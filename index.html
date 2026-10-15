@@ -195,7 +195,9 @@
 
         .config-group { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; background: #F8FAFC; padding: 15px; border-radius: var(--radius); border: 1px solid var(--border-color); }
         
-        .config-row-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-weight: 600; font-size: 14.3px; color: var(--text-main); line-height: 1.5; box-sizing: border-box; }
+        /* 🛠 調整設定選項內的文字與右側開關按鈕完美垂直置中對齊 */
+        .config-row-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-weight: 600; font-size: 14.3px; color: var(--text-main); line-height: 1.4; box-sizing: border-box; }
+        .config-row-item span { display: inline-flex; align-items: center; transform: translateY(1px); }
         body.power-saving-mode .config-row-item { color: #FFFFFF !important; }
 
         .slider-container { display: flex; align-items: center; gap: 16px; margin-top: 5px; }
@@ -870,7 +872,6 @@
     async function triggerAutoSaveToCloud() {
         let statusText = document.getElementById('cloudStatusText');
         let settingSaveStatus = document.getElementById('powerSavingSaveStatus');
-        let closeSettingsBtn = document.getElementById('closeSettingsBtn');
 
         if (!accessToken || !isCloudSyncActive) {
             if (settingSaveStatus) settingSaveStatus.innerText = `✅ 本機存檔完畢`;
@@ -881,13 +882,9 @@
 
         statusText.innerText = `☁️ 雲端儲存中...`;
         if (settingSaveStatus) settingSaveStatus.innerText = `☁️ 雲端儲存中...`;
-        if (closeSettingsBtn) {
-            closeSettingsBtn.disabled = true;
-            closeSettingsBtn.style.opacity = '0.5';
-            closeSettingsBtn.style.cursor = 'not-allowed';
-        }
         
         return new Promise((resolve) => {
+            // 💡 將防手滑/防連擊的延遲縮短至 300ms，讓雲端儲存反應更快更即時
             autoSyncTimer = setTimeout(async () => {
                 try {
                     let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
@@ -947,14 +944,9 @@
                     statusText.innerText = `❌ 雲端同步失敗`;
                     if (settingSaveStatus) settingSaveStatus.innerText = `❌ 存檔失敗`;
                 } finally {
-                    if (closeSettingsBtn) {
-                        closeSettingsBtn.disabled = false;
-                        closeSettingsBtn.style.opacity = '1';
-                        closeSettingsBtn.style.cursor = 'pointer';
-                    }
                     resolve();
                 }
-            }, 1000);
+            }, 300);
         });
     }
 
@@ -964,8 +956,6 @@
     }
     
     function closeSystemSettingsModal() { 
-        let closeSettingsBtn = document.getElementById('closeSettingsBtn');
-        if (closeSettingsBtn && closeSettingsBtn.disabled) return;
         document.getElementById('systemSettingsModal').style.display = 'none'; 
     }
     
@@ -1103,12 +1093,7 @@
         if (event.target == document.getElementById('advancedModal')) document.getElementById('advancedModal').style.display = 'none';
         if (event.target == document.getElementById('examAdvancedModal')) document.getElementById('examAdvancedModal').style.display = 'none';
         if (event.target == document.getElementById('historyModal')) document.getElementById('historyModal').style.display = 'none';
-        if (event.target == document.getElementById('systemSettingsModal')) {
-            let closeSettingsBtn = document.getElementById('closeSettingsBtn');
-            if (closeSettingsBtn && !closeSettingsBtn.disabled) {
-                document.getElementById('systemSettingsModal').style.display = 'none';
-            }
-        }
+        if (event.target == document.getElementById('systemSettingsModal')) document.getElementById('systemSettingsModal').style.display = 'none';
         if (event.target == document.getElementById('exportModal')) document.getElementById('exportModal').style.display = 'none';
         if (event.target == document.getElementById('aboutModal')) document.getElementById('aboutModal').style.display = 'none';
         if (event.target == document.getElementById('examResultModal')) document.getElementById('examResultModal').style.display = 'none';
@@ -1800,7 +1785,6 @@
             else for (let val of targetSet) { if (!userSet.has(val)) { isPosCorrect = false; break; } }
         }
 
-        // 💡 英文、中文、詞性三者皆須完全正確，該題才判定為全對 (isCorrect = true)
         let isFullyCorrect = isEngCorrect && isChiCorrect && isPosCorrect;
 
         examResults.push({
@@ -1909,10 +1893,8 @@
             let userPosText = res.userPos ? `[${res.userPos}]` : '[(未選)]';
 
             if (res.isCorrect) {
-                // 完全答對：全部顯示綠色
                 html += `<div class="correct-item">✅ 第 ${index+1} 題：${res.english} (${res.chinese})${posDisplay}<br><small style="color:#10B981;">您的回答：${res.userEng} / ${res.userChi} ${userPosText}</small></div>`;
             } else {
-                // 部分錯誤或全錯：分別判斷 英文/中文/詞性 的答對或答錯顏色
                 let engColor = res.isEngCorrect ? '#10B981' : '#EF4444';
                 let chiColor = res.isChiCorrect ? '#10B981' : '#EF4444';
                 let posColor = res.isPosCorrect ? '#10B981' : '#EF4444';
@@ -2023,7 +2005,6 @@
                         if (res.isCorrect) {
                             histHtml += `<div style="color: #10B981; margin-bottom: 5px;">✅ 第${rIdx+1}題: ${res.english} (${res.chinese})${pDisp}</div>`;
                         } else {
-                            // 歷史明細同樣標示 英文/中文/詞性 個別答對與答錯顏色
                             let engColor = res.isEngCorrect ? '#10B981' : '#EF4444';
                             let chiColor = res.isChiCorrect ? '#10B981' : '#EF4444';
                             let posColor = res.isPosCorrect ? '#10B981' : '#EF4444';
