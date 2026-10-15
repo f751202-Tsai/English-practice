@@ -366,7 +366,8 @@
         <div id="resultContainer" style="display: none;"></div>
     </div>
     
-    <div id="status" style="display: none;">準備就緒...</div>
+    <!-- 修正處：移除 style="display: none;"，讓剛開啟 App 時即會顯示 -->
+    <div id="status">準備就緒...</div>
 </div>
 
 <!-- ================= 🏁 本次測驗結果彈窗 ================= -->
@@ -664,6 +665,15 @@
         initExportCheckboxes();
         loadExamSettings(); 
 
+        // 確保剛進畫面時狀態欄文字正確顯示
+        let statusEl = document.getElementById('status');
+        if (statusEl) {
+            statusEl.style.display = 'block';
+            if (!statusEl.innerText || statusEl.innerText.trim() === '') {
+                statusEl.innerText = '準備就緒...';
+            }
+        }
+
         if (sessionStorage.getItem('dev_unlocked') === 'true') {
             document.getElementById('devLoginPanel').style.display = 'none';
             document.getElementById('devContentPanel').style.display = 'flex';
@@ -758,7 +768,6 @@
 
     function handleAuthClick() {
         if (tokenClient) {
-            // 點擊登入後，直接顯示固定提示文字（不含秒數）
             let statusText = document.getElementById('cloudStatusText');
             statusText.innerText = `⏳ 正在連接 Google 雲端中...`;
 
@@ -1229,7 +1238,7 @@
         let index = document.getElementById('listSelector').value;
         saveSelectedListIndex(index);
         document.getElementById('wordList').value = wordLists[index].content;
-        document.getElementById('status').style.display = 'none';
+        document.getElementById('status').style.display = 'block';
         document.getElementById('resultContainer').style.display = 'none';
     }
 
@@ -1825,7 +1834,8 @@
 
         document.getElementById('examArea').style.display = 'none';
         document.getElementById('examSetupPanel').style.display = 'block';
-        document.getElementById('status').style.display = 'none';
+        document.getElementById('status').style.display = 'block';
+        document.getElementById('status').innerText = '準備就緒...';
 
         let totalCount = examResults.length;
         if (totalCount === 0) {
@@ -2053,7 +2063,7 @@
         document.getElementById('examArea').style.display = 'none';
         document.getElementById('examSetupPanel').style.display = 'block';
         document.getElementById('status').style.display = 'block';
-        document.getElementById('status').innerText = '⏹ 已停止播放與測驗。';
+        document.getElementById('status').innerText = '準備就緒...';
     }
 
     function checkAnswerTimeLimit(inputElement) {
