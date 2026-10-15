@@ -342,10 +342,10 @@
             <div id="examTimer">作答剩餘時間：<span id="timeLeft">0</span> 秒</div>
             
             <label>請輸入聽到的英文：</label>
-            <input type="text" id="examInputEng" placeholder="輸入英文..." onkeydown="handleInputKeyDown(event, 'eng')" disabled>
+            <input type="text" id="examInputEng" placeholder="輸入英文..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="handleInputKeyDown(event, 'eng')" disabled>
             
             <label style="margin-top: 11px;">請輸入中文意思：</label>
-            <input type="text" id="examInputChi" placeholder="輸入中文..." onkeydown="handleInputKeyDown(event, 'chi')" disabled>
+            <input type="text" id="examInputChi" placeholder="輸入中文..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="handleInputKeyDown(event, 'chi')" disabled>
 
             <label style="margin-top: 11px;">詞性選擇（可複選）：</label>
             <div class="pos-checkbox-group" id="examPosCheckboxGroup">
@@ -408,6 +408,7 @@
             <div>
                 <label style="margin-top:0;">🔋 省電模式</label>
                 <span style="font-size: 13.2px; color: var(--text-muted);">開啟後背景調暗以節省電力</span>
+                <span id="powerSavingSaveStatus" style="font-size: 13.2px; color: var(--primary); margin-left: 8px; font-weight: 600;"></span>
             </div>
             <label class="switch">
                 <input type="checkbox" id="powerSavingToggle" onchange="togglePowerSavingMode()">
@@ -436,7 +437,7 @@
             <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openAboutModal()">關於</button>
         </div>
 
-        <button class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="closeSystemSettingsModal()">關閉設定</button>
+        <button class="action-btn btn-start" id="closeSettingsBtn" style="margin-top: 22px; width: 100%;" onclick="closeSystemSettingsModal()">關閉設定</button>
     </div>
 </div>
 
@@ -864,73 +865,106 @@
     }
 
     async function triggerAutoSaveToCloud() {
-        if (!accessToken || !isCloudSyncActive) return;
+        let statusText = document.getElementById('cloudStatusText');
+        let settingSaveStatus = document.getElementById('powerSavingSaveStatus');
+        let closeSettingsBtn = document.getElementById('closeSettingsBtn');
+
+        if (!accessToken || !isCloudSyncActive) {
+            if (settingSaveStatus) settingSaveStatus.innerText = `✅ 本機存檔完畢`;
+            return Promise.resolve();
+        }
+
         if (autoSyncTimer) clearTimeout(autoSyncTimer);
 
-        let statusText = document.getElementById('cloudStatusText');
         statusText.innerText = `☁️ 雲端儲存中...`;
+        if (settingSaveStatus) settingSaveStatus.innerText = `☁️ 雲端儲存中...`;
+        if (closeSettingsBtn) {
+            closeSettingsBtn.disabled = true;
+            closeSettingsBtn.style.opacity = '0.5';
+            closeSettingsBtn.style.cursor = 'not-allowed';
+        }
         
-        autoSyncTimer = setTimeout(async () => {
-            try {
-                let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
-                let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-                let data = await res.json();
-                let fileId = (data.files && data.files.length > 0) ? data.files[0].id : null;
-                
-                if (fileId) {
-                    let fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+        return new Promise((resolve) => {
+            autoSyncTimer = setTimeout(async () => {
+                try {
+                    let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
+                    let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
                         headers: { 'Authorization': `Bearer ${accessToken}` }
                     });
-                    let cloudData = await fileRes.json() || {};
+                    let data = await res.json();
+                    let fileId = (data.files && data.files.length > 0) ? data.files[0].id : null;
                     
-                    if (cloudData.activeDeviceId && cloudData.activeDeviceId !== myDeviceId) {
-                        forceLogoutDueToConflict();
-                        return;
+                    if (fileId) {
+                        let fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                            headers: { 'Authorization': `Bearer ${accessToken}` }
+                        });
+                        let cloudData = await fileRes.json() || {};
+                        
+                        if (cloudData.activeDeviceId && cloudData.activeDeviceId !== myDeviceId) {
+                            forceLogoutDueToConflict();
+                            resolve();
+                            return;
+                        }
                     }
+
+                    let fullPackage = {
+                        activeDeviceId: myDeviceId,
+                        wordLists: wordLists,
+                        lastSelectedList: lastSelectedList,
+                        lastTargetList: lastTargetList,
+                        appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}'),
+                        systemSettings: JSON.parse(localStorage.getItem('dictation_system_settings') || '{}'),
+                        examSettings: JSON.parse(localStorage.getItem('dictation_exam_settings') || '{}'),
+                        examHistory: examHistory
+                    };
+
+                    let fileContent = JSON.stringify(fullPackage);
+
+                    if (fileId) {
+                        await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                            method: 'PATCH',
+                            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                            body: fileContent
+                        });
+                    } else {
+                        let metadata = { name: FILENAME, parents: ['appDataFolder'] };
+                        let form = new FormData();
+                        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                        form.append('file', new Blob([fileContent], { type: 'application/json' }));
+
+                        await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${accessToken}` },
+                            body: form
+                        });
+                    }
+                    statusText.innerText = `✅ 已連結 Google 雲端`;
+                    if (settingSaveStatus) settingSaveStatus.innerText = `✅ 存檔完畢`;
+                } catch (err) {
+                    statusText.innerText = `❌ 雲端同步失敗`;
+                    if (settingSaveStatus) settingSaveStatus.innerText = `❌ 存檔失敗`;
+                } finally {
+                    if (closeSettingsBtn) {
+                        closeSettingsBtn.disabled = false;
+                        closeSettingsBtn.style.opacity = '1';
+                        closeSettingsBtn.style.cursor = 'pointer';
+                    }
+                    resolve();
                 }
-
-                let fullPackage = {
-                    activeDeviceId: myDeviceId,
-                    wordLists: wordLists,
-                    lastSelectedList: lastSelectedList,
-                    lastTargetList: lastTargetList,
-                    appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}'),
-                    systemSettings: JSON.parse(localStorage.getItem('dictation_system_settings') || '{}'),
-                    examSettings: JSON.parse(localStorage.getItem('dictation_exam_settings') || '{}'),
-                    examHistory: examHistory
-                };
-
-                let fileContent = JSON.stringify(fullPackage);
-
-                if (fileId) {
-                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-                        method: 'PATCH',
-                        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-                        body: fileContent
-                    });
-                } else {
-                    let metadata = { name: FILENAME, parents: ['appDataFolder'] };
-                    let form = new FormData();
-                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                    form.append('file', new Blob([fileContent], { type: 'application/json' }));
-
-                    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${accessToken}` },
-                        body: form
-                    });
-                }
-                statusText.innerText = `✅ 已連結 Google 雲端`;
-            } catch (err) {
-                statusText.innerText = `❌ 雲端同步失敗`;
-            }
-        }, 1000);
+            }, 1000);
+        });
     }
 
-    function openSystemSettingsModal() { document.getElementById('systemSettingsModal').style.display = 'block'; }
-    function closeSystemSettingsModal() { document.getElementById('systemSettingsModal').style.display = 'none'; }
+    function openSystemSettingsModal() { 
+        document.getElementById('powerSavingSaveStatus').innerText = '';
+        document.getElementById('systemSettingsModal').style.display = 'block'; 
+    }
+    
+    function closeSystemSettingsModal() { 
+        let closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        if (closeSettingsBtn && closeSettingsBtn.disabled) return;
+        document.getElementById('systemSettingsModal').style.display = 'none'; 
+    }
     
     function openAboutModal() { document.getElementById('aboutModal').style.display = 'block'; }
     function closeAboutModal() { document.getElementById('aboutModal').style.display = 'none'; }
@@ -1066,7 +1100,12 @@
         if (event.target == document.getElementById('advancedModal')) document.getElementById('advancedModal').style.display = 'none';
         if (event.target == document.getElementById('examAdvancedModal')) document.getElementById('examAdvancedModal').style.display = 'none';
         if (event.target == document.getElementById('historyModal')) document.getElementById('historyModal').style.display = 'none';
-        if (event.target == document.getElementById('systemSettingsModal')) document.getElementById('systemSettingsModal').style.display = 'none';
+        if (event.target == document.getElementById('systemSettingsModal')) {
+            let closeSettingsBtn = document.getElementById('closeSettingsBtn');
+            if (closeSettingsBtn && !closeSettingsBtn.disabled) {
+                document.getElementById('systemSettingsModal').style.display = 'none';
+            }
+        }
         if (event.target == document.getElementById('exportModal')) document.getElementById('exportModal').style.display = 'none';
         if (event.target == document.getElementById('aboutModal')) document.getElementById('aboutModal').style.display = 'none';
         if (event.target == document.getElementById('examResultModal')) document.getElementById('examResultModal').style.display = 'none';
