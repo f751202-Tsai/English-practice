@@ -326,10 +326,11 @@
                 <!-- 右上角清單內容排序選單（修正 A-Z 與 Z-A 排序方向） -->
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <span style="font-size: 16px;" title="排序方式">☰</span>
-                    <select id="wordSortSelector" style="width: auto; margin-top: 0; padding: 6px 10px; font-size: 13.2px;" onchange="sortWordListContent(this.value)">
-                        <option value="az">A-Z 排序</option>
-                        <option value="za">Z-A 排序</option>
-                    </select>
+<select id="wordSortSelector" style="width: auto; margin-top: 0; padding: 6px 10px; font-size: 13.2px;" onchange="sortWordListContent(this.value)">
+    <option value="" disabled selected>排序方式</option>
+    <option value="az">A-Z 排序</option>
+    <option value="za">Z-A 排序</option>
+</select>
                 </div>
             </div>
             
@@ -1555,35 +1556,36 @@
         document.getElementById(displayId).innerText = parseFloat(document.getElementById(sliderId).value).toFixed(2) + ' 倍';
     }
 
-    // 修正 A-Z 與 Z-A 排序的比較方向
+  
+    // 修正 A-Z 與 Z-A 排序邏輯及正確歸零
     function sortWordListContent(sortType) {
+        if (!sortType) return;
         let textarea = document.getElementById('wordList');
-        let rawText = textarea.value;
-        if (!rawText.trim()) { 
+        let words = parseWordsRaw(textarea.value);
+        if (!words.length) { 
             alert('請先輸入單字後再進行排序！'); 
             document.getElementById('wordSortSelector').selectedIndex = 0;
             return; 
         }
 
-        let words = parseWordsRaw(rawText);
-        if (!words.length) { 
-            document.getElementById('wordSortSelector').selectedIndex = 0;
-            return; 
-        }
-
         if (sortType === 'az') {
-            // 正確的 A 到 Z 排序
             words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
         } else if (sortType === 'za') {
-            // 正確的 Z 到 A 排序 (將 b 與 a 對調)
+            // 修正：Z-A 必須用 b 比較 a 才會正確反向排序
             words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
         }
 
         textarea.value = words.map(w => w.rawLine).join('\n');
         autoSaveCurrentList();
         
+        // 執行完後將選單歸零回提示選項
         setTimeout(() => { document.getElementById('wordSortSelector').selectedIndex = 0; }, 200);
-    }
+        }
+
+        textarea.value = words.map(w => w.rawLine).join('\n');
+        autoSaveCurrentList();
+        
+        setTimeout(() => { document.getElementById('wordSortSelector').selectedIndex = 0; }, 200);
 
     function parseWords(text) {
         let allWords = parseWordsRaw(text);
