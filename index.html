@@ -1183,7 +1183,7 @@
                 if (s.speakRate !== undefined) { document.getElementById('speakRate').value = s.speakRate; updateSpeedDisplay('examSpeakRate', 'examSpeedValue'); }
                 if (s.pauseTime !== undefined) document.getElementById('examPauseTime').value = s.pauseTime;
                 if (s.answerTime !== undefined) document.getElementById('examAnswerTime').value = s.answerTime;
-                if (s.repeatCount !== undefined) document.getElementById('examRepeatCount').value = s.repeatCount;
+                if (s.repeatCount !== undefined) document.getElementById('repeatCount').value = s.repeatCount;
             } catch(e){}
         }
         updateExamStats();
@@ -1909,7 +1909,7 @@
 
         let html = `<div class="result-box">
             <div style="background: #EEF2FF; padding: 12px 16px; border-radius: 8px; border: 1px solid #C7D2FE; font-weight: 600; color: var(--primary); margin-bottom: 12px;">🏁 考試結束！以下為您的測驗結果：</div>
-            <h3 style="color:var(--text-main); font-size:16.5px;">📊 成績統計：得分 ${scoreRate} 分 (總題數 ${totalCount} 題，完全答對 ${fullyCorrectCount} 題)</h3><hr style="border:0; border-top:1px solid var(--border-color); margin:12px 0;">`;
+            <h3 style="color:var(--text-main); font-size:16.5px;">📊 成績統計 : 得分 ${scoreRate} 分 (總題數 ${totalCount} 題，完全答對 ${fullyCorrectCount} 題)</h3><hr style="border:0; border-top:1px solid var(--border-color); margin:12px 0;">`;
         
         examResults.forEach((res, index) => {
             let posDisplay = res.pos ? ` [${res.pos}]` : '';
@@ -1954,21 +1954,30 @@
                 points.push({ x, y, score: rec.score, date: rec.date });
             });
 
+            // 📱 偵測是否為手機版 (螢幕寬度小於 768px)
+            let isMobile = window.innerWidth < 768;
+            // 手機版線條加粗 50% (原 2.5 -> 3.75)
+            let strokeWidth = isMobile ? 3.75 : 2.5;
+            // 手機版字體放大 60% (原分數 11 -> 17.6，坐標軸 11 -> 14)
+            let scoreFontSize = isMobile ? 17.6 : 11;
+            let axisFontSize = isMobile ? 14 : 11;
+            let circleRadius = isMobile ? 6.5 : 4.5;
+
             let svgHtml = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" style="overflow:visible;">`;
             [0, 50, 100].forEach(val => {
                 let lineY = padding + graphHeight - (val / 100) * graphHeight;
                 svgHtml += `<line x1="${padding}" y1="${lineY}" x2="${width - padding}" y2="${lineY}" stroke="#E2E8F0" stroke-width="1" />`;
-                svgHtml += `<text x="${padding - 22}" y="${lineY + 4}" font-size="11" fill="#94A3B8">${val}</text>`;
+                svgHtml += `<text x="${padding - 22}" y="${lineY + 4}" font-size="${axisFontSize}" fill="#94A3B8">${val}</text>`;
             });
 
             if (points.length > 1) {
                 let polylinePoints = points.map(p => `${p.x},${p.y}`).join(' ');
-                svgHtml += `<polyline fill="none" stroke="#4F46E5" stroke-width="2.5" points="${polylinePoints}" />`;
+                svgHtml += `<polyline fill="none" stroke="#4F46E5" stroke-width="${strokeWidth}" points="${polylinePoints}" />`;
             }
 
             points.forEach((p) => {
-                svgHtml += `<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#4F46E5" stroke="white" stroke-width="1.5"><title>${p.date} — 得分: ${p.score}分</title></circle>`;
-                svgHtml += `<text x="${p.x}" y="${p.y - 8}" font-size="11" font-weight="700" fill="#0F172A" text-anchor="middle">${p.score}</text>`;
+                svgHtml += `<circle cx="${p.x}" cy="${p.y}" r="${circleRadius}" fill="#4F46E5" stroke="white" stroke-width="1.5"><title>${p.date} — 得分: ${p.score}分</title></circle>`;
+                svgHtml += `<text x="${p.x}" y="${p.y - 9}" font-size="${scoreFontSize}" font-weight="700" fill="#0F172A" text-anchor="middle">${p.score}</text>`;
             });
             svgHtml += `</svg>`;
             chartContainer.innerHTML = svgHtml;
@@ -2206,7 +2215,7 @@
         initExportCheckboxes();
         updateExamStats();
 
-        alert("🧹 成功清空所有英文題庫的單字，並已全面重設標題名稱！");
+        _alert("🧹 成功清空所有英文題庫的單字，並已全面重設標題名稱！");
     }
 
     function clearAllExamHistoryData() {
