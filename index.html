@@ -600,7 +600,6 @@
     let accessToken = null;
     let isCloudSyncActive = false;
     let autoSyncTimer = null;
-    let loginProgressTimer = null; // 登入連線計時器
 
     let myDeviceId = localStorage.getItem('dictation_device_id');
     if (!myDeviceId) {
@@ -676,7 +675,6 @@
                 scope: SCOPES,
                 callback: async (resp) => {
                     if (resp.error !== undefined) {
-                        if (loginProgressTimer) clearInterval(loginProgressTimer);
                         document.getElementById('cloudStatusText').innerText = `💻 本機作業模式 (未登入)`;
                         return;
                     }
@@ -685,13 +683,11 @@
                     
                     let canProceed = await checkAndClaimDeviceOwnership();
                     if (!canProceed) {
-                        if (loginProgressTimer) clearInterval(loginProgressTimer);
                         accessToken = null;
                         document.getElementById('cloudStatusText').innerText = `💻 本機作業模式 (未登入)`;
                         return;
                     }
 
-                    if (loginProgressTimer) clearInterval(loginProgressTimer);
                     isCloudSyncActive = true;
                     document.getElementById('cloudStatusText').innerText = `✅ 已連結 Google 雲端`;
                     let authBtn = document.getElementById('cloudAuthBtn');
@@ -762,16 +758,9 @@
 
     function handleAuthClick() {
         if (tokenClient) {
-            // 點擊登入後，顯示連接中計費提示
-            let secondsElapsed = 0;
+            // 點擊登入後，直接顯示固定提示文字（不含秒數）
             let statusText = document.getElementById('cloudStatusText');
-            statusText.innerText = `⏳ 正在連接 Google 雲端中..(已過 1 秒 / 預計 5 秒)..`;
-            
-            if (loginProgressTimer) clearInterval(loginProgressTimer);
-            loginProgressTimer = setInterval(() => {
-                secondsElapsed++;
-                statusText.innerText = `⏳ 正在連接 Google 雲端中..(已過 ${secondsElapsed} 秒 / 預計 5 秒)..`;
-            }, 1000);
+            statusText.innerText = `⏳ 正在連接 Google 雲端中...`;
 
             tokenClient.requestAccessToken({ prompt: 'consent' });
         } else {
