@@ -299,7 +299,7 @@
     <!-- ================= 第一頁：練習聽力模式 ================= -->
     <div id="practicePage" class="page-section active">
         <div class="list-manager-box">
-            <label for="listSelector" style="margin-top: 0;">📂 載入英文題庫 (共 30 組)：</label>
+            <label for="listSelector" style="margin-top: 0;">📂 載入英文題庫 (共 30 組)：[cite: 19]</label>
             <div class="select-with-action">
                 <div class="list-select-wrapper">
                     <select id="listSelector" onchange="switchWordList()"></select>
@@ -309,17 +309,17 @@
         </div>
 
         <div id="wordListContainer">
-            <label for="wordList">單字清單內容（英文 中文 詞性，不熟前面可加 *）：</label>
-            <textarea id="wordList" oninput="handleTextareaInput()" placeholder="格式範例：&#10;*chatty cathy 健談 名詞&#10;bed 雙人床 名詞&#10;*orange 橘子 名詞"></textarea>
+            <label for="wordList">----可自行新增單字----<br>單字清單內容（不熟前面可加 *）：[cite: 19]</label>
+            <textarea id="wordList" oninput="handleTextareaInput()" placeholder="格式範例：&#10;*chatty cathy 健談 名詞&#10;bed 雙人床 名詞&#10;*orange 橘子 名詞[cite: 19]"></textarea>
             <div class="btn-action-container">
-                <button class="btn-sort-abc" onclick="sortWordsABC()">🔤 A-Z 字母排序</button>
-                <button class="btn-advanced" onclick="openAdvancedModal()">⚙️ 進階設定</button>
+                <button class="btn-sort-abc" onclick="sortWordsABC()">🔤 A-Z 字母排序[cite: 19]</button>
+                <button class="btn-advanced" onclick="openAdvancedModal()">⚙️ 進階設定[cite: 19]</button>
             </div>
         </div>
         
         <div class="btn-group">
-            <button id="toggleDictationBtn" class="action-btn btn-start" onclick="toggleDictation()">▶ 開始聽力練習</button>
-            <button id="pauseDictationBtn" class="action-btn btn-pause" onclick="togglePauseDictation()">⏸ 暫停</button>
+            <button id="toggleDictationBtn" class="action-btn btn-start" onclick="toggleDictation()">▶ 開始聽力練習[cite: 19]</button>
+            <button id="pauseDictationBtn" class="action-btn btn-pause" onclick="togglePauseDictation()">⏸ 暫停[cite: 19]</button>
         </div>
     </div>
 
@@ -327,91 +327,91 @@
     <div id="examPage" class="page-section">
         <div class="exam-setup-box" id="examSetupPanel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h3 style="margin:0; color:var(--text-main); font-size:17.6px;">🎓 考試範圍設定</h3>
-                <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openHistoryModal()">📊 考試紀錄</button>
+                <h3 style="margin:0; color:var(--text-main); font-size:17.6px;">🎓 考試範圍設定[cite: 19]</h3>
+                <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openHistoryModal()">📊 考試紀錄[cite: 19]</button>
             </div>
 
-            <label style="margin-top:0;">請勾選考試範圍（可複選）：</label>
+            <label style="margin-top:0;">請勾選考試範圍（可複選）：[cite: 19]</label>
             <div class="exam-lists-grid" id="examListsCheckboxGroup"></div>
             
-            <div class="exam-stats" id="examStatsDisplay">📊 範圍統計：總單字數 0 個 | 星號 (*) 單字數 0 個</div>
+            <div class="exam-stats" id="examStatsDisplay">📊 範圍統計：總單字數 0 個 | 星號 (*) 單字數 0 個[cite: 19]</div>
 
-            <button class="btn-advanced" style="margin-top: 22px; width: 100%;" onclick="openExamAdvancedModal()">⚙️ 考試進階設定</button>
-            <button class="action-btn btn-start" style="margin-top: 11px; width: 100%;" onclick="startExamMode()">開始考試</button>
+            <button class="btn-advanced" style="margin-top: 22px; width: 100%;" onclick="openExamAdvancedModal()">⚙️ 考試進階設定[cite: 19]</button>
+            <button class="action-btn btn-start" style="margin-top: 11px; width: 100%;" onclick="startExamMode()">開始考試[cite: 19]</button>
         </div>
 
         <div id="examArea">
-            <h3 style="margin-top:0; color:var(--primary); font-size:17.6px;">✍️ 考試作答中</h3>
-            <div id="examProgressStatus" style="font-weight: 600; color: var(--primary); margin-bottom: 9px; font-size: 15.4px;">🎧 正在進行考試 (第 1/10 題)... 請聆聽並於下方作答</div>
-            <div id="examTimer">作答剩餘時間：<span id="timeLeft">0</span> 秒</div>
+            <h3 style="margin-top:0; color:var(--primary); font-size:17.6px;">✍️ 考試作答中[cite: 19]</h3>
+            <div id="examProgressStatus" style="font-weight: 600; color: var(--primary); margin-bottom: 9px; font-size: 15.4px;">🎧 正在進行考試 (第 1/10 題)... 請聆聽並於下方作答[cite: 19]</div>
+            <div id="examTimer">作答剩餘時間：<span id="timeLeft">0</span> 秒[cite: 19]</div>
             
-            <label>請輸入聽到的英文：</label>
-            <input type="text" id="examInputEng" placeholder="輸入英文..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="handleInputKeyDown(event, 'eng')" disabled>
+            <label>請輸入聽到的英文：[cite: 19]</label>
+            <input type="text" id="examInputEng" placeholder="輸入英文..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="handleInputKeyDown(event, 'eng')" disabled[cite: 19]>
             
-            <label style="margin-top: 11px;">請輸入中文意思：</label>
-            <input type="text" id="examInputChi" placeholder="輸入中文..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="handleInputKeyDown(event, 'chi')" disabled>
+            <label style="margin-top: 11px;">請輸入中文意思：[cite: 19]</label>
+            <input type="text" id="examInputChi" placeholder="輸入中文..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="handleInputKeyDown(event, 'chi')" disabled[cite: 19]>
 
-            <label style="margin-top: 11px;">詞性選擇（可複選）：</label>
+            <label style="margin-top: 11px;">詞性選擇（可複選）：[cite: 19]</label>
             <div class="pos-checkbox-group" id="examPosCheckboxGroup">
-                <label><input type="checkbox" value="動詞" class="exam-pos-chk" onkeydown="handlePosKeyDown(event, 0)" disabled> 動詞</label>
-                <label><input type="checkbox" value="名詞" class="exam-pos-chk" onkeydown="handlePosKeyDown(event, 1)" disabled> 名詞</label>
-                <label><input type="checkbox" value="形容詞" class="exam-pos-chk" onkeydown="handlePosKeyDown(event, 2)" disabled> 形容詞</label>
-                <label><input type="checkbox" value="副詞" class="exam-pos-chk" onkeydown="handlePosKeyDown(event, 3)" disabled> 副詞</label>
-                <label><input type="checkbox" value="片語" class="exam-pos-chk" onkeydown="handlePosKeyDown(event, 4)" disabled> 片語</label>
+                <label><input type="checkbox" value="動詞" class="exam-pos-chk" onkeydown="handlePosKeyDown(event, 0)" disabled> 動詞[cite: 19]</label>
+                <label><input type="checkbox" value="名詞" class="exam-pos-chk" onkeydown="handlePosKeyDown(event, 1)" disabled> 名詞[cite: 19]</label>
+                <label><input type="checkbox" value="形容詞" class="exam-pos-chk" onkeydown="handlePosKeyDown(event, 2)" disabled> 形容詞[cite: 19]</label>
+                <label><input type="checkbox" value="副詞" class="exam-pos-chk" onkeydown="handlePosKeyDown(event, 3)" disabled> 副詞[cite: 19]</label>
+                <label><input type="checkbox" value="片語" class="exam-pos-chk" onkeydown="handlePosKeyDown(event, 4)" disabled> 片語[cite: 19]</label>
             </div>
 
-            <button id="examSubmitBtn" class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="submitExamAnswer()" disabled>送出答案 (Enter)</button>
-            <button class="action-btn btn-stop" style="margin-top: 11px; width: 100%;" onclick="finishExam()">⏹ 結束並停止考試</button>
+            <button id="examSubmitBtn" class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="submitExamAnswer()" disabled>送出答案 (Enter)[cite: 19]</button>
+            <button class="action-btn btn-stop" style="margin-top: 11px; width: 100%;" onclick="finishExam()">⏹ 結束並停止考試[cite: 19]</button>
         </div>
 
         <div id="resultContainer" style="display: none;"></div>
     </div>
     
-    <div id="status">準備就緒...</div>
+    <div id="status">準備就緒...[cite: 19]</div>
 </div>
 
 <!-- ================= 🏁 本次測驗結果彈窗 ================= -->
 <div id="examResultModal" class="modal">
     <div class="modal-content" style="max-width: 620px;">
-        <span class="close-modal" onclick="closeExamResultModal()">&times;</span>
+        <span class="close-modal" onclick="closeExamResultModal()">&times;[cite: 19]</span>
         <div id="modalResultBody"></div>
-        <button class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="closeExamResultModal()">確定關閉</button>
+        <button class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="closeExamResultModal()">確定關閉[cite: 19]</button>
     </div>
 </div>
 
 <!-- ================= ⚙️ 系統設定彈窗 ================= -->
 <div id="systemSettingsModal" class="modal">
     <div class="modal-content">
-        <span class="close-modal" onclick="closeSystemSettingsModal()">&times;</span>
-        <h3 style="margin-top:0; color:var(--primary); font-size:19.8px; font-weight:700;">⚙️ 系統設定中心</h3>
+        <span class="close-modal" onclick="closeSystemSettingsModal()">&times;[cite: 19]</span>
+        <h3 style="margin-top:0; color:var(--primary); font-size:19.8px; font-weight:700;">⚙️ 系統設定中心[cite: 19]</h3>
         
         <div class="config-group" style="margin-top: 16px;">
-            <label for="systemVolume" style="margin-top:0;">🔊 音量調整：</label>
+            <label for="systemVolume" style="margin-top:0;">🔊 音量調整：[cite: 19]</label>
             <div class="slider-container">
                 <input type="range" id="systemVolume" min="0" max="100" value="100" oninput="updateVolumeDisplay(); saveSystemSettings();">
-                <span id="volumeValue" class="speed-val">100%</span>
+                <span id="volumeValue" class="speed-val">100%[cite: 19]</span>
             </div>
         </div>
 
         <div class="config-group">
-            <label style="margin-top:0;">🗣 口音選擇：</label>
+            <label style="margin-top:0;">🗣 口音選擇：[cite: 19]</label>
             <div style="display: flex; flex-direction: column; gap: 9px; margin-top: 7px;">
-                <label class="checkbox-item-row"><input type="checkbox" id="accentUS" checked disabled style="cursor: not-allowed;"> 🇺🇸 美國 (固定預設)</label>
+                <label class="checkbox-item-row"><input type="checkbox" id="accentUS" checked disabled style="cursor: not-allowed;"> 🇺🇸 美國 (固定預設)[cite: 19]</label>
             </div>
         </div>
 
         <div class="config-group">
-            <label style="margin-top:0;">📂 匯出英文題庫 (存成 .txt 檔)：</label>
+            <label style="margin-top:0;">📂 匯出英文題庫 (存成 .txt 檔)：[cite: 19]</label>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 7px;">
-                <span style="font-size: 14.3px; color: var(--text-muted);">可選擇要匯出的題庫範圍：</span>
-                <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openExportModal()">選擇並匯出 txt 檔</button>
+                <span style="font-size: 14.3px; color: var(--text-muted);">可選擇要匯出的題庫範圍：[cite: 19]</span>
+                <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openExportModal()">選擇並匯出 txt 檔[cite: 19]</button>
             </div>
         </div>
 
         <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
             <div>
-                <label style="margin-top:0;">🔋 省電模式</label>
-                <span style="font-size: 13.2px; color: var(--text-muted);">開啟後背景調暗以節省電力</span>
+                <label style="margin-top:0;">🔋 省電模式[cite: 19]</label>
+                <span style="font-size: 13.2px; color: var(--text-muted);">開啟後背景調暗以節省電力[cite: 19]</span>
                 <span id="powerSavingSaveStatus" style="font-size: 13.2px; color: var(--primary); margin-left: 8px; font-weight: 600;"></span>
             </div>
             <label class="switch">
@@ -420,176 +420,185 @@
             </label>
         </div>
 
+        <!-- 5. 省電模式跟開發者介面中間新增載入初始設定 -->
+        <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+            <div>
+                <label style="margin-top:0;">🔄 載入初始設定</label>
+                <span style="font-size: 13.2px; color: var(--text-muted);">一鍵重設所有清單與系統參數並上雲端</span>
+            </div>
+            <button class="cloud-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);" onclick="loadInitialSettings()">載入初始設定</button>
+        </div>
+
         <div class="config-group">
-            <label style="margin-top:0;">🛠️ 開發者介面</label>
+            <label style="margin-top:0;">🛠️ 開發者介面[cite: 19]</label>
             <div id="devLoginPanel" style="display: flex; gap: 10px; margin-top: 9px;">
-                <input type="password" id="devPasswordInput" placeholder="請輸入開發者密碼..." style="margin-top:0; flex:1;">
-                <button class="cloud-btn" style="background: var(--primary-gradient); white-space: nowrap;" onclick="verifyDevPassword()">解鎖</button>
+                <input type="password" id="devPasswordInput" placeholder="請輸入開發者密碼..." style="margin-top:0; flex:1;"[cite: 19]>
+                <button class="cloud-btn" style="background: var(--primary-gradient); white-space: nowrap;" onclick="verifyDevPassword()">解鎖[cite: 19]</button>
             </div>
             <div id="devContentPanel" style="display: none; margin-top: 11px; padding: 13px; background: rgba(0,0,0,0.03); border-radius: 8px; border: 1px dashed var(--border-color); flex-direction: column; gap: 9px;">
-                <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="runStressTest()">🚀 執行壓力測試：一鍵填滿 30 組題庫 (共 9,000 字)</button>
-                <button class="action-btn" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="clearAllWordListsData()">🧹 清空所有英文清單內的單字</button>
-                <button class="action-btn" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="clearAllExamHistoryData()">🗑️ 一鍵清空所有考試紀錄</button>
+                <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="runStressTest()">🚀 執行壓力測試：一鍵填滿 30 組題庫 (共 9,000 字)[cite: 19]</button>
+                <button class="action-btn" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="clearAllWordListsData()">🧹 清空所有英文清單內的單字[cite: 19]</button>
+                <button class="action-btn" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="clearAllExamHistoryData()">🗑️ 一鍵清空所有考試紀錄[cite: 19]</button>
             </div>
         </div>
 
         <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
             <div>
-                <label style="margin-top:0;">ℹ️ 關於應用程式</label>
-                <span style="font-size: 13.2px; color: var(--text-muted);">檢視作者與版本資訊</span>
+                <label style="margin-top:0;">ℹ️ 關於應用程式[cite: 19]</label>
+                <span style="font-size: 13.2px; color: var(--text-muted);">檢視作者與版本資訊[cite: 19]</span>
             </div>
-            <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openAboutModal()">關於</button>
+            <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openAboutModal()">關於[cite: 19]</button>
         </div>
 
-        <button class="action-btn btn-start" id="closeSettingsBtn" style="margin-top: 22px; width: 100%;" onclick="closeSystemSettingsModal()">關閉設定</button>
+        <button class="action-btn btn-start" id="closeSettingsBtn" style="margin-top: 22px; width: 100%;" onclick="closeSystemSettingsModal()">關閉設定[cite: 19]</button>
     </div>
 </div>
 
 <!-- ================= ℹ️ 關於資訊彈窗 ================= -->
 <div id="aboutModal" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
-        <span class="close-modal" onclick="closeAboutModal()">&times;</span>
+        <span class="close-modal" onclick="closeAboutModal()">&times;[cite: 19]</span>
         <div class="logo-badge" style="margin: 10px auto;">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M2 10v3"></path><path d="M6 6v11"></path><path d="M10 3v18"></path><path d="M14 8v8"></path><path d="M18 5v14"></path><path d="M22 10v3"></path>
             </svg>
         </div>
-        <h3 style="margin-top:10px; color:var(--text-main); font-size:19.8px; font-weight:700;">關於 英文聽力測驗</h3>
+        <h3 style="margin-top:10px; color:var(--text-main); font-size:19.8px; font-weight:700;">關於 英文聽力測驗[cite: 19]</h3>
         <div style="margin: 22px 0; padding: 18px; background: #F8FAFC; border-radius: 12px; border: 1px solid var(--border-color); font-size: 16.5px; font-weight: 600; color: var(--primary);">
-            作者: Freddy Tsai<br>版本 1.0
+            作者: Freddy Tsai<br>版本 1.0[cite: 19]
         </div>
-        <button class="action-btn btn-start" style="width: 100%;" onclick="closeAboutModal()">確定</button>
+        <button class="action-btn btn-start" style="width: 100%;" onclick="closeAboutModal()">確定[cite: 19]</button>
     </div>
 </div>
 
 <!-- ================= 📂 匯出題庫清單多選彈窗 ================= -->
 <div id="exportModal" class="modal">
     <div class="modal-content">
-        <span class="close-modal" onclick="closeExportModal()">&times;</span>
-        <h3 style="margin-top:0; color:var(--primary); font-size:19.8px; font-weight:700;">📂 匯出英文題庫</h3>
-        <p style="font-size: 14.3px; color: var(--text-muted);">勾選您想要匯出的題庫，系統將為每個勾選的清單個別下載獨立的 `.txt` 檔：</p>
+        <span class="close-modal" onclick="closeExportModal()">&times;[cite: 19]</span>
+        <h3 style="margin-top:0; color:var(--primary); font-size:19.8px; font-weight:700;">📂 匯出英文題庫[cite: 19]</h3>
+        <p style="font-size: 14.3px; color: var(--text-muted);">勾選您想要匯出的題庫，系統將為每個勾選的清單個別下載獨立的 `.txt` 檔：[cite: 19]</p>
         
         <div style="display: flex; gap: 10px; margin-bottom: 11px;">
-            <button class="btn-advanced" style="padding: 7px 13px; font-size: 13.2px;" onclick="toggleAllExportCheckboxes(true)">全選</button>
-            <button class="btn-advanced" style="padding: 7px 13px; font-size: 13.2px;" onclick="toggleAllExportCheckboxes(false)">全不選</button>
+            <button class="btn-advanced" style="padding: 7px 13px; font-size: 13.2px;" onclick="toggleAllExportCheckboxes(true)">全選[cite: 19]</button>
+            <button class="btn-advanced" style="padding: 7px 13px; font-size: 13.2px;" onclick="toggleAllExportCheckboxes(false)">全不選[cite: 19]</button>
         </div>
 
         <div class="exam-lists-grid" id="exportListsCheckboxGroup" style="max-height: 250px;"></div>
-        <button class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="confirmExportTxtFiles()">📥下載</button>
+        <button class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="confirmExportTxtFiles()">📥下載[cite: 19]</button>
     </div>
 </div>
 
 <!-- 📊 考試紀錄彈窗 -->
 <div id="historyModal" class="modal">
     <div class="modal-content">
-        <span class="close-modal" onclick="closeHistoryModal()">&times;</span>
-        <h3 style="margin-top:0; color:var(--text-main); font-size:19.8px; font-weight:700; margin-bottom: 22px;">📊 考試紀錄與學習分析</h3>
+        <span class="close-modal" onclick="closeHistoryModal()">&times;[cite: 19]</span>
+        <h3 style="margin-top:0; color:var(--text-main); font-size:19.8px; font-weight:700; margin-bottom: 22px;">📊 考試紀錄與學習分析[cite: 19]</h3>
         
         <div style="background: #F8FAFC; padding: 18px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 22px;">
-            <h4 style="margin-top:0; color:var(--primary); font-size:15.4px; margin-bottom:13px;">📈 歷史成績曲線 (近 20 筆)</h4>
+            <h4 style="margin-top:0; color:var(--primary); font-size:15.4px; margin-bottom:13px;">📈 歷史成績曲線 (近 20 筆)[cite: 19]</h4>
             <div id="chartContainer" style="width: 100%; height: 160px; position: relative; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 11px; box-sizing: border-box;"></div>
         </div>
 
         <div style="background: #F8FAFC; padding: 18px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 22px;">
-            <h4 style="margin-top:0; color:#E11D48; font-size:15.4px; margin-bottom:13px;">🔥 錯誤率最高單字 (取20筆)</h4>
+            <h4 style="margin-top:0; color:#E11D48; font-size:15.4px; margin-bottom:13px;">🔥 錯誤率最高單字 (取20筆)[cite: 19]</h4>
             <div id="topWrongWordsList" style="max-height: 160px; overflow-y: auto; background: #FFFFFF; border: 1px solid var(--border-color); padding: 13px; border-radius: 8px; font-size: 14.3px; color: #000000;"></div>
             <div style="margin-top: 13px; display: flex; gap: 10px; align-items: center;">
-                <label style="margin:0; font-size: 14.3px; white-space: nowrap; color:var(--primary); font-weight: 700;">儲存至目標題庫：</label>
+                <label style="margin:0; font-size: 14.3px; white-space: nowrap; color:var(--primary); font-weight: 700;">儲存至目標題庫：[cite: 19]</label>
                 <select id="targetListSelector" style="margin:0; flex:1; padding: 9px; font-size: 14.3px;" onchange="saveTargetListIndex(this.value)"></select>
-                <button class="cloud-btn" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 9px 15px;" onclick="saveSelectedWrongWordsToTargetList()">📥 儲存勾選單字</button>
+                <button class="cloud-btn" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 9px 15px;" onclick="saveSelectedWrongWordsToTargetList()">📥 儲存勾選單字[cite: 19]</button>
             </div>
         </div>
 
         <div style="background: #F8FAFC; padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);">
-            <h4 style="margin-top:0; color:var(--primary); font-size:15.4px; margin-bottom:13px;">📜 歷史分數紀錄 (近 20 筆)</h4>
+            <h4 style="margin-top:0; color:var(--primary); font-size:15.4px; margin-bottom:13px;">📜 歷史分數紀錄 (近 20 筆)[cite: 19]</h4>
             <div id="examHistoryList" style="max-height: 200px; overflow-y: auto;"></div>
         </div>
         
-        <button class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="closeHistoryModal()">關閉視窗</button>
+        <button class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="closeHistoryModal()">關閉視窗[cite: 19]</button>
     </div>
 </div>
 
 <!-- ⚙️ 練習進階設定彈出視窗 -->
 <div id="advancedModal" class="modal">
     <div class="modal-content">
-        <span class="close-modal" onclick="closeAdvancedModal()">&times;</span>
-        <h3 style="margin-top:0; color:var(--primary); font-size:19.8px; font-weight:700;">⚙️ 聽力練習進階設定</h3>
+        <span class="close-modal" onclick="closeAdvancedModal()">&times;[cite: 19]</span>
+        <h3 style="margin-top:0; color:var(--primary); font-size:19.8px; font-weight:700;">⚙️ 聽力練習進階設定[cite: 19]</h3>
         
         <div class="config-group" style="margin-top: 16px;">
             <div class="config-row-item" style="color: #D97706;">
-                <span>🌟 只選擇有加星號（*）的單字</span>
+                <span>🌟 只選擇有加星號（*）的單字[cite: 19]</span>
                 <label class="switch"><input type="checkbox" id="onlyStarred" onchange="saveAppSettings()"><span class="slider-toggle"></span></label>
             </div>
             <div class="config-row-item" style="color: #059669;">
-                <span>🔀 隨機播放單字</span>
+                <span>🔀 隨機播放單字[cite: 19]</span>
                 <label class="switch"><input type="checkbox" id="enableShuffle" onchange="saveAppSettings()"><span class="slider-toggle"></span></label>
             </div>
             <div class="config-row-item">
-                <span>🔠 拼讀字母 (a-p-p-l-e)</span>
+                <span>🔠 拼讀字母 (a-p-p-l-e)[cite: 19]</span>
                 <label class="switch"><input type="checkbox" id="enableSpell" checked onchange="saveAppSettings()"><span class="slider-toggle"></span></label>
             </div>
             <div class="config-row-item">
-                <span>🗣 播放中文含義</span>
+                <span>🗣 播放中文含義[cite: 19]</span>
                 <label class="switch"><input type="checkbox" id="enableChinese" checked onchange="saveAppSettings()"><span class="slider-toggle"></span></label>
             </div>
             <div class="config-row-item" style="color: var(--primary);">
-                <span>🗣 播放詞性</span>
+                <span>🗣 播放詞性[cite: 19]</span>
                 <label class="switch"><input type="checkbox" id="enablePOS" checked onchange="saveAppSettings()"><span class="slider-toggle"></span></label>
             </div>
             <div class="config-row-item">
-                <span>🔁 循環播放</span>
+                <span>🔁 循環播放[cite: 19]</span>
                 <label class="switch"><input type="checkbox" id="enableLoop" onchange="saveAppSettings()"><span class="slider-toggle"></span></label>
             </div>
         </div>
         
-        <label for="speakRate" style="margin-top: 16px;">調整總朗讀語速：</label>
+        <label for="speakRate" style="margin-top: 16px;">調整總朗讀語速：[cite: 19]</label>
         <div class="slider-container">
             <input type="range" id="speakRate" min="0.5" max="1.5" step="0.05" value="0.8" oninput="updateSpeedDisplay('speakRate', 'speedValue'); saveAppSettings();">
-            <span id="speedValue" class="speed-val">0.8 倍</span>
+            <span id="speedValue" class="speed-val">0.8 倍[cite: 19]</span>
         </div>
         
-        <label for="pauseTime" style="margin-top: 16px;">單字之間停頓秒數：</label>
+        <label for="pauseTime" style="margin-top: 16px;">單字之間停頓秒數：[cite: 19]</label>
         <input type="number" id="pauseTime" value="2" min="0" max="10" oninput="saveAppSettings()">
         
-        <label for="repeatCount" style="margin-top: 16px;">單字朗讀次數：</label>
+        <label for="repeatCount" style="margin-top: 16px;">單字朗讀次數：[cite: 19]</label>
         <input type="number" id="repeatCount" value="1" min="1" max="5" oninput="saveAppSettings()">
 
-        <button class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="closeAdvancedModal()">確定</button>
+        <button class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="closeAdvancedModal()">確定[cite: 19]</button>
     </div>
 </div>
 
 <!-- ⚙️ 考試進階設定彈出視窗 -->
 <div id="examAdvancedModal" class="modal">
     <div class="modal-content">
-        <span class="close-modal" onclick="closeExamAdvancedModal()">&times;</span>
-        <h3 style="margin-top:0; color:var(--primary); font-size:19.8px; font-weight:700;">⚙️ 聽力測驗進階設定</h3>
+        <span class="close-modal" onclick="closeExamAdvancedModal()">&times;[cite: 19]</span>
+        <h3 style="margin-top:0; color:var(--primary); font-size:19.8px; font-weight:700;">⚙️ 聽力測驗進階設定[cite: 19]</h3>
         
         <div class="config-group" style="margin-top: 16px;">
             <div class="config-row-item" style="color: #D97706;">
-                <span>🌟 只考有加星號（*）的單字</span>
+                <span>🌟 只考有加星號（*）的單字[cite: 19]</span>
                 <label class="switch"><input type="checkbox" id="examOnlyStarred" onchange="updateExamStats(); saveExamSettings();"><span class="slider-toggle"></span></label>
             </div>
         </div>
 
-        <label for="examQuestionCount" style="margin-top: 13px;">題目數量 (0為全部)：</label>
-        <input type="number" id="examQuestionCount" value="0" min="1" placeholder="留空或設為 0 代表全部考" oninput="saveExamSettings()">
+        <label for="examQuestionCount" style="margin-top: 13px;">題目數量 (0為全部)：[cite: 19]</label>
+        <input type="number" id="examQuestionCount" value="0" min="1" placeholder="留空或設為 0 代表全部考" oninput="saveExamSettings()"[cite: 19]>
 
-        <label for="examSpeakRate" style="margin-top: 16px;">調整總朗讀語速：</label>
+        <label for="examSpeakRate" style="margin-top: 16px;">調整總朗讀語速：[cite: 19]</label>
         <div class="slider-container">
             <input type="range" id="examSpeakRate" min="0.5" max="1.5" step="0.05" value="0.8" oninput="updateSpeedDisplay('examSpeakRate', 'examSpeedValue'); saveExamSettings();">
-            <span id="examSpeedValue" class="speed-val">0.8 倍</span>
+            <span id="examSpeedValue" class="speed-val">0.8 倍[cite: 19]</span>
         </div>
         
-        <label for="examPauseTime" style="margin-top: 16px;">單字間隔秒數：</label>
+        <label for="examPauseTime" style="margin-top: 16px;">單字間隔秒數：[cite: 19]</label>
         <input type="number" id="examPauseTime" value="1" min="0" max="10" oninput="saveExamSettings()">
         
-        <label for="examAnswerTime" style="margin-top: 16px;">考試作答秒數：</label>
+        <label for="examAnswerTime" style="margin-top: 16px;">考試作答秒數：[cite: 19]</label>
         <input type="number" id="examAnswerTime" value="15" min="1" max="30" oninput="saveExamSettings()" onchange="checkAnswerTimeLimit(this)">
         
-        <label for="examRepeatCount" style="margin-top: 16px;">單字朗讀次數：</label>
+        <label for="examRepeatCount" style="margin-top: 16px;">單字朗讀次數：[cite: 19]</label>
         <input type="number" id="examRepeatCount" value="1" min="2" max="5" oninput="saveExamSettings()">
 
-        <button class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="closeExamAdvancedModal()">確定</button>
+        <button class="action-btn btn-start" style="margin-top: 22px; width: 100%;" onclick="closeExamAdvancedModal()">確定[cite: 19]</button>
     </div>
 </div>
 
@@ -602,6 +611,7 @@
     let accessToken = null;
     let isCloudSyncActive = false;
     let autoSyncTimer = null;
+    let isCloudSyncing = false; // 2. 用於追蹤雲端是否正在同步中
 
     let myDeviceId = localStorage.getItem('dictation_device_id');
     if (!myDeviceId) {
@@ -634,15 +644,15 @@
         wordLists = [];
         for (let i = 1; i <= 30; i++) {
             wordLists.push({
-                title: `英文題庫${i}`,
+                title: `Database ${i}`, // 5.a 初始改為 Database 1, 2...
                 content: ""
             });
         }
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
     } else {
         wordLists.forEach((l, idx) => {
-            if (!l.title || l.title.startsWith("壓測題庫") || l.title === `題庫${idx+1}`) {
-                l.title = `英文題庫${idx+1}`;
+            if (!l.title || l.title.startsWith("壓測題庫") || l.title.startsWith("英文題庫")) {
+                l.title = `Database ${idx+1}`;
             }
         });
     }
@@ -670,7 +680,7 @@
         if (statusEl) {
             statusEl.style.display = 'block';
             if (!statusEl.innerText || statusEl.innerText.trim() === '') {
-                statusEl.innerText = '準備就緒...';
+                statusEl.innerText = '準備就緒...[cite: 19]';
             }
         }
 
@@ -684,7 +694,11 @@
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: async (resp) => {
-                    if (resp.error !== undefined) {
+                    // 6. 如果使用者中途取消授權或發生錯誤，將狀態正確重設為未登入
+                    if (resp.error !== undefined || !resp.access_token) {
+                        accessToken = null;
+                        isCloudSyncActive = false;
+                        isCloudSyncing = false;
                         document.getElementById('cloudStatusText').innerText = `💻 本機作業模式 (未登入)`;
                         return;
                     }
@@ -694,6 +708,8 @@
                     let canProceed = await checkAndClaimDeviceOwnership();
                     if (!canProceed) {
                         accessToken = null;
+                        isCloudSyncActive = false;
+                        isCloudSyncing = false;
                         document.getElementById('cloudStatusText').innerText = `💻 本機作業模式 (未登入)`;
                         return;
                     }
@@ -771,7 +787,12 @@
             let statusText = document.getElementById('cloudStatusText');
             statusText.innerText = `⏳ 正在連接 Google 雲端中...`;
 
-            tokenClient.requestAccessToken({ prompt: 'consent' });
+            try {
+                tokenClient.requestAccessToken({ prompt: 'consent' });
+            } catch(e) {
+                // 6. 防禦異常失敗導致文字卡住
+                statusText.innerText = `💻 本機作業模式 (未登入)`;
+            }
         } else {
             alert("⚠️ Google API 系統尚未完全載入，請重新整理網頁後再試一次。");
         }
@@ -782,6 +803,7 @@
             google.accounts.oauth2.revoke(accessToken, () => {
                 accessToken = null;
                 isCloudSyncActive = false;
+                isCloudSyncing = false;
                 document.getElementById('cloudStatusText').innerText = `💻 本機作業模式 (未登入)`;
                 let authBtn = document.getElementById('cloudAuthBtn');
                 authBtn.innerText = '登入 Google 雲端';
@@ -795,6 +817,7 @@
     function forceLogoutDueToConflict() {
         accessToken = null;
         isCloudSyncActive = false;
+        isCloudSyncing = false;
         document.getElementById('cloudStatusText').innerText = `💻 本機作業模式 (已被其他裝置登入)`;
         let authBtn = document.getElementById('cloudAuthBtn');
         authBtn.innerText = '登入 Google 雲端';
@@ -865,10 +888,6 @@
         }
     }
 
-    /**
-     * 🛠️ 局部欄位專屬同步函式：改了哪裡，就只抓雲端現有資料合併更新該欄位，不上傳無關資料
-     * @param {string} sectionKey 要更新的欄位名稱 ('wordLists' | 'systemSettings' | 'appSettings' | 'examSettings' | 'examHistory' 等)
-     */
     async function triggerAutoSaveToCloud(sectionKey) {
         let statusText = document.getElementById('cloudStatusText');
         let settingSaveStatus = document.getElementById('powerSavingSaveStatus');
@@ -880,6 +899,7 @@
 
         if (autoSyncTimer) clearTimeout(autoSyncTimer);
 
+        isCloudSyncing = true; // 2. 標記開始同步
         statusText.innerText = `☁️ 雲端同步中...`;
         if (settingSaveStatus) settingSaveStatus.innerText = `☁️ 雲端同步中...`;
         
@@ -902,15 +922,14 @@
                         
                         if (cloudData.activeDeviceId && cloudData.activeDeviceId !== myDeviceId) {
                             forceLogoutDueToConflict();
+                            isCloudSyncing = false;
                             resolve();
                             return;
                         }
                     }
 
-                    // 確保裝置ID存在
                     cloudData.activeDeviceId = myDeviceId;
 
-                    // 🎯 核心精準更新：只把本次異動的欄位填入或覆蓋，其他欄位保留雲端原樣
                     if (sectionKey === 'wordLists') {
                         cloudData.wordLists = wordLists;
                         cloudData.lastSelectedList = lastSelectedList;
@@ -924,7 +943,6 @@
                     } else if (sectionKey === 'examHistory') {
                         cloudData.examHistory = examHistory;
                     } else {
-                        // 備用：若未指定則上傳全部
                         cloudData.wordLists = wordLists;
                         cloudData.lastSelectedList = lastSelectedList;
                         cloudData.lastTargetList = lastTargetList;
@@ -960,6 +978,7 @@
                     statusText.innerText = `❌ 雲端同步失敗`;
                     if (settingSaveStatus) settingSaveStatus.innerText = `❌ 存檔失敗`;
                 } finally {
+                    isCloudSyncing = false; // 2. 同步結束解除鎖定
                     resolve();
                 }
             }, 300);
@@ -992,7 +1011,16 @@
         document.getElementById('volumeValue').innerText = vol + '%';
     }
 
+    // 2. 省電模式要等雲端儲存好，關閉才能按（若正在同步則阻擋變更）
     function togglePowerSavingMode() {
+        if (isCloudSyncing) {
+            alert("⚠️ 雲端正在儲存同步中，請稍候再切換省電模式！");
+            // 恢復開關原狀態
+            let toggle = document.getElementById('powerSavingToggle');
+            toggle.checked = !toggle.checked;
+            return;
+        }
+
         let isPowerSaving = document.getElementById('powerSavingToggle').checked;
         if (isPowerSaving) {
             document.body.classList.add('power-saving-mode');
@@ -1000,6 +1028,74 @@
             document.body.classList.remove('power-saving-mode');
         }
         saveSystemSettings();
+    }
+
+    // 5. 載入初始設定功能
+    async function loadInitialSettings() {
+        let userInput = prompt("⚠️ 您確定要載入初始設定嗎？\n這將會清除所有單字清單、重設名稱為 Database 1~30、重設進階設定並清空考試紀錄。\n\n請輸入大寫的 CONFIRM 來確認執行：");
+        if (userInput !== "CONFIRM") {
+            alert("❌ 已取消載入初始設定。");
+            return;
+        }
+
+        // 5.a 清空英文清單內容，名稱變成 Database 1, 2...
+        wordLists = [];
+        for (let i = 1; i <= 30; i++) {
+            wordLists.push({
+                title: `Database ${i}`,
+                content: ""
+            });
+        }
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        lastSelectedList = 0;
+        lastTargetList = 0;
+        localStorage.setItem('dictation_last_selected_list', 0);
+        localStorage.setItem('dictation_last_target_list', 0);
+
+        // 5.b 聽力練習進階設定：只考* (false), 播放拼音 (false), 其餘開 (true)
+        let defaultAppSettings = {
+            onlyStarred: false,
+            enableShuffle: true,
+            enableSpell: false,
+            enableChinese: true,
+            enablePOS: true,
+            enableLoop: true,
+            speakRate: 1,      // 5.c 語速設為 1
+            pauseTime: 2,      // 5.c 停頓秒數設為 2
+            repeatCount: 1     // 5.c 朗讀次數設為 1
+        };
+        localStorage.setItem('dictation_app_settings', JSON.stringify(defaultAppSettings));
+
+        // 5.d 考試紀錄清空
+        examHistory = [];
+        localStorage.removeItem('dictation_exam_history');
+
+        // 5.c 聽力測驗進階設定：關閉只考星號、題數量0、間隔1、作答秒數15、朗讀次數1
+        let defaultExamSettings = {
+            selectedLists: [],
+            onlyStarred: false,
+            questionCount: 0,
+            speakRate: 1,
+            pauseTime: 1,
+            answerTime: 15,
+            repeatCount: 1
+        };
+        localStorage.setItem('dictation_exam_settings', JSON.stringify(defaultExamSettings));
+
+        // 重新載入畫面元件狀態
+        loadAppSettings();
+        loadExamSettings();
+        initListSelector(0, 0);
+        initExamCheckboxes();
+        initExportCheckboxes();
+
+        // 5.d 更新所有設定至雲端
+        if (accessToken && isCloudSyncActive) {
+            await triggerAutoSaveToCloud('all');
+        }
+
+        alert("✅ 已成功重設並載入所有初始設定，並同步至雲端！");
+        closeSystemSettingsModal();
     }
 
     function verifyDevPassword() {
@@ -1021,7 +1117,6 @@
             powerSaving: document.getElementById('powerSavingToggle').checked
         };
         localStorage.setItem('dictation_system_settings', JSON.stringify(settings));
-        // 🎯 改了系統設定（包含省電模式、音量），只儲存 systemSettings 到雲端
         triggerAutoSaveToCloud('systemSettings');
     }
 
@@ -1129,7 +1224,6 @@
             repeatCount: document.getElementById('repeatCount').value
         };
         localStorage.setItem('dictation_app_settings', JSON.stringify(settings));
-        // 🎯 改了聽力練習進階設定，只儲存 appSettings
         triggerAutoSaveToCloud('appSettings');
     }
 
@@ -1164,7 +1258,6 @@
             repeatCount: document.getElementById('examRepeatCount').value
         };
         localStorage.setItem('dictation_exam_settings', JSON.stringify(examSettings));
-        // 🎯 改了考試設定，只儲存 examSettings
         triggerAutoSaveToCloud('examSettings');
     }
 
@@ -1219,7 +1312,6 @@
     function saveSelectedListIndex(index) {
         lastSelectedList = parseInt(index) || 0;
         localStorage.setItem('dictation_last_selected_list', lastSelectedList);
-        // 🎯 這裡屬於題庫/清單相關異動，只儲存 wordLists
         triggerAutoSaveToCloud('wordLists');
     }
 
@@ -1340,7 +1432,6 @@
         wordLists[index].content = textarea.value;
         
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        // 🎯 核心優化：修改英文清單單字時，只觸發儲存 wordLists 欄位，不影響其他設定
         triggerAutoSaveToCloud('wordLists');
 
         let currentIdx = selector.value;
@@ -1359,7 +1450,6 @@
         if (newTitle !== null && newTitle.trim()) {
             wordLists[index].title = newTitle.trim();
             localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-            // 🎯 修改標題也屬於題庫範圍，只更新 wordLists
             triggerAutoSaveToCloud('wordLists');
             let currentContent = document.getElementById('wordList').value;
             let currentTargetIdx = document.getElementById('targetListSelector') ? document.getElementById('targetListSelector').value : 0;
@@ -1904,7 +1994,6 @@
         examHistory.unshift(newRecord);
         if (examHistory.length > 20) examHistory.pop();
         localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
-        // 🎯 考試結束產生歷史紀錄，只更新 examHistory 欄位
         triggerAutoSaveToCloud('examHistory');
 
         let html = `<div class="result-box">
@@ -1954,14 +2043,14 @@
                 points.push({ x, y, score: rec.score, date: rec.date });
             });
 
-            // 📱 偵測是否為手機版 (螢幕寬度小於 768px)
+            // 1. 手機版歷史成績曲線放大 40%、線條再粗 40%
             let isMobile = window.innerWidth < 768;
-            // 手機版線條加粗 50% (原 2.5 -> 3.75)
-            let strokeWidth = isMobile ? 3.75 : 2.5;
-            // 手機版字體放大 60% (原分數 11 -> 17.6，坐標軸 11 -> 14)
-            let scoreFontSize = isMobile ? 17.6 : 11;
-            let axisFontSize = isMobile ? 14 : 11;
-            let circleRadius = isMobile ? 6.5 : 4.5;
+            // 原本手機版線條 3.75 再粗 40% (3.75 * 1.4 = 5.25)
+            let strokeWidth = isMobile ? 5.25 : 2.5;
+            // 原本手機版字體大小 17.6 與 14 再放大 40%
+            let scoreFontSize = isMobile ? (17.6 * 1.4) : 11;
+            let axisFontSize = isMobile ? (14 * 1.4) : 11;
+            let circleRadius = isMobile ? (6.5 * 1.4) : 4.5;
 
             let svgHtml = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" style="overflow:visible;">`;
             [0, 50, 100].forEach(val => {
@@ -2175,7 +2264,7 @@
                 }
             }
             tempStressLists.push({
-                title: `英文題庫${i + 1}`,
+                title: `Database ${i + 1}`,
                 content: listLines.join('\n')
             });
         }
@@ -2195,14 +2284,14 @@
             return;
         }
 
-        if (!confirm("⚠️ 警告：確定要清空所有 30 組題庫內的所有單字，並將標題重設為「英文題庫1~30」嗎？此操作將會寫入儲存並同步至雲端！")) {
+        if (!confirm("⚠️ 警告：確定要清空所有 30 組題庫內的所有單字，並將標題重設為「Database 1~30」嗎？此操作將會寫入儲存並同步至雲端！")) {
             return;
         }
 
         wordLists = [];
         for (let i = 1; i <= 30; i++) {
             wordLists.push({
-                title: `英文題庫${i}`,
+                title: `Database ${i}`,
                 content: ""
             });
         }
@@ -2215,7 +2304,7 @@
         initExportCheckboxes();
         updateExamStats();
 
-        _alert("🧹 成功清空所有英文題庫的單字，並已全面重設標題名稱！");
+        alert("🧹 成功清空所有英文題庫的單字，並已重設標題名稱！");
     }
 
     function clearAllExamHistoryData() {
