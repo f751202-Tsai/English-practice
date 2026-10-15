@@ -157,6 +157,23 @@
         .cloud-btn.logout { background-color: #EF4444; box-shadow: none; }
         .cloud-btn.logout:hover { background-color: #DC2626; }
 
+        /* 1. 統一系統設定內按鈕的固定尺寸大小 (XY 大小一致) */
+        .config-group .cloud-btn {
+            width: 130px;
+            height: 38px;
+            padding: 0 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+        #devLoginPanel .cloud-btn {
+            width: 100px;
+            height: 48px; /* 配合 input 高度 */
+        }
+
         .tab-nav { display: flex; background: #F1F5F9; padding: 4px; border-radius: var(--radius); margin-bottom: 26px; border: 1px solid var(--border-color); }
         .tab-btn { flex: 1; padding: 13px; font-size: 15.4px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; background: transparent; color: var(--text-muted); transition: all 0.2s ease; text-align: center; }
         .tab-btn.active { background: var(--card-bg); color: var(--primary); border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06); }
@@ -309,9 +326,9 @@
         </div>
 
         <div id="wordListContainer">
-            <label for="wordList" style="margin-bottom: 2px;">----可自行新增單字----</label>
-            <label for="wordList" style="margin-top: 0;">單字清單內容（不熟前面可加 *）：</label>
-            <textarea id="wordList" oninput="handleTextareaInput()" placeholder="格式範例：&#10;*chatty cathy 健談 名詞&#10;bed 雙人床 名詞&#10;*orange 橘子 名詞"></textarea>
+            <!-- 3. 將提示標題調整至格式範例與單字清單內容之間 -->
+            <label for="wordList" style="margin-top: 15px;">單字清單內容（不熟前面可加 *）：</label>
+            <textarea id="wordList" oninput="handleTextareaInput()" placeholder="----可自行新增單字----&#10;格式範例：&#10;*chatty cathy 健談 名詞&#10;bed 雙人床 名詞&#10;*orange 橘子 名詞"></textarea>
             <div class="btn-action-container">
                 <button class="btn-sort-abc" onclick="sortWordsABC()">🔤 A-Z 字母排序</button>
                 <button class="btn-advanced" onclick="openAdvancedModal()">⚙️ 進階設定</button>
@@ -368,7 +385,8 @@
         <div id="resultContainer" style="display: none;"></div>
     </div>
     
-    <div id="status">準備就緒...</div>
+    <!-- 4. 將狀態欄預設改為帶有火焰圖示 -->
+    <div id="status">準備就緒 🔥</div>
 </div>
 
 <!-- ================= 🏁 本次測驗結果彈窗 ================= -->
@@ -384,7 +402,7 @@
 <div id="systemSettingsModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="closeSystemSettingsModal()">&times;</span>
-        <h3 style="margin-top:0; color:var(--primary); font-size:19.8px; font-weight:700;">⚙️ 系統設定中心</h3>
+        <h3 style="margin-top:0; color:var(--primary); font-size:19.8px; font-weight:700;">⚙️ 系統設定</h3>
         
         <div class="config-group" style="margin-top: 16px;">
             <label for="systemVolume" style="margin-top:0;">🔊 音量調整：</label>
@@ -405,7 +423,7 @@
             <label style="margin-top:0;">📂 匯出英文題庫 (存成 .txt 檔)：</label>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 7px;">
                 <span style="font-size: 14.3px; color: var(--text-muted);">可選擇要匯出的題庫範圍：</span>
-                <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openExportModal()">選擇並匯出 txt 檔</button>
+                <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openExportModal()">匯出 txt 檔</button>
             </div>
         </div>
 
@@ -421,7 +439,6 @@
             </label>
         </div>
 
-        <!-- 6. 載入初始設定按鈕改為與解鎖/關於同色 (var(--primary-gradient)) -->
         <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
             <div>
                 <label style="margin-top:0;">🔄 載入初始設定</label>
@@ -554,8 +571,8 @@
         
         <label for="speakRate" style="margin-top: 16px;">調整總朗讀語速：</label>
         <div class="slider-container">
-            <input type="range" id="speakRate" min="0.5" max="1.5" step="0.05" value="0.8" oninput="updateSpeedDisplay('speakRate', 'speedValue'); saveAppSettings();">
-            <span id="speedValue" class="speed-val">0.8 倍</span>
+            <input type="range" id="speakRate" min="0.5" max="1.5" step="0.05" value="1" oninput="updateSpeedDisplay('speakRate', 'speedValue'); saveAppSettings();">
+            <span id="speedValue" class="speed-val">1.00 倍</span>
         </div>
         
         <label for="pauseTime" style="margin-top: 16px;">單字之間停頓秒數：</label>
@@ -586,8 +603,8 @@
 
         <label for="examSpeakRate" style="margin-top: 16px;">調整總朗讀語速：</label>
         <div class="slider-container">
-            <input type="range" id="examSpeakRate" min="0.5" max="1.5" step="0.05" value="0.8" oninput="updateSpeedDisplay('examSpeakRate', 'examSpeedValue'); saveExamSettings();">
-            <span id="examSpeedValue" class="speed-val">0.8 倍</span>
+            <input type="range" id="examSpeakRate" min="0.5" max="1.5" step="0.05" value="1" oninput="updateSpeedDisplay('examSpeakRate', 'examSpeedValue'); saveExamSettings();">
+            <span id="examSpeedValue" class="speed-val">1.00 倍</span>
         </div>
         
         <label for="examPauseTime" style="margin-top: 16px;">單字間隔秒數：</label>
@@ -680,8 +697,8 @@
         let statusEl = document.getElementById('status');
         if (statusEl) {
             statusEl.style.display = 'block';
-            if (!statusEl.innerText || statusEl.innerText.trim() === '') {
-                statusEl.innerText = '準備就緒...';
+            if (!statusEl.innerText || statusEl.innerText.trim() === '' || statusEl.innerText.trim() === '準備就緒...') {
+                statusEl.innerText = '準備就緒 🔥';
             }
         }
 
@@ -695,12 +712,19 @@
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: async (resp) => {
-                    // 5. 判斷使用者在授權時按下取消或發生錯誤
+                    // 2. 設立詳細的 log 與檢查，確保精準捕捉使用者按下取消或發生錯誤
+                    console.log("Google Auth Callback Response:", resp);
+
                     if (resp.error !== undefined || !resp.access_token) {
+                        console.warn("⚠️ 使用者取消 Google 授權或授權失敗，錯誤代碼:", resp.error);
                         accessToken = null;
                         isCloudSyncActive = false;
                         isCloudSyncing = false;
                         document.getElementById('cloudStatusText').innerText = `💻 本機作業模式 (未登入)`;
+                        let authBtn = document.getElementById('cloudAuthBtn');
+                        authBtn.innerText = '登入 Google 雲端';
+                        authBtn.className = 'cloud-btn';
+                        authBtn.setAttribute('onclick', 'handleAuthClick()');
                         return;
                     }
                     
@@ -791,6 +815,7 @@
             try {
                 tokenClient.requestAccessToken({ prompt: 'consent' });
             } catch(e) {
+                console.error("requestAccessToken 發生例外錯誤:", e);
                 statusText.innerText = `💻 本機作業模式 (未登入)`;
             }
         } else {
@@ -905,7 +930,6 @@
         statusText.innerText = `☁️ 雲端同步中...`;
         if (settingSaveStatus) settingSaveStatus.innerText = `☁️ 雲端同步中...`;
         
-        // 4. 正在同步時，將系統設定關閉按鈕設為 disable
         if (closeSettingsBtn) closeSettingsBtn.disabled = true;
 
         return new Promise((resolve) => {
@@ -985,7 +1009,6 @@
                     if (settingSaveStatus) settingSaveStatus.innerText = `❌ 存檔失敗`;
                 } finally {
                     isCloudSyncing = false; 
-                    // 4. 同步結束，解鎖關閉按鈕
                     if (closeSettingsBtn) closeSettingsBtn.disabled = false;
                     resolve();
                 }
@@ -999,7 +1022,6 @@
     }
     
     function closeSystemSettingsModal() { 
-        // 4. 如果正在雲端同步中，禁止關閉系統設定
         if (isCloudSyncing) {
             alert("⚠️ 雲端正在儲存同步中，請稍候再關閉設定視窗！");
             return;
@@ -1041,7 +1063,7 @@
         saveSystemSettings();
     }
 
-    // 1. 簡化的「載入初始設定」確認流程
+    // 5. 載入初始設定時，將聽力練習與測驗進階設定語速改為 1 倍
     async function loadInitialSettings() {
         let isConfirmed = confirm("確定要載入初始設定嗎？");
         if (!isConfirmed) {
@@ -1279,7 +1301,7 @@
                 }
                 if (s.onlyStarred !== undefined) document.getElementById('examOnlyStarred').checked = s.onlyStarred;
                 if (s.questionCount !== undefined) document.getElementById('examQuestionCount').value = s.questionCount;
-                if (s.speakRate !== undefined) { document.getElementById('speakRate').value = s.speakRate; updateSpeedDisplay('examSpeakRate', 'examSpeedValue'); }
+                if (s.speakRate !== undefined) { document.getElementById('examSpeakRate').value = s.speakRate; updateSpeedDisplay('examSpeakRate', 'examSpeedValue'); }
                 if (s.pauseTime !== undefined) document.getElementById('examPauseTime').value = s.pauseTime;
                 if (s.answerTime !== undefined) document.getElementById('examAnswerTime').value = s.answerTime;
                 if (s.repeatCount !== undefined) document.getElementById('examRepeatCount').value = s.repeatCount;
@@ -1971,7 +1993,7 @@
         document.getElementById('examArea').style.display = 'none';
         document.getElementById('examSetupPanel').style.display = 'block';
         document.getElementById('status').style.display = 'block';
-        document.getElementById('status').innerText = '準備就緒...';
+        document.getElementById('status').innerText = '準備就緒 🔥';
 
         let totalCount = examResults.length;
         if (totalCount === 0) {
@@ -2049,14 +2071,12 @@
                 points.push({ x, y, score: rec.score, date: rec.date });
             });
 
-            // 3. 手機版歷史成績曲線 0分跟100分的間距再放大 2.1倍
             let isMobile = window.innerWidth < 768;
             let strokeWidth = isMobile ? (5.25 * 1.5) : 2.5;
             let scoreFontSize = isMobile ? (17.6 * 1.4) : 11;
             let axisFontSize = isMobile ? (14 * 1.4) : 11;
             let circleRadius = isMobile ? (6.5 * 1.4) : 4.5;
 
-            // 調整手機版的 SVG viewBox 垂直高度，使 0分與100分的間距放大 2.1 倍
             let viewBoxHeight = isMobile ? (height * 2.1) : height;
             let viewBoxWidth = width;
 
@@ -2064,7 +2084,6 @@
             [0, 50, 100].forEach(val => {
                 let lineY = padding + graphHeight - (val / 100) * graphHeight;
                 if (isMobile) {
-                    // 針對手機版依據中心點垂直展開 2.1 倍間距
                     let centerOffset = lineY - (height / 2);
                     lineY = (height / 2) + centerOffset * 2.1;
                 }
@@ -2239,7 +2258,7 @@
         document.getElementById('examArea').style.display = 'none';
         document.getElementById('examSetupPanel').style.display = 'block';
         document.getElementById('status').style.display = 'block';
-        document.getElementById('status').innerText = '準備就緒...';
+        document.getElementById('status').innerText = '準備就緒 🔥';
     }
 
     function checkAnswerTimeLimit(inputElement) {
