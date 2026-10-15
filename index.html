@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英文聽力測驗 (Google 雲端單裝置排他鎖定版)</title>
+    <title>英文聽力測驗 (Google 雲端局部欄位專屬同步版)</title>
     <!-- 引入 Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -195,7 +195,6 @@
 
         .config-group { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; background: #F8FAFC; padding: 15px; border-radius: var(--radius); border: 1px solid var(--border-color); }
         
-        /* 🛠 調整設定選項內的文字與右側開關按鈕完美垂直置中對齊 */
         .config-row-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-weight: 600; font-size: 14.3px; color: var(--text-main); line-height: 1.4; box-sizing: border-box; }
         .config-row-item span { display: inline-flex; align-items: center; transform: translateY(1px); }
         body.power-saving-mode .config-row-item { color: #FFFFFF !important; }
@@ -825,15 +824,15 @@
                     return;
                 }
 
-                if (cloudData && Array.isArray(cloudData.wordLists) && cloudData.wordLists.length === 30) {
-                    wordLists = cloudData.wordLists;
-                    localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-
+                if (cloudData) {
+                    if (Array.isArray(cloudData.wordLists) && cloudData.wordLists.length === 30) {
+                        wordLists = cloudData.wordLists;
+                        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+                    }
                     if (cloudData.lastSelectedList !== undefined) {
                         lastSelectedList = parseInt(cloudData.lastSelectedList) || 0;
                         localStorage.setItem('dictation_last_selected_list', lastSelectedList);
                     }
-
                     if (cloudData.lastTargetList !== undefined) {
                         lastTargetList = parseInt(cloudData.lastTargetList) || 0;
                         localStorage.setItem('dictation_last_target_list', lastTargetList);
@@ -847,17 +846,14 @@
                         localStorage.setItem('dictation_app_settings', JSON.stringify(cloudData.appSettings));
                         loadAppSettings();
                     }
-
                     if (cloudData.systemSettings) {
                         localStorage.setItem('dictation_system_settings', JSON.stringify(cloudData.systemSettings));
                         loadSystemSettings();
                     }
-
                     if (cloudData.examSettings) {
                         localStorage.setItem('dictation_exam_settings', JSON.stringify(cloudData.examSettings));
                         loadExamSettings();
                     }
-
                     if (cloudData.examHistory) {
                         examHistory = cloudData.examHistory;
                         localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
@@ -869,7 +865,11 @@
         }
     }
 
-    async function triggerAutoSaveToCloud() {
+    /**
+     * 🛠️ 局部欄位專屬同步函式：改了哪裡，就只抓雲端現有資料合併更新該欄位，不上傳無關資料
+     * @param {string} sectionKey 要更新的欄位名稱 ('wordLists' | 'systemSettings' | 'appSettings' | 'examSettings' | 'examHistory' 等)
+     */
+    async function triggerAutoSaveToCloud(sectionKey) {
         let statusText = document.getElementById('cloudStatusText');
         let settingSaveStatus = document.getElementById('powerSavingSaveStatus');
 
@@ -880,11 +880,10 @@
 
         if (autoSyncTimer) clearTimeout(autoSyncTimer);
 
-        statusText.innerText = `☁️ 雲端儲存中...`;
-        if (settingSaveStatus) settingSaveStatus.innerText = `☁️ 雲端儲存中...`;
+        statusText.innerText = `☁️ 雲端同步中...`;
+        if (settingSaveStatus) settingSaveStatus.innerText = `☁️ 雲端同步中...`;
         
         return new Promise((resolve) => {
-            // 💡 將防手滑/防連擊的延遲縮短至 300ms，讓雲端儲存反應更快更即時
             autoSyncTimer = setTimeout(async () => {
                 try {
                     let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
@@ -894,11 +893,12 @@
                     let data = await res.json();
                     let fileId = (data.files && data.files.length > 0) ? data.files[0].id : null;
                     
+                    let cloudData = {};
                     if (fileId) {
                         let fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
                             headers: { 'Authorization': `Bearer ${accessToken}` }
                         });
-                        let cloudData = await fileRes.json() || {};
+                        cloudData = await fileRes.json() || {};
                         
                         if (cloudData.activeDeviceId && cloudData.activeDeviceId !== myDeviceId) {
                             forceLogoutDueToConflict();
@@ -907,18 +907,34 @@
                         }
                     }
 
-                    let fullPackage = {
-                        activeDeviceId: myDeviceId,
-                        wordLists: wordLists,
-                        lastSelectedList: lastSelectedList,
-                        lastTargetList: lastTargetList,
-                        appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}'),
-                        systemSettings: JSON.parse(localStorage.getItem('dictation_system_settings') || '{}'),
-                        examSettings: JSON.parse(localStorage.getItem('dictation_exam_settings') || '{}'),
-                        examHistory: examHistory
-                    };
+                    // 確保裝置ID存在
+                    cloudData.activeDeviceId = myDeviceId;
 
-                    let fileContent = JSON.stringify(fullPackage);
+                    // 🎯 核心精準更新：只把本次異動的欄位填入或覆蓋，其他欄位保留雲端原樣
+                    if (sectionKey === 'wordLists') {
+                        cloudData.wordLists = wordLists;
+                        cloudData.lastSelectedList = lastSelectedList;
+                        cloudData.lastTargetList = lastTargetList;
+                    } else if (sectionKey === 'systemSettings') {
+                        cloudData.systemSettings = JSON.parse(localStorage.getItem('dictation_system_settings') || '{}');
+                    } else if (sectionKey === 'appSettings') {
+                        cloudData.appSettings = JSON.parse(localStorage.getItem('dictation_app_settings') || '{}');
+                    } else if (sectionKey === 'examSettings') {
+                        cloudData.examSettings = JSON.parse(localStorage.getItem('dictation_exam_settings') || '{}');
+                    } else if (sectionKey === 'examHistory') {
+                        cloudData.examHistory = examHistory;
+                    } else {
+                        // 備用：若未指定則上傳全部
+                        cloudData.wordLists = wordLists;
+                        cloudData.lastSelectedList = lastSelectedList;
+                        cloudData.lastTargetList = lastTargetList;
+                        cloudData.appSettings = JSON.parse(localStorage.getItem('dictation_app_settings') || '{}');
+                        cloudData.systemSettings = JSON.parse(localStorage.getItem('dictation_system_settings') || '{}');
+                        cloudData.examSettings = JSON.parse(localStorage.getItem('dictation_exam_settings') || '{}');
+                        cloudData.examHistory = examHistory;
+                    }
+
+                    let fileContent = JSON.stringify(cloudData);
 
                     if (fileId) {
                         await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
@@ -1005,7 +1021,8 @@
             powerSaving: document.getElementById('powerSavingToggle').checked
         };
         localStorage.setItem('dictation_system_settings', JSON.stringify(settings));
-        triggerAutoSaveToCloud();
+        // 🎯 改了系統設定（包含省電模式、音量），只儲存 systemSettings 到雲端
+        triggerAutoSaveToCloud('systemSettings');
     }
 
     function loadSystemSettings() {
@@ -1112,7 +1129,8 @@
             repeatCount: document.getElementById('repeatCount').value
         };
         localStorage.setItem('dictation_app_settings', JSON.stringify(settings));
-        triggerAutoSaveToCloud();
+        // 🎯 改了聽力練習進階設定，只儲存 appSettings
+        triggerAutoSaveToCloud('appSettings');
     }
 
     function loadAppSettings() {
@@ -1146,7 +1164,8 @@
             repeatCount: document.getElementById('examRepeatCount').value
         };
         localStorage.setItem('dictation_exam_settings', JSON.stringify(examSettings));
-        triggerAutoSaveToCloud();
+        // 🎯 改了考試設定，只儲存 examSettings
+        triggerAutoSaveToCloud('examSettings');
     }
 
     function loadExamSettings() {
@@ -1200,13 +1219,14 @@
     function saveSelectedListIndex(index) {
         lastSelectedList = parseInt(index) || 0;
         localStorage.setItem('dictation_last_selected_list', lastSelectedList);
-        triggerAutoSaveToCloud();
+        // 🎯 這裡屬於題庫/清單相關異動，只儲存 wordLists
+        triggerAutoSaveToCloud('wordLists');
     }
 
     function saveTargetListIndex(index) {
         lastTargetList = parseInt(index) || 0;
         localStorage.setItem('dictation_last_target_list', lastTargetList);
-        triggerAutoSaveToCloud();
+        triggerAutoSaveToCloud('wordLists');
     }
 
     function initListSelector(practiceIndex = 0, targetIndex = 0) {
@@ -1320,7 +1340,8 @@
         wordLists[index].content = textarea.value;
         
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        triggerAutoSaveToCloud();
+        // 🎯 核心優化：修改英文清單單字時，只觸發儲存 wordLists 欄位，不影響其他設定
+        triggerAutoSaveToCloud('wordLists');
 
         let currentIdx = selector.value;
         let currentTargetIdx = document.getElementById('targetListSelector') ? document.getElementById('targetListSelector').value : 0;
@@ -1338,7 +1359,8 @@
         if (newTitle !== null && newTitle.trim()) {
             wordLists[index].title = newTitle.trim();
             localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-            triggerAutoSaveToCloud();
+            // 🎯 修改標題也屬於題庫範圍，只更新 wordLists
+            triggerAutoSaveToCloud('wordLists');
             let currentContent = document.getElementById('wordList').value;
             let currentTargetIdx = document.getElementById('targetListSelector') ? document.getElementById('targetListSelector').value : 0;
             initListSelector(index, currentTargetIdx);
@@ -1882,7 +1904,8 @@
         examHistory.unshift(newRecord);
         if (examHistory.length > 20) examHistory.pop();
         localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
-        triggerAutoSaveToCloud();
+        // 🎯 考試結束產生歷史紀錄，只更新 examHistory 欄位
+        triggerAutoSaveToCloud('examHistory');
 
         let html = `<div class="result-box">
             <div style="background: #EEF2FF; padding: 12px 16px; border-radius: 8px; border: 1px solid #C7D2FE; font-weight: 600; color: var(--primary); margin-bottom: 12px;">🏁 考試結束！以下為您的測驗結果：</div>
@@ -2176,7 +2199,7 @@
         }
 
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        triggerAutoSaveToCloud();
+        triggerAutoSaveToCloud('wordLists');
 
         initListSelector(0, 0);
         initExamCheckboxes();
@@ -2198,7 +2221,7 @@
 
         examHistory = [];
         localStorage.removeItem('dictation_exam_history');
-        triggerAutoSaveToCloud();
+        triggerAutoSaveToCloud('examHistory');
 
         alert("🗑️ 成功清空所有考試歷史紀錄！");
     }
