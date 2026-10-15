@@ -323,7 +323,7 @@
         <div id="wordListContainer">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
                 <label for="wordList" style="margin-top: 0;">英文題庫（不熟前面可加 *）：</label>
-                <!-- 右上角清單內容排序選單（已暫時移除時間排序，僅保留 A-Z 與 Z-A） -->
+                <!-- 右上角清單內容排序選單（修正 A-Z 與 Z-A 排序方向） -->
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <span style="font-size: 16px;" title="排序方式">☰</span>
                     <select id="wordSortSelector" style="width: auto; margin-top: 0; padding: 6px 10px; font-size: 13.2px;" onchange="sortWordListContent(this.value)">
@@ -1555,7 +1555,7 @@
         document.getElementById(displayId).innerText = parseFloat(document.getElementById(sliderId).value).toFixed(2) + ' 倍';
     }
 
-    // 第一階段：僅保留並正確實作 A-Z 與 Z-A 排序
+    // 修正 A-Z 與 Z-A 排序的比較方向
     function sortWordListContent(sortType) {
         let textarea = document.getElementById('wordList');
         let rawText = textarea.value;
@@ -1572,8 +1572,10 @@
         }
 
         if (sortType === 'az') {
+            // 正確的 A 到 Z 排序
             words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
         } else if (sortType === 'za') {
+            // 正確的 Z 到 A 排序 (將 b 與 a 對調)
             words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
         }
 
