@@ -330,6 +330,8 @@
     <option value="" disabled selected>排序方式</option>
     <option value="az">A-Z 排序</option>
     <option value="za">Z-A 排序</option>
+    <option value="date_new_old">日期：近到遠</option>
+    <option value="date_old_new">日期：遠到近</option>
 </select>
                 </div>
             </div>
@@ -1569,10 +1571,18 @@
         }
 
         if (sortType === 'az') {
+            // A-Z 順向排序
             words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
         } else if (sortType === 'za') {
-            // 修正：Z-A 必須用 b 比較 a 才會正確反向排序
+            // Z-A 反向排序
             words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+            words.reverse();
+        } else if (sortType === 'date_new_old') {
+            // 日期：近到遠（將較下面/較晚輸入的排到最前面）
+            words.sort((a, b) => b.originalIndex - a.originalIndex);
+        } else if (sortType === 'date_old_new') {
+            // 日期：遠到近（將較上面/較早輸入的排回最前面，恢復原本順序）
+            words.sort((a, b) => a.originalIndex - b.originalIndex);
         }
 
         textarea.value = words.map(w => w.rawLine).join('\n');
