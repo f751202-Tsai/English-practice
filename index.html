@@ -600,6 +600,7 @@
     let accessToken = null;
     let isCloudSyncActive = false;
     let autoSyncTimer = null;
+    let loginProgressTimer = null; // 登入連線計時器
 
     let myDeviceId = localStorage.getItem('dictation_device_id');
     if (!myDeviceId) {
@@ -674,17 +675,25 @@
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: async (resp) => {
-                    if (resp.error !== undefined) return;
+                    if (resp.error !== undefined) {
+                        if (loginProgressTimer) clearInterval(loginProgressTimer);
+                        document.getElementById('cloudStatusText').innerText = `💻 本機作業模式 (未登入)`;
+                        return;
+                    }
+                    
                     accessToken = resp.access_token;
                     
                     let canProceed = await checkAndClaimDeviceOwnership();
                     if (!canProceed) {
+                        if (loginProgressTimer) clearInterval(loginProgressTimer);
                         accessToken = null;
+                        document.getElementById('cloudStatusText').innerText = `💻 本機作業模式 (未登入)`;
                         return;
                     }
 
+                    if (loginProgressTimer) clearInterval(loginProgressTimer);
                     isCloudSyncActive = true;
-                    document.getElementById('cloudStatusText').innerText = `✅ 已連結 Google 雲端（單裝置同步中）`;
+                    document.getElementById('cloudStatusText').innerText = `✅ 已連結 Google 雲端`;
                     let authBtn = document.getElementById('cloudAuthBtn');
                     authBtn.innerText = '🔒 登出';
                     authBtn.className = 'cloud-btn logout';
@@ -753,6 +762,17 @@
 
     function handleAuthClick() {
         if (tokenClient) {
+            // 點擊登入後，顯示連接中計費提示
+            let secondsElapsed = 0;
+            let statusText = document.getElementById('cloudStatusText');
+            statusText.innerText = `⏳ 正在連接 Google 雲端中..(已過 1 秒 / 預計 5 秒)..`;
+            
+            if (loginProgressTimer) clearInterval(loginProgressTimer);
+            loginProgressTimer = setInterval(() => {
+                secondsElapsed++;
+                statusText.innerText = `⏳ 正在連接 Google 雲端中..(已過 ${secondsElapsed} 秒 / 預計 5 秒)..`;
+            }, 1000);
+
             tokenClient.requestAccessToken({ prompt: 'consent' });
         } else {
             alert("⚠️ Google API 系統尚未完全載入，請重新整理網頁後再試一次。");
@@ -909,7 +929,7 @@
                         body: form
                     });
                 }
-                statusText.innerText = `✅ 已連結 Google 雲端（單裝置同步中）`;
+                statusText.innerText = `✅ 已連結 Google 雲端`;
             } catch (err) {
                 statusText.innerText = `❌ 雲端同步失敗`;
             }
@@ -1745,7 +1765,6 @@
             else for (let val of targetSet) { if (!userSet.has(val)) { isPosCorrect = false; break; } }
         }
 
-        // 💡 2. 計分比例：英文 5分 / 中文 3分 / 詞性 2分（單題滿分 10分）
         let itemEarnedScore = 0;
         if (isEngCorrect) itemEarnedScore += 5;
         if (isChiCorrect) itemEarnedScore += 3;
@@ -1762,7 +1781,7 @@
             isChiCorrect,
             isPosCorrect,
             earnedScore: itemEarnedScore,
-            isCorrect: (itemEarnedScore === 10) // 滿分10分才算完美全對
+            isCorrect: (itemEarnedScore === 10)
         });
 
         currentWordIndex++;
@@ -1827,7 +1846,6 @@
             return;
         }
 
-        // 計算總得分（總題數 * 10 為滿分，換算為 100 分制）
         let totalEarnedScore = examResults.reduce((sum, r) => sum + (r.earnedScore || 0), 0);
         let maxPossibleScore = totalCount * 10;
         let scoreRate = Math.round((totalEarnedScore / maxPossibleScore) * 100);
@@ -1870,7 +1888,6 @@
         resultContainer.innerHTML = html;
         resultContainer.style.display = 'block';
 
-        // 💡 1. 考試結束後彈出額外結果視窗
         document.getElementById('modalResultBody').innerHTML = html;
         openExamResultModal();
     }
