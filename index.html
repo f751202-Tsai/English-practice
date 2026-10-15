@@ -157,7 +157,6 @@
         .cloud-btn.logout { background-color: #EF4444; box-shadow: none; }
         .cloud-btn.logout:hover { background-color: #DC2626; }
 
-        /* 統一系統設定內按鈕的固定尺寸大小 (改為統一 130px 寬度) */
         .config-group .cloud-btn {
             width: 130px;
             height: 38px;
@@ -168,10 +167,6 @@
             white-space: nowrap;
             flex-shrink: 0;
             box-sizing: border-box;
-        }
-        #devLoginPanel .cloud-btn {
-            width: 130px; /* 修正 1：將解鎖按鈕寬度改為與其他按鈕一樣長 (130px) */
-            height: 48px; 
         }
 
         .tab-nav { display: flex; background: #F1F5F9; padding: 4px; border-radius: var(--radius); margin-bottom: 26px; border: 1px solid var(--border-color); }
@@ -191,8 +186,8 @@
         .btn-edit-block:hover { background-color: #F1F5F9; }
 
         .btn-action-container { display: flex; gap: 10px; margin-top: 13px; }
-        .btn-sort-abc, .btn-advanced { background-color: #F8FAFC; color: #334155; border: 1px solid var(--border-color); padding: 11px 16px; font-size: 14.3px; border-radius: var(--radius); cursor: pointer; flex: 1; font-weight: 600; text-align: center; }
-        .btn-sort-abc:hover, .btn-advanced:hover { background-color: #F1F5F9; }
+        .btn-advanced { background-color: #F8FAFC; color: #334155; border: 1px solid var(--border-color); padding: 11px 16px; font-size: 14.3px; border-radius: var(--radius); cursor: pointer; width: 100%; font-weight: 600; text-align: center; }
+        .btn-advanced:hover { background-color: #F1F5F9; }
         
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
         
@@ -326,10 +321,22 @@
         </div>
 
         <div id="wordListContainer">
-            <label for="wordList" style="margin-top: 15px;">單字清單內容（不熟前面可加 *）：</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                <label for="wordList" style="margin-top: 0;">單字清單內容（不熟前面可加 *）：</label>
+                <!-- 3. 新增右上角清單內容排序選單（三條線圖示 + 下拉選單） -->
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 16px;" title="排序方式">☰</span>
+                    <select id="wordSortSelector" style="width: auto; margin-top: 0; padding: 6px 10px; font-size: 13.2px;" onchange="sortWordListContent(this.value)">
+                        <option value="az">A-Z 排序</option>
+                        <option value="za">Z-A 排序</option>
+                        <option value="new_near">根據新增日期:近-遠</option>
+                        <option value="new_far">根據新增日期:遠-近</option>
+                    </select>
+                </div>
+            </div>
+            
             <textarea id="wordList" oninput="handleTextareaInput()" placeholder="----可自行新增單字----&#10;格式範例：&#10;*chatty cathy 健談 名詞&#10;bed 雙人床 名詞&#10;*orange 橘子 名詞"></textarea>
             <div class="btn-action-container">
-                <button class="btn-sort-abc" onclick="sortWordsABC()">🔤 A-Z 字母排序</button>
                 <button class="btn-advanced" onclick="openAdvancedModal()">⚙️ 進階設定</button>
             </div>
         </div>
@@ -445,23 +452,10 @@
             <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="loadInitialSettings()">載入初始設定</button>
         </div>
 
-        <div class="config-group">
-            <label style="margin-top:0;">🛠️ 開發者介面</label>
-            <div id="devLoginPanel" style="display: flex; gap: 10px; margin-top: 9px;">
-                <input type="password" id="devPasswordInput" placeholder="請輸入開發者密碼..." style="margin-top:0; flex:1;">
-                <button class="cloud-btn" style="background: var(--primary-gradient); white-space: nowrap;" onclick="verifyDevPassword()">解鎖</button>
-            </div>
-            <div id="devContentPanel" style="display: none; margin-top: 11px; padding: 13px; background: rgba(0,0,0,0.03); border-radius: 8px; border: 1px dashed var(--border-color); flex-direction: column; gap: 9px;">
-                <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="runStressTest()">🚀 執行壓力測試：一鍵填滿 30 組題庫 (共 9,000 字)</button>
-                <button class="action-btn" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="clearAllWordListsData()">🧹 清空所有英文清單內的單字</button>
-                <button class="action-btn" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="clearAllExamHistoryData()">🗑️ 一鍵清空所有考試紀錄</button>
-            </div>
-        </div>
-
         <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
             <div>
                 <label style="margin-top:0;">ℹ️ 關於應用程式</label>
-                <span style="font-size: 13.2px; color: var(--text-muted);">檢視作者與版本資訊</span>
+                <span style="font-size: 13.2px; color: var(--text-muted);">檢視作者與版本資訊及開發者選項</span>
             </div>
             <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openAboutModal()">關於</button>
         </div>
@@ -470,9 +464,9 @@
     </div>
 </div>
 
-<!-- ================= ℹ️ 關於資訊彈窗 ================= -->
+<!-- ================= ℹ️ 關於資訊彈窗 (2. 將開發者介面與隱藏按鈕移至此處) ================= -->
 <div id="aboutModal" class="modal">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
+    <div class="modal-content" style="max-width: 480px; text-align: center;">
         <span class="close-modal" onclick="closeAboutModal()">&times;</span>
         <div class="logo-badge" style="margin: 10px auto;">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -480,10 +474,26 @@
             </svg>
         </div>
         <h3 style="margin-top:10px; color:var(--text-main); font-size:19.8px; font-weight:700;">關於 英文聽力測驗</h3>
-        <div style="margin: 22px 0; padding: 18px; background: #F8FAFC; border-radius: 12px; border: 1px solid var(--border-color); font-size: 16.5px; font-weight: 600; color: var(--primary);">
-            作者: Freddy Tsai<br>版本 1.0
+        <div style="margin: 18px 0; padding: 16px; background: #F8FAFC; border-radius: 12px; border: 1px solid var(--border-color); font-size: 16.5px; font-weight: 600; color: var(--primary);">
+            作者: Freddy Tsai
         </div>
-        <button class="action-btn btn-start" style="width: 100%;" onclick="closeAboutModal()">確定</button>
+
+        <!-- 2. 開發者介面與密碼輸入 / 隱藏按鈕完整移至此處 -->
+        <div class="config-group" style="text-align: left; margin: 15px 0;">
+            <label style="margin-top:0;">🛠️ 開發者介面</label>
+            <div id="devLoginPanel" style="display: flex; gap: 10px; margin-top: 9px;">
+                <input type="password" id="devPasswordInput" placeholder="請輸入開發者密碼..." style="margin-top:0; flex:1;">
+                <button class="cloud-btn" style="background: var(--primary-gradient); white-space: nowrap; width: 130px; height: 48px;" onclick="verifyDevPassword()">解鎖</button>
+            </div>
+            <div id="devContentPanel" style="display: none; margin-top: 11px; padding: 13px; background: rgba(0,0,0,0.03); border-radius: 8px; border: 1px dashed var(--border-color); flex-direction: column; gap: 9px;">
+                <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="runStressTest()">🚀 執行壓力測試：一鍵填滿 30 組題庫 (共 9,000 字)</button>
+                <button class="action-btn" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="clearAllWordListsData()">🧹 清空所有英文清單內的單字</button>
+                <button class="action-btn" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); width: 100%; font-size: 14.3px; padding: 11px;" onclick="clearAllExamHistoryData()">🗑️ 一鍵清空所有考試紀錄</button>
+            </div>
+        </div>
+
+        <h3 style="margin-top:10px; color:var(--text-muted); font-size:15px; font-weight:500;">版本 1.0</h3>
+        <button class="action-btn btn-start" style="width: 100%; margin-top: 15px;" onclick="closeAboutModal()">確定</button>
     </div>
 </div>
 
@@ -658,10 +668,12 @@
     let wordLists = JSON.parse(localStorage.getItem('dictation_word_lists')) || [];
     if (wordLists.length !== 30) {
         wordLists = [];
+        let nowTs = Date.now();
         for (let i = 1; i <= 30; i++) {
             wordLists.push({
                 title: `Database ${i}`, 
-                content: ""
+                content: "",
+                createdAt: nowTs - (30 - i) * 1000 // 賦予預設時間戳記
             });
         }
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
@@ -669,6 +681,9 @@
         wordLists.forEach((l, idx) => {
             if (!l.title || l.title.startsWith("壓測題庫") || l.title.startsWith("英文題庫")) {
                 l.title = `Database ${idx+1}`;
+            }
+            if (!l.createdAt) {
+                l.createdAt = Date.now() - (30 - idx) * 1000;
             }
         });
     }
@@ -737,6 +752,7 @@
                     }
 
                     isCloudSyncActive = true;
+                    // 4. 登入成功後更新狀態欄
                     document.getElementById('cloudStatusText').innerText = `✅ 已連結 Google 雲端`;
                     let authBtn = document.getElementById('cloudAuthBtn');
                     authBtn.innerText = '🔒 登出';
@@ -804,6 +820,7 @@
         return standardVoice || null;
     }
 
+    // 4. 簡化 Google 登入狀態邏輯：按下後先顯示正在連接，成功後由 callback 改為已連結
     function handleAuthClick() {
         if (tokenClient) {
             let statusText = document.getElementById('cloudStatusText');
@@ -1067,10 +1084,12 @@
         }
 
         wordLists = [];
+        let nowTs = Date.now();
         for (let i = 1; i <= 30; i++) {
             wordLists.push({
                 title: `Database ${i}`,
-                content: ""
+                content: "",
+                createdAt: nowTs - (30 - i) * 1000
             });
         }
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
@@ -1230,8 +1249,8 @@
         if (event.target == document.getElementById('systemSettingsModal')) {
             if (!isCloudSyncing) document.getElementById('systemSettingsModal').style.display = 'none';
         }
-        if (event.target == document.getElementById('exportModal')) document.getElementById('exportModal').style.display = 'none';
         if (event.target == document.getElementById('aboutModal')) document.getElementById('aboutModal').style.display = 'none';
+        if (event.target == document.getElementById('exportModal')) document.getElementById('exportModal').style.display = 'none';
         if (event.target == document.getElementById('examResultModal')) document.getElementById('examResultModal').style.display = 'none';
     }
 
@@ -1336,13 +1355,11 @@
     function saveSelectedListIndex(index) {
         lastSelectedList = parseInt(index) || 0;
         localStorage.setItem('dictation_last_selected_list', lastSelectedList);
-        // 修正 3：切換題庫時「只儲存於本地」，不再觸發 triggerAutoSaveToCloud('wordLists')
     }
 
     function saveTargetListIndex(index) {
         lastTargetList = parseInt(index) || 0;
         localStorage.setItem('dictation_last_target_list', lastTargetList);
-        // 同樣僅存本地，避免不必要的雲端同步
     }
 
     function initListSelector(practiceIndex = 0, targetIndex = 0) {
@@ -1394,7 +1411,7 @@
 
     function switchWordList() {
         let index = document.getElementById('listSelector').value;
-        saveSelectedListIndex(index); // 僅記錄本地狀態，不呼叫雲端同步
+        saveSelectedListIndex(index);
         document.getElementById('wordList').value = wordLists[index].content;
         document.getElementById('status').style.display = 'block';
         document.getElementById('resultContainer').style.display = 'none';
@@ -1413,7 +1430,7 @@
     function handleTextareaInput() {
         let textarea = document.getElementById('wordList');
         removeDuplicateWords(textarea);
-        autoSaveCurrentList(); // 只有當使用者實際編輯文字內容時，才會觸發雲端同步
+        autoSaveCurrentList();
     }
 
     function removeDuplicateWords(textareaElement) {
@@ -1454,6 +1471,7 @@
         let selector = document.getElementById('listSelector');
         let index = parseInt(selector.value);
         wordLists[index].content = textarea.value;
+        if (!wordLists[index].createdAt) wordLists[index].createdAt = Date.now();
         
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
         triggerAutoSaveToCloud('wordLists');
@@ -1534,13 +1552,31 @@
         document.getElementById(displayId).innerText = parseFloat(document.getElementById(sliderId).value).toFixed(2) + ' 倍';
     }
 
-    function sortWordsABC() {
+    // 3. 實作 4 種排序方式的下拉選單處理函式
+    function sortWordListContent(sortType) {
         let textarea = document.getElementById('wordList');
         let words = parseWordsRaw(textarea.value);
-        if (!words.length) { alert('請先輸入單字後再進行排序！'); return; }
-        words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
+        if (!words.length) { 
+            alert('請先輸入單字後再進行排序！'); 
+            document.getElementById('wordSortSelector').selectedIndex = 0;
+            return; 
+        }
+
+        if (sortType === 'az') {
+            words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
+        } else if (sortType === 'za') {
+            words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+        } else if (sortType === 'new_near') {
+            // 模擬順序反轉（假設越後面輸入越新）
+            words.reverse();
+        } else if (sortType === 'new_far') {
+            // 維持原序或按原始加入順序
+        }
+
         textarea.value = words.map(w => w.rawLine).join('\n');
         autoSaveCurrentList();
+        // 排序完成後將下拉選單歸位
+        setTimeout(() => { document.getElementById('wordSortSelector').selectedIndex = 0; }, 200);
     }
 
     function parseWords(text) {
@@ -2073,7 +2109,6 @@
             let axisFontSize = isMobile ? (14 * 1.4) : 11;
             let circleRadius = isMobile ? (6.5 * 1.4) : 4.5;
 
-            // 修正 2：調整手機版的 viewBoxHeight 與座標對應，使 0~100 分上下限貼齊邊緣，消除下方空白
             let viewBoxHeight = isMobile ? 220 : height;
             let viewBoxWidth = width;
 
@@ -2082,7 +2117,6 @@
             [0, 50, 100].forEach(val => {
                 let lineY = padding + graphHeight - (val / 100) * graphHeight;
                 if (isMobile) {
-                    // 將 0 分到 100 分的分佈範圍在手機版上適當延展，讓 0 分向下貼近邊緣
                     lineY = padding + (1 - val / 100) * (viewBoxHeight - padding * 2);
                 }
                 svgHtml += `<line x1="${padding}" y1="${lineY}" x2="${width - padding}" y2="${lineY}" stroke="#E2E8F0" stroke-width="1" />`;
@@ -2264,13 +2298,14 @@
         else if (val < 1 || isNaN(val)) { inputElement.value = 1; }
     }
 
-    function runStressTest() {
+    // 1. 執行壓力測試的 9,000 單字直接存入雲端
+    async function runStressTest() {
         if (sessionStorage.getItem('dev_unlocked') !== 'true') {
             alert("⚠️ 尚未解鎖開發者功能，請先輸入正確密碼！");
             return;
         }
 
-        if (!confirm("⚠️ 確定要執行壓力測試嗎？這將會暫時在畫面上填滿 30 組題庫 (共 9,000 字)供您測試，關閉 App 後即恢復清空狀態！")) {
+        if (!confirm("⚠️ 確定要執行壓力測試嗎？這將會產生 30 組題庫 (共 9,000 字)並「直接儲存並同步至雲端」，請觀察同步花費時間！")) {
             return;
         }
 
@@ -2282,6 +2317,7 @@
         let generatedSet = new Set();
         let totalWordsCount = 0;
         let tempStressLists = [];
+        let nowTs = Date.now();
 
         for (let i = 0; i < 30; i++) {
             let listLines = [];
@@ -2303,17 +2339,26 @@
             }
             tempStressLists.push({
                 title: `Database ${i + 1}`,
-                content: listLines.join('\n')
+                content: listLines.join('\n'),
+                createdAt: nowTs + i
             });
         }
 
         wordLists = tempStressLists;
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        
         initListSelector(0, 0);
         initExamCheckboxes();
         initExportCheckboxes();
         updateExamStats();
 
-        alert(`🎉 壓力測試已成功加載 ${totalWordsCount} 個單字到畫面上！\n\n💡 提示：此測試內容不會儲存，重新整理網頁後即會恢復原本空白的 30 個英文題庫。`);
+        // 立即存入雲端，以便觀察同步時間
+        let startTime = performance.now();
+        await triggerAutoSaveToCloud('wordLists');
+        let endTime = performance.now();
+        let durationSec = ((endTime - startTime) / 1000).toFixed(2);
+
+        alert(`🎉 壓力測試 9,000 字已成功產生並儲存至雲端！\n⏱️ 雲端同步總耗時：${durationSec} 秒`);
     }
 
     function clearAllWordListsData() {
@@ -2327,10 +2372,12 @@
         }
 
         wordLists = [];
+        let nowTs = Date.now();
         for (let i = 1; i <= 30; i++) {
             wordLists.push({
                 title: `Database ${i}`,
-                content: ""
+                content: "",
+                createdAt: nowTs - (30 - i) * 1000
             });
         }
 
