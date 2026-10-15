@@ -323,14 +323,14 @@
         <div id="wordListContainer">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
                 <label for="wordList" style="margin-top: 0;">單字清單內容（不熟前面可加 *）：</label>
-                <!-- 3. 新增右上角清單內容排序選單（三條線圖示 + 下拉選單） -->
+                <!-- 右上角清單內容排序選單（三條線圖示 + 下拉選單） -->
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <span style="font-size: 16px;" title="排序方式">☰</span>
                     <select id="wordSortSelector" style="width: auto; margin-top: 0; padding: 6px 10px; font-size: 13.2px;" onchange="sortWordListContent(this.value)">
                         <option value="az">A-Z 排序</option>
                         <option value="za">Z-A 排序</option>
-                        <option value="new_near">根據新增日期:近-遠</option>
-                        <option value="new_far">根據新增日期:遠-近</option>
+                        <option value="date_near">根據日期：近>遠</option>
+                        <option value="date_far">根據日期：遠>近</option>
                     </select>
                 </div>
             </div>
@@ -464,7 +464,7 @@
     </div>
 </div>
 
-<!-- ================= ℹ️ 關於資訊彈窗 (2. 將開發者介面與隱藏按鈕移至此處) ================= -->
+<!-- ================= ℹ️ 關於資訊彈窗 ================= -->
 <div id="aboutModal" class="modal">
     <div class="modal-content" style="max-width: 480px; text-align: center;">
         <span class="close-modal" onclick="closeAboutModal()">&times;</span>
@@ -478,7 +478,7 @@
             作者: Freddy Tsai
         </div>
 
-        <!-- 2. 開發者介面與密碼輸入 / 隱藏按鈕完整移至此處 -->
+        <!-- 開發者介面與密碼輸入 / 隱藏按鈕 -->
         <div class="config-group" style="text-align: left; margin: 15px 0;">
             <label style="margin-top:0;">🛠️ 開發者介面</label>
             <div id="devLoginPanel" style="display: flex; gap: 10px; margin-top: 9px;">
@@ -673,7 +673,7 @@
             wordLists.push({
                 title: `Database ${i}`, 
                 content: "",
-                createdAt: nowTs - (30 - i) * 1000 // 賦予預設時間戳記
+                createdAt: nowTs - (30 - i) * 1000
             });
         }
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
@@ -752,7 +752,6 @@
                     }
 
                     isCloudSyncActive = true;
-                    // 4. 登入成功後更新狀態欄
                     document.getElementById('cloudStatusText').innerText = `✅ 已連結 Google 雲端`;
                     let authBtn = document.getElementById('cloudAuthBtn');
                     authBtn.innerText = '🔒 登出';
@@ -820,7 +819,6 @@
         return standardVoice || null;
     }
 
-    // 4. 簡化 Google 登入狀態邏輯：按下後先顯示正在連接，成功後由 callback 改為已連結
     function handleAuthClick() {
         if (tokenClient) {
             let statusText = document.getElementById('cloudStatusText');
@@ -1317,7 +1315,7 @@
                 if (s.onlyStarred !== undefined) document.getElementById('examOnlyStarred').checked = s.onlyStarred;
                 if (s.questionCount !== undefined) document.getElementById('examQuestionCount').value = s.questionCount;
                 if (s.speakRate !== undefined) { document.getElementById('examSpeakRate').value = s.speakRate; updateSpeedDisplay('examSpeakRate', 'examSpeedValue'); }
-                if (s.pauseTime !== undefined) document.getElementById('pauseTime').value = s.pauseTime;
+                if (s.pauseTime !== undefined) document.getElementById('examPauseTime').value = s.pauseTime;
                 if (s.answerTime !== undefined) document.getElementById('examAnswerTime').value = s.answerTime;
                 if (s.repeatCount !== undefined) document.getElementById('examRepeatCount').value = s.repeatCount;
             } catch(e){}
@@ -1506,7 +1504,7 @@
     function parseWordsRaw(text) {
         let lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         let allWords = [], seen = new Set();
-        lines.forEach(line => {
+        lines.forEach((line, originalIndex) => {
             let isStarred = line.startsWith('*');
             let cleanLine = isStarred ? line.substring(1).trim() : line;
             let firstChiIndex = cleanLine.search(/[\u4e00-\u9fa5]/);
@@ -1521,7 +1519,14 @@
             let key = engPart.toLowerCase();
             if (key && !seen.has(key)) {
                 seen.add(key);
-                allWords.push({ english: engPart, chinese: chiPart, pos: posPart, starred: isStarred, rawLine: line });
+                allWords.push({ 
+                    english: engPart, 
+                    chinese: chiPart, 
+                    pos: posPart, 
+                    starred: isStarred, 
+                    rawLine: line,
+                    originalIndex: originalIndex 
+                });
             }
         });
         return allWords;
@@ -1552,12 +1557,18 @@
         document.getElementById(displayId).innerText = parseFloat(document.getElementById(sliderId).value).toFixed(2) + ' 倍';
     }
 
-    // 3. 實作 4 種排序方式的下拉選單處理函式
+    // 修正：獨立並精準實作 4 種排序方式（含修復 A-Z 失效與日期排序倒序邏輯）
     function sortWordListContent(sortType) {
         let textarea = document.getElementById('wordList');
-        let words = parseWordsRaw(textarea.value);
-        if (!words.length) { 
+        let rawText = textarea.value;
+        if (!rawText.trim()) { 
             alert('請先輸入單字後再進行排序！'); 
+            document.getElementById('wordSortSelector').selectedIndex = 0;
+            return; 
+        }
+
+        let words = parseWordsRaw(rawText);
+        if (!words.length) { 
             document.getElementById('wordSortSelector').selectedIndex = 0;
             return; 
         }
@@ -1566,16 +1577,17 @@
             words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
         } else if (sortType === 'za') {
             words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
-        } else if (sortType === 'new_near') {
-            // 模擬順序反轉（假設越後面輸入越新）
-            words.reverse();
-        } else if (sortType === 'new_far') {
-            // 維持原序或按原始加入順序
+        } else if (sortType === 'date_near') {
+            // 根據日期：近>遠 (越後面新增的排在越上面，即 originalIndex 大的排前面)
+            words.sort((a, b) => b.originalIndex - a.originalIndex);
+        } else if (sortType === 'date_far') {
+            // 根據日期：遠>近 (越前面新增的排在越上面，即 originalIndex 小的排前面)
+            words.sort((a, b) => a.originalIndex - b.originalIndex);
         }
 
         textarea.value = words.map(w => w.rawLine).join('\n');
         autoSaveCurrentList();
-        // 排序完成後將下拉選單歸位
+        
         setTimeout(() => { document.getElementById('wordSortSelector').selectedIndex = 0; }, 200);
     }
 
@@ -2298,7 +2310,6 @@
         else if (val < 1 || isNaN(val)) { inputElement.value = 1; }
     }
 
-    // 1. 執行壓力測試的 9,000 單字直接存入雲端
     async function runStressTest() {
         if (sessionStorage.getItem('dev_unlocked') !== 'true') {
             alert("⚠️ 尚未解鎖開發者功能，請先輸入正確密碼！");
@@ -2352,7 +2363,6 @@
         initExportCheckboxes();
         updateExamStats();
 
-        // 立即存入雲端，以便觀察同步時間
         let startTime = performance.now();
         await triggerAutoSaveToCloud('wordLists');
         let endTime = performance.now();
