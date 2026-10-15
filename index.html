@@ -1837,7 +1837,6 @@
             return;
         }
 
-        // 💡 依據總題數動態計算單題配分與總分（滿分 100 分）
         let fullyCorrectCount = examResults.filter(r => r.isCorrect).length;
         let scorePerQuestion = 100 / totalCount;
         let scoreRate = Math.round(fullyCorrectCount * scorePerQuestion);
@@ -1861,16 +1860,25 @@
 
         let html = `<div class="result-box">
             <div style="background: #EEF2FF; padding: 12px 16px; border-radius: 8px; border: 1px solid #C7D2FE; font-weight: 600; color: var(--primary); margin-bottom: 12px;">🏁 考試結束！以下為您的測驗結果：</div>
-            <h3 style="color:var(--text-main); font-size:16.5px;">📊 成績統計：得分 ${scoreRate} 分 (總題數 ${totalCount} 題，全對 ${fullyCorrectCount} 題，每題配分 ${scorePerQuestion.toFixed(2)} 分)</h3><hr style="border:0; border-top:1px solid var(--border-color); margin:12px 0;">`;
+            <h3 style="color:var(--text-main); font-size:16.5px;">📊 成績統計：得分 ${scoreRate} 分 (總題數 ${totalCount} 題，完全答對 ${fullyCorrectCount} 題)</h3><hr style="border:0; border-top:1px solid var(--border-color); margin:12px 0;">`;
         
         examResults.forEach((res, index) => {
             let posDisplay = res.pos ? ` [${res.pos}]` : '';
-            let userPosDisplay = res.userPos ? ` [${res.userPos}]` : ' [(未選)]';
-            let itemScoreText = res.isCorrect ? `+${scorePerQuestion.toFixed(1)}分` : `0分 (需全對)`;
+            let userPosText = res.userPos ? `[${res.userPos}]` : '[(未選)]';
+
             if (res.isCorrect) {
-                html += `<div class="correct-item">✅ 第 ${index+1} 題：${res.english} (${res.chinese})${posDisplay} (${itemScoreText})<br><small style="color:var(--text-muted);">您的回答：${res.userEng} / ${res.userChi}${userPosDisplay}</small></div>`;
+                // 完全答對：全部顯示綠色，不顯示單題分數與警語
+                html += `<div class="correct-item">✅ 第 ${index+1} 題：${res.english} (${res.chinese})${posDisplay}<br><small style="color:#10B981;">您的回答：${res.userEng} / ${res.userChi} ${userPosText}</small></div>`;
             } else {
-                html += `<div class="wrong-item">❌ 第 ${index+1} 題：正確答案是 <strong>${res.english} (${res.chinese})${posDisplay}</strong> (${itemScoreText})<br><small style="color:var(--text-muted);">您的回答：${res.userEng || '(未填)'} / ${res.userChi || '(未填)'}${userPosDisplay}</small></div>`;
+                // 部分錯誤或全錯：分別判斷 英文/中文/詞性 的答對或答錯顏色
+                let engColor = res.isEngCorrect ? '#10B981' : '#EF4444';
+                let chiColor = res.isChiCorrect ? '#10B981' : '#EF4444';
+                let posColor = res.isPosCorrect ? '#10B981' : '#EF4444';
+
+                let userEngText = res.userEng || '(未填)';
+                let userChiText = res.userChi || '(未填)';
+
+                html += `<div class="wrong-item">❌ 第 ${index+1} 題：正確答案是 <strong>${res.english} (${res.chinese})${posDisplay}</strong><br><small style="color:var(--text-muted);">您的回答：<span style="color:${engColor}; font-weight:600;">${userEngText}</span> / <span style="color:${chiColor}; font-weight:600;">${userChiText}</span> <span style="color:${posColor}; font-weight:600;">${userPosText}</span></small></div>`;
             }
         });
         html += `</div>`;
