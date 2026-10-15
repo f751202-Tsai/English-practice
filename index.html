@@ -51,7 +51,6 @@
             background-color: #1E222A !important;
             color: #A5B4FC !important;
         }
-        /* 省電模式下的近期錯誤清單背景與文字調整 */
         body.power-saving-mode #topWrongWordsList {
             background-color: #000000 !important;
             color: #FFFFFF !important;
@@ -87,7 +86,6 @@
             transition: background 0.3s, color 0.3s;
         }
 
-        /* 💡 針對電腦版 (螢幕寬度大於 768px)：維持整體 1.5 (150%) 放大 */
         @media (min-width: 769px) {
             body {
                 zoom: 1.5;
@@ -180,7 +178,6 @@
         
         .modal-content { background-color: #ffffff; margin: 3vh auto; padding: 25px; border-radius: 20px; width: 90%; max-width: 650px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: relative; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-sizing: border-box; }
         
-        /* 💡 針對電腦版 (螢幕寬度大於 768px)：將「考試紀錄與學習分析」彈窗內部獨立縮小 80% (zoom: 0.8) */
         @media (min-width: 769px) {
             #historyModal .modal-content {
                 zoom: 0.8;
@@ -366,7 +363,6 @@
         <div id="resultContainer" style="display: none;"></div>
     </div>
     
-    <!-- 修正處：移除 style="display: none;"，讓剛開啟 App 時即會顯示 -->
     <div id="status">準備就緒...</div>
 </div>
 
@@ -665,7 +661,6 @@
         initExportCheckboxes();
         loadExamSettings(); 
 
-        // 確保剛進畫面時狀態欄文字正確顯示
         let statusEl = document.getElementById('status');
         if (statusEl) {
             statusEl.style.display = 'block';
@@ -1763,10 +1758,8 @@
             else for (let val of targetSet) { if (!userSet.has(val)) { isPosCorrect = false; break; } }
         }
 
-        let itemEarnedScore = 0;
-        if (isEngCorrect) itemEarnedScore += 5;
-        if (isChiCorrect) itemEarnedScore += 3;
-        if (isPosCorrect) itemEarnedScore += 2;
+        // 💡 英文、中文、詞性三者皆須完全正確，該題才判定為全對 (isCorrect = true)
+        let isFullyCorrect = isEngCorrect && isChiCorrect && isPosCorrect;
 
         examResults.push({
             english: currentItem.english, 
@@ -1778,8 +1771,7 @@
             isEngCorrect,
             isChiCorrect,
             isPosCorrect,
-            earnedScore: itemEarnedScore,
-            isCorrect: (itemEarnedScore === 10)
+            isCorrect: isFullyCorrect
         });
 
         currentWordIndex++;
@@ -1845,11 +1837,10 @@
             return;
         }
 
-        let totalEarnedScore = examResults.reduce((sum, r) => sum + (r.earnedScore || 0), 0);
-        let maxPossibleScore = totalCount * 10;
-        let scoreRate = Math.round((totalEarnedScore / maxPossibleScore) * 100);
-        
+        // 💡 依據總題數動態計算單題配分與總分（滿分 100 分）
         let fullyCorrectCount = examResults.filter(r => r.isCorrect).length;
+        let scorePerQuestion = 100 / totalCount;
+        let scoreRate = Math.round(fullyCorrectCount * scorePerQuestion);
         
         let now = new Date();
         let dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
@@ -1870,15 +1861,16 @@
 
         let html = `<div class="result-box">
             <div style="background: #EEF2FF; padding: 12px 16px; border-radius: 8px; border: 1px solid #C7D2FE; font-weight: 600; color: var(--primary); margin-bottom: 12px;">🏁 考試結束！以下為您的測驗結果：</div>
-            <h3 style="color:var(--text-main); font-size:16.5px;">📊 成績統計：得分 ${scoreRate} 分 (已完成 ${totalCount} 題，完全答對 ${fullyCorrectCount} 題)</h3><hr style="border:0; border-top:1px solid var(--border-color); margin:12px 0;">`;
+            <h3 style="color:var(--text-main); font-size:16.5px;">📊 成績統計：得分 ${scoreRate} 分 (總題數 ${totalCount} 題，全對 ${fullyCorrectCount} 題，每題配分 ${scorePerQuestion.toFixed(2)} 分)</h3><hr style="border:0; border-top:1px solid var(--border-color); margin:12px 0;">`;
         
         examResults.forEach((res, index) => {
             let posDisplay = res.pos ? ` [${res.pos}]` : '';
             let userPosDisplay = res.userPos ? ` [${res.userPos}]` : ' [(未選)]';
+            let itemScoreText = res.isCorrect ? `+${scorePerQuestion.toFixed(1)}分` : `0分 (需全對)`;
             if (res.isCorrect) {
-                html += `<div class="correct-item">✅ 第 ${index+1} 題：${res.english} (${res.chinese})${posDisplay} (+10分)<br><small style="color:var(--text-muted);">您的回答：${res.userEng} / ${res.userChi}${userPosDisplay}</small></div>`;
+                html += `<div class="correct-item">✅ 第 ${index+1} 題：${res.english} (${res.chinese})${posDisplay} (${itemScoreText})<br><small style="color:var(--text-muted);">您的回答：${res.userEng} / ${res.userChi}${userPosDisplay}</small></div>`;
             } else {
-                html += `<div class="wrong-item">❌ 第 ${index+1} 題：正確答案是 <strong>${res.english} (${res.chinese})${posDisplay}</strong> (+${res.earnedScore}分)<br><small style="color:var(--text-muted);">您的回答：${res.userEng || '(未填)'} / ${res.userChi || '(未填)'}${userPosDisplay}</small></div>`;
+                html += `<div class="wrong-item">❌ 第 ${index+1} 題：正確答案是 <strong>${res.english} (${res.chinese})${posDisplay}</strong> (${itemScoreText})<br><small style="color:var(--text-muted);">您的回答：${res.userEng || '(未填)'} / ${res.userChi || '(未填)'}${userPosDisplay}</small></div>`;
             }
         });
         html += `</div>`;
