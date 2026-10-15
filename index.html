@@ -323,14 +323,12 @@
         <div id="wordListContainer">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
                 <label for="wordList" style="margin-top: 0;">英文題庫（不熟前面可加 *）：</label>
-                <!-- 右上角清單內容排序選單（三條線圖示 + 下拉選單） -->
+                <!-- 右上角清單內容排序選單（已暫時移除時間排序，僅保留 A-Z 與 Z-A） -->
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <span style="font-size: 16px;" title="排序方式">☰</span>
                     <select id="wordSortSelector" style="width: auto; margin-top: 0; padding: 6px 10px; font-size: 13.2px;" onchange="sortWordListContent(this.value)">
                         <option value="az">A-Z 排序</option>
                         <option value="za">Z-A 排序</option>
-                        <option value="date_near">日期：近>遠</option>
-                        <option value="date_far">日期：遠>近</option>
                     </select>
                 </div>
             </div>
@@ -1557,7 +1555,7 @@
         document.getElementById(displayId).innerText = parseFloat(document.getElementById(sliderId).value).toFixed(2) + ' 倍';
     }
 
-    // 修正後的 4 種排序方式（已修復 Z-A 排序、A-Z 排序與日期近>遠 / 遠>近順序）
+    // 第一階段：僅保留並正確實作 A-Z 與 Z-A 排序
     function sortWordListContent(sortType) {
         let textarea = document.getElementById('wordList');
         let rawText = textarea.value;
@@ -1576,14 +1574,7 @@
         if (sortType === 'az') {
             words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
         } else if (sortType === 'za') {
-            // 修正 Z-A 排序 (改為 b 對 a 進行比較)
             words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
-        } else if (sortType === 'date_near') {
-            // 日期：近>遠 (越後面新增的排在越上面，即 originalIndex 大的排前面)
-            words.sort((a, b) => b.originalIndex - a.originalIndex);
-        } else if (sortType === 'date_far') {
-            // 日期：遠>近 (越前面新增的排在越上面，即 originalIndex 小的排前面)
-            words.sort((a, b) => a.originalIndex - b.originalIndex);
         }
 
         textarea.value = words.map(w => w.rawLine).join('\n');
