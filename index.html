@@ -157,7 +157,7 @@
         .cloud-btn.logout { background-color: #EF4444; box-shadow: none; }
         .cloud-btn.logout:hover { background-color: #DC2626; }
 
-        /* 1. 統一系統設定內按鈕的固定尺寸大小 (XY 大小一致) */
+        /* 統一系統設定內按鈕的固定尺寸大小 (改為統一 130px 寬度) */
         .config-group .cloud-btn {
             width: 130px;
             height: 38px;
@@ -170,8 +170,8 @@
             box-sizing: border-box;
         }
         #devLoginPanel .cloud-btn {
-            width: 100px;
-            height: 48px; /* 配合 input 高度 */
+            width: 130px; /* 修正 1：將解鎖按鈕寬度改為與其他按鈕一樣長 (130px) */
+            height: 48px; 
         }
 
         .tab-nav { display: flex; background: #F1F5F9; padding: 4px; border-radius: var(--radius); margin-bottom: 26px; border: 1px solid var(--border-color); }
@@ -326,7 +326,6 @@
         </div>
 
         <div id="wordListContainer">
-            <!-- 3. 將提示標題調整至格式範例與單字清單內容之間 -->
             <label for="wordList" style="margin-top: 15px;">單字清單內容（不熟前面可加 *）：</label>
             <textarea id="wordList" oninput="handleTextareaInput()" placeholder="----可自行新增單字----&#10;格式範例：&#10;*chatty cathy 健談 名詞&#10;bed 雙人床 名詞&#10;*orange 橘子 名詞"></textarea>
             <div class="btn-action-container">
@@ -385,7 +384,6 @@
         <div id="resultContainer" style="display: none;"></div>
     </div>
     
-    <!-- 4. 將狀態欄預設改為帶有火焰圖示 -->
     <div id="status">準備就緒 🔥</div>
 </div>
 
@@ -712,7 +710,6 @@
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: async (resp) => {
-                    // 2. 設立詳細的 log 與檢查，確保精準捕捉使用者按下取消或發生錯誤
                     console.log("Google Auth Callback Response:", resp);
 
                     if (resp.error !== undefined || !resp.access_token) {
@@ -1063,7 +1060,6 @@
         saveSystemSettings();
     }
 
-    // 5. 載入初始設定時，將聽力練習與測驗進階設定語速改為 1 倍
     async function loadInitialSettings() {
         let isConfirmed = confirm("確定要載入初始設定嗎？");
         if (!isConfirmed) {
@@ -1302,7 +1298,7 @@
                 if (s.onlyStarred !== undefined) document.getElementById('examOnlyStarred').checked = s.onlyStarred;
                 if (s.questionCount !== undefined) document.getElementById('examQuestionCount').value = s.questionCount;
                 if (s.speakRate !== undefined) { document.getElementById('examSpeakRate').value = s.speakRate; updateSpeedDisplay('examSpeakRate', 'examSpeedValue'); }
-                if (s.pauseTime !== undefined) document.getElementById('examPauseTime').value = s.pauseTime;
+                if (s.pauseTime !== undefined) document.getElementById('pauseTime').value = s.pauseTime;
                 if (s.answerTime !== undefined) document.getElementById('examAnswerTime').value = s.answerTime;
                 if (s.repeatCount !== undefined) document.getElementById('examRepeatCount').value = s.repeatCount;
             } catch(e){}
@@ -1340,13 +1336,13 @@
     function saveSelectedListIndex(index) {
         lastSelectedList = parseInt(index) || 0;
         localStorage.setItem('dictation_last_selected_list', lastSelectedList);
-        triggerAutoSaveToCloud('wordLists');
+        // 修正 3：切換題庫時「只儲存於本地」，不再觸發 triggerAutoSaveToCloud('wordLists')
     }
 
     function saveTargetListIndex(index) {
         lastTargetList = parseInt(index) || 0;
         localStorage.setItem('dictation_last_target_list', lastTargetList);
-        triggerAutoSaveToCloud('wordLists');
+        // 同樣僅存本地，避免不必要的雲端同步
     }
 
     function initListSelector(practiceIndex = 0, targetIndex = 0) {
@@ -1398,7 +1394,7 @@
 
     function switchWordList() {
         let index = document.getElementById('listSelector').value;
-        saveSelectedListIndex(index);
+        saveSelectedListIndex(index); // 僅記錄本地狀態，不呼叫雲端同步
         document.getElementById('wordList').value = wordLists[index].content;
         document.getElementById('status').style.display = 'block';
         document.getElementById('resultContainer').style.display = 'none';
@@ -1417,7 +1413,7 @@
     function handleTextareaInput() {
         let textarea = document.getElementById('wordList');
         removeDuplicateWords(textarea);
-        autoSaveCurrentList();
+        autoSaveCurrentList(); // 只有當使用者實際編輯文字內容時，才會觸發雲端同步
     }
 
     function removeDuplicateWords(textareaElement) {
@@ -2077,15 +2073,17 @@
             let axisFontSize = isMobile ? (14 * 1.4) : 11;
             let circleRadius = isMobile ? (6.5 * 1.4) : 4.5;
 
-            let viewBoxHeight = isMobile ? (height * 2.1) : height;
+            // 修正 2：調整手機版的 viewBoxHeight 與座標對應，使 0~100 分上下限貼齊邊緣，消除下方空白
+            let viewBoxHeight = isMobile ? 220 : height;
             let viewBoxWidth = width;
 
             let svgHtml = `<svg width="100%" height="100%" viewBox="0 0 ${viewBoxWidth} ${viewBoxHeight}" style="overflow:visible;">`;
+            
             [0, 50, 100].forEach(val => {
                 let lineY = padding + graphHeight - (val / 100) * graphHeight;
                 if (isMobile) {
-                    let centerOffset = lineY - (height / 2);
-                    lineY = (height / 2) + centerOffset * 2.1;
+                    // 將 0 分到 100 分的分佈範圍在手機版上適當延展，讓 0 分向下貼近邊緣
+                    lineY = padding + (1 - val / 100) * (viewBoxHeight - padding * 2);
                 }
                 svgHtml += `<line x1="${padding}" y1="${lineY}" x2="${width - padding}" y2="${lineY}" stroke="#E2E8F0" stroke-width="1" />`;
                 svgHtml += `<text x="${padding - 22}" y="${lineY + 4}" font-size="${axisFontSize}" fill="#94A3B8">${val}</text>`;
@@ -2094,8 +2092,7 @@
             let adjustedPoints = points.map(p => {
                 let py = p.y;
                 if (isMobile) {
-                    let centerOffset = py - (height / 2);
-                    py = (height / 2) + centerOffset * 2.1;
+                    py = padding + (1 - p.score / 100) * (viewBoxHeight - padding * 2);
                 }
                 return { x: p.x, y: py, score: p.score, date: p.date };
             });
