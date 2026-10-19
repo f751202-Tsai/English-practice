@@ -446,17 +446,18 @@
         #flashcardSettingsModal .modal-content { transform: scale(1.2); transform-origin: center center; margin: 15vh auto; }
         #cardExamAdvancedModal .modal-content { transform: scale(1.2); transform-origin: center center; margin: 15vh auto; }
 
+        /* ================= 測驗紀錄與學習分析 Modal 寬度與比例放大修正 ================= */
         #historyModal .modal-content {
-            width: 100%;
-            max-width: 620px;
-            margin: 6vh auto;
+            width: 92%;
+            max-width: 880px; /* 擴大視窗寬度，延伸至綠框範圍 */
+            margin: 3vh auto;
             border-radius: var(--radius-outer);
             padding: 0; 
             background: var(--card-bg);
-            box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+            box-shadow: 0 25px 40px -10px rgba(15, 23, 42, 0.2);
             border: 1px solid var(--border-color);
             box-sizing: border-box;
-            max-height: 84vh;
+            max-height: 92vh;
             position: relative;
             overflow: hidden;
             display: flex;
@@ -476,21 +477,21 @@
         }
 
         .modal-inner-padding {
-            padding: 32px 28px 24px 28px;
+            padding: 28px 32px 24px 32px;
             display: flex;
             flex-direction: column;
             flex: 1;
             overflow-y: auto;
-            max-height: 84vh;
+            max-height: 92vh;
             box-sizing: border-box;
         }
 
         #historyModal .close-modal {
             position: absolute;
-            top: 22px;
+            top: 20px;
             right: 28px;
             color: var(--text-muted);
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
             cursor: pointer;
             line-height: 1;
@@ -858,10 +859,10 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 17px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 16px;
+            margin-bottom: 18px;
             padding-right: 30px;
         }
         body.power-saving-mode .page-main-title {
@@ -870,8 +871,8 @@
 
         .tab-cards-container {
             display: flex;
-            gap: 12px;
-            margin-bottom: 18px;
+            gap: 14px;
+            margin-bottom: 20px;
             padding-bottom: 16px;
             border-bottom: 1px solid var(--border-color);
         }
@@ -880,7 +881,7 @@
             flex: 1;
             display: flex;
             align-items: center;
-            padding: 12px 14px;
+            padding: 14px 18px;
             background: #F8FAFC;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-inner);
@@ -905,15 +906,15 @@
         }
 
         .history-item-icon-box {
-            width: 38px;
-            height: 38px;
+            width: 40px;
+            height: 40px;
             background: #F8FAFC;
             border: 1px solid var(--border-color);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 10px;
+            margin-right: 12px;
             flex-shrink: 0;
             color: var(--text-muted);
             transition: all 0.2s;
@@ -938,7 +939,7 @@
         }
 
         .history-item-title {
-            font-size: 13.5px;
+            font-size: 15px;
             font-weight: 600;
             color: var(--text-main);
             white-space: nowrap;
@@ -961,17 +962,17 @@
         .sub-card {
             background: #F8FAFC;
             border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 14px;
-            margin-bottom: 12px;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
         }
         body.power-saving-mode .sub-card { background: #1E222A !important; }
 
         .sub-card-title {
-            font-size: 12.5px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 700;
             color: var(--text-muted);
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -980,12 +981,13 @@
             color: #CBD5E1 !important;
         }
 
+        /* 擴大圖表顯示區域 */
         .chart-wrapper {
             background: #FFFFFF;
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 10px;
-            height: 120px;
+            border-radius: 12px;
+            padding: 14px;
+            height: 180px;
             position: relative;
         }
         body.power-saving-mode .chart-wrapper { background: #1E222A !important; }
@@ -998,18 +1000,18 @@
         .error-word-list {
             background: #FFFFFF;
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 10px 12px;
+            border-radius: 12px;
+            padding: 12px 14px;
             margin-bottom: 10px;
         }
         body.power-saving-mode .error-word-list { background: #1E222A !important; }
         .error-word-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 12.5px;
+            gap: 10px;
+            font-size: 13.5px;
             color: var(--text-main);
-            padding: 6px 0;
+            padding: 8px 0;
         }
         body.power-saving-mode .error-word-item {
             color: #F1F5F9 !important;
@@ -1028,10 +1030,10 @@
         .save-target-row {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
         .save-target-label {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             color: var(--primary);
             white-space: nowrap;
@@ -1041,13 +1043,13 @@
         }
         .target-select {
             flex: 1;
-            padding: 7px 10px;
-            font-size: 12px;
+            padding: 8px 12px;
+            font-size: 13px;
             font-weight: 600;
             color: var(--text-main);
             background: #FFFFFF;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 10px;
             outline: none;
         }
         body.power-saving-mode .target-select { background: #1E222A !important; color: #F1F5F9 !important; }
@@ -1056,16 +1058,16 @@
             background: var(--primary-gradient);
             border: none;
             color: white;
-            padding: 7px 14px;
-            font-size: 12px;
+            padding: 8px 16px;
+            font-size: 13px;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             white-space: nowrap;
         }
         .btn-purple:hover { opacity: 0.92; transform: translateY(-1px); }
@@ -1073,9 +1075,9 @@
         .history-card { 
             background: #FFFFFF; 
             border: 1px solid var(--border-color); 
-            border-radius: 10px; 
-            margin-bottom: 8px; 
-            padding: 11px 14px; 
+            border-radius: 12px; 
+            margin-bottom: 10px; 
+            padding: 13px 16px; 
         }
         body.power-saving-mode .history-card { background: #1E222A !important; border-color: #2D3748 !important; }
         .history-header { 
@@ -1084,17 +1086,17 @@
             align-items: center; 
             cursor: pointer; 
             font-weight: 600; 
-            font-size: 12.5px; 
+            font-size: 13.5px; 
             color: var(--text-main); 
         }
         body.power-saving-mode .history-header { color: #F1F5F9 !important; }
         .history-detail { 
             display: none; 
-            margin-top: 10px; 
-            padding-top: 10px; 
+            margin-top: 12px; 
+            padding-top: 12px; 
             border-top: 1px dashed var(--border-color); 
-            font-size: 12px; 
-            max-height: 140px; 
+            font-size: 13px; 
+            max-height: 180px; 
             overflow-y: auto; 
         }
         body.power-saving-mode .history-detail {
@@ -1791,7 +1793,7 @@
             <div class="tab-cards-container">
                 <div class="tab-card-item active" id="cardListeningTab" onclick="switchHistoryTab('listening')">
                     <div class="history-item-icon-box">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
                     </div>
                     <div class="history-item-content">
                         <div class="history-item-title">聽力測驗分析</div>
@@ -1799,7 +1801,9 @@
                 </div>
 
                 <div class="tab-card-item" id="cardWordTab" onclick="switchHistoryTab('word')">
-                    <div class="history-item-icon-box" style="visibility: hidden; width: 0; margin-right: 0;"></div>
+                    <div class="history-item-icon-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>
+                    </div>
                     <div class="history-item-content">
                         <div class="history-item-title">字卡測驗分析</div>
                     </div>
@@ -1817,7 +1821,7 @@
 
                     <div class="sub-card">
                         <div class="sub-card-title">🔥 錯誤率最高單字 (聽力測驗)</div>
-                        <div id="listeningTopWrongWords" class="error-word-list" style="max-height: 140px; overflow-y: auto;"></div>
+                        <div id="listeningTopWrongWords" class="error-word-list" style="max-height: 180px; overflow-y: auto;"></div>
                         <div class="save-target-row" style="margin-top: 10px;">
                             <span class="save-target-label">儲存至目標題庫：</span>
                             <select id="targetListSelectorListening" class="target-select"></select>
@@ -1827,7 +1831,7 @@
 
                     <div class="sub-card">
                         <div class="sub-card-title">📜 歷史分數紀錄 (聽力測驗)</div>
-                        <div id="examHistoryList" style="max-height: 200px; overflow-y: auto;"></div>
+                        <div id="examHistoryList" style="max-height: 240px; overflow-y: auto;"></div>
                     </div>
                 </div>
 
@@ -1841,7 +1845,7 @@
 
                     <div class="sub-card">
                         <div class="sub-card-title">🔥 錯誤率最高單字 (字卡測驗)</div>
-                        <div id="cardTopWrongWords" class="error-word-list" style="max-height: 140px; overflow-y: auto;"></div>
+                        <div id="cardTopWrongWords" class="error-word-list" style="max-height: 180px; overflow-y: auto;"></div>
                         <div class="save-target-row" style="margin-top: 10px;">
                             <span class="save-target-label">儲存至目標題庫：</span>
                             <select id="targetListSelectorCard" class="target-select"></select>
@@ -1851,12 +1855,12 @@
 
                     <div class="sub-card">
                         <div class="sub-card-title">📜 歷史分數紀錄 (字卡測驗)</div>
-                        <div id="cardExamHistoryList" style="max-height: 200px; overflow-y: auto;"></div>
+                        <div id="cardExamHistoryList" style="max-height: 240px; overflow-y: auto;"></div>
                     </div>
                 </div>
             </div>
 
-            <button class="action-btn-primary" style="margin-top: 14px;" onclick="closeHistoryModal()">關閉視窗</button>
+            <button class="action-btn-primary" style="margin-top: 16px; padding: 13px;" onclick="closeHistoryModal()">關閉視窗</button>
         </div>
     </div>
 </div>
@@ -3398,6 +3402,8 @@
         document.getElementById('examBackBtn').style.display = 'inline-flex';
         
         let total = examResults.length;
+        if (total === 0) return;
+
         let correct = examResults.filter(r => r.isCorrect).length;
         let score = total > 0 ? Math.round((correct / total) * 100) : 0;
         
@@ -3407,29 +3413,27 @@
         triggerAutoSaveToCloud();
 
         let html = `<div class="result-box">
-            <div style="font-weight:700; margin-bottom:12px; font-size:15px; color:var(--text-main);">※ 考試結束！以下為您的測驗結果：</div>
+            <div style="font-weight:700; margin-bottom:12px; font-size:15px; color:var(--text-main);">※ 聽力測驗結束！以下為您的測驗結果：</div>
             <div style="font-weight:600; margin-bottom:14px; color:var(--primary);">📊 成績統計：得分 ${score} 分 (總題數 ${total} 題，完全答對 ${correct} 題)</div>`;
         
         examResults.forEach((r, i) => {
             let titleColor = r.isCorrect ? '#10B981' : '#EF4444';
             let icon = r.isCorrect ? '✅' : '❌';
+            let correctInfo = `${r.english} (${r.chinese || ''})`;
             
             let engDisplay = r.engMatch ? `<span style="color:#10B981;">${r.userEng || '[(未填)]'}</span>` : `<span style="color:#EF4444;">${r.userEng || '[(未填)]'}</span>`;
             let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${r.userChi || '[(未填)]'}</span>` : `<span style="color:#EF4444;">${r.userChi || '[(未填)]'}</span>`;
-
-            let correctInfo = `${r.english} (${r.chinese || ''})`;
             let userAnsInfo = `${engDisplay} / ${chiDisplay}`;
 
             html += `<div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
-                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
+                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${r.english} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
                 <div style="font-size:13.5px; color:var(--text-muted);">您的回答：${userAnsInfo}</div>
             </div>`;
         });
         html += `</div>`;
-        document.getElementById('resultContainer').innerHTML = html;
-        document.getElementById('resultContainer').style.display = 'block';
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        document.getElementById('modalResultBody').innerHTML = html;
+        document.getElementById('examResultModal').style.display = 'block';
     }
 
     function handleInputKeyDown(e, type) {
@@ -3651,6 +3655,7 @@
         }
     }
 
+    /* 渲染成績曲線圖：優化點位與文字顯示比例 */
     function renderScoreChart(canvasId, dataList) {
         const canvas = document.getElementById(canvasId);
         if (!canvas) return;
@@ -3668,14 +3673,14 @@
 
         if (!dataList || dataList.length === 0) {
             ctx.fillStyle = "#94A3B8";
-            ctx.font = "12px Inter, sans-serif";
+            ctx.font = "13px Inter, sans-serif";
             ctx.textAlign = "center";
             ctx.fillText("尚無歷史成績資料", width / 2, height / 2);
             return;
         }
 
         const scores = dataList.slice(0, 10).reverse().map(d => d.score);
-        const padding = 20;
+        const padding = 28;
         const chartWidth = width - padding * 2;
         const chartHeight = height - padding * 2;
 
@@ -3702,7 +3707,7 @@
         if (points.length > 1) {
             ctx.beginPath();
             ctx.strokeStyle = "#6366F1";
-            ctx.lineWidth = 2.5;
+            ctx.lineWidth = 3;
             points.forEach((p, idx) => {
                 if (idx === 0) ctx.moveTo(p.x, p.y);
                 else ctx.lineTo(p.x, p.y);
@@ -3712,17 +3717,17 @@
 
         points.forEach(p => {
             ctx.beginPath();
-            ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
             ctx.fillStyle = "#6366F1";
             ctx.fill();
             ctx.strokeStyle = "#FFFFFF";
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 2;
             ctx.stroke();
 
             ctx.fillStyle = "#4F46E5";
             ctx.font = "bold 15px Inter, sans-serif";
             ctx.textAlign = "center";
-            ctx.fillText(p.score, p.x, p.y - 10);
+            ctx.fillText(p.score, p.x, p.y - 12);
         });
     }
 
