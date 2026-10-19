@@ -588,14 +588,21 @@
             min-height: 260px;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 1s ease 0s;
+            transition: transform 0.6s ease;
             box-sizing: border-box;
             user-select: none;
+            cursor: pointer;
         }
 
-        .flashcard-perspective:hover .flashcard {
-            transform: rotateY(180deg);
-            transition-delay: 0.5s;
+        /* 保留電腦桌面版 hover 效果，同時加上 JS 觸控支援的 .flipped 狀態 */
+        @media (hover: hover) and (pointer: fine) {
+            .flashcard-perspective:hover .flashcard {
+                transform: rotateY(180deg);
+            }
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg) !important;
         }
 
         .card-face {
@@ -1422,7 +1429,7 @@
                 </div>
             </div>
 
-            <div class="swipe-hint">💡 提示：滑鼠移至卡片 0.5 秒後可翻轉看中文</div>
+            <div class="swipe-hint">💡 提示：點擊卡片即可翻轉看中文，左右滑動切換卡片</div>
 
             <div class="card-nav-controls">
                 <button class="external-card-audio-btn" onclick="playCurrentFlashcardAudio()" title="播放發音">🔊</button>
@@ -2094,6 +2101,10 @@
     let cardExamResults = [];
     let currentCardExamRanges = "";
 
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let isSwipeAction = false;
+
     window.onload = function() {
         checkAndRedirectInAppBrowser();
         loadVoices();
@@ -2110,6 +2121,7 @@
         initEditorSelector();
         initExamCheckboxes();
         loadHomeCardOrder();
+        initFlashcardTouchListeners();
 
         document.querySelectorAll('input[type="range"]').forEach(slider => updateSliderProgress(slider));
 
@@ -2134,6 +2146,36 @@
             });
         }
     };
+
+    function initFlashcardTouchListeners() {
+        const cardEl = document.getElementById('flashcardCardEl');
+        if (!cardEl) return;
+
+        cardEl.addEventListener('touchstart', e => { 
+            touchStartX = e.changedTouches[0].screenX;
+            isSwipeAction = false;
+        }, { passive: true });
+
+        cardEl.addEventListener('touchend', e => { 
+            touchEndX = e.changedTouches[0].screenX;
+            let diffX = touchEndX - touchStartX;
+            
+            if (Math.abs(diffX) > 40) {
+                isSwipeAction = true;
+                if (diffX < -40) nextFlashcard();
+                else if (diffX > 40) prevFlashcard();
+            } else {
+                cardEl.classList.toggle('flipped');
+            }
+        }, false);
+
+        cardEl.addEventListener('click', e => {
+            // 桌機無 Touch 時的翻轉邏輯，觸控時已有 touchend 處理
+            if (!('ontouchstart' in window)) {
+                cardEl.classList.toggle('flipped');
+            }
+        });
+    }
 
     function checkAndRedirectInAppBrowser() {
         const ua = navigator.userAgent || navigator.vendor || window.opera;
@@ -2541,8 +2583,18 @@
         switchView('flashcardSetupView');
     }
 
+    function resetFlashcardFlipState() {
+        const cardEl = document.getElementById('flashcardCardEl');
+        if (cardEl) {
+            cardEl.classList.remove('flipped');
+        }
+    }
+
     function updateFlashcardView() {
         if (flashcardActiveList.length === 0) return;
+        
+        resetFlashcardFlipState();
+
         let card = flashcardActiveList[currentFcIndex];
         document.getElementById('fcCardEng').innerText = card.english;
         document.getElementById('fcCardChi').innerText = card.chinese || '(無中文)';
@@ -2911,18 +2963,6 @@
         if (chosenVoice) utterance.voice = chosenVoice;
         utterance.rate = parseFloat(document.getElementById('fcSpeakRate').value) || 1.0;
         window.speechSynthesis.speak(utterance);
-    }
-
-    let touchStartX = 0;
-    let touchEndX = 0;
-    const cardEl = document.getElementById('flashcardCardEl');
-    if (cardEl) {
-        cardEl.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, false);
-        cardEl.addEventListener('touchend', e => { 
-            touchEndX = e.changedTouches[0].screenX;
-            if (touchEndX < touchStartX - 50) nextFlashcard();
-            if (touchEndX > touchStartX + 50) prevFlashcard();
-        }, false);
     }
 
     function initExamCardGrid() {
