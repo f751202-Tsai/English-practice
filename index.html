@@ -22,7 +22,6 @@
             --radius-inner: 16px;
         }
 
-        /* 省電模式色彩調整：統一深黑色為 #1E222A */
         body.power-saving-mode {
             --bg-body: #14171E !important;
             --card-bg: #1E222A !important;
@@ -594,7 +593,6 @@
             cursor: pointer;
         }
 
-        /* 保留電腦桌面版 hover 效果，同時加上 JS 觸控支援的 .flipped 狀態 */
         @media (hover: hover) and (pointer: fine) {
             .flashcard-perspective:hover .flashcard {
                 transform: rotateY(180deg);
@@ -1759,8 +1757,8 @@
         <div class="config-group" style="margin-top: 14px;">
             <label for="fcSpeakRate" style="margin-top:0;">調整總朗讀語速：</label>
             <div class="slider-container">
-                <input type="range" id="fcSpeakRate" min="0.5" max="1.5" step="0.05" value="1" class="range-slider" oninput="updateSpeedDisplay('fcSpeakRate', 'fcSpeedValue'); updateSliderProgress(this);">
-                <span id="fcSpeedValue" class="speed-val">1.00 倍</span>
+                <input type="range" id="fcSpeakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" oninput="updateSpeedDisplay('fcSpeakRate', 'fcSpeedValue'); updateSliderProgress(this);">
+                <span id="fcSpeedValue" class="speed-val">0.80 倍</span>
             </div>
         </div>
 
@@ -1993,8 +1991,8 @@
         
         <label for="examSpeakRate" style="margin-top: 14px;">調整總朗讀語速：</label>
         <div class="slider-container">
-            <input type="range" id="examSpeakRate" min="0.5" max="1.5" step="0.05" value="1" class="range-slider" oninput="updateSpeedDisplay('examSpeakRate', 'examSpeedValue'); saveExamAppSettings(); updateSliderProgress(this);">
-            <span id="examSpeedValue" class="speed-val">1.00 倍</span>
+            <input type="range" id="examSpeakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" oninput="updateSpeedDisplay('examSpeakRate', 'examSpeedValue'); saveExamAppSettings(); updateSliderProgress(this);">
+            <span id="examSpeedValue" class="speed-val">0.80 倍</span>
         </div>
 
         <label for="examQuestionCount" style="margin-top: 14px;">題目數量 (0為全部)：</label>
@@ -2046,8 +2044,8 @@
         
         <label for="speakRate" style="margin-top: 14px;">調整總朗讀語速：</label>
         <div class="slider-container">
-            <input type="range" id="speakRate" min="0.5" max="1.5" step="0.05" value="1" class="range-slider" oninput="updateSpeedDisplay('speakRate', 'speedValue'); saveAppSettings(); updateSliderProgress(this);">
-            <span id="speedValue" class="speed-val">1.00 倍</span>
+            <input type="range" id="speakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" oninput="updateSpeedDisplay('speakRate', 'speedValue'); saveAppSettings(); updateSliderProgress(this);">
+            <span id="speedValue" class="speed-val">0.80 倍</span>
         </div>
         
         <label for="pauseTime" style="margin-top: 14px;">單字之間停頓秒數：</label>
@@ -2239,8 +2237,18 @@
     }
 
     function loadVoices() { voices = synth.getVoices(); }
+
+    /* 優化後的語音選擇邏輯 (與 index2 一致優選美語發音) */
     function getSelectedVoice(langCode) {
         if (voices.length === 0) voices = synth.getVoices();
+        if (langCode === 'en-US' || langCode.startsWith('en')) {
+            // 優先找標記為 en-US 或 en_US 的語音
+            let usVoice = voices.find(v => v.lang === 'en-US' || v.lang === 'en_US' || v.lang.replace('_','-') === 'en-US');
+            if (usVoice) return usVoice;
+            // 次優尋找包含 English / US 的語音
+            let fallbackEn = voices.find(v => v.lang.startsWith('en'));
+            if (fallbackEn) return fallbackEn;
+        }
         return voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode) || null;
     }
 
@@ -2999,7 +3007,7 @@
         let utterance = new SpeechSynthesisUtterance(word);
         let chosenVoice = getSelectedVoice('en-US');
         if (chosenVoice) utterance.voice = chosenVoice;
-        utterance.rate = parseFloat(document.getElementById('fcSpeakRate').value) || 1.0;
+        utterance.rate = parseFloat(document.getElementById('fcSpeakRate').value) || 0.8;
         window.speechSynthesis.speak(utterance);
     }
 
@@ -3364,7 +3372,7 @@
         }
 
         let item = wordsData[currentWordIndex];
-        let rate = parseFloat(document.getElementById('speakRate').value) || 1;
+        let rate = parseFloat(document.getElementById('speakRate').value) || 0.8;
         let isLoop = document.getElementById('enableLoop').checked;
         let targetRepeat = parseInt(document.getElementById('repeatCount').value) || 1;
         if (targetRepeat < 1) targetRepeat = 1;
@@ -3528,7 +3536,7 @@
         document.getElementById('examProgressStatus').innerText = `🎧 正在進行考試... 請聆聽並於下方作答 (${currentWordIndex + 1}/${wordsData.length})`;
 
         let item = wordsData[currentWordIndex];
-        let rate = parseFloat(document.getElementById('examSpeakRate').value) || 1;
+        let rate = parseFloat(document.getElementById('examSpeakRate').value) || 0.8;
         let repeatCount = parseInt(document.getElementById('examRepeatCount').value) || 1;
 
         let utteranceCount = 0;
