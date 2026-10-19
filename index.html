@@ -454,7 +454,6 @@
         #flashcardSettingsModal .modal-content { transform: scale(1); transform-origin: center center; margin: 5vh auto; }
         #cardExamAdvancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 5vh auto; }
 
-        /* ================= 測驗紀錄與學習分析 Modal 寬度與比例放大修正 ================= */
         #historyModal .modal-content {
             width: 92%;
             max-width: 880px;
@@ -759,7 +758,6 @@
         }
         .btn-rename:hover { background: #EEF2FF; color: var(--primary); border-color: #C7D2FE; }
 
-        /* ================= 題庫編輯器容器與高亮完全重疊關鍵修復 ================= */
         .editor-wrapper {
             position: relative;
             width: 100%;
@@ -776,7 +774,6 @@
             border-color: #2D3748 !important;
         }
 
-        /* 底層高亮背景與頂層輸入框設定 100% 精確重疊 */
         .highlight-backdrop, 
         .editor-wrapper textarea {
             position: absolute;
@@ -787,7 +784,7 @@
             padding: 12px 14px;
             box-sizing: border-box !important;
             font-size: 14px;
-            font-weight: 400; /* 強制相同字重 */
+            font-weight: 400;
             font-family: inherit;
             line-height: 1.6;
             letter-spacing: normal;
@@ -800,7 +797,6 @@
             resize: none;
         }
 
-        /* 底層高亮背景：普通文字完全透明，消除黑色陰影/殘影重影 */
         .highlight-backdrop {
             z-index: 1;
             color: transparent !important;
@@ -810,7 +806,6 @@
             background: transparent;
         }
 
-        /* 頂層文字輸入框：負責顯示全部文字，背景透明 */
         .editor-wrapper textarea { 
             z-index: 2; 
             background: transparent !important; 
@@ -825,7 +820,6 @@
             caret-color: #FFFFFF !important;
         }
 
-        /* 一般模式搜尋高亮：鮮黃背景，文字透明交由 textarea 本身顯示，徹底解決重疊不齊導致的陰影 */
         .highlight-match { 
             background-color: #FDE047 !important; 
             color: transparent !important; 
@@ -835,7 +829,6 @@
             box-shadow: none !important;
         }
 
-        /* 省電模式搜尋高亮：鮮黃背景，文字透明交由 textarea 本身顯示 */
         body.power-saving-mode .editor-wrapper .highlight-backdrop .highlight-match,
         body.power-saving-mode .highlight-match {
             background-color: #FACC15 !important; 
@@ -998,7 +991,6 @@
             color: #CBD5E1 !important;
         }
 
-        /* 擴大圖表顯示區域 */
         .chart-wrapper {
             background: #FFFFFF;
             border: 1px solid var(--border-color);
@@ -1126,7 +1118,6 @@
             border-color: #2D3748 !important;
         }
 
-        /* ================= 📱 手機與平板適應性 (RWD) 關鍵修正 ================= */
         @media screen and (max-width: 768px) {
             body {
                 padding: 12px 8px;
@@ -1682,7 +1673,7 @@
 
             <div class="mode-status-card">
                 <div class="mode-status-text">
-                    <span>💻</span> 本機作業模式 (未登入)
+                    <span id="editorModeStatusText">💻 本機作業模式 (未登入)</span>
                 </div>
             </div>
 
@@ -2096,7 +2087,6 @@
     let flashcardActiveList = [];
     let currentFcIndex = 0;
 
-    // 字卡測驗相關變數
     let cardExamActiveList = [];
     let currentCardExamIndex = 0;
     let cardExamTimerId = null;
@@ -2105,6 +2095,7 @@
     let currentCardExamRanges = "";
 
     window.onload = function() {
+        checkAndRedirectInAppBrowser();
         loadVoices();
         if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
         loadAppSettings();
@@ -2129,12 +2120,12 @@
                 callback: async (resp) => {
                     if (resp.error !== undefined || !resp.access_token) {
                         accessToken = null; isCloudSyncActive = false;
-                        document.getElementById('cloudStatusText').innerText = `💻 本機作業模式 (未登入)`;
+                        updateCloudStatusText(`💻 本機作業模式 (未登入)`);
                         return;
                     }
                     accessToken = resp.access_token;
                     isCloudSyncActive = true;
-                    document.getElementById('cloudStatusText').innerText = `✅ 已連結 Google 雲端`;
+                    updateCloudStatusText(`✅ 已連結 Google 雲端`);
                     let authBtn = document.getElementById('cloudAuthBtn');
                     authBtn.innerText = '🔒 登出'; authBtn.className = 'cloud-btn logout';
                     authBtn.setAttribute('onclick', 'handleLogout()');
@@ -2143,6 +2134,31 @@
             });
         }
     };
+
+    function checkAndRedirectInAppBrowser() {
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isLine = /Line/i.test(ua);
+        const isInApp = /FBAN|FBAV|Instagram|MicroMessenger/i.test(ua) || isLine;
+
+        if (isInApp) {
+            const currentUrl = window.location.href;
+            if (/Android/i.test(ua)) {
+                const intentUrl = 'intent://' + currentUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+                window.location.href = intentUrl;
+            } else if (/iPhone|iPad|iPod/i.test(ua)) {
+                document.getElementById('inAppBrowserWarning').style.display = 'block';
+            } else {
+                document.getElementById('inAppBrowserWarning').style.display = 'block';
+            }
+        }
+    }
+
+    function updateCloudStatusText(text) {
+        let elHome = document.getElementById('cloudStatusText');
+        if (elHome) elHome.innerText = text;
+        let elEditor = document.getElementById('editorModeStatusText');
+        if (elEditor) elEditor.innerText = text;
+    }
 
     function updateSliderProgress(slider) {
         let min = parseFloat(slider.min) || 0;
@@ -2165,7 +2181,7 @@
         if (accessToken) {
             google.accounts.oauth2.revoke(accessToken, () => {
                 accessToken = null; isCloudSyncActive = false;
-                document.getElementById('cloudStatusText').innerText = `💻 本機作業模式 (未登入)`;
+                updateCloudStatusText(`💻 本機作業模式 (未登入)`);
                 let authBtn = document.getElementById('cloudAuthBtn');
                 authBtn.innerText = '登入 Google 雲端'; authBtn.className = 'cloud-btn';
                 authBtn.setAttribute('onclick', 'handleAuthClick()');
@@ -2176,6 +2192,7 @@
 
     async function loadDataFromGoogleDrive() {
         if (!accessToken) return;
+        updateCloudStatusText(`☁️ 雲端資料同步中...`);
         try {
             let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
             let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
@@ -2209,11 +2226,16 @@
                     initExamCheckboxes();
                 }
             }
-        } catch (err) { console.error("雲端載入失敗", err); }
+            updateCloudStatusText(`✅ 已連結 Google 雲端`);
+        } catch (err) { 
+            console.error("雲端載入失敗", err); 
+            updateCloudStatusText(`⚠️ 雲端同步失敗`);
+        }
     }
 
     async function triggerAutoSaveToCloud() {
         if (!accessToken || !isCloudSyncActive) return;
+        updateCloudStatusText(`☁️ 上傳備份中...`);
         try {
             let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
             let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
@@ -2239,7 +2261,11 @@
                     method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}` }, body: form
                 });
             }
-        } catch(e) { console.error("雲端存檔失敗", e); }
+            updateCloudStatusText(`✅ 已連結 Google 雲端`);
+        } catch(e) { 
+            console.error("雲端存檔失敗", e); 
+            updateCloudStatusText(`⚠️ 雲端同步失敗`);
+        }
     }
 
     function switchView(viewId) {
@@ -2579,7 +2605,6 @@
         initCardExamGrid();
     }
 
-    // ================= 字卡測驗邏輯 =================
     function initCardExamGrid() {
         let grid = document.getElementById('cardExamGrid');
         if (!grid) return;
@@ -2684,7 +2709,6 @@
             words = words.filter(w => w.starred);
         }
 
-        // 隨機洗牌
         for (let i = words.length - 1; i > 0; i--) {
             let j = Math.floor(Math.random() * (i + 1));
             [words[i], words[j]] = [words[j], words[i]];
@@ -3070,7 +3094,6 @@
         }
     }
 
-    /* 搜尋高亮處理：修正文字顏色與結構以徹底解決重影問題 */
     function handleEditorSearch() {
         const textarea = document.getElementById('editorWordList');
         const searchInput = document.getElementById('wordSearchInput');
@@ -3772,7 +3795,6 @@
         }
     }
 
-    /* 渲染成績曲線圖：優化點位與文字顯示比例 */
     function renderScoreChart(canvasId, dataList) {
         const canvas = document.getElementById(canvasId);
         if (!canvas) return;
