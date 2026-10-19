@@ -2240,16 +2240,9 @@
 
     /* 優化後的語音選擇邏輯 (與 index2 一致優選美語發音) */
     function getSelectedVoice(langCode) {
-        if (voices.length === 0) voices = synth.getVoices();
-        if (langCode === 'en-US' || langCode.startsWith('en')) {
-            // 優先找標記為 en-US 或 en_US 的語音
-            let usVoice = voices.find(v => v.lang === 'en-US' || v.lang === 'en_US' || v.lang.replace('_','-') === 'en-US');
-            if (usVoice) return usVoice;
-            // 次優尋找包含 English / US 的語音
-            let fallbackEn = voices.find(v => v.lang.startsWith('en'));
-            if (fallbackEn) return fallbackEn;
-        }
-        return voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode) || null;
+    if (voices.length === 0) voices = synth.getVoices();
+    let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
+    return standardVoice || null;
     }
 
     function handleAuthClick() {
@@ -3007,10 +3000,14 @@
         let utterance = new SpeechSynthesisUtterance(word);
         let chosenVoice = getSelectedVoice('en-US');
         if (chosenVoice) utterance.voice = chosenVoice;
+        utterance.lang = 'en-US'; // 👈 補上 lang 屬性
         utterance.rate = parseFloat(document.getElementById('fcSpeakRate').value) || 0.8;
+    
+        let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+        utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
+
         window.speechSynthesis.speak(utterance);
     }
-
     function initExamCardGrid() {
         let grid = document.getElementById('examCardGrid');
         if (!grid) return;
@@ -3415,25 +3412,33 @@
         });
     }
 
-    function playQueue(queueItems, rate, onComplete) {
-        if (queueItems.length === 0) {
+        function playQueue(queueItems, rate, onComplete) {
+            if (queueItems.length === 0) {
             if (onComplete) onComplete();
             return;
-        }
-        let item = queueItems.shift();
-        if (item.onPlay) item.onPlay();
+            }
+            let item = queueItems.shift();
+            if (item.onPlay) item.onPlay();
 
-        let utterance = new SpeechSynthesisUtterance(item.text);
-        let chosenVoice = getSelectedVoice(item.isEng ? 'en-US' : 'zh-TW');
-        if (chosenVoice) utterance.voice = chosenVoice;
-        utterance.rate = rate;
+            let utterance = new SpeechSynthesisUtterance(item.text);
+            let langCode = item.isEng ? 'en-US' : 'zh-TW';
+            let chosenVoice = getSelectedVoice(langCode);
+    
+            if (chosenVoice) utterance.voice = chosenVoice;
+            utterance.lang = langCode; // 👈 關鍵修正：必須顯式指定 lang 屬性！
+            utterance.rate = rate;
 
-        utterance.onend = () => {
+            // 補上系統音量傳入
+            let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+            let baseVol = (parseInt(sysVol) || 100) / 100;
+            utterance.volume = Math.max(0, Math.min(1.0, baseVol));
+
+            utterance.onend = () => {
             if (!isPlaying || isPaused) return;
             playQueue(queueItems, rate, onComplete);
-        };
-        synth.speak(utterance);
-    }
+            };
+            synth.speak(utterance);
+         }
 
     function stopDictation() {
         isPlaying = false; isPaused = false; synth.cancel(); clearTimeout(timeoutId);
@@ -3540,33 +3545,37 @@
         let repeatCount = parseInt(document.getElementById('examRepeatCount').value) || 1;
 
         let utteranceCount = 0;
-        function speakSingle() {
-            let utterance = new SpeechSynthesisUtterance(item.english);
-            let chosenVoice = getSelectedVoice('en-US');
-            if (chosenVoice) utterance.voice = chosenVoice;
+    function speakSingle() {
+    let utterance = new SpeechSynthesisUtterance(item.english);
+    let chosenVoice = getSelectedVoice('en-US');
+    if (chosenVoice) utterance.voice = chosenVoice;
+    utterance.lang = 'en-US'; // 👈 補上 lang 屬性
+    
+    utterance.rate = rate;
+    let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+    utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
+
+    utterance.onend = () => {
+        utteranceCount++;
+        if (utteranceCount < repeatCount) {
+            setTimeout(speakSingle, 300);
+        } else {
+            document.getElementById('examInputEng').disabled = false;
+            document.getElementById('examInputChi').disabled = false;
+            document.getElementById('examSubmitBtn').disabled = false;
+            document.getElementById('examInputEng').focus();
             
-            utterance.rate = rate;
-            utterance.onend = () => {
-                utteranceCount++;
-                if (utteranceCount < repeatCount) {
-                    setTimeout(speakSingle, 300);
-                } else {
-                    document.getElementById('examInputEng').disabled = false;
-                    document.getElementById('examInputChi').disabled = false;
-                    document.getElementById('examSubmitBtn').disabled = false;
-                    document.getElementById('examInputEng').focus();
-                    
-                    examTimeLeft = parseInt(document.getElementById('examAnswerTime').value) || 26;
-                    document.getElementById('timeLeft').innerText = examTimeLeft;
-                    examTimerId = setInterval(() => {
-                        examTimeLeft--;
-                        document.getElementById('timeLeft').innerText = examTimeLeft;
-                        if (examTimeLeft <= 0) { clearInterval(examTimerId); submitExamAnswer(); }
-                    }, 1000);
-                }
-            };
-            synth.speak(utterance);
+            examTimeLeft = parseInt(document.getElementById('examAnswerTime').value) || 26;
+            document.getElementById('timeLeft').innerText = examTimeLeft;
+            examTimerId = setInterval(() => {
+                examTimeLeft--;
+                document.getElementById('timeLeft').innerText = examTimeLeft;
+                if (examTimeLeft <= 0) { clearInterval(examTimerId); submitExamAnswer(); }
+            }, 1000);
         }
+    };
+    synth.speak(utterance);
+}////
         speakSingle();
     }
 
