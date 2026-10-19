@@ -542,7 +542,17 @@
             align-items: center; 
             justify-content: space-between;
         }
-        body.power-saving-mode #status { background: #1E222A !important; color: #E2E8F0 !important; }
+body.power-saving-mode #status { 
+    background: #1E222A !important; 
+    color: #FFFFFF !important; 
+    border: 1px solid #2D3748 !important; 
+    border-left: 5px solid var(--primary) !important;
+}
+
+body.power-saving-mode #status strong,
+body.power-saving-mode #status span {
+    color: #FFFFFF !important;
+}
 
         .exam-setup-box { margin-top: 16px; padding: 22px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; box-sizing: border-box; }
         .exam-lists-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; max-height: 200px; overflow-y: auto; background: white; padding: 13px; border: 1px solid var(--border-color); border-radius: 14px; margin-top: 9px; box-sizing: border-box; }
@@ -3434,8 +3444,13 @@
             utterance.volume = Math.max(0, Math.min(1.0, baseVol));
 
             utterance.onend = () => {
+
             if (!isPlaying || isPaused) return;
-            playQueue(queueItems, rate, onComplete);
+
+                setTimeout(() => {
+                    playQueue(queueItems, rate, onComplete);
+                }, 1000);
+            
             };
             synth.speak(utterance);
          }
@@ -3558,7 +3573,7 @@
     utterance.onend = () => {
         utteranceCount++;
         if (utteranceCount < repeatCount) {
-            setTimeout(speakSingle, 300);
+            setTimeout(speakSingle, 1000);
         } else {
             document.getElementById('examInputEng').disabled = false;
             document.getElementById('examInputChi').disabled = false;
