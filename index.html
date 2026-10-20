@@ -2162,25 +2162,39 @@ body.power-saving-mode #status span {
 
         document.querySelectorAll('input[type="range"]').forEach(slider => updateSliderProgress(slider));
 
-        if (typeof google !== 'undefined') {
+if (typeof google !== 'undefined') {
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: async (resp) => {
                     if (resp.error !== undefined || !resp.access_token) {
-                        accessToken = null; isCloudSyncActive = false;
+                        accessToken = null; 
+                        isCloudSyncActive = false;
                         updateCloudStatusText(`💻 本機作業模式 (未登入)`);
                         return;
                     }
                     accessToken = resp.access_token;
                     isCloudSyncActive = true;
+                    // 記錄已登入狀態，供重新整理時識別
+                    localStorage.setItem('dictation_google_logged_in', 'true');
+                    
                     updateCloudStatusText(`✅ 已連結 Google 雲端`);
                     let authBtn = document.getElementById('cloudAuthBtn');
-                    authBtn.innerText = '🔒 登出'; authBtn.className = 'cloud-btn logout';
-                    authBtn.setAttribute('onclick', 'handleLogout()');
+                    if (authBtn) {
+                        authBtn.innerText = '🔒 登出'; 
+                        authBtn.className = 'cloud-btn logout';
+                        authBtn.setAttribute('onclick', 'handleLogout()');
+                    }
                     loadDataFromGoogleDrive();
                 }
             });
+
+            // 👈 關鍵新增：如果先前有登入過，重新整理時自動觸發靜默登入（背景自動登入）
+            if (localStorage.getItem('dictation_google_logged_in') === 'true') {
+                updateCloudStatusText(`☁️ 自動連線中...`);
+                // prompt: '' 代表不彈出任何帳號選擇畫面，背景靜默取得 Token
+                tokenClient.requestAccessToken({ prompt: '' });
+            }
         }
     };
 
@@ -2258,14 +2272,21 @@ body.power-saving-mode #status span {
     function handleAuthClick() {
         if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
     }
-    function handleLogout() {
+function handleLogout() {
         if (accessToken) {
             google.accounts.oauth2.revoke(accessToken, () => {
-                accessToken = null; isCloudSyncActive = false;
+                accessToken = null; 
+                isCloudSyncActive = false;
+                // 清除自動登入標記
+                localStorage.removeItem('dictation_google_logged_in');
+                
                 updateCloudStatusText(`💻 本機作業模式 (未登入)`);
                 let authBtn = document.getElementById('cloudAuthBtn');
-                authBtn.innerText = '登入 Google 雲端'; authBtn.className = 'cloud-btn';
-                authBtn.setAttribute('onclick', 'handleAuthClick()');
+                if (authBtn) {
+                    authBtn.innerText = '登入 Google 雲端'; 
+                    authBtn.className = 'cloud-btn';
+                    authBtn.setAttribute('onclick', 'handleAuthClick()');
+                }
                 alert("🔒 已登出 Google 帳號。");
             });
         }
