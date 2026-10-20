@@ -1000,10 +1000,41 @@ body.power-saving-mode #status span {
             margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
         body.power-saving-mode .sub-card-title {
             color: #CBD5E1 !important;
+        }
+
+        .sub-card-content-wrapper {
+            transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+            max-height: 800px;
+            overflow: hidden;
+            opacity: 1;
+        }
+        .sub-card-content-wrapper.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+        }
+
+        .sub-card-toggle-btn {
+            background: #6366F1;
+            border: none;
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.25);
+            flex-shrink: 0;
+        }
+        .sub-card-toggle-btn.collapsed svg {
+            transform: rotate(180deg);
         }
 
         .chart-wrapper {
@@ -1377,7 +1408,7 @@ body.power-saving-mode #status span {
             <div>
                 <div class="textarea-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <button class="collapse-toggle-btn" id="fcCollapseBtn" onclick="toggleFlashcardPreview()" title="展開/摺疊預覽">
+                        <button class="collapse-toggle-btn collapsed" id="fcCollapseBtn" onclick="toggleFlashcardPreview()" title="展開/摺疊預覽">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
@@ -1395,7 +1426,7 @@ body.power-saving-mode #status span {
                     </div>
                 </div>
                 
-                <div class="preview-collapse-container" id="fcPreviewContainer">
+                <div class="preview-collapse-container collapsed" id="fcPreviewContainer">
                     <textarea id="flashcardPreviewTextarea" readonly placeholder="點選上方範圍卡片即可預覽單字..."></textarea>
                 </div>
             </div>
@@ -1470,7 +1501,7 @@ body.power-saving-mode #status span {
             <div>
                 <div class="textarea-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <button class="collapse-toggle-btn" id="cardExamCollapseBtn" onclick="toggleCardExamPreview()" title="展開/摺疊預覽">
+                        <button class="collapse-toggle-btn collapsed" id="cardExamCollapseBtn" onclick="toggleCardExamPreview()" title="展開/摺疊預覽">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
@@ -1488,7 +1519,7 @@ body.power-saving-mode #status span {
                     </div>
                 </div>
                 
-                <div class="preview-collapse-container" id="cardExamPreviewContainer">
+                <div class="preview-collapse-container collapsed" id="cardExamPreviewContainer">
                     <textarea id="cardExamPreviewTextarea" readonly placeholder="點選上方範圍卡片即可預覽單字..."></textarea>
                 </div>
             </div>
@@ -1565,7 +1596,7 @@ body.power-saving-mode #status span {
             <div id="practicePreviewContainer">
                 <div class="textarea-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <button class="collapse-toggle-btn" id="collapseBtn" onclick="togglePreview()" title="展開/摺疊預覽">
+                        <button class="collapse-toggle-btn collapsed" id="collapseBtn" onclick="togglePreview()" title="展開/摺疊預覽">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
@@ -1583,7 +1614,7 @@ body.power-saving-mode #status span {
                     </div>
                 </div>
                 
-                <div class="preview-collapse-container" id="previewContainer">
+                <div class="preview-collapse-container collapsed" id="previewContainer">
                     <textarea id="wordList" readonly placeholder="此處為唯讀預覽，請至「題庫管理與編輯」修改單字..."></textarea>
                 </div>
             </div>
@@ -1626,7 +1657,7 @@ body.power-saving-mode #status span {
             <div id="examPreviewContainer">
                 <div class="textarea-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <button class="collapse-toggle-btn" id="examCollapseBtn" onclick="toggleExamPreview()" title="展開/摺疊預覽">
+                        <button class="collapse-toggle-btn collapsed" id="examCollapseBtn" onclick="toggleExamPreview()" title="展開/摺疊預覽">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
@@ -1644,7 +1675,7 @@ body.power-saving-mode #status span {
                     </div>
                 </div>
                 
-                <div class="preview-collapse-container" id="examPreviewCollapseContainer">
+                <div class="preview-collapse-container collapsed" id="examPreviewCollapseContainer">
                     <textarea id="examWordList" readonly placeholder="此處為唯讀預覽，請至「題庫管理與編輯」修改單字..."></textarea>
                 </div>
             </div>
@@ -1936,49 +1967,103 @@ body.power-saving-mode #status span {
             <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
                 <div class="tab-panel active" id="panelListeningHistory">
                     <div class="sub-card">
-                        <div class="sub-card-title">📈 歷史成績曲線 (聽力測驗)</div>
-                        <div class="chart-wrapper">
-                            <canvas id="listeningScoreCanvas" class="score-chart-canvas"></canvas>
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="listeningScoreChartToggleBtn" onclick="toggleSubCard('listeningScoreChartContent', 'listeningScoreChartToggleBtn', 'listening_score_chart')" title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            📈 歷史成績曲線 (聽力測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="listeningScoreChartContent">
+                            <div class="chart-wrapper">
+                                <canvas id="listeningScoreCanvas" class="score-chart-canvas"></canvas>
+                            </div>
                         </div>
                     </div>
 
                     <div class="sub-card">
-                        <div class="sub-card-title">🔥 錯誤率最高單字 (聽力測驗)</div>
-                        <div id="listeningTopWrongWords" class="error-word-list" style="max-height: 180px; overflow-y: auto;"></div>
-                        <div class="save-target-row" style="margin-top: 10px;">
-                            <span class="save-target-label">儲存至目標題庫：</span>
-                            <select id="targetListSelectorListening" class="target-select"></select>
-                            <button class="btn-purple" onclick="saveSelectedWrongWords('listening')">📥 儲存勾選單字</button>
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="listeningTopWrongToggleBtn" onclick="toggleSubCard('listeningTopWrongContent', 'listeningTopWrongToggleBtn', 'listening_top_wrong')" title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            🔥 錯誤率最高單字 (聽力測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="listeningTopWrongContent">
+                            <div id="listeningTopWrongWords" class="error-word-list" style="max-height: 180px; overflow-y: auto;"></div>
+                            <div class="save-target-row" style="margin-top: 10px;">
+                                <span class="save-target-label">儲存至目標題庫：</span>
+                                <select id="targetListSelectorListening" class="target-select"></select>
+                                <button class="btn-purple" onclick="saveSelectedWrongWords('listening')">📥 儲存勾選單字</button>
+                            </div>
                         </div>
                     </div>
 
                     <div class="sub-card">
-                        <div class="sub-card-title">📜 歷史分數紀錄 (聽力測驗)</div>
-                        <div id="examHistoryList" style="max-height: 240px; overflow-y: auto;"></div>
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="listeningHistoryListToggleBtn" onclick="toggleSubCard('listeningHistoryListContent', 'listeningHistoryListToggleBtn', 'listening_history_list')" title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            📜 歷史分數紀錄 (聽力測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="listeningHistoryListContent">
+                            <div id="examHistoryList" style="max-height: 240px; overflow-y: auto;"></div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="tab-panel" id="panelWordHistory">
                     <div class="sub-card">
-                        <div class="sub-card-title">📈 歷史成績曲線 (字卡測驗)</div>
-                        <div class="chart-wrapper">
-                            <canvas id="cardScoreCanvas" class="score-chart-canvas"></canvas>
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="cardScoreChartToggleBtn" onclick="toggleSubCard('cardScoreChartContent', 'cardScoreChartToggleBtn', 'card_score_chart')" title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            📈 歷史成績曲線 (字卡測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="cardScoreChartContent">
+                            <div class="chart-wrapper">
+                                <canvas id="cardScoreCanvas" class="score-chart-canvas"></canvas>
+                            </div>
                         </div>
                     </div>
 
                     <div class="sub-card">
-                        <div class="sub-card-title">🔥 錯誤率最高單字 (字卡測驗)</div>
-                        <div id="cardTopWrongWords" class="error-word-list" style="max-height: 180px; overflow-y: auto;"></div>
-                        <div class="save-target-row" style="margin-top: 10px;">
-                            <span class="save-target-label">儲存至目標題庫：</span>
-                            <select id="targetListSelectorCard" class="target-select"></select>
-                            <button class="btn-purple" onclick="saveSelectedWrongWords('card')">📥 儲存勾選單字</button>
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="cardTopWrongToggleBtn" onclick="toggleSubCard('cardTopWrongContent', 'cardTopWrongToggleBtn', 'card_top_wrong')" title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            🔥 錯誤率最高單字 (字卡測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="cardTopWrongContent">
+                            <div id="cardTopWrongWords" class="error-word-list" style="max-height: 180px; overflow-y: auto;"></div>
+                            <div class="save-target-row" style="margin-top: 10px;">
+                                <span class="save-target-label">儲存至目標題庫：</span>
+                                <select id="targetListSelectorCard" class="target-select"></select>
+                                <button class="btn-purple" onclick="saveSelectedWrongWords('card')">📥 儲存勾選單字</button>
+                            </div>
                         </div>
                     </div>
 
                     <div class="sub-card">
-                        <div class="sub-card-title">📜 歷史分數紀錄 (字卡測驗)</div>
-                        <div id="cardExamHistoryList" style="max-height: 240px; overflow-y: auto;"></div>
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="cardHistoryListToggleBtn" onclick="toggleSubCard('cardHistoryListContent', 'cardHistoryListToggleBtn', 'card_history_list')" title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            📜 歷史分數紀錄 (字卡測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="cardHistoryListContent">
+                            <div id="cardExamHistoryList" style="max-height: 240px; overflow-y: auto;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2159,6 +2244,7 @@ body.power-saving-mode #status span {
         initExamCheckboxes();
         loadHomeCardOrder();
         initFlashcardTouchListeners();
+        loadCollapseStates();
 
         document.querySelectorAll('input[type="range"]').forEach(slider => updateSliderProgress(slider));
 
@@ -2183,6 +2269,96 @@ body.power-saving-mode #status span {
             });
         }
     };
+
+    function loadCollapseStates() {
+        let collapseStates = JSON.parse(localStorage.getItem('dictation_collapse_states')) || {
+            practice: true,
+            flashcard: true,
+            exam: true,
+            cardExam: true,
+            listening_score_chart: false,
+            listening_top_wrong: false,
+            listening_history_list: false,
+            card_score_chart: false,
+            card_top_wrong: false,
+            card_history_list: false
+        };
+
+        applyCollapseState('previewContainer', 'collapseBtn', collapseStates.practice);
+        applyCollapseState('fcPreviewContainer', 'fcCollapseBtn', collapseStates.flashcard);
+        applyCollapseState('examPreviewCollapseContainer', 'examCollapseBtn', collapseStates.exam);
+        applyCollapseState('cardExamPreviewContainer', 'cardExamCollapseBtn', collapseStates.cardExam);
+
+        applySubCardCollapseState('listeningScoreChartContent', 'listeningScoreChartToggleBtn', collapseStates.listening_score_chart);
+        applySubCardCollapseState('listeningTopWrongContent', 'listeningTopWrongToggleBtn', collapseStates.listening_top_wrong);
+        applySubCardCollapseState('listeningHistoryListContent', 'listeningHistoryListToggleBtn', collapseStates.listening_history_list);
+        applySubCardCollapseState('cardScoreChartContent', 'cardScoreChartToggleBtn', collapseStates.card_score_chart);
+        applySubCardCollapseState('cardTopWrongContent', 'cardTopWrongToggleBtn', collapseStates.card_top_wrong);
+        applySubCardCollapseState('cardHistoryListContent', 'cardHistoryListToggleBtn', collapseStates.card_history_list);
+    }
+
+    function applyCollapseState(containerId, btnId, isCollapsed) {
+        const container = document.getElementById(containerId);
+        const btn = document.getElementById(btnId);
+        if (container && btn) {
+            if (isCollapsed) {
+                container.classList.add('collapsed');
+                btn.classList.add('collapsed');
+            } else {
+                container.classList.remove('collapsed');
+                btn.classList.remove('collapsed');
+            }
+        }
+    }
+
+    function applySubCardCollapseState(contentId, btnId, isCollapsed) {
+        const content = document.getElementById(contentId);
+        const btn = document.getElementById(btnId);
+        if (content && btn) {
+            if (isCollapsed) {
+                content.classList.add('collapsed');
+                btn.classList.add('collapsed');
+            } else {
+                content.classList.remove('collapsed');
+                btn.classList.remove('collapsed');
+            }
+        }
+    }
+
+    function saveCollapseState(key, isCollapsed) {
+        let collapseStates = JSON.parse(localStorage.getItem('dictation_collapse_states')) || {
+            practice: true,
+            flashcard: true,
+            exam: true,
+            cardExam: true,
+            listening_score_chart: false,
+            listening_top_wrong: false,
+            listening_history_list: false,
+            card_score_chart: false,
+            card_top_wrong: false,
+            card_history_list: false
+        };
+        collapseStates[key] = isCollapsed;
+        localStorage.setItem('dictation_collapse_states', JSON.stringify(collapseStates));
+    }
+
+    function toggleSubCard(contentId, btnId, stateKey) {
+        const content = document.getElementById(contentId);
+        const btn = document.getElementById(btnId);
+        if (content && btn) {
+            content.classList.toggle('collapsed');
+            btn.classList.toggle('collapsed');
+            let isCollapsed = content.classList.contains('collapsed');
+            saveCollapseState(stateKey, isCollapsed);
+            
+            if (!isCollapsed && (stateKey === 'listening_score_chart' || stateKey === 'card_score_chart')) {
+                setTimeout(() => {
+                    if (stateKey === 'listening_score_chart') renderScoreChart('listeningScoreCanvas', examHistory);
+                    else renderScoreChart('cardScoreCanvas', cardExamHistory);
+                }, 100);
+            }
+        }
+    }
 
     function initFlashcardTouchListeners() {
         const cardEl = document.getElementById('flashcardCardEl');
@@ -2556,8 +2732,11 @@ body.power-saving-mode #status span {
     }
 
     function toggleFlashcardPreview() {
-        document.getElementById('fcPreviewContainer').classList.toggle('collapsed');
-        document.getElementById('fcCollapseBtn').classList.toggle('collapsed');
+        let container = document.getElementById('fcPreviewContainer');
+        let btn = document.getElementById('fcCollapseBtn');
+        container.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed');
+        saveCollapseState('flashcard', container.classList.contains('collapsed'));
     }
 
     function sortFlashcardPreview(sortType) {
@@ -2760,8 +2939,11 @@ body.power-saving-mode #status span {
     }
 
     function toggleCardExamPreview() {
-        document.getElementById('cardExamPreviewContainer').classList.toggle('collapsed');
-        document.getElementById('cardExamCollapseBtn').classList.toggle('collapsed');
+        let container = document.getElementById('cardExamPreviewContainer');
+        let btn = document.getElementById('cardExamCollapseBtn');
+        container.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed');
+        saveCollapseState('cardExam', container.classList.contains('collapsed'));
     }
 
     function sortCardExamPreview(sortType) {
@@ -3076,8 +3258,11 @@ body.power-saving-mode #status span {
     }
 
     function toggleExamPreview() {
-        document.getElementById('examPreviewCollapseContainer').classList.toggle('collapsed');
-        document.getElementById('examCollapseBtn').classList.toggle('collapsed');
+        let container = document.getElementById('examPreviewCollapseContainer');
+        let btn = document.getElementById('examCollapseBtn');
+        container.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed');
+        saveCollapseState('exam', container.classList.contains('collapsed'));
     }
 
     function sortExamWordListContent(sortType) {
@@ -3153,8 +3338,11 @@ body.power-saving-mode #status span {
     }
 
     function togglePreview() {
-        document.getElementById('previewContainer').classList.toggle('collapsed');
-        document.getElementById('collapseBtn').classList.toggle('collapsed');
+        let container = document.getElementById('previewContainer');
+        let btn = document.getElementById('collapseBtn');
+        container.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed');
+        saveCollapseState('practice', container.classList.contains('collapsed'));
     }
 
     function sortWordListContent(sortType) {
