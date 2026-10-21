@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Vocab- 英文聽力與學習系統 (完整整合版)</title>
+    <title>My Vocab - 英文聽力與學習系統 (資安防護修復版)</title>
     <!-- 引入 Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -542,17 +542,17 @@
             align-items: center; 
             justify-content: space-between;
         }
-body.power-saving-mode #status { 
-    background: #1E222A !important; 
-    color: #FFFFFF !important; 
-    border: 1px solid #2D3748 !important; 
-    border-left: 5px solid var(--primary) !important;
-}
+        body.power-saving-mode #status { 
+            background: #1E222A !important; 
+            color: #FFFFFF !important; 
+            border: 1px solid #2D3748 !important; 
+            border-left: 5px solid var(--primary) !important;
+        }
 
-body.power-saving-mode #status strong,
-body.power-saving-mode #status span {
-    color: #FFFFFF !important;
-}
+        body.power-saving-mode #status strong,
+        body.power-saving-mode #status span {
+            color: #FFFFFF !important;
+        }
 
         .exam-setup-box { margin-top: 16px; padding: 22px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; box-sizing: border-box; }
         .exam-lists-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; max-height: 200px; overflow-y: auto; background: white; padding: 13px; border: 1px solid var(--border-color); border-radius: 14px; margin-top: 9px; box-sizing: border-box; }
@@ -2154,6 +2154,17 @@ body.power-saving-mode #status span {
 </div>
 
 <script>
+    /* ================= 🛡️ 資安防護：HTML 字元轉義防 XSS 函數 ================= */
+    function escapeHTML(str) {
+        if (!str && str !== 0) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     const CLIENT_ID = '976805087499-l4auf66i1qkj91ba335jvgtk3b04a9av.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/drive.appdata'; 
     const FILENAME = 'english_dictation_lists_v2.json';
@@ -2424,11 +2435,10 @@ body.power-saving-mode #status span {
 
     function loadVoices() { voices = synth.getVoices(); }
 
-    /* 優化後的語音選擇邏輯 (與 index2 一致優選美語發音) */
     function getSelectedVoice(langCode) {
-    if (voices.length === 0) voices = synth.getVoices();
-    let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
-    return standardVoice || null;
+        if (voices.length === 0) voices = synth.getVoices();
+        let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
+        return standardVoice || null;
     }
 
     function handleAuthClick() {
@@ -2631,7 +2641,7 @@ body.power-saving-mode #status span {
             let cardHtml = `
                 <div class="select-card ${isSelected}" onclick="togglePracticeCard(${index}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${list.title}</div>
+                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
                         <div class="select-card-count">(${count}/300 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
@@ -2688,7 +2698,7 @@ body.power-saving-mode #status span {
             let cardHtml = `
                 <div class="select-card ${isSelected}" onclick="toggleFlashcardCard(${index}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${list.title}</div>
+                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
                         <div class="select-card-count">(${count}/300 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
@@ -2892,7 +2902,7 @@ body.power-saving-mode #status span {
             let cardHtml = `
                 <div class="select-card ${isSelected}" onclick="toggleCardExamCard(${index}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${list.title}</div>
+                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
                         <div class="select-card-count">(${count}/300 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
@@ -3141,14 +3151,14 @@ body.power-saving-mode #status span {
         cardExamResults.forEach((r, i) => {
             let titleColor = r.isCorrect ? '#10B981' : '#EF4444';
             let icon = r.isCorrect ? '✅' : '❌';
-            let correctInfo = `${r.english} (${r.chinese || ''}) ${r.pos ? '/ ' + r.pos : ''}`;
+            let correctInfo = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')}) ${r.pos ? '/ ' + escapeHTML(r.pos) : ''}`;
             
-            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${r.userChi || '[(未填)]'}</span>` : `<span style="color:#EF4444;">${r.userChi || '[(未填)]'}</span>`;
-            let posDisplay = r.posMatch ? `<span style="color:#10B981;">${r.userPos || '[(未選)]'}</span>` : `<span style="color:#EF4444;">${r.userPos || '[(未選)]'}</span>`;
+            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '[(未填)]')}</span>`;
+            let posDisplay = r.posMatch ? `<span style="color:#10B981;">${escapeHTML(r.userPos || '[(未選)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userPos || '[(未選)]')}</span>`;
             let userAnsInfo = `${chiDisplay} ${r.pos ? '/ ' + posDisplay : ''}`;
 
             html += `<div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
-                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${r.english} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
+                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${escapeHTML(r.english)} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
                 <div style="font-size:13.5px; color:var(--text-muted);">您的回答：${userAnsInfo}</div>
             </div>`;
         });
@@ -3192,7 +3202,7 @@ body.power-saving-mode #status span {
         let utterance = new SpeechSynthesisUtterance(word);
         let chosenVoice = getSelectedVoice('en-US');
         if (chosenVoice) utterance.voice = chosenVoice;
-        utterance.lang = 'en-US'; // 👈 補上 lang 屬性
+        utterance.lang = 'en-US';
         utterance.rate = parseFloat(document.getElementById('fcSpeakRate').value) || 0.8;
     
         let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
@@ -3200,6 +3210,7 @@ body.power-saving-mode #status span {
 
         window.speechSynthesis.speak(utterance);
     }
+
     function initExamCardGrid() {
         let grid = document.getElementById('examCardGrid');
         if (!grid) return;
@@ -3212,7 +3223,7 @@ body.power-saving-mode #status span {
             let cardHtml = `
                 <div class="select-card ${isSelected}" onclick="toggleExamCard(${index}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${list.title}</div>
+                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
                         <div class="select-card-count">(${count}/300 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
@@ -3573,7 +3584,7 @@ body.power-saving-mode #status span {
         if (targetRepeat < 1) targetRepeat = 1;
 
         let loopSymbolHtml = isLoop ? `<span style="color:#3B82F6; font-size:17px; margin-left:6px; font-weight:bold;">∞</span>` : '';
-        let leftPart = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${item.english}</strong> <span style="font-weight:600; color:#475569;">(第 1/${targetRepeat} 次)</span>`;
+        let leftPart = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${escapeHTML(item.english)}</strong> <span style="font-weight:600; color:#475569;">(第 1/${targetRepeat} 次)</span>`;
         let rightPart = `<span style="color:#4F46E5; font-weight:700;">(${currentWordIndex + 1}/${wordsData.length})</span>${loopSymbolHtml}`;
         
         document.getElementById('status').innerHTML = `<div>${leftPart}</div><div style="display:flex; align-items:center;">${rightPart}</div>`;
@@ -3584,7 +3595,7 @@ body.power-saving-mode #status span {
                 text: item.english,
                 isEng: true,
                 onPlay: () => {
-                    let newLeft = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${item.english}</strong> <span style="font-weight:600; color:#475569;">(第 ${r}/${targetRepeat} 次)</span>`;
+                    let newLeft = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${escapeHTML(item.english)}</strong> <span style="font-weight:600; color:#475569;">(第 ${r}/${targetRepeat} 次)</span>`;
                     document.getElementById('status').children[0].innerHTML = newLeft;
                 }
             });
@@ -3610,38 +3621,34 @@ body.power-saving-mode #status span {
         });
     }
 
-        function playQueue(queueItems, rate, onComplete) {
-            if (queueItems.length === 0) {
+    function playQueue(queueItems, rate, onComplete) {
+        if (queueItems.length === 0) {
             if (onComplete) onComplete();
             return;
-            }
-            let item = queueItems.shift();
-            if (item.onPlay) item.onPlay();
+        }
+        let item = queueItems.shift();
+        if (item.onPlay) item.onPlay();
 
-            let utterance = new SpeechSynthesisUtterance(item.text);
-            let langCode = item.isEng ? 'en-US' : 'zh-TW';
-            let chosenVoice = getSelectedVoice(langCode);
-    
-            if (chosenVoice) utterance.voice = chosenVoice;
-            utterance.lang = langCode; // 👈 關鍵修正：必須顯式指定 lang 屬性！
-            utterance.rate = rate;
+        let utterance = new SpeechSynthesisUtterance(item.text);
+        let langCode = item.isEng ? 'en-US' : 'zh-TW';
+        let chosenVoice = getSelectedVoice(langCode);
 
-            // 補上系統音量傳入
-            let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
-            let baseVol = (parseInt(sysVol) || 100) / 100;
-            utterance.volume = Math.max(0, Math.min(1.0, baseVol));
+        if (chosenVoice) utterance.voice = chosenVoice;
+        utterance.lang = langCode;
+        utterance.rate = rate;
 
-            utterance.onend = () => {
+        let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+        let baseVol = (parseInt(sysVol) || 100) / 100;
+        utterance.volume = Math.max(0, Math.min(1.0, baseVol));
 
+        utterance.onend = () => {
             if (!isPlaying || isPaused) return;
-
-                setTimeout(() => {
-                    playQueue(queueItems, rate, onComplete);
-                }, 1000);
-            
-            };
-            synth.speak(utterance);
-         }
+            setTimeout(() => {
+                playQueue(queueItems, rate, onComplete);
+            }, 1000);
+        };
+        synth.speak(utterance);
+    }
 
     function stopDictation() {
         isPlaying = false; isPaused = false; synth.cancel(); clearTimeout(timeoutId);
@@ -3748,37 +3755,37 @@ body.power-saving-mode #status span {
         let repeatCount = parseInt(document.getElementById('examRepeatCount').value) || 1;
 
         let utteranceCount = 0;
-    function speakSingle() {
-    let utterance = new SpeechSynthesisUtterance(item.english);
-    let chosenVoice = getSelectedVoice('en-US');
-    if (chosenVoice) utterance.voice = chosenVoice;
-    utterance.lang = 'en-US'; // 👈 補上 lang 屬性
-    
-    utterance.rate = rate;
-    let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
-    utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
-
-    utterance.onend = () => {
-        utteranceCount++;
-        if (utteranceCount < repeatCount) {
-            setTimeout(speakSingle, 1000);
-        } else {
-            document.getElementById('examInputEng').disabled = false;
-            document.getElementById('examInputChi').disabled = false;
-            document.getElementById('examSubmitBtn').disabled = false;
-            document.getElementById('examInputEng').focus();
+        function speakSingle() {
+            let utterance = new SpeechSynthesisUtterance(item.english);
+            let chosenVoice = getSelectedVoice('en-US');
+            if (chosenVoice) utterance.voice = chosenVoice;
+            utterance.lang = 'en-US';
             
-            examTimeLeft = parseInt(document.getElementById('examAnswerTime').value) || 26;
-            document.getElementById('timeLeft').innerText = examTimeLeft;
-            examTimerId = setInterval(() => {
-                examTimeLeft--;
-                document.getElementById('timeLeft').innerText = examTimeLeft;
-                if (examTimeLeft <= 0) { clearInterval(examTimerId); submitExamAnswer(); }
-            }, 1000);
+            utterance.rate = rate;
+            let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+            utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
+
+            utterance.onend = () => {
+                utteranceCount++;
+                if (utteranceCount < repeatCount) {
+                    setTimeout(speakSingle, 1000);
+                } else {
+                    document.getElementById('examInputEng').disabled = false;
+                    document.getElementById('examInputChi').disabled = false;
+                    document.getElementById('examSubmitBtn').disabled = false;
+                    document.getElementById('examInputEng').focus();
+                    
+                    examTimeLeft = parseInt(document.getElementById('examAnswerTime').value) || 26;
+                    document.getElementById('timeLeft').innerText = examTimeLeft;
+                    examTimerId = setInterval(() => {
+                        examTimeLeft--;
+                        document.getElementById('timeLeft').innerText = examTimeLeft;
+                        if (examTimeLeft <= 0) { clearInterval(examTimerId); submitExamAnswer(); }
+                    }, 1000);
+                }
+            };
+            synth.speak(utterance);
         }
-    };
-    synth.speak(utterance);
-}////
         speakSingle();
     }
 
@@ -3864,14 +3871,14 @@ body.power-saving-mode #status span {
         examResults.forEach((r, i) => {
             let titleColor = r.isCorrect ? '#10B981' : '#EF4444';
             let icon = r.isCorrect ? '✅' : '❌';
-            let correctInfo = `${r.english} (${r.chinese || ''})`;
+            let correctInfo = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')})`;
             
-            let engDisplay = r.engMatch ? `<span style="color:#10B981;">${r.userEng || '[(未填)]'}</span>` : `<span style="color:#EF4444;">${r.userEng || '[(未填)]'}</span>`;
-            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${r.userChi || '[(未填)]'}</span>` : `<span style="color:#EF4444;">${r.userChi || '[(未填)]'}</span>`;
+            let engDisplay = r.engMatch ? `<span style="color:#10B981;">${escapeHTML(r.userEng || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userEng || '[(未填)]')}</span>`;
+            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '[(未填)]')}</span>`;
             let userAnsInfo = `${engDisplay} / ${chiDisplay}`;
 
             html += `<div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
-                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${r.english} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
+                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${escapeHTML(r.english)} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
                 <div style="font-size:13.5px; color:var(--text-muted);">您的回答：${userAnsInfo}</div>
             </div>`;
         });
@@ -3943,7 +3950,7 @@ body.power-saving-mode #status span {
     function openHistoryModalContent() {
         let targetSelectOptions = '';
         wordLists.forEach((l, idx) => {
-            targetSelectOptions += `<option value="${idx}">${idx + 1}: ${l.title} (${getListWordCount(l.content)}/300)</option>`;
+            targetSelectOptions += `<option value="${idx}">${idx + 1}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/300)</option>`;
         });
         let targetSelLis = document.getElementById('targetListSelectorListening');
         let targetSelCard = document.getElementById('targetListSelectorCard');
@@ -3959,8 +3966,8 @@ body.power-saving-mode #status span {
                 listeningHistoryHtml += `
                     <div class="history-card">
                         <div class="history-header" onclick="toggleHistoryDetail(${hIdx})">
-                            <span>📅 ${h.date} ｜ 範圍: ${h.range || '預設範圍'}</span>
-                            <span style="color:var(--primary); font-weight:700;">🎯 ${h.score}分 (共${h.total}題/錯${wrongCount}題) <span id="arrow_${hIdx}">▼</span></span>
+                            <span>📅 ${escapeHTML(h.date)} ｜ 範圍: ${escapeHTML(h.range || '預設範圍')}</span>
+                            <span style="color:var(--primary); font-weight:700;">🎯 ${escapeHTML(h.score)}分 (共${escapeHTML(h.total)}題/錯${wrongCount}題) <span id="arrow_${hIdx}">▼</span></span>
                         </div>
                         <div class="history-detail" id="detail_${hIdx}">
                 `;
@@ -3969,10 +3976,10 @@ body.power-saving-mode #status span {
                         let icon = r.isCorrect ? '✅' : '❌';
                         let color = r.isCorrect ? '#10B981' : '#EF4444';
                         
-                        let engDisplay = r.engMatch ? `<span style="color:#10B981;">${r.userEng || '未填'}</span>` : `<span style="color:#EF4444;">${r.userEng || '未填'}</span>`;
-                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${r.userChi || '未填'}</span>` : `<span style="color:#EF4444;">${r.userChi || '未填'}</span>`;
+                        let engDisplay = r.engMatch ? `<span style="color:#10B981;">${escapeHTML(r.userEng || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userEng || '未填')}</span>`;
+                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '未填')}</span>`;
 
-                        let correctStr = `${r.english} (${r.chinese || ''})`;
+                        let correctStr = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')})`;
                         let userStr = `${engDisplay} / ${chiDisplay}`;
 
                         let ansText = r.isCorrect ? correctStr : `正確答案 ${correctStr} ｜ 您的回答: ${userStr}`;
@@ -3994,8 +4001,8 @@ body.power-saving-mode #status span {
                 cardHistoryHtml += `
                     <div class="history-card">
                         <div class="history-header" onclick="toggleCardHistoryDetail(${hIdx})">
-                            <span>📅 ${h.date} ｜ 範圍: ${h.range || '預設範圍'}</span>
-                            <span style="color:#10B981; font-weight:700;">🎯 ${h.score}分 (共${h.total}題/錯${wrongCount}題) <span id="cardArrow_${hIdx}">▼</span></span>
+                            <span>📅 ${escapeHTML(h.date)} ｜ 範圍: ${escapeHTML(h.range || '預設範圍')}</span>
+                            <span style="color:#10B981; font-weight:700;">🎯 ${escapeHTML(h.score)}分 (共${escapeHTML(h.total)}題/錯${wrongCount}題) <span id="cardArrow_${hIdx}">▼</span></span>
                         </div>
                         <div class="history-detail" id="cardDetail_${hIdx}">
                 `;
@@ -4003,9 +4010,9 @@ body.power-saving-mode #status span {
                     h.results.forEach((r, rIdx) => {
                         let icon = r.isCorrect ? '✅' : '❌';
                         let color = r.isCorrect ? '#10B981' : '#EF4444';
-                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${r.userChi || '未填'}</span>` : `<span style="color:#EF4444;">${r.userChi || '未填'}</span>`;
-                        let posDisplay = r.posMatch ? `<span style="color:#10B981;">${r.userPos || '未選'}</span>` : `<span style="color:#EF4444;">${r.userPos || '未選'}</span>`;
-                        let correctStr = `${r.english} (${r.chinese || ''}) ${r.pos ? '/ ' + r.pos : ''}`;
+                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '未填')}</span>`;
+                        let posDisplay = r.posMatch ? `<span style="color:#10B981;">${escapeHTML(r.userPos || '未選')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userPos || '未選')}</span>`;
+                        let correctStr = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')}) ${r.pos ? '/ ' + escapeHTML(r.pos) : ''}`;
                         let userStr = `${chiDisplay} ${r.pos ? '/ ' + posDisplay : ''}`;
                         let ansText = r.isCorrect ? correctStr : `正確答案 ${correctStr} ｜ 您的回答: ${userStr}`;
                         cardHistoryHtml += `<div style="color:${color}; margin-bottom:4px;">${icon} 第${rIdx+1}題：${ansText}</div>`;
@@ -4038,8 +4045,8 @@ body.power-saving-mode #status span {
         } else {
             listeningWrongArr.forEach((w, idx) => {
                 listeningWrongHtml += `<div class="error-word-item">
-                    <input type="checkbox" checked value="${w.english}"> 
-                    <span>${idx + 1}. <b>${w.english}</b> (${w.chinese || ''}) — <span class="error-count">錯誤 ${w.count} 次</span></span>
+                    <input type="checkbox" checked value="${escapeHTML(w.english)}"> 
+                    <span>${idx + 1}. <b>${escapeHTML(w.english)}</b> (${escapeHTML(w.chinese || '')}) — <span class="error-count">錯誤 ${escapeHTML(w.count)} 次</span></span>
                 </div>`;
             });
         }
@@ -4067,8 +4074,8 @@ body.power-saving-mode #status span {
         } else {
             cardWrongArr.forEach((w, idx) => {
                 cardWrongHtml += `<div class="error-word-item">
-                    <input type="checkbox" checked value="${w.english}"> 
-                    <span>${idx + 1}. <b>${w.english}</b> (${w.chinese || ''}) — <span class="error-count">錯誤 ${w.count} 次</span></span>
+                    <input type="checkbox" checked value="${escapeHTML(w.english)}"> 
+                    <span>${idx + 1}. <b>${escapeHTML(w.english)}</b> (${escapeHTML(w.chinese || '')}) — <span class="error-count">錯誤 ${escapeHTML(w.count)} 次</span></span>
                 </div>`;
             });
         }
