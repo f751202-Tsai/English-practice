@@ -215,7 +215,7 @@
             background: var(--primary-gradient); color: white; border: none; 
             padding: 7px 15px; border-radius: 8px; cursor: pointer; 
             font-weight: 600; font-size: 13px; box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
-            transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+            transition: all 0.2s; 
         }
         .cloud-btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .cloud-btn.logout { background-color: #EF4444; box-shadow: none; }
@@ -452,7 +452,6 @@
         #examAdvancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
         #flashcardSettingsModal .modal-content { transform: scale(1); transform-origin: center center; margin: 5vh auto; }
         #cardExamAdvancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 5vh auto; }
-        #contactModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
 
         #historyModal .modal-content {
             width: 92%;
@@ -543,17 +542,17 @@
             align-items: center; 
             justify-content: space-between;
         }
-        body.power-saving-mode #status { 
-            background: #1E222A !important; 
-            color: #FFFFFF !important; 
-            border: 1px solid #2D3748 !important; 
-            border-left: 5px solid var(--primary) !important;
-        }
+body.power-saving-mode #status { 
+    background: #1E222A !important; 
+    color: #FFFFFF !important; 
+    border: 1px solid #2D3748 !important; 
+    border-left: 5px solid var(--primary) !important;
+}
 
-        body.power-saving-mode #status strong,
-        body.power-saving-mode #status span {
-            color: #FFFFFF !important;
-        }
+body.power-saving-mode #status strong,
+body.power-saving-mode #status span {
+    color: #FFFFFF !important;
+}
 
         .exam-setup-box { margin-top: 16px; padding: 22px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; box-sizing: border-box; }
         .exam-lists-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; max-height: 200px; overflow-y: auto; background: white; padding: 13px; border: 1px solid var(--border-color); border-radius: 14px; margin-top: 9px; box-sizing: border-box; }
@@ -1899,39 +1898,18 @@
     </div>
 </div>
 
-<!-- ================= 💬 問題與建議回報彈窗 ================= -->
-<div id="contactModal" class="modal">
-    <div class="modal-content" style="max-width: 480px;">
-        <span class="close-modal" onclick="closeContactModal()">&times;</span>
-        <h3 style="margin-top:0; color:var(--primary); font-size:18px; font-weight:700;">💬 問題與建議回報</h3>
-        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 12px;">感謝使用 My Vocab！若您有任何使用上的問題或改進建議，歡迎在此留下您的反饋，訊息將直達管理員的 LINE：</p>
-        <textarea id="contactFeedbackInput" rows="5" placeholder="請詳細說明您遇到的問題或建議..." style="width: 100%; height: 120px !important; resize: vertical;"></textarea>
-        <button class="action-btn-primary" style="margin-top: 16px;" onclick="sendContactFeedback()">📤 送出回報</button>
-    </div>
-</div>
-
 <div id="aboutModal" class="modal">
     <div class="modal-content" style="max-width: 460px; text-align: center;">
         <span class="close-modal" onclick="closeAboutModal()">&times;</span>
-        <h3 style="margin-top:10px; color:var(--text-main); font-size:18px; font-weight:700;">關於 My Vocab</h3>
+        <h3 style="margin-top:10px; color:var(--text-main); font-size:18px; font-weight:700;">關於 英文聽力與學習系統</h3>
         <div class="author-box" style="margin: 15px 0; padding: 14px; background: #F8FAFC; border-radius: 12px; border: 1px solid var(--border-color); font-size: 15px; font-weight: 600; color: var(--primary);">
             作者: Fried Chicken Tsai
         </div>
-
-        <!-- 💬 問題與建議回報 (位於作者與開發者介面之間) -->
-        <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; text-align: left; margin: 12px 0;">
-            <div>
-                <label style="margin-top:0;">💬 問題與建議回報</label>
-                <span style="font-size: 12.5px; color: var(--text-muted);">傳送訊息與除錯資料至 LINE</span>
-            </div>
-            <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openContactModal()">聯繫我們</button>
-        </div>
-
         <div class="config-group" style="text-align: left; margin: 12px 0;">
             <label style="margin-top:0;">🛠️ 開發者介面</label>
             <div id="devLoginPanel" style="display: flex; gap: 8px; margin-top: 8px;">
                 <input type="password" id="devPasswordInput" placeholder="請輸入開發者密碼..." style="margin-top:0; flex:1;">
-                <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="verifyDevPassword()">解鎖</button>
+                <button class="cloud-btn" style="background: var(--primary-gradient); white-space: nowrap;" onclick="verifyDevPassword()">解鎖</button>
             </div>
             <div id="devContentPanel" style="display: none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px; flex-direction: column; gap: 8px;">
                 <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 13.5px; padding: 10px;" onclick="runStressTest()">🚀 壓力測試 (30組/9000字)</button>
@@ -2177,12 +2155,10 @@
 
 <script>
     const CLIENT_ID = '976805087499-l4auf66i1qkj91ba335jvgtk3b04a9av.apps.googleusercontent.com';
-    const SCOPES = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'; 
+    const SCOPES = 'https://www.googleapis.com/auth/drive.appdata'; 
     const FILENAME = 'english_dictation_lists_v2.json';
-    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw2riNxZsafng7Fo8Eo2GpUJ148-XuS7ksXQ-fpSILPg_9X-ICNrOLwxzOJF74BoySg/exec';
 
     let tokenClient, accessToken = null, isCloudSyncActive = false;
-    let googleUserInfo = null; // 儲存登入的使用者資訊
     let myDeviceId = localStorage.getItem('dictation_device_id');
     if (!myDeviceId) {
         myDeviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -2278,13 +2254,12 @@
                 scope: SCOPES,
                 callback: async (resp) => {
                     if (resp.error !== undefined || !resp.access_token) {
-                        accessToken = null; isCloudSyncActive = false; googleUserInfo = null;
+                        accessToken = null; isCloudSyncActive = false;
                         updateCloudStatusText(`💻 本機作業模式 (未登入)`);
                         return;
                     }
                     accessToken = resp.access_token;
                     isCloudSyncActive = true;
-                    fetchGoogleUserInfo();
                     updateCloudStatusText(`✅ 已連結 Google 雲端`);
                     let authBtn = document.getElementById('cloudAuthBtn');
                     authBtn.innerText = '🔒 登出'; authBtn.className = 'cloud-btn logout';
@@ -2294,82 +2269,6 @@
             });
         }
     };
-
-    async function fetchGoogleUserInfo() {
-        if (!accessToken) return;
-        try {
-            let res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            if (res.ok) {
-                googleUserInfo = await res.json();
-            }
-        } catch(e) {
-            console.error('無法取得 Google 使用者資訊', e);
-        }
-    }
-
-    function openContactModal() {
-        document.getElementById('contactFeedbackInput').value = '';
-        document.getElementById('contactModal').style.display = 'block';
-    }
-
-    function closeContactModal() {
-        document.getElementById('contactModal').style.display = 'none';
-    }
-
-    async function sendContactFeedback() {
-        let text = document.getElementById('contactFeedbackInput').value.trim();
-        if (!text) {
-            alert('請輸入您遇到的問題或建議！');
-            return;
-        }
-
-        let sendBtn = document.querySelector('#contactModal .action-btn-primary');
-        let originalText = sendBtn.innerText;
-        sendBtn.innerText = '傳送中...';
-        sendBtn.disabled = true;
-
-        // 打包完整的除錯與系統參數
-        let payload = {
-            feedback: text,
-            userInfo: googleUserInfo ? {
-                name: googleUserInfo.name || '未填寫姓名',
-                email: googleUserInfo.email || '無Email',
-                id: googleUserInfo.id
-            } : '未登入 / 本機使用者',
-            deviceId: myDeviceId,
-            userAgent: navigator.userAgent,
-            appSettings: {
-                practice: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}'),
-                exam: JSON.parse(localStorage.getItem('dictation_exam_app_settings') || '{}'),
-                flashcard: JSON.parse(localStorage.getItem('dictation_flashcard_app_settings') || '{}'),
-                cardExam: JSON.parse(localStorage.getItem('dictation_card_exam_app_settings') || '{}'),
-                system: JSON.parse(localStorage.getItem('dictation_system_settings') || '{}')
-            },
-            wordLists: wordLists,
-            examHistory: examHistory,
-            cardExamHistory: cardExamHistory
-        };
-
-        try {
-            await fetch(GAS_WEB_APP_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            alert('已成功傳送！感謝您的回報與除錯資訊。');
-            closeContactModal();
-        } catch (err) {
-            console.error('送出失敗', err);
-            alert('⚠️ 送出失敗，請重試或檢查網路連線。');
-        } finally {
-            sendBtn.innerText = originalText;
-            sendBtn.disabled = false;
-        }
-    }
 
     function loadCollapseStates() {
         let collapseStates = JSON.parse(localStorage.getItem('dictation_collapse_states')) || {
@@ -2525,10 +2424,11 @@
 
     function loadVoices() { voices = synth.getVoices(); }
 
+    /* 優化後的語音選擇邏輯 (與 index2 一致優選美語發音) */
     function getSelectedVoice(langCode) {
-        if (voices.length === 0) voices = synth.getVoices();
-        let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
-        return standardVoice || null;
+    if (voices.length === 0) voices = synth.getVoices();
+    let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
+    return standardVoice || null;
     }
 
     function handleAuthClick() {
@@ -2537,7 +2437,7 @@
     function handleLogout() {
         if (accessToken) {
             google.accounts.oauth2.revoke(accessToken, () => {
-                accessToken = null; isCloudSyncActive = false; googleUserInfo = null;
+                accessToken = null; isCloudSyncActive = false;
                 updateCloudStatusText(`💻 本機作業模式 (未登入)`);
                 let authBtn = document.getElementById('cloudAuthBtn');
                 authBtn.innerText = '登入 Google 雲端'; authBtn.className = 'cloud-btn';
@@ -3292,7 +3192,7 @@
         let utterance = new SpeechSynthesisUtterance(word);
         let chosenVoice = getSelectedVoice('en-US');
         if (chosenVoice) utterance.voice = chosenVoice;
-        utterance.lang = 'en-US';
+        utterance.lang = 'en-US'; // 👈 補上 lang 屬性
         utterance.rate = parseFloat(document.getElementById('fcSpeakRate').value) || 0.8;
     
         let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
@@ -3710,34 +3610,38 @@
         });
     }
 
-    function playQueue(queueItems, rate, onComplete) {
-        if (queueItems.length === 0) {
+        function playQueue(queueItems, rate, onComplete) {
+            if (queueItems.length === 0) {
             if (onComplete) onComplete();
             return;
-        }
-        let item = queueItems.shift();
-        if (item.onPlay) item.onPlay();
+            }
+            let item = queueItems.shift();
+            if (item.onPlay) item.onPlay();
 
-        let utterance = new SpeechSynthesisUtterance(item.text);
-        let langCode = item.isEng ? 'en-US' : 'zh-TW';
-        let chosenVoice = getSelectedVoice(langCode);
+            let utterance = new SpeechSynthesisUtterance(item.text);
+            let langCode = item.isEng ? 'en-US' : 'zh-TW';
+            let chosenVoice = getSelectedVoice(langCode);
+    
+            if (chosenVoice) utterance.voice = chosenVoice;
+            utterance.lang = langCode; // 👈 關鍵修正：必須顯式指定 lang 屬性！
+            utterance.rate = rate;
 
-        if (chosenVoice) utterance.voice = chosenVoice;
-        utterance.lang = langCode;
-        utterance.rate = rate;
+            // 補上系統音量傳入
+            let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+            let baseVol = (parseInt(sysVol) || 100) / 100;
+            utterance.volume = Math.max(0, Math.min(1.0, baseVol));
 
-        let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
-        let baseVol = (parseInt(sysVol) || 100) / 100;
-        utterance.volume = Math.max(0, Math.min(1.0, baseVol));
+            utterance.onend = () => {
 
-        utterance.onend = () => {
             if (!isPlaying || isPaused) return;
-            setTimeout(() => {
-                playQueue(queueItems, rate, onComplete);
-            }, 1000);
-        };
-        synth.speak(utterance);
-    }
+
+                setTimeout(() => {
+                    playQueue(queueItems, rate, onComplete);
+                }, 1000);
+            
+            };
+            synth.speak(utterance);
+         }
 
     function stopDictation() {
         isPlaying = false; isPaused = false; synth.cancel(); clearTimeout(timeoutId);
@@ -3844,37 +3748,37 @@
         let repeatCount = parseInt(document.getElementById('examRepeatCount').value) || 1;
 
         let utteranceCount = 0;
-        function speakSingle() {
-            let utterance = new SpeechSynthesisUtterance(item.english);
-            let chosenVoice = getSelectedVoice('en-US');
-            if (chosenVoice) utterance.voice = chosenVoice;
-            utterance.lang = 'en-US';
-            
-            utterance.rate = rate;
-            let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
-            utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
+    function speakSingle() {
+    let utterance = new SpeechSynthesisUtterance(item.english);
+    let chosenVoice = getSelectedVoice('en-US');
+    if (chosenVoice) utterance.voice = chosenVoice;
+    utterance.lang = 'en-US'; // 👈 補上 lang 屬性
+    
+    utterance.rate = rate;
+    let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+    utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
 
-            utterance.onend = () => {
-                utteranceCount++;
-                if (utteranceCount < repeatCount) {
-                    setTimeout(speakSingle, 1000);
-                } else {
-                    document.getElementById('examInputEng').disabled = false;
-                    document.getElementById('examInputChi').disabled = false;
-                    document.getElementById('examSubmitBtn').disabled = false;
-                    document.getElementById('examInputEng').focus();
-                    
-                    examTimeLeft = parseInt(document.getElementById('examAnswerTime').value) || 26;
-                    document.getElementById('timeLeft').innerText = examTimeLeft;
-                    examTimerId = setInterval(() => {
-                        examTimeLeft--;
-                        document.getElementById('timeLeft').innerText = examTimeLeft;
-                        if (examTimeLeft <= 0) { clearInterval(examTimerId); submitExamAnswer(); }
-                    }, 1000);
-                }
-            };
-            synth.speak(utterance);
+    utterance.onend = () => {
+        utteranceCount++;
+        if (utteranceCount < repeatCount) {
+            setTimeout(speakSingle, 1000);
+        } else {
+            document.getElementById('examInputEng').disabled = false;
+            document.getElementById('examInputChi').disabled = false;
+            document.getElementById('examSubmitBtn').disabled = false;
+            document.getElementById('examInputEng').focus();
+            
+            examTimeLeft = parseInt(document.getElementById('examAnswerTime').value) || 26;
+            document.getElementById('timeLeft').innerText = examTimeLeft;
+            examTimerId = setInterval(() => {
+                examTimeLeft--;
+                document.getElementById('timeLeft').innerText = examTimeLeft;
+                if (examTimeLeft <= 0) { clearInterval(examTimerId); submitExamAnswer(); }
+            }, 1000);
         }
+    };
+    synth.speak(utterance);
+}////
         speakSingle();
     }
 
