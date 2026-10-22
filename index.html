@@ -1172,7 +1172,7 @@
             .scale-wrapper,
             .scale-wrapper-practice {
                 transform: none !important;
-                margin: 0 0 40px 0 !important;
+                margin: 0 0 20px 0 !important;
                 max-width: 100% !important;
                 width: 100% !important;
             }
@@ -1226,12 +1226,12 @@
                 width: 100%;
             }
 
-            /* 手機模式下動態計算並縮小 Y 軸範圍，確保按鈕能在同畫面顯示 */
+            /* 手機模式下動態計算並適當變長 Y 軸範圍，使題庫預覽能充分填滿空間，同時按鈕能貼齊畫面底部 */
             #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea {
-                height: clamp(140px, 22vh, 220px) !important;
+                height: clamp(220px, calc(100svh - 430px), 480px) !important;
             }
             .editor-wrapper {
-                height: clamp(180px, 28vh, 260px) !important;
+                height: clamp(200px, calc(100svh - 410px), 450px) !important;
             }
         }
 
