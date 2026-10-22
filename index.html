@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Vocab - My Vocab</title>
+    <title>Chicky Vocab</title>
     <!-- 引入 Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-body: #EEF2F6;
@@ -190,19 +190,20 @@
         .settings-gear-btn:hover { background: #EEF2FF; color: var(--primary); border-color: #C7D2FE; }
 
         .app-logo-icon {
-            width: 72px;
-            height: 72px;
-            background: var(--primary-gradient);
-            border-radius: 18px;
+            width: 80px;
+            height: 80px;
+            background: #6366F1;
+            border-radius: 22px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 12px;
-            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4), 0 0 0 4px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 12px 24px -6px rgba(99, 102, 241, 0.45), 0 0 0 4px rgba(99, 102, 241, 0.15);
             position: relative;
+            overflow: hidden;
         }
 
-        h2 { text-align: center; color: var(--text-main); font-weight: 700; letter-spacing: -0.5px; margin: 0; font-size: 25px; }
+        h2 { text-align: center; color: var(--text-main); font-weight: 800; letter-spacing: -0.5px; margin: 0; font-size: 26px; }
         .app-subtitle { margin: 6px 0 0 0; font-size: 14px; color: var(--text-muted); text-align: center; font-weight: 500; }
 
         .cloud-sync-bar { 
@@ -1295,19 +1296,47 @@
             <div class="app-header">
                 <button class="settings-gear-btn" onclick="openSystemSettingsModal()" title="系統設定">⚙️</button>
                 <div class="app-logo-icon">
-                    <svg width="46" height="46" viewBox="0 0 36 36" fill="none">
-                        <rect x="10" y="6" width="20" height="24" rx="3.5" fill="#E0E7FF" opacity="0.65" transform="rotate(8 20 18)"/>
-                        <rect x="6" y="5" width="20" height="24" rx="3.5" fill="#FFFFFF"/>
-                        <text x="9" y="11.5" font-family="Inter, sans-serif" font-weight="700" font-size="7" fill="#4F46E5">E</text>
-                        <text x="12.5" y="22.5" font-family="Inter, sans-serif" font-weight="800" font-size="14" fill="#4F46E5">E</text>
+                    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 背景紫色圓角方形 -->
+                        <rect width="100" height="100" rx="22" fill="#6366F1"/>
+                        
+                        <!-- 雞塊本體 -->
+                        <path d="M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z" fill="#F3A63B" stroke="#2B2118" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        
+                        <!-- 雞塊表面質感與腮紅 -->
+                        <circle cx="36" cy="46" r="3.5" fill="#EE715C"/>
+                        <circle cx="58" cy="46" r="3.5" fill="#EE715C"/>
+                        <circle cx="30" cy="62" r="2" fill="#E28923"/>
+                        <circle cx="68" cy="58" r="2" fill="#E28923"/>
+                        <circle cx="48" cy="72" r="2.5" fill="#E28923"/>
+
+                        <!-- 雞塊眼睛與微笑 -->
+                        <circle cx="40" cy="42" r="2.5" fill="#2B2118"/>
+                        <circle cx="54" cy="42" r="2.5" fill="#2B2118"/>
+                        <path d="M 44 48 Q 47 52 50 48" stroke="#2B2118" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+
+                        <!-- 腳腿 -->
+                        <path d="M 38 82 L 36 88 M 36 88 L 32 88 M 58 82 L 60 88 M 60 88 L 64 88" stroke="#2B2118" stroke-width="3" stroke-linecap="round"/>
+
+                        <!-- 手與揮手 -->
+                        <path d="M 24 50 Q 17 52 18 58" stroke="#2B2118" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M 72 48 Q 78 40 76 34" stroke="#2B2118" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+                        <!-- ABC 對話框 -->
+                        <g transform="translate(10, 0)">
+                            <path d="M 52 14 L 80 14 C 85 14, 88 17, 88 22 L 88 32 C 88 37, 85 40, 80 40 L 68 40 L 62 46 L 63 40 L 52 40 C 47 40, 44 37, 44 32 L 44 22 C 44 17, 47 14, 52 14 Z" fill="#FFFFFF" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round"/>
+                            <text x="50" y="31" font-family="'Inter', sans-serif" font-weight="800" font-size="11" fill="#4F46E5">A</text>
+                            <text x="59" y="31" font-family="'Inter', sans-serif" font-weight="800" font-size="11" fill="#EF4444">B</text>
+                            <text x="68" y="31" font-family="'Inter', sans-serif" font-weight="800" font-size="11" fill="#10B981">C</text>
+                        </g>
                     </svg>
                 </div>
-                <h2>My Vocab</h2>
+                <h2>Chicky Vocab</h2>
                 <div class="app-subtitle">Professional Learning System</div>
             </div>
             
             <div class="cloud-sync-bar">
-                <span id="cloudStatusText">💻 本機作業模式 (未登入)</span>
+                <span id="cloudStatusText">💻 未登入</span>
                 <div>
                     <button id="cloudAuthBtn" class="cloud-btn" onclick="handleAuthClick()">登入 Google 雲端</button>
                 </div>
@@ -1741,7 +1770,7 @@
 
             <div class="mode-status-card">
                 <div class="mode-status-text">
-                    <span id="editorModeStatusText">💻 本機作業模式 (未登入)</span>
+                    <span id="editorModeStatusText">💻 未登入</span>
                 </div>
             </div>
 
@@ -1923,7 +1952,7 @@
 <div id="aboutModal" class="modal">
     <div class="modal-content" style="max-width: 460px; text-align: center;">
         <span class="close-modal" onclick="closeAboutModal()">&times;</span>
-        <h3 style="margin-top:10px; color:var(--text-main); font-size:18px; font-weight:700;">關於 My Vocab</h3>
+        <h3 style="margin-top:10px; color:var(--text-main); font-size:18px; font-weight:700;">關於 Chicky Vocab</h3>
         <div class="author-box" style="margin: 15px 0; padding: 14px; background: #F8FAFC; border-radius: 12px; border: 1px solid var(--border-color); font-size: 15px; font-weight: 600; color: var(--primary);">
             作者: Fried Chicken Tsai
         </div>
@@ -2289,7 +2318,7 @@
                 callback: async (resp) => {
                     if (resp.error !== undefined || !resp.access_token) {
                         accessToken = null; isCloudSyncActive = false;
-                        updateCloudStatusText(`💻 本機作業模式 (未登入)`);
+                        updateCloudStatusText(`💻 未登入`);
                         return;
                     }
                     accessToken = resp.access_token;
@@ -2471,7 +2500,7 @@
         if (accessToken) {
             google.accounts.oauth2.revoke(accessToken, () => {
                 accessToken = null; isCloudSyncActive = false;
-                updateCloudStatusText(`💻 本機作業模式 (未登入)`);
+                updateCloudStatusText(`💻 未登入`);
                 let authBtn = document.getElementById('cloudAuthBtn');
                 authBtn.innerText = '登入 Google 雲端'; authBtn.className = 'cloud-btn';
                 authBtn.setAttribute('onclick', 'handleAuthClick()');
@@ -4382,3 +4411,4 @@
 </script>
 </body>
 </html>
+`
