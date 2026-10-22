@@ -1248,7 +1248,7 @@
             }
         }
 
-        @media screen and (max-width: 480px) {
+            @media screen and (max-width: 480px) {
             .select-card-grid {
                 grid-template-columns: 1fr;
             }
@@ -1267,13 +1267,14 @@
             }
 
             .cloud-sync-bar {
-                flex-direction: column;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
                 gap: 8px;
-                align-items: flex-start;
             }
 
             .cloud-sync-bar > div {
-                width: 100%;
+                width: auto;
                 display: flex;
                 justify-content: flex-end;
             }
