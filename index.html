@@ -1172,7 +1172,7 @@
             .scale-wrapper,
             .scale-wrapper-practice {
                 transform: none !important;
-                margin: 0 0 20px 0 !important;
+                margin: 0 0 40px 0 !important;
                 max-width: 100% !important;
                 width: 100% !important;
             }
@@ -1180,6 +1180,7 @@
             .paper-card-container {
                 padding: 16px 14px;
                 border-radius: 16px;
+                overflow: hidden !important; /* 確保內容不會溢出，移除最右邊拉bar */
             }
 
             .current-mode-indicator {
@@ -1226,12 +1227,12 @@
                 width: 100%;
             }
 
-            /* 手機模式下動態計算並適當變長 Y 軸範圍，使題庫預覽能充分填滿空間，同時按鈕能貼齊畫面底部 */
+            /* 手機模式下動態計算並縮小 Y 軸範圍，確保按鈕能在同畫面顯示，無需拉動 bar 與滑動頁面 */
             #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea {
-                height: clamp(220px, calc(100svh - 430px), 480px) !important;
+                height: clamp(110px, 15vh, 140px) !important;
             }
             .editor-wrapper {
-                height: clamp(200px, calc(100svh - 410px), 450px) !important;
+                height: clamp(180px, 28vh, 260px) !important;
             }
         }
 
