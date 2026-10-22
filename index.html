@@ -447,6 +447,19 @@
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
         .modal-content { background-color: #ffffff; margin: 3vh auto; padding: 25px; border-radius: 20px; width: 90%; max-width: 650px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: relative; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-sizing: border-box; }
         
+        /* 1. 延長測驗結束後的視窗 Y 軸高度至綠線範圍 (最大 85vh，內容高 calc(85vh - 120px)) */
+        #examResultModal .modal-content {
+            max-height: 85vh !important;
+            margin: 3vh auto !important;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        #examResultModal .result-box {
+            max-height: calc(85vh - 120px) !important;
+            overflow-y: auto;
+        }
+
         #systemSettingsModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
         #advancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
         #examAdvancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
@@ -1541,7 +1554,7 @@
 
         <!-- ================= 📋 字卡測驗：執行介面 ================= -->
         <div id="cardExamPlayView" class="app-view">
-            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <div class="progress-indicator" id="cardExamProgressText" style="font-size: 13.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 3px 12px; border-radius: 20px;">1 / 1 題</div>
             </div>
 
@@ -1846,10 +1859,10 @@
 </div>
 
 <div id="examResultModal" class="modal">
-    <div class="modal-content" style="max-width: 620px;">
+    <div class="modal-content">
         <span class="close-modal" onclick="closeExamResultModal()">&times;</span>
         <div id="modalResultBody"></div>
-        <button class="action-btn btn-start" style="margin-top: 20px; width: 100%;" onclick="closeExamResultModal()">確定關閉</button>
+        <button class="action-btn btn-start" style="margin-top: 16px; width: 100%; flex-shrink: 0;" onclick="closeExamResultModal()">確定關閉</button>
     </div>
 </div>
 
@@ -2217,8 +2230,9 @@
     let isPlaying = false, isPaused = false, wordsData = [], currentWordIndex = 0;
     let isExamRunning = false, examTimerId = null, examTimeLeft = 0, examResults = [], currentExamRanges = "";
     
-    let examHistory = JSON.parse(localStorage.getItem('dictation_exam_history')) || [];
-    let cardExamHistory = JSON.parse(localStorage.getItem('dictation_card_exam_history')) || [];
+    // 2. 載入時保留最近 10 筆歷史紀錄
+    let examHistory = (JSON.parse(localStorage.getItem('dictation_exam_history')) || []).slice(0, 10);
+    let cardExamHistory = (JSON.parse(localStorage.getItem('dictation_card_exam_history')) || []).slice(0, 10);
     
     let lastSelectedList = parseInt(localStorage.getItem('dictation_last_selected_list')) || 0;
 
@@ -2485,12 +2499,13 @@
                         wordLists = cloudData.wordLists;
                         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
                     }
+                    // 2. 雲端同步時確保聽力與字卡測驗紀錄只保留最新 10 筆
                     if (cloudData.examHistory) {
-                        examHistory = cloudData.examHistory;
+                        examHistory = cloudData.examHistory.slice(0, 10);
                         localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
                     }
                     if (cloudData.cardExamHistory) {
-                        cardExamHistory = cloudData.cardExamHistory;
+                        cardExamHistory = cloudData.cardExamHistory.slice(0, 10);
                         localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
                     }
                     initPracticeCardGrid();
@@ -2508,6 +2523,7 @@
         }
     }
 
+    // 2. 自動上傳雲端：同步成績曲線、常錯單字與歷史分數（一律只傳最新10筆）
     async function triggerAutoSaveToCloud() {
         if (!accessToken || !isCloudSyncActive) return;
         updateCloudStatusText(`☁️ 上傳備份中...`);
@@ -2518,7 +2534,14 @@
             });
             let data = await res.json();
             let fileId = (data.files && data.files.length > 0) ? data.files[0].id : null;
-            let cloudData = { activeDeviceId: myDeviceId, wordLists, examHistory, cardExamHistory, appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}') };
+            
+            let cloudData = { 
+                activeDeviceId: myDeviceId, 
+                wordLists, 
+                examHistory: examHistory.slice(0, 10), 
+                cardExamHistory: cardExamHistory.slice(0, 10), 
+                appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}') 
+            };
             let fileContent = JSON.stringify(cloudData);
 
             if (fileId) {
@@ -3134,6 +3157,7 @@
         }
     }
 
+    // 2. 字卡測驗結束：僅保留最近 10 筆並同步至雲端
     function finishCardExamSession() {
         if (cardExamTimerId) clearInterval(cardExamTimerId);
         releaseWakeLock();
@@ -3149,6 +3173,12 @@
 
         let newRecord = { date: new Date().toLocaleString(), range: currentCardExamRanges || '預設範圍', total, score, results: cardExamResults };
         cardExamHistory.unshift(newRecord);
+        
+        // 限制只儲存最近 10 筆
+        if (cardExamHistory.length > 10) {
+            cardExamHistory = cardExamHistory.slice(0, 10);
+        }
+
         localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
         triggerAutoSaveToCloud();
 
@@ -3849,6 +3879,7 @@
         document.getElementById('examBackBtn').style.display = 'inline-flex';
     }
 
+    // 2. 聽力測驗結束：僅保留最近 10 筆並同步至雲端
     function finishExam() {
         isPlaying = false; isExamRunning = false; synth.cancel();
         if (examTimerId) clearInterval(examTimerId);
@@ -3869,6 +3900,12 @@
         
         let newRecord = { date: new Date().toLocaleString(), range: currentExamRanges, total, score, results: examResults };
         examHistory.unshift(newRecord);
+        
+        // 限制只儲存最近 10 筆
+        if (examHistory.length > 10) {
+            examHistory = examHistory.slice(0, 10);
+        }
+
         localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
         triggerAutoSaveToCloud();
 
