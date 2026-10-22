@@ -1166,49 +1166,20 @@
 
         @media screen and (max-width: 768px) {
             body {
-                padding: 10px 8px;
+                padding: 12px 8px;
             }
 
             .scale-wrapper,
             .scale-wrapper-practice {
                 transform: none !important;
-                margin: 0 !important;
+                margin: 0 0 40px 0 !important;
                 max-width: 100% !important;
                 width: 100% !important;
             }
 
             .paper-card-container {
-                padding: 14px 12px;
+                padding: 16px 14px;
                 border-radius: 16px;
-                overflow: hidden !important;
-            }
-
-            .top-nav-bar {
-                margin-bottom: 14px !important;
-            }
-
-            .select-card-grid {
-                max-height: 180px !important;
-                margin-bottom: 10px !important;
-            }
-
-            .stats-status-bar {
-                margin-bottom: 10px !important;
-                padding: 8px 12px !important;
-            }
-
-            .textarea-header {
-                margin-top: 2px !important;
-                margin-bottom: 6px !important;
-            }
-
-            .btn-group {
-                margin-top: 10px !important;
-            }
-
-            .btn-advanced {
-                margin-top: 6px !important;
-                padding: 9px !important;
             }
 
             .current-mode-indicator {
@@ -1255,7 +1226,7 @@
                 width: 100%;
             }
 
-            /* 手機模式動態調節預覽框與整體容器，消除底部多餘留白並充滿畫面 */
+            /* 手機模式下動態計算並縮小 Y 軸範圍，確保按鈕能在同畫面顯示 */
             #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea {
                 height: clamp(140px, 22vh, 220px) !important;
             }
