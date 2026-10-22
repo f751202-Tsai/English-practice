@@ -1166,72 +1166,28 @@
 
         @media screen and (max-width: 768px) {
             body {
-                padding: 10px 6px;
+                padding: 12px 8px;
             }
 
             .scale-wrapper,
             .scale-wrapper-practice {
                 transform: none !important;
-                margin: 0 0 20px 0 !important;
+                margin: 0 0 40px 0 !important;
                 max-width: 100% !important;
                 width: 100% !important;
             }
 
             .paper-card-container {
-                padding: 14px 12px;
+                padding: 16px 14px;
                 border-radius: 16px;
-            }
-
-            .top-nav-bar {
-                margin-bottom: 12px !important;
-            }
-
-            #practiceNavBar {
-                margin-bottom: 12px !important;
             }
 
             .current-mode-indicator {
                 font-size: 13px;
-                padding: 4px 10px;
+                padding: 5px 12px;
                 max-width: 60%;
                 overflow: hidden;
                 text-overflow: ellipsis;
-            }
-
-            /* 手機模式動態調節高度，使未折疊預覽時按鈕亦可出現在一屏 */
-            .select-card-grid {
-                max-height: clamp(80px, 15vh, 140px) !important;
-                margin-bottom: 10px !important;
-            }
-
-            .stats-status-bar {
-                padding: 6px 12px !important;
-                margin-bottom: 10px !important;
-                font-size: 12px !important;
-            }
-
-            .textarea-header {
-                margin-top: 2px !important;
-                margin-bottom: 4px !important;
-            }
-
-            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea {
-                height: clamp(100px, 20vh, 180px) !important;
-            }
-
-            .btn-advanced {
-                padding: 8px !important;
-                margin-top: 6px !important;
-                font-size: 13px !important;
-            }
-
-            .btn-group {
-                margin-top: 8px !important;
-            }
-
-            button.action-btn, .action-btn-primary {
-                padding: 10px !important;
-                font-size: 14px !important;
             }
 
             .modal-content {
@@ -1268,6 +1224,14 @@
 
             .save-target-label {
                 width: 100%;
+            }
+
+            /* 手機模式下動態計算並縮小 Y 軸範圍，確保按鈕能在同畫面顯示 */
+            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea {
+                height: clamp(140px, 22vh, 220px) !important;
+            }
+            .editor-wrapper {
+                height: clamp(180px, 28vh, 260px) !important;
             }
         }
 
