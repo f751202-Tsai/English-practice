@@ -447,7 +447,6 @@
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
         .modal-content { background-color: #ffffff; margin: 3vh auto; padding: 25px; border-radius: 20px; width: 90%; max-width: 650px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: relative; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-sizing: border-box; }
         
-        /* 1. 延長測驗結束後的視窗 Y 軸高度至綠線範圍 (最大 85vh，內容高 calc(85vh - 120px)) */
         #examResultModal .modal-content {
             max-height: 85vh !important;
             margin: 3vh auto !important;
@@ -1583,6 +1582,8 @@
                 <label><input type="checkbox" value="名詞" class="card-exam-pos-chk"> 名詞</label>
                 <label><input type="checkbox" value="形容詞" class="card-exam-pos-chk"> 形容詞</label>
                 <label><input type="checkbox" value="副詞" class="card-exam-pos-chk"> 副詞</label>
+                <label><input type="checkbox" value="連接詞" class="card-exam-pos-chk"> 連接詞</label>
+                <label><input type="checkbox" value="介係詞" class="card-exam-pos-chk"> 介係詞</label>
                 <label><input type="checkbox" value="片語" class="card-exam-pos-chk"> 片語</label>
             </div>
 
@@ -2499,7 +2500,6 @@
                         wordLists = cloudData.wordLists;
                         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
                     }
-                    // 2. 雲端同步時確保聽力與字卡測驗紀錄只保留最新 10 筆
                     if (cloudData.examHistory) {
                         examHistory = cloudData.examHistory.slice(0, 10);
                         localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
@@ -2523,7 +2523,6 @@
         }
     }
 
-    // 2. 自動上傳雲端：同步成績曲線、常錯單字與歷史分數（一律只傳最新10筆）
     async function triggerAutoSaveToCloud() {
         if (!accessToken || !isCloudSyncActive) return;
         updateCloudStatusText(`☁️ 上傳備份中...`);
@@ -3157,7 +3156,6 @@
         }
     }
 
-    // 2. 字卡測驗結束：僅保留最近 10 筆並同步至雲端
     function finishCardExamSession() {
         if (cardExamTimerId) clearInterval(cardExamTimerId);
         releaseWakeLock();
@@ -3174,7 +3172,6 @@
         let newRecord = { date: new Date().toLocaleString(), range: currentCardExamRanges || '預設範圍', total, score, results: cardExamResults };
         cardExamHistory.unshift(newRecord);
         
-        // 限制只儲存最近 10 筆
         if (cardExamHistory.length > 10) {
             cardExamHistory = cardExamHistory.slice(0, 10);
         }
@@ -3879,7 +3876,6 @@
         document.getElementById('examBackBtn').style.display = 'inline-flex';
     }
 
-    // 2. 聽力測驗結束：僅保留最近 10 筆並同步至雲端
     function finishExam() {
         isPlaying = false; isExamRunning = false; synth.cancel();
         if (examTimerId) clearInterval(examTimerId);
@@ -3901,7 +3897,6 @@
         let newRecord = { date: new Date().toLocaleString(), range: currentExamRanges, total, score, results: examResults };
         examHistory.unshift(newRecord);
         
-        // 限制只儲存最近 10 筆
         if (examHistory.length > 10) {
             examHistory = examHistory.slice(0, 10);
         }
@@ -3952,7 +3947,10 @@
     function openExportModal() { document.getElementById('exportModal').style.display = 'block'; }
     function closeExportModal() { document.getElementById('exportModal').style.display = 'none'; }
     
-    function openHistoryModal() { 
+    async function openHistoryModal() { 
+        if (accessToken && isCloudSyncActive) {
+            await loadDataFromGoogleDrive();
+        }
         openHistoryModalContent(); 
         document.getElementById('historyModal').style.display = 'block'; 
         setTimeout(() => {
@@ -4220,7 +4218,6 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-	    // 判斷是否為省電模式：若為省電模式使用 #C7D2FE，一般模式則使用原本的 #4F46E5
             const isPowerSaving = document.body.classList.contains('power-saving-mode');
             ctx.fillStyle = isPowerSaving ? "#C7D2FE" : "#4F46E5";
             
