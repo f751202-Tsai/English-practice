@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Vocab- 英文聽力與學習系統 (完整整合版)</title>
+    <title>My Vocab - My Vocab</title>
     <!-- 引入 Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -215,7 +215,7 @@
             background: var(--primary-gradient); color: white; border: none; 
             padding: 7px 15px; border-radius: 8px; cursor: pointer; 
             font-weight: 600; font-size: 13px; box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
-            transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+            transition: all 0.2s; 
         }
         .cloud-btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .cloud-btn.logout { background-color: #EF4444; box-shadow: none; }
@@ -452,7 +452,6 @@
         #examAdvancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
         #flashcardSettingsModal .modal-content { transform: scale(1); transform-origin: center center; margin: 5vh auto; }
         #cardExamAdvancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 5vh auto; }
-        #contactModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
 
         #historyModal .modal-content {
             width: 92%;
@@ -1167,28 +1166,72 @@
 
         @media screen and (max-width: 768px) {
             body {
-                padding: 12px 8px;
+                padding: 10px 6px;
             }
 
             .scale-wrapper,
             .scale-wrapper-practice {
                 transform: none !important;
-                margin: 0 0 40px 0 !important;
+                margin: 0 0 20px 0 !important;
                 max-width: 100% !important;
                 width: 100% !important;
             }
 
             .paper-card-container {
-                padding: 16px 14px;
+                padding: 14px 12px;
                 border-radius: 16px;
+            }
+
+            .top-nav-bar {
+                margin-bottom: 12px !important;
+            }
+
+            #practiceNavBar {
+                margin-bottom: 12px !important;
             }
 
             .current-mode-indicator {
                 font-size: 13px;
-                padding: 5px 12px;
+                padding: 4px 10px;
                 max-width: 60%;
                 overflow: hidden;
                 text-overflow: ellipsis;
+            }
+
+            /* 手機模式動態調節高度，使未折疊預覽時按鈕亦可出現在一屏 */
+            .select-card-grid {
+                max-height: clamp(80px, 15vh, 140px) !important;
+                margin-bottom: 10px !important;
+            }
+
+            .stats-status-bar {
+                padding: 6px 12px !important;
+                margin-bottom: 10px !important;
+                font-size: 12px !important;
+            }
+
+            .textarea-header {
+                margin-top: 2px !important;
+                margin-bottom: 4px !important;
+            }
+
+            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea {
+                height: clamp(100px, 20vh, 180px) !important;
+            }
+
+            .btn-advanced {
+                padding: 8px !important;
+                margin-top: 6px !important;
+                font-size: 13px !important;
+            }
+
+            .btn-group {
+                margin-top: 8px !important;
+            }
+
+            button.action-btn, .action-btn-primary {
+                padding: 10px !important;
+                font-size: 14px !important;
             }
 
             .modal-content {
@@ -1899,31 +1942,6 @@
     </div>
 </div>
 
-<!-- ================= 💬 問題與建議回報彈窗 ================= -->
-<div id="contactModal" class="modal" style="z-index: 2000;">
-    <div class="modal-content" style="max-width: 480px;">
-        <span class="close-modal" onclick="closeContactModal()">&times;</span>
-        <h3 style="margin-top:0; color:var(--primary); font-size:18px; font-weight:700;">💬 問題與建議回報</h3>
-        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 12px;">感謝使用 My Vocab！若您有任何使用上的問題或改進建議，歡迎在此留下您的反饋，訊息將直達管理員的 LINE：</p>
-        
-        <textarea id="contactFeedbackInput" rows="5" placeholder="請詳細說明您遇到的問題或建議..." style="width: 100%; height: 120px !important; resize: vertical;"></textarea>
-
-        <!-- 上傳圖片按鈕區塊 -->
-        <div style="margin-top: 10px;">
-            <input type="file" id="contactImageInput" accept="image/*" style="display: none;" onchange="handleContactImageSelect(event)">
-            <button class="btn-advanced" style="padding: 8px 12px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: 0;" onclick="document.getElementById('contactImageInput').click()">
-                📷 上傳圖片 / 截圖
-            </button>
-            <div id="contactImagePreviewBox" style="display: none; margin-top: 8px; align-items: center; gap: 8px; background: #F1F5F9; padding: 6px 10px; border-radius: 8px; font-size: 12.5px;">
-                <span id="contactImageName" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px; color: var(--text-main);"></span>
-                <button onclick="clearContactImage()" style="background: none; border: none; color: #EF4444; font-weight: bold; cursor: pointer; padding: 0 4px;">✕ 移除</button>
-            </div>
-        </div>
-
-        <button class="action-btn-primary" style="margin-top: 16px;" onclick="sendContactFeedback()">📤 送出回報</button>
-    </div>
-</div>
-
 <div id="aboutModal" class="modal">
     <div class="modal-content" style="max-width: 460px; text-align: center;">
         <span class="close-modal" onclick="closeAboutModal()">&times;</span>
@@ -1931,21 +1949,11 @@
         <div class="author-box" style="margin: 15px 0; padding: 14px; background: #F8FAFC; border-radius: 12px; border: 1px solid var(--border-color); font-size: 15px; font-weight: 600; color: var(--primary);">
             作者: Fried Chicken Tsai
         </div>
-
-        <!-- 💬 問題與建議回報 (位於作者與開發者介面之間) -->
-        <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; text-align: left; margin: 12px 0;">
-            <div>
-                <label style="margin-top:0;">💬 問題與建議回報</label>
-                <span style="font-size: 12.5px; color: var(--text-muted);">傳送訊息與除錯資料至 LINE</span>
-            </div>
-            <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="openContactModal()">聯繫我們</button>
-        </div>
-
         <div class="config-group" style="text-align: left; margin: 12px 0;">
             <label style="margin-top:0;">🛠️ 開發者介面</label>
             <div id="devLoginPanel" style="display: flex; gap: 8px; margin-top: 8px;">
                 <input type="password" id="devPasswordInput" placeholder="請輸入開發者密碼..." style="margin-top:0; flex:1;">
-                <button class="cloud-btn" style="background: var(--primary-gradient);" onclick="verifyDevPassword()">解鎖</button>
+                <button class="cloud-btn" style="background: var(--primary-gradient); white-space: nowrap;" onclick="verifyDevPassword()">解鎖</button>
             </div>
             <div id="devContentPanel" style="display: none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px; flex-direction: column; gap: 8px;">
                 <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 13.5px; padding: 10px;" onclick="runStressTest()">🚀 壓力測試 (30組/9000字)</button>
@@ -2190,15 +2198,22 @@
 </div>
 
 <script>
+    /* ================= 🛡️ 資安防護：HTML 字元轉義防 XSS 函數 ================= */
+    function escapeHTML(str) {
+        if (!str && str !== 0) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     const CLIENT_ID = '976805087499-l4auf66i1qkj91ba335jvgtk3b04a9av.apps.googleusercontent.com';
-    const SCOPES = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'; 
+    const SCOPES = 'https://www.googleapis.com/auth/drive.appdata'; 
     const FILENAME = 'english_dictation_lists_v2.json';
-    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw2riNxZsafng7Fo8Eo2GpUJ148-XuS7ksXQ-fpSILPg_9X-ICNrOLwxzOJF74BoySg/exec';
 
     let tokenClient, accessToken = null, isCloudSyncActive = false;
-    let googleUserInfo = null; // 儲存登入的使用者資訊
-    let currentContactImageBase64 = ''; // 儲存上傳圖片 Base64
-
     let myDeviceId = localStorage.getItem('dictation_device_id');
     if (!myDeviceId) {
         myDeviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -2294,13 +2309,12 @@
                 scope: SCOPES,
                 callback: async (resp) => {
                     if (resp.error !== undefined || !resp.access_token) {
-                        accessToken = null; isCloudSyncActive = false; googleUserInfo = null;
+                        accessToken = null; isCloudSyncActive = false;
                         updateCloudStatusText(`💻 本機作業模式 (未登入)`);
                         return;
                     }
                     accessToken = resp.access_token;
                     isCloudSyncActive = true;
-                    fetchGoogleUserInfo();
                     updateCloudStatusText(`✅ 已連結 Google 雲端`);
                     let authBtn = document.getElementById('cloudAuthBtn');
                     authBtn.innerText = '🔒 登出'; authBtn.className = 'cloud-btn logout';
@@ -2310,132 +2324,6 @@
             });
         }
     };
-
-    async function fetchGoogleUserInfo() {
-        if (!accessToken) return;
-        try {
-            let res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            if (res.ok) {
-                googleUserInfo = await res.json();
-            }
-        } catch(e) {
-            console.error('無法取得 Google 使用者資訊', e);
-        }
-    }
-
-    function handleContactImageSelect(event) {
-        let file = event.target.files[0];
-        if (!file) return;
-
-        if (file.size > 5 * 1024 * 1024) {
-            alert('⚠️ 圖片大小不能超過 5MB！');
-            event.target.value = '';
-            return;
-        }
-
-        let reader = new FileReader();
-        reader.onload = function(e) {
-            currentContactImageBase64 = e.target.result;
-            document.getElementById('contactImageName').innerText = `📷 ${file.name}`;
-            document.getElementById('contactImagePreviewBox').style.display = 'inline-flex';
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function clearContactImage() {
-        currentContactImageBase64 = '';
-        document.getElementById('contactImageInput').value = '';
-        document.getElementById('contactImagePreviewBox').style.display = 'none';
-    }
-
-    function openContactModal() {
-        document.getElementById('contactFeedbackInput').value = '';
-        clearContactImage();
-        let contactModal = document.getElementById('contactModal');
-        contactModal.style.zIndex = '2000'; // 確保置頂於關於視窗上方
-        contactModal.style.display = 'block';
-    }
-
-    function closeContactModal() {
-        document.getElementById('contactModal').style.display = 'none';
-    }
-
-    async function sendContactFeedback() {
-        let text = document.getElementById('contactFeedbackInput').value.trim();
-        if (!text && !currentContactImageBase64) {
-            alert('請輸入您遇到的問題或建議，或上傳相關圖片！');
-            return;
-        }
-
-        let sendBtn = document.querySelector('#contactModal .action-btn-primary');
-        let originalText = sendBtn.innerText;
-        sendBtn.innerText = '傳送中...';
-        sendBtn.disabled = true;
-
-        // 計算題庫單字總數與星號單字數
-        let totalWordCount = 0;
-        let totalStarCount = 0;
-        wordLists.forEach(list => {
-            if (list.content) {
-                let words = parseWordsRaw(list.content);
-                totalWordCount += words.length;
-                totalStarCount += words.filter(w => w.starred).length;
-            }
-        });
-
-        let systemSettings = JSON.parse(localStorage.getItem('dictation_system_settings') || '{}');
-        let practiceSettings = JSON.parse(localStorage.getItem('dictation_app_settings') || '{}');
-        let examSettings = JSON.parse(localStorage.getItem('dictation_exam_app_settings') || '{}');
-        let flashcardSettings = JSON.parse(localStorage.getItem('dictation_flashcard_app_settings') || '{}');
-        let cardExamSettings = JSON.parse(localStorage.getItem('dictation_card_exam_app_settings') || '{}');
-
-        // 格式化帶入 8 項 App 資訊
-        let appInfoReport = `
---- 當前 App 資訊 ---
-1. 題庫英文單字總數: ${totalWordCount}
-2. 題庫(*)英文單字總數: ${totalStarCount}
-3. 系統設定: ${JSON.stringify(systemSettings)}
-4. 聽力練習設定: ${JSON.stringify(practiceSettings)}
-5. 聽力測驗設定: ${JSON.stringify(examSettings)}
-6. 字卡練習設定: ${JSON.stringify(flashcardSettings)}
-7. 字卡測驗設定: ${JSON.stringify(cardExamSettings)}
-8. 考試紀錄與學習分析: 聽力紀錄 ${examHistory.length} 筆 / 字卡紀錄 ${cardExamHistory.length} 筆
-`.trim();
-
-        let fullFeedback = text ? `${text}\n\n${appInfoReport}` : appInfoReport;
-
-        let payload = {
-            feedback: fullFeedback,
-            imageBase64: currentContactImageBase64,
-            userInfo: googleUserInfo ? {
-                name: googleUserInfo.name || '未填寫姓名',
-                email: googleUserInfo.email || '無Email',
-                id: googleUserInfo.id
-            } : '未登入 / 本機使用者',
-            deviceId: myDeviceId,
-            userAgent: navigator.userAgent
-        };
-
-        try {
-            await fetch(GAS_WEB_APP_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            alert('已成功傳送！感謝您的回報與除錯資訊。');
-            closeContactModal();
-        } catch (err) {
-            console.error('送出失敗', err);
-            alert('⚠️ 送出失敗，請重試或檢查網路連線。');
-        } finally {
-            sendBtn.innerText = originalText;
-            sendBtn.disabled = false;
-        }
-    }
 
     function loadCollapseStates() {
         let collapseStates = JSON.parse(localStorage.getItem('dictation_collapse_states')) || {
@@ -2603,7 +2491,7 @@
     function handleLogout() {
         if (accessToken) {
             google.accounts.oauth2.revoke(accessToken, () => {
-                accessToken = null; isCloudSyncActive = false; googleUserInfo = null;
+                accessToken = null; isCloudSyncActive = false;
                 updateCloudStatusText(`💻 本機作業模式 (未登入)`);
                 let authBtn = document.getElementById('cloudAuthBtn');
                 authBtn.innerText = '登入 Google 雲端'; authBtn.className = 'cloud-btn';
@@ -2797,7 +2685,7 @@
             let cardHtml = `
                 <div class="select-card ${isSelected}" onclick="togglePracticeCard(${index}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${list.title}</div>
+                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
                         <div class="select-card-count">(${count}/300 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
@@ -2854,7 +2742,7 @@
             let cardHtml = `
                 <div class="select-card ${isSelected}" onclick="toggleFlashcardCard(${index}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${list.title}</div>
+                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
                         <div class="select-card-count">(${count}/300 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
@@ -3058,7 +2946,7 @@
             let cardHtml = `
                 <div class="select-card ${isSelected}" onclick="toggleCardExamCard(${index}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${list.title}</div>
+                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
                         <div class="select-card-count">(${count}/300 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
@@ -3307,14 +3195,14 @@
         cardExamResults.forEach((r, i) => {
             let titleColor = r.isCorrect ? '#10B981' : '#EF4444';
             let icon = r.isCorrect ? '✅' : '❌';
-            let correctInfo = `${r.english} (${r.chinese || ''}) ${r.pos ? '/ ' + r.pos : ''}`;
+            let correctInfo = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')}) ${r.pos ? '/ ' + escapeHTML(r.pos) : ''}`;
             
-            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${r.userChi || '[(未填)]'}</span>` : `<span style="color:#EF4444;">${r.userChi || '[(未填)]'}</span>`;
-            let posDisplay = r.posMatch ? `<span style="color:#10B981;">${r.userPos || '[(未選)]'}</span>` : `<span style="color:#EF4444;">${r.userPos || '[(未選)]'}</span>`;
+            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '[(未填)]')}</span>`;
+            let posDisplay = r.posMatch ? `<span style="color:#10B981;">${escapeHTML(r.userPos || '[(未選)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userPos || '[(未選)]')}</span>`;
             let userAnsInfo = `${chiDisplay} ${r.pos ? '/ ' + posDisplay : ''}`;
 
             html += `<div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
-                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${r.english} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
+                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${escapeHTML(r.english)} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
                 <div style="font-size:13.5px; color:var(--text-muted);">您的回答：${userAnsInfo}</div>
             </div>`;
         });
@@ -3366,6 +3254,7 @@
 
         window.speechSynthesis.speak(utterance);
     }
+
     function initExamCardGrid() {
         let grid = document.getElementById('examCardGrid');
         if (!grid) return;
@@ -3378,7 +3267,7 @@
             let cardHtml = `
                 <div class="select-card ${isSelected}" onclick="toggleExamCard(${index}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${list.title}</div>
+                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
                         <div class="select-card-count">(${count}/300 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
@@ -3739,7 +3628,7 @@
         if (targetRepeat < 1) targetRepeat = 1;
 
         let loopSymbolHtml = isLoop ? `<span style="color:#3B82F6; font-size:17px; margin-left:6px; font-weight:bold;">∞</span>` : '';
-        let leftPart = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${item.english}</strong> <span style="font-weight:600; color:#475569;">(第 1/${targetRepeat} 次)</span>`;
+        let leftPart = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${escapeHTML(item.english)}</strong> <span style="font-weight:600; color:#475569;">(第 1/${targetRepeat} 次)</span>`;
         let rightPart = `<span style="color:#4F46E5; font-weight:700;">(${currentWordIndex + 1}/${wordsData.length})</span>${loopSymbolHtml}`;
         
         document.getElementById('status').innerHTML = `<div>${leftPart}</div><div style="display:flex; align-items:center;">${rightPart}</div>`;
@@ -3750,7 +3639,7 @@
                 text: item.english,
                 isEng: true,
                 onPlay: () => {
-                    let newLeft = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${item.english}</strong> <span style="font-weight:600; color:#475569;">(第 ${r}/${targetRepeat} 次)</span>`;
+                    let newLeft = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${escapeHTML(item.english)}</strong> <span style="font-weight:600; color:#475569;">(第 ${r}/${targetRepeat} 次)</span>`;
                     document.getElementById('status').children[0].innerHTML = newLeft;
                 }
             });
@@ -4026,14 +3915,14 @@
         examResults.forEach((r, i) => {
             let titleColor = r.isCorrect ? '#10B981' : '#EF4444';
             let icon = r.isCorrect ? '✅' : '❌';
-            let correctInfo = `${r.english} (${r.chinese || ''})`;
+            let correctInfo = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')})`;
             
-            let engDisplay = r.engMatch ? `<span style="color:#10B981;">${r.userEng || '[(未填)]'}</span>` : `<span style="color:#EF4444;">${r.userEng || '[(未填)]'}</span>`;
-            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${r.userChi || '[(未填)]'}</span>` : `<span style="color:#EF4444;">${r.userChi || '[(未填)]'}</span>`;
+            let engDisplay = r.engMatch ? `<span style="color:#10B981;">${escapeHTML(r.userEng || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userEng || '[(未填)]')}</span>`;
+            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '[(未填)]')}</span>`;
             let userAnsInfo = `${engDisplay} / ${chiDisplay}`;
 
             html += `<div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
-                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${r.english} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
+                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${escapeHTML(r.english)} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
                 <div style="font-size:13.5px; color:var(--text-muted);">您的回答：${userAnsInfo}</div>
             </div>`;
         });
@@ -4105,7 +3994,7 @@
     function openHistoryModalContent() {
         let targetSelectOptions = '';
         wordLists.forEach((l, idx) => {
-            targetSelectOptions += `<option value="${idx}">${idx + 1}: ${l.title} (${getListWordCount(l.content)}/300)</option>`;
+            targetSelectOptions += `<option value="${idx}">${idx + 1}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/300)</option>`;
         });
         let targetSelLis = document.getElementById('targetListSelectorListening');
         let targetSelCard = document.getElementById('targetListSelectorCard');
@@ -4121,8 +4010,8 @@
                 listeningHistoryHtml += `
                     <div class="history-card">
                         <div class="history-header" onclick="toggleHistoryDetail(${hIdx})">
-                            <span>📅 ${h.date} ｜ 範圍: ${h.range || '預設範圍'}</span>
-                            <span style="color:var(--primary); font-weight:700;">🎯 ${h.score}分 (共${h.total}題/錯${wrongCount}題) <span id="arrow_${hIdx}">▼</span></span>
+                            <span>📅 ${escapeHTML(h.date)} ｜ 範圍: ${escapeHTML(h.range || '預設範圍')}</span>
+                            <span style="color:var(--primary); font-weight:700;">🎯 ${escapeHTML(h.score)}分 (共${escapeHTML(h.total)}題/錯${wrongCount}題) <span id="arrow_${hIdx}">▼</span></span>
                         </div>
                         <div class="history-detail" id="detail_${hIdx}">
                 `;
@@ -4131,10 +4020,10 @@
                         let icon = r.isCorrect ? '✅' : '❌';
                         let color = r.isCorrect ? '#10B981' : '#EF4444';
                         
-                        let engDisplay = r.engMatch ? `<span style="color:#10B981;">${r.userEng || '未填'}</span>` : `<span style="color:#EF4444;">${r.userEng || '未填'}</span>`;
-                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${r.userChi || '未填'}</span>` : `<span style="color:#EF4444;">${r.userChi || '未填'}</span>`;
+                        let engDisplay = r.engMatch ? `<span style="color:#10B981;">${escapeHTML(r.userEng || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userEng || '未填')}</span>`;
+                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '未填')}</span>`;
 
-                        let correctStr = `${r.english} (${r.chinese || ''})`;
+                        let correctStr = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')})`;
                         let userStr = `${engDisplay} / ${chiDisplay}`;
 
                         let ansText = r.isCorrect ? correctStr : `正確答案 ${correctStr} ｜ 您的回答: ${userStr}`;
@@ -4156,8 +4045,8 @@
                 cardHistoryHtml += `
                     <div class="history-card">
                         <div class="history-header" onclick="toggleCardHistoryDetail(${hIdx})">
-                            <span>📅 ${h.date} ｜ 範圍: ${h.range || '預設範圍'}</span>
-                            <span style="color:#10B981; font-weight:700;">🎯 ${h.score}分 (共${h.total}題/錯${wrongCount}題) <span id="cardArrow_${hIdx}">▼</span></span>
+                            <span>📅 ${escapeHTML(h.date)} ｜ 範圍: ${escapeHTML(h.range || '預設範圍')}</span>
+                            <span style="color:#10B981; font-weight:700;">🎯 ${escapeHTML(h.score)}分 (共${escapeHTML(h.total)}題/錯${wrongCount}題) <span id="cardArrow_${hIdx}">▼</span></span>
                         </div>
                         <div class="history-detail" id="cardDetail_${hIdx}">
                 `;
@@ -4165,9 +4054,9 @@
                     h.results.forEach((r, rIdx) => {
                         let icon = r.isCorrect ? '✅' : '❌';
                         let color = r.isCorrect ? '#10B981' : '#EF4444';
-                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${r.userChi || '未填'}</span>` : `<span style="color:#EF4444;">${r.userChi || '未填'}</span>`;
-                        let posDisplay = r.posMatch ? `<span style="color:#10B981;">${r.userPos || '未選'}</span>` : `<span style="color:#EF4444;">${r.userPos || '未選'}</span>`;
-                        let correctStr = `${r.english} (${r.chinese || ''}) ${r.pos ? '/ ' + r.pos : ''}`;
+                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '未填')}</span>`;
+                        let posDisplay = r.posMatch ? `<span style="color:#10B981;">${escapeHTML(r.userPos || '未選')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userPos || '未選')}</span>`;
+                        let correctStr = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')}) ${r.pos ? '/ ' + escapeHTML(r.pos) : ''}`;
                         let userStr = `${chiDisplay} ${r.pos ? '/ ' + posDisplay : ''}`;
                         let ansText = r.isCorrect ? correctStr : `正確答案 ${correctStr} ｜ 您的回答: ${userStr}`;
                         cardHistoryHtml += `<div style="color:${color}; margin-bottom:4px;">${icon} 第${rIdx+1}題：${ansText}</div>`;
@@ -4200,8 +4089,8 @@
         } else {
             listeningWrongArr.forEach((w, idx) => {
                 listeningWrongHtml += `<div class="error-word-item">
-                    <input type="checkbox" checked value="${w.english}"> 
-                    <span>${idx + 1}. <b>${w.english}</b> (${w.chinese || ''}) — <span class="error-count">錯誤 ${w.count} 次</span></span>
+                    <input type="checkbox" checked value="${escapeHTML(w.english)}"> 
+                    <span>${idx + 1}. <b>${escapeHTML(w.english)}</b> (${escapeHTML(w.chinese || '')}) — <span class="error-count">錯誤 ${escapeHTML(w.count)} 次</span></span>
                 </div>`;
             });
         }
@@ -4229,8 +4118,8 @@
         } else {
             cardWrongArr.forEach((w, idx) => {
                 cardWrongHtml += `<div class="error-word-item">
-                    <input type="checkbox" checked value="${w.english}"> 
-                    <span>${idx + 1}. <b>${w.english}</b> (${w.chinese || ''}) — <span class="error-count">錯誤 ${w.count} 次</span></span>
+                    <input type="checkbox" checked value="${escapeHTML(w.english)}"> 
+                    <span>${idx + 1}. <b>${escapeHTML(w.english)}</b> (${escapeHTML(w.chinese || '')}) — <span class="error-count">錯誤 ${escapeHTML(w.count)} 次</span></span>
                 </div>`;
             });
         }
