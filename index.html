@@ -4220,7 +4220,10 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            ctx.fillStyle = "#4F46E5";
+	    // 判斷是否為省電模式：若為省電模式使用 #C7D2FE，一般模式則使用原本的 #4F46E5
+            const isPowerSaving = document.body.classList.contains('power-saving-mode');
+            ctx.fillStyle = isPowerSaving ? "#C7D2FE" : "#4F46E5";
+            
             ctx.font = "bold 15px Inter, sans-serif";
             ctx.textAlign = "center";
             ctx.fillText(p.score, p.x, p.y - 12);
