@@ -833,11 +833,15 @@
         }
         .list-card-menu-btn:hover { background: rgba(0,0,0,0.05); color: var(--text-main); }
 
-        /* 卡片右側 3 個點點開的下拉選單 */
+        /* 卡片右側 3 個點點開的下拉選單 (支援動態向上延伸防切掉) */
         .dropdown-menu {
             display: none; position: absolute; right: 16px; top: 60px; background: #FFFFFF;
             border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             z-index: 100; min-width: 120px; overflow: hidden;
+        }
+        .dropdown-menu.drop-up {
+            top: auto !important;
+            bottom: 60px !important;
         }
         .dropdown-menu.show { display: block; }
         .dropdown-item {
@@ -849,7 +853,7 @@
         .dropdown-item.danger:hover { background: #FEF2F2; }
 
         /* ---------------------------------
-           單字編輯內頁 UI (對應圖2：上方佈局調整以防手機鍵盤遮擋)
+           單字編輯內頁 UI
            --------------------------------- */
         .editor-top-section {
             display: flex;
@@ -1797,7 +1801,7 @@
             <div id="resultContainer" style="display: none;"></div>
         </div>
 
-        <!-- ================= 📁 題庫清單頁面 (對應圖1) ================= -->
+        <!-- ================= 📁 題庫清單頁面 ================= -->
         <div id="editorListView" class="app-view">
             <div class="top-nav-bar">
                 <button class="back-home-btn" onclick="backToHome()" title="返回首頁">
@@ -1820,7 +1824,7 @@
             <div class="list-card-container" id="editorListCardContainer"></div>
         </div>
 
-        <!-- ================= 📝 單字編輯內頁 (對應圖2：上方佈局調整以防手機鍵盤遮擋) ================= -->
+        <!-- ================= 📝 單字編輯內頁 ================= -->
         <div id="editorDetailView" class="app-view">
             <div class="top-nav-bar">
                 <button class="back-home-btn" onclick="backToListFromDetail()" title="返回清單">
@@ -2698,7 +2702,6 @@
         switchView('examView');
     }
 
-    // 進入圖 1 的題庫清單頁面
     async function goToEditorPage() {
         if (accessToken && isCloudSyncActive) {
             await loadDataFromGoogleDrive();
@@ -2724,7 +2727,6 @@
         switchView('homeDashboardView');
     }
 
-    // 初始化圖 1 的題庫清單 UI
     function initEditorListCards() {
         let container = document.getElementById('editorListCardContainer');
         if (!container) return;
@@ -2752,15 +2754,33 @@
         });
     }
 
+    // 動態判斷選單位置：若按鈕位置偏下方，則讓選單往上延伸以防被切掉
     function toggleDropdownMenu(idx, event) {
         document.querySelectorAll('.dropdown-menu').forEach(m => {
             if (m.id !== `dropdownMenu_${idx}`) m.classList.remove('show');
         });
+
         let menu = document.getElementById(`dropdownMenu_${idx}`);
-        if (menu) menu.classList.toggle('show');
+        if (!menu) return;
+
+        let isShown = menu.classList.contains('show');
+        if (!isShown) {
+            // 計算按鈕相對於容器或畫面的位置，若靠近下方則加上 drop-up 樣式
+            let btnRect = event.currentTarget.getBoundingClientRect();
+            let containerRect = document.getElementById('editorListCardContainer').getBoundingClientRect();
+            
+            // 如果按鈕距離容器底部小於 160px，代表在下方，將選單往上彈出
+            if (btnRect.bottom > containerRect.bottom - 150) {
+                menu.classList.add('drop-up');
+            } else {
+                menu.classList.remove('drop-up');
+            }
+            menu.classList.add('show');
+        } else {
+            menu.classList.remove('show');
+        }
     }
 
-    // 點擊字卡進入該題庫內容編輯內頁 (圖 2)
     function openEditorDetail(idx) {
         lastSelectedList = idx;
         localStorage.setItem('dictation_last_selected_list', idx);
@@ -2781,7 +2801,6 @@
         switchView('editorListView');
     }
 
-    // 來自圖 1 菜單的「修改」標題
     function renameListTitleFromMenu(idx) {
         let list = wordLists[idx];
         let newTitle = prompt("請輸入新的題庫標題：", list.title);
@@ -2793,7 +2812,6 @@
         }
     }
 
-    // 來自圖 1 菜單的「清空」單字
     function clearListContentFromMenu(idx) {
         if (confirm(`確定要清空「${wordLists[idx].title}」裡的所有單字嗎？`)) {
             wordLists[idx].content = "";
@@ -2803,7 +2821,6 @@
         }
     }
 
-    // 來自圖 1 菜單的「刪除」題庫
     function deleteListFromMenu(idx) {
         if (wordLists.length <= 1) {
             alert("⚠️ 至少必須保留一組題庫本！");
@@ -2817,7 +2834,6 @@
         }
     }
 
-    // 新增題庫本
     function addNewWordList() {
         if (wordLists.length >= MAX_LISTS_DEFAULT) {
             alert(`⚠️ 目前題庫數量已達上限 ${MAX_LISTS_DEFAULT} 組！`);
@@ -2836,7 +2852,6 @@
         alert("✅ 新增成功！");
     }
 
-    // 每次修改、清空、刪除後的即時儲存支援 (對應需求1：每次修改、清空、刪除後會儲存至本機跟雲端)
     function handleEditorTextareaInput() {
         let idx = lastSelectedList;
         if (!wordLists[idx]) return;
@@ -3645,7 +3660,6 @@
         }
     }
 
-    // 點擊最下方「儲存」按鈕時執行的動作（對應需求2：按下最下面的儲存才會存檔至雲端）
     function saveAndStayInEditor() {
         handleEditorTextareaInput();
         let idx = lastSelectedList;
