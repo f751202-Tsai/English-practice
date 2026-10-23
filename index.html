@@ -2424,8 +2424,14 @@
         }
     };
 
+    // 取得「本地時區」的今天日期，格式 YYYY-MM-DD（台灣時間 00:00 就會換日）
+    function getLocalDateStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
     function checkDailyReset() {
-        let todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        let todayStr = getLocalDateStr();
         if (chickenData.lastDate !== todayStr) {
             chickenData.lastDate = todayStr;
             chickenData.tasks.dailyLogin = { done: true, claimed: false }; // 每日登入自動完成
@@ -2434,6 +2440,7 @@
             chickenData.tasks.listeningPerfect = { done: false, claimed: false };
             chickenData.tasks.cardPerfect = { done: false, claimed: false };
             saveChickenData();
+            triggerAutoSaveToCloud(); // 重置後同步到雲端（未登入時會自動略過）
         }
     }
 
@@ -2444,6 +2451,8 @@
 
     function updateChickenBadgeUI() {
         checkDailyReset();
+        let modal = document.getElementById('chickenRewardModal');
+        if (modal && modal.style.display === 'block') updateChickenModalUI();
         let badge = document.getElementById('chickenRewardBadge');
         if (!badge) return;
 
@@ -2586,9 +2595,15 @@
         loadCollapseStates();
 
         // 初始化雞塊系統與每日登入任務
-        checkDailyReset();
-        triggerTaskCheck('dailyLogin');
-        updateChickenBadgeUI();
+                 checkDailyReset();
+                 updateChickenBadgeUI();
+
+                 // 切回 app 時檢查是否已跨日
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') updateChickenBadgeUI();
+        });
+        // app 開著不動時，每分鐘檢查一次
+        setInterval(updateChickenBadgeUI, 60 * 1000);
 
         window.addEventListener('click', function(e) {
             if (!e.target.closest('.list-card-menu-btn') && !e.target.closest('.dropdown-menu')) {
