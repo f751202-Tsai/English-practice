@@ -2472,11 +2472,11 @@
         if (!container) return;
 
         const taskDefs = [
-            { key: 'dailyLogin', title: '1. 每日登入', desc: '每日開啟系統自動完成' },
-            { key: 'listeningPractice', title: '2. 完成一次聽力測驗', desc: '完成任意聽力測驗一次' },
-            { key: 'cardPractice', title: '3. 完成一次字卡測驗', desc: '完成任意字卡測驗一次' },
-            { key: 'listeningPerfect', title: '4. 聽力測驗10題以上獲得滿分', desc: '聽力測驗題目 ≥ 10 且 100 分' },
-            { key: 'cardPerfect', title: '5. 字卡測驗10題以上獲得滿分', desc: '字卡測驗題目 ≥ 10 且 100 分' }
+            { key: 'dailyLogin', title: '1. 每日登入', desc: '' },
+            { key: 'listeningPractice', title: '2. 完成一次聽力測驗', desc: '' },
+            { key: 'cardPractice', title: '3. 完成一次字卡測驗', desc: '' },
+            { key: 'listeningPerfect', title: '4. 聽力測驗題目 ≥ 10 且 80 分', desc: '' },
+            { key: 'cardPerfect', title: '5. 字卡測驗題目 ≥ 10 且 80 分', desc: '' }
         ];
 
         let html = '';
@@ -2527,7 +2527,7 @@
                 chickenData.tasks.listeningPractice.done = true;
                 updated = true;
             }
-            if (data.total >= 10 && data.score === 100) {
+            if (data.total >= 10 && data.score >= 80) {
                 if (!chickenData.tasks.listeningPerfect.claimed) {
                     chickenData.tasks.listeningPerfect.done = true;
                     updated = true;
@@ -2538,7 +2538,7 @@
                 chickenData.tasks.cardPractice.done = true;
                 updated = true;
             }
-            if (data.total >= 10 && data.score === 100) {
+            if (data.total >= 10 && data.score >= 80) {
                 if (!chickenData.tasks.cardPerfect.claimed) {
                     chickenData.tasks.cardPerfect.done = true;
                     updated = true;
