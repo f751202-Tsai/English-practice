@@ -24,23 +24,24 @@
 
         body.power-saving-mode {
             --bg-body: #14171E !important;
-            --card-bg: #1E222A !important;
-            --text-main: #F1F5F9 !important;
-            --text-muted: #A0AEC0 !important;
-            --border-color: #2D3748 !important;
+            --card-bg: #1B1E27 !important;
+            --card-border: #2B303C !important;
+            --text-main: #FFFFFF !important;
+            --text-muted: #94A3B8 !important;
+            --divider-color: rgba(255, 255, 255, 0.08) !important;
             background-image: none !important;
         }
 
         body.power-saving-mode .paper-card-container {
-            background-color: #1E222A !important;
-            color: #F1F5F9 !important;
-            border-color: #2D3748 !important;
+            background-color: #1B1E27 !important;
+            color: #FFFFFF !important;
+            border-color: #2B303C !important;
         }
 
         body.power-saving-mode .section-card-wrapper {
-            background-color: #1E222A !important;
+            background-color: #1B1E27 !important;
             color: #FFFFFF !important;
-            border-color: #2D3748 !important;
+            border-color: #2B303C !important;
         }
 
         body.power-saving-mode .cloud-sync-bar,
@@ -56,21 +57,21 @@
         body.power-saving-mode .mode-status-card,
         body.power-saving-mode .database-load-card,
         body.power-saving-mode .search-bar-container { 
-            background-color: #1E222A !important; 
+            background-color: #1B1E27 !important; 
             color: #FFFFFF !important;            
-            border-color: #2D3748 !important;
+            border-color: #2B303C !important;
         }
 
         body.power-saving-mode .modal-content { 
-            background-color: #1E222A !important; 
-            color: #F1F5F9 !important;            
-            border-color: #2D3748 !important; 
+            background-color: #1B1E27 !important; 
+            color: #FFFFFF !important;            
+            border-color: #2B303C !important; 
         }
 
         body.power-saving-mode .author-box {
-            background-color: #1E222A !important;
+            background-color: #1B1E27 !important;
             color: #FFFFFF !important;
-            border-color: #2D3748 !important;
+            border-color: #2B303C !important;
         }
 
         body.power-saving-mode .section-header,
@@ -80,11 +81,11 @@
         }
 
         body.power-saving-mode .select-card.selected {
-            background: #1E222A !important;
+            background: #1B1E27 !important;
             border-color: #818CF8 !important;
         }
         body.power-saving-mode .select-card-title {
-            color: #F1F5F9 !important;
+            color: #FFFFFF !important;
         }
         body.power-saving-mode .select-card.selected .select-card-title {
             color: #A5B4FC !important;
@@ -95,7 +96,7 @@
             border-color: #4338CA !important;
         }
         body.power-saving-mode #topWrongWordsList {
-            background-color: #1E222A !important;
+            background-color: #1B1E27 !important;
             color: #FFFFFF !important;
         }
         body.power-saving-mode #topWrongWordsList span {
@@ -103,16 +104,16 @@
         }
 
         body.power-saving-mode .tab-card-item {
-            background: #1E222A !important;
-            border-color: #2D3748 !important;
+            background: #1B1E27 !important;
+            border-color: #2B303C !important;
         }
         body.power-saving-mode .tab-card-item .history-item-title {
-            color: #F1F5F9 !important;
+            color: #FFFFFF !important;
         }
         body.power-saving-mode .tab-card-item .history-item-icon-box {
-            background: #1E222A !important;
-            border-color: #2D3748 !important;
-            color: #A0AEC0 !important;
+            background: #1B1E27 !important;
+            border-color: #2B303C !important;
+            color: #94A3B8 !important;
         }
 
         body { 
@@ -229,68 +230,157 @@
             flex-direction: column;
             gap: 16px;
         }
-        .section-card-wrapper {
+
+        /* 新版首頁卡片樣式 */
+        .section-card {
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-inner);
-            padding: 6px 20px;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+            overflow: hidden;
             box-sizing: border-box;
-        }
-        .sort-controls {
-            position: absolute;
-            top: 12px;
-            right: 16px;
-            display: flex;
-            gap: 4px;
-            z-index: 5;
-        }
-        .sort-btn {
-            background: #F1F5F9;
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            width: 26px;
-            height: 26px;
-            border-radius: 6px;
             cursor: pointer;
-            font-size: 12px;
+        }
+
+        .section-card:hover {
+            border-color: #C7D2FE;
+            transform: translateY(-2px);
+        }
+
+        body.power-saving-mode .section-card {
+            background-color: #1B1E27 !important;
+            border-color: #2B303C !important;
+        }
+
+        body.power-saving-mode .section-card:hover {
+            border-color: #4F46E5 !important;
+        }
+
+        .section-header-clickable {
             display: flex;
             align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+            user-select: none;
+            padding: 2px 0;
+            width: 100%;
         }
-        .sort-btn:hover { background: #EEF2FF; color: var(--primary); border-color: #C7D2FE; }
 
-        .section-header {
+        .header-title-box {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .section-title-group {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .section-title {
             font-size: 17px;
             font-weight: 700;
             color: var(--text-main);
-            padding: 16px 0 10px 0;
             letter-spacing: -0.3px;
         }
+
+        body.power-saving-mode .section-title {
+            color: #FFFFFF !important;
+        }
+
+        .section-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-top: 3px;
+        }
+
+        /* 可折疊的清單容器 */
+        .collapsible-list {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin-top 0.35s ease;
+            margin-top: 0;
+        }
+
+        .collapsible-list.expanded {
+            max-height: 500px;
+            opacity: 1;
+            margin-top: 14px;
+        }
+
         .list-item {
             display: flex;
             align-items: center;
-            padding: 16px 0;
-            border-bottom: 1px solid var(--border-color);
+            padding: 14px 0;
+            border-top: 1px solid var(--border-color);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: transform 0.2s ease;
         }
-        .section-card-wrapper .list-item:last-child { border-bottom: none; }
-        .list-item:hover { transform: translateX(4px); }
+
+        body.power-saving-mode .list-item {
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .section-card .list-item:first-child {
+            border-top: 1px solid var(--border-color);
+        }
+
+        body.power-saving-mode .section-card .list-item:first-child {
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .list-item:hover {
+            transform: translateX(4px);
+        }
+
+        /* 子項目的白色圓角圖示盒 */
         .item-icon-box {
-            width: 46px; height: 46px; background: #EEF2FF; border-radius: 14px;
+            width: 44px; height: 44px; background: #EEF2FF; border-radius: 14px;
             display: flex; align-items: center; justify-content: center; margin-right: 16px;
             flex-shrink: 0; color: var(--primary); transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
+
+        body.power-saving-mode .item-icon-box {
+            background: #252836 !important;
+            color: #818CF8 !important;
+        }
+
         .list-item:hover .item-icon-box { background: var(--primary); color: #FFFFFF; }
         .item-content { flex: 1; min-width: 0; }
         .item-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 3px; }
+        
+        body.power-saving-mode .item-title {
+            color: #FFFFFF !important;
+        }
+
         .list-item:hover .item-title { color: var(--primary); }
         .item-desc { font-size: 13px; color: var(--text-muted); font-weight: 400; }
         .item-arrow { color: #CBD5E1; font-size: 18px; font-weight: bold; transition: transform 0.2s; margin-left: 10px; flex-shrink: 0; }
         .list-item:hover .item-arrow { color: var(--primary); transform: translateX(3px); }
+
+        /* 標題左側的紫色圓角吉祥物圖示盒 */
+        .mascot-icon-box {
+            width: 48px;
+            height: 48px;
+            background-color: #6366F1;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+            overflow: hidden;
+        }
+
+        .mascot-svg {
+            width: 42px;
+            height: 42px;
+        }
 
         .top-nav-bar {
             display: flex;
@@ -460,12 +550,6 @@
             overflow-y: auto;
         }
 
-        #systemSettingsModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
-        #advancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
-        #examAdvancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
-        #flashcardSettingsModal .modal-content { transform: scale(1); transform-origin: center center; margin: 5vh auto; }
-        #cardExamAdvancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 5vh auto; }
-
         #historyModal .modal-content {
             width: 92%;
             max-width: 880px;
@@ -523,7 +607,7 @@
         .close-modal:hover { color: var(--text-main); }
 
         .config-group { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; background: #F8FAFC; padding: 15px; border-radius: 14px; border: 1px solid var(--border-color); box-sizing: border-box; }
-        body.power-saving-mode .config-group { background: #1E222A !important; }
+        body.power-saving-mode .config-group { background: #1B1E27 !important; }
         .config-row-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-weight: 600; font-size: 14.3px; color: #0F172A; }
         body.power-saving-mode .config-row-item { color: #FFFFFF !important; }
 
@@ -556,9 +640,9 @@
             justify-content: space-between;
         }
         body.power-saving-mode #status { 
-            background: #1E222A !important; 
+            background: #1B1E27 !important; 
             color: #FFFFFF !important; 
-            border: 1px solid #2D3748 !important; 
+            border: 1px solid #2B303C !important; 
             border-left: 5px solid var(--primary) !important;
         }
 
@@ -569,24 +653,24 @@
 
         .exam-setup-box { margin-top: 16px; padding: 22px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; box-sizing: border-box; }
         .exam-lists-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; max-height: 200px; overflow-y: auto; background: white; padding: 13px; border: 1px solid var(--border-color); border-radius: 14px; margin-top: 9px; box-sizing: border-box; }
-        body.power-saving-mode .exam-lists-grid { background: #1E222A !important; }
+        body.power-saving-mode .exam-lists-grid { background: #1B1E27 !important; }
         .checkbox-item-row { display: flex; align-items: center; gap: 7px; font-size: 14.3px; font-weight: normal; margin-top: 4px; cursor: pointer; }
         .checkbox-item-row input[type="checkbox"] { width: auto !important; margin: 0; cursor: pointer; }
         .exam-stats { margin-top: 13px; padding: 13px; background: #E0E7FF; border-radius: 8px; font-weight: 600; color: #3730A3; font-size: 13.5px; border: 1px solid #A5B4FC; }
         body.power-saving-mode .exam-stats { background: #2E3147 !important; color: #C7D2FE !important; }
 
         #examArea { margin-top: 16px; padding: 20px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; display: none; position: relative; z-index: 40; box-sizing: border-box; }
-        body.power-saving-mode #examArea { background: #1E222A !important; }
+        body.power-saving-mode #examArea { background: #1B1E27 !important; }
         #examTimer { font-size: 16.5px; color: #EF4444; font-weight: 700; text-align: right; margin-top: 5px; }
         #cardExamTimer { font-size: 13.5px; color: #EF4444; font-weight: 700; }
 
         .pos-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; background: #fff; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 12px; box-sizing: border-box; }
-        body.power-saving-mode .pos-checkbox-group { background: #1E222A !important; }
+        body.power-saving-mode .pos-checkbox-group { background: #1B1E27 !important; }
         .pos-checkbox-group label { margin-top: 0; font-weight: normal; display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13.5px; margin-bottom: 0; }
         .pos-checkbox-group input { width: auto !important; margin: 0; cursor: pointer; }
 
         .result-box { margin-top: 16px; padding: 18px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; max-height: 280px; overflow-y: auto; font-size: 14.3px; position: relative; z-index: 40; box-sizing: border-box; }
-        body.power-saving-mode .result-box { background: #1E222A !important; }
+        body.power-saving-mode .result-box { background: #1B1E27 !important; }
         .correct-item { color: #10B981; margin-bottom: 6px; font-weight: 500; }
         .wrong-item { color: #EF4444; margin-bottom: 6px; font-weight: 500; }
 
@@ -645,7 +729,7 @@
         }
 
         body.power-saving-mode .card-face {
-            background: linear-gradient(145deg, #1E222A 0%, #1E222A 100%) !important;
+            background: linear-gradient(145deg, #1B1E27 0%, #1B1E27 100%) !important;
         }
 
         .card-face.card-front {
@@ -679,7 +763,7 @@
             cursor: not-allowed;
             opacity: 0.6;
         }
-        body.power-saving-mode .ctrl-btn { background: #1E222A !important; color: #F1F5F9 !important; }
+        body.power-saving-mode .ctrl-btn { background: #1B1E27 !important; color: #FFFFFF !important; }
 
         .external-card-audio-btn, .external-card-star-btn {
             background: #FFFFFF; border: 1px solid var(--border-color);
@@ -687,7 +771,7 @@
             flex-shrink: 0; transition: all 0.2s; box-sizing: border-box;
         }
         body.power-saving-mode .external-card-audio-btn, body.power-saving-mode .external-card-star-btn {
-            background: #1E222A !important; border-color: var(--border-color) !important; color: #F1F5F9 !important;
+            background: #1B1E27 !important; border-color: var(--border-color) !important; color: #FFFFFF !important;
         }
         .external-card-audio-btn:hover, .external-card-star-btn:hover { background: #EEF2FF; border-color: #C7D2FE; }
         .external-card-star-btn.starred { background: #FEF3C7; border-color: #F59E0B; color: #D97706; }
@@ -697,21 +781,11 @@
         .progress-bar-fill { width: 0%; height: 100%; background: var(--primary-gradient); transition: width 0.3s ease; }
 
         .settings-card-group { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 16px; padding: 4px 16px; margin-bottom: 16px; box-sizing: border-box; }
-        body.power-saving-mode .settings-card-group { background: #1E222A !important; }
+        body.power-saving-mode .settings-card-group { background: #1B1E27 !important; }
         .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
         .setting-item:not(:last-child) { border-bottom: 1px solid var(--border-color); }
         .setting-label { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: #334155; }
         body.power-saving-mode .setting-label { color: #E2E8F0 !important; }
-        .number-input { width: 44px; padding: 5px 0; font-size: 14px; font-weight: 600; text-align: center; border: 1px solid var(--border-color); border-radius: 8px; outline: none; }
-        
-        .speed-control-box { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 16px; padding: 14px 16px; margin-bottom: 20px; box-sizing: border-box; }
-        body.power-saving-mode .speed-control-box { background: #1E222A !important; }
-        .speed-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13.5px; font-weight: 600; color: #334155; }
-        body.power-saving-mode .speed-header { color: #E2E8F0 !important; }
-        .speed-value { color: #818CF8; font-weight: 700; }
-        
-        .range-slider { width: 100%; height: 6px; background: #E2E8F0; border-radius: 3px; outline: none; -webkit-appearance: none; }
-        .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #818CF8; cursor: pointer; box-shadow: 0 2px 4px rgba(129, 140, 248, 0.4); }
 
         .mode-status-card {
             background: #F8FAFC;
@@ -762,6 +836,7 @@
             cursor: pointer;
             min-width: 0;
         }
+        body.power-saving-mode .db-select { background: #1B1E27 !important; color: #FFFFFF !important; }
         .db-select:focus { border-color: var(--primary); }
         .btn-rename {
             background: #FFFFFF;
@@ -780,9 +855,9 @@
             flex-shrink: 0;
         }
         body.power-saving-mode .btn-rename {
-            background: #1E222A !important;
+            background: #1B1E27 !important;
             color: #FFFFFF !important;
-            border-color: #2D3748 !important;
+            border-color: #2B303C !important;
         }
         .btn-rename:hover { background: #EEF2FF; color: var(--primary); border-color: #C7D2FE; }
 
@@ -798,8 +873,8 @@
         }
         
         body.power-saving-mode .editor-wrapper {
-            background: #1E222A !important;
-            border-color: #2D3748 !important;
+            background: #1B1E27 !important;
+            border-color: #2B303C !important;
         }
 
         .highlight-backdrop, 
@@ -857,16 +932,6 @@
             box-shadow: none !important;
         }
 
-        body.power-saving-mode .editor-wrapper .highlight-backdrop .highlight-match,
-        body.power-saving-mode .highlight-match {
-            background-color: #FACC15 !important; 
-            color: transparent !important;           
-            border-radius: 3px;
-            font-weight: inherit;
-            padding: 0;
-            box-shadow: none !important;
-        }
-
         .search-bar-container {
             display: flex; align-items: center; background: #FFFFFF;
             border: 1px solid var(--border-color); border-radius: 12px;
@@ -874,13 +939,14 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s;
             box-sizing: border-box;
         }
+        body.power-saving-mode .search-bar-container { background: #1B1E27 !important; border-color: #2B303C !important; }
         .search-bar-container:focus-within {
             border-color: var(--primary); box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
         }
         .search-icon { font-size: 15px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
         .search-input { flex: 1; border: none !important; outline: none !important; font-size: 13px; color: var(--text-main); background: transparent !important; font-family: inherit; }
+        body.power-saving-mode .search-input { color: #FFFFFF !important; }
         .search-input::placeholder { color: #94A3B8; }
-        body.power-saving-mode .search-input::placeholder { color: #A0AEC0 !important; }
         
         .action-btn-primary {
             width: 100%; margin-top: 4px; padding: 12px; font-size: 14.5px; font-weight: 700;
@@ -912,6 +978,7 @@
             padding-bottom: 16px;
             border-bottom: 1px solid var(--border-color);
         }
+        body.power-saving-mode .tab-cards-container { border-color: #2B303C !important; }
 
         .tab-card-item {
             flex: 1;
@@ -925,12 +992,7 @@
             transition: all 0.2s ease;
             box-sizing: border-box;
         }
-
-        .tab-card-item:hover {
-            background: #EEF2FF;
-            border-color: #C7D2FE;
-            transform: translateY(-2px);
-        }
+        body.power-saving-mode .tab-card-item { background: #1B1E27 !important; border-color: #2B303C !important; }
 
         .tab-card-item.active {
             background: #EEF2FF;
@@ -954,21 +1016,8 @@
             margin-right: 12px;
             flex-shrink: 0;
             color: var(--text-muted);
-            transition: all 0.2s;
         }
-
-        .tab-card-item:hover .history-item-icon-box {
-            background: #EEF2FF;
-            color: var(--primary);
-            border-color: #C7D2FE;
-        }
-
-        .tab-card-item.active .history-item-icon-box {
-            background: var(--primary);
-            color: #FFFFFF;
-            border-color: transparent;
-            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
-        }
+        body.power-saving-mode .history-item-icon-box { background: #1B1E27 !important; border-color: #2B303C !important; }
 
         .history-item-content {
             flex: 1;
@@ -982,8 +1031,8 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            transition: color 0.2s;
         }
+        body.power-saving-mode .history-item-title { color: #FFFFFF !important; }
 
         .tab-card-item.active .history-item-title {
             color: var(--primary);
@@ -1004,7 +1053,7 @@
             margin-bottom: 16px;
             box-sizing: border-box;
         }
-        body.power-saving-mode .sub-card { background: #1E222A !important; }
+        body.power-saving-mode .sub-card { background: #1B1E27 !important; border-color: #2B303C !important; }
 
         .sub-card-title {
             font-size: 14px;
@@ -1015,9 +1064,7 @@
             align-items: center;
             gap: 8px;
         }
-        body.power-saving-mode .sub-card-title {
-            color: #CBD5E1 !important;
-        }
+        body.power-saving-mode .sub-card-title { color: #CBD5E1 !important; }
 
         .sub-card-content-wrapper {
             transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
@@ -1059,7 +1106,7 @@
             position: relative;
             box-sizing: border-box;
         }
-        body.power-saving-mode .chart-wrapper { background: #1E222A !important; }
+        body.power-saving-mode .chart-wrapper { background: #1B1E27 !important; border-color: #2B303C !important; }
         canvas.score-chart-canvas {
             width: 100% !important;
             height: 100% !important;
@@ -1074,7 +1121,7 @@
             margin-bottom: 10px;
             box-sizing: border-box;
         }
-        body.power-saving-mode .error-word-list { background: #1E222A !important; }
+        body.power-saving-mode .error-word-list { background: #1B1E27 !important; border-color: #2B303C !important; }
         .error-word-item {
             display: flex;
             align-items: center;
@@ -1083,19 +1130,10 @@
             color: var(--text-main);
             padding: 8px 0;
         }
-        body.power-saving-mode .error-word-item {
-            color: #F1F5F9 !important;
-        }
-        .error-word-item:not(:last-child) {
-            border-bottom: 1px solid #F1F5F9;
-        }
-        body.power-saving-mode .error-word-item:not(:last-child) {
-            border-bottom: 1px solid #2D3748 !important;
-        }
-        .error-count {
-            color: #EF4444;
-            font-weight: 600;
-        }
+        body.power-saving-mode .error-word-item { color: #FFFFFF !important; }
+        .error-word-item:not(:last-child) { border-bottom: 1px solid #F1F5F9; }
+        body.power-saving-mode .error-word-item:not(:last-child) { border-bottom: 1px solid #2B303C !important; }
+        .error-count { color: #EF4444; font-weight: 600; }
 
         .save-target-row {
             display: flex;
@@ -1108,9 +1146,7 @@
             color: var(--primary);
             white-space: nowrap;
         }
-        body.power-saving-mode .save-target-label {
-            color: #A5B4FC !important;
-        }
+        body.power-saving-mode .save-target-label { color: #A5B4FC !important; }
         .target-select {
             flex: 1;
             padding: 8px 12px;
@@ -1123,7 +1159,7 @@
             outline: none;
             min-width: 0;
         }
-        body.power-saving-mode .target-select { background: #1E222A !important; color: #F1F5F9 !important; }
+        body.power-saving-mode .target-select { background: #1B1E27 !important; color: #FFFFFF !important; border-color: #2B303C !important; }
 
         .btn-purple {
             background: var(--primary-gradient);
@@ -1152,7 +1188,7 @@
             padding: 13px 16px; 
             box-sizing: border-box;
         }
-        body.power-saving-mode .history-card { background: #1E222A !important; border-color: #2D3748 !important; }
+        body.power-saving-mode .history-card { background: #1B1E27 !important; border-color: #2B303C !important; }
         .history-header { 
             display: flex; 
             justify-content: space-between; 
@@ -1162,7 +1198,7 @@
             font-size: 13.5px; 
             color: var(--text-main); 
         }
-        body.power-saving-mode .history-header { color: #F1F5F9 !important; }
+        body.power-saving-mode .history-header { color: #FFFFFF !important; }
         .history-detail { 
             display: none; 
             margin-top: 12px; 
@@ -1172,112 +1208,28 @@
             max-height: 180px; 
             overflow-y: auto; 
         }
-        body.power-saving-mode .history-detail {
-            color: #CBD5E1 !important;
-            border-color: #2D3748 !important;
-        }
+        body.power-saving-mode .history-detail { color: #CBD5E1 !important; border-color: #2B303C !important; }
 
         @media screen and (max-width: 768px) {
-            body {
-                padding: 12px 8px;
-            }
-
-            .scale-wrapper,
-            .scale-wrapper-practice {
-                transform: none !important;
-                margin: 0 0 40px 0 !important;
-                max-width: 100% !important;
-                width: 100% !important;
-            }
-
-            .paper-card-container {
-                padding: 16px 14px;
-                border-radius: 16px;
-            }
-
-            .current-mode-indicator {
-                font-size: 13px;
-                padding: 5px 12px;
-                max-width: 60%;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .modal-content {
-                width: 95% !important;
-                padding: 16px !important;
-                margin: 2vh auto !important;
-            }
-
-            .modal-inner-padding {
-                padding: 16px 12px !important;
-            }
-
-            .tab-cards-container {
-                gap: 8px;
-            }
-
-            .tab-card-item {
-                padding: 10px 8px;
-            }
-
-            .history-item-icon-box {
-                width: 32px;
-                height: 32px;
-                margin-right: 6px;
-            }
-
-            .history-item-title {
-                font-size: 13px;
-            }
-
-            .save-target-row {
-                flex-wrap: wrap;
-            }
-
-            .save-target-label {
-                width: 100%;
-            }
-
-            /* 手機模式下動態計算並縮小 Y 軸範圍，確保按鈕能在同畫面顯示 */
-            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea {
-                height: clamp(140px, 22vh, 220px) !important;
-            }
-            .editor-wrapper {
-                height: clamp(180px, 28vh, 260px) !important;
-            }
+            body { padding: 12px 8px; }
+            .scale-wrapper, .scale-wrapper-practice { transform: none !important; margin: 0 0 40px 0 !important; max-width: 100% !important; width: 100% !important; }
+            .paper-card-container { padding: 16px 14px; border-radius: 16px; }
+            .current-mode-indicator { font-size: 13px; padding: 5px 12px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
+            .modal-content { width: 95% !important; padding: 16px !important; margin: 2vh auto !important; }
+            .modal-inner-padding { padding: 16px 12px !important; }
+            .tab-cards-container { gap: 8px; }
+            .tab-card-item { padding: 10px 8px; }
+            .history-item-icon-box { width: 32px; height: 32px; margin-right: 6px; }
+            .history-item-title { font-size: 13px; }
+            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea { height: clamp(140px, 22vh, 220px) !important; }
+            .editor-wrapper { height: clamp(180px, 28vh, 260px) !important; }
         }
 
-            @media screen and (max-width: 480px) {
-            .select-card-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-status-bar {
-                font-size: 12px;
-                padding: 8px 12px;
-            }
-
-            .card-english {
-                font-size: 26px;
-            }
-
-            .card-chinese {
-                font-size: 20px;
-            }
-
-            .cloud-sync-bar {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .cloud-sync-bar > div {
-                width: auto;
-                display: flex;
-                justify-content: flex-end;
-            }
+        @media screen and (max-width: 480px) {
+            .select-card-grid { grid-template-columns: 1fr; }
+            .stats-status-bar { font-size: 12px; padding: 8px 12px; }
+            .card-english { font-size: 26px; }
+            .card-chinese { font-size: 20px; }
         }
     </style>
 </head>
@@ -1298,32 +1250,19 @@
                 <button class="settings-gear-btn" onclick="openSystemSettingsModal()" title="系統設定">⚙️</button>
                 <div class="app-logo-icon">
                     <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- 背景紫色圓角方形 -->
                         <rect width="100" height="100" rx="22" fill="#6366F1"/>
-                        
-                        <!-- 雞塊本體 -->
                         <path d="M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z" fill="#F3A63B" stroke="#2B2118" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                        
-                        <!-- 雞塊表面質感與腮紅 -->
                         <circle cx="36" cy="46" r="3.5" fill="#EE715C"/>
                         <circle cx="58" cy="46" r="3.5" fill="#EE715C"/>
                         <circle cx="30" cy="62" r="2" fill="#E28923"/>
                         <circle cx="68" cy="58" r="2" fill="#E28923"/>
-                        <circle cx="48" cy="72" r="2.5" fill="#E28923"/>
-
-                        <!-- 雞塊眼睛與微笑 -->
+                        <circle cx="48" cy="72" r="2.5" fill="#E2861E"/>
                         <circle cx="40" cy="42" r="2.5" fill="#2B2118"/>
                         <circle cx="54" cy="42" r="2.5" fill="#2B2118"/>
                         <path d="M 44 48 Q 47 52 50 48" stroke="#2B2118" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-
-                        <!-- 腳腿 -->
                         <path d="M 38 82 L 36 88 M 36 88 L 32 88 M 58 82 L 60 88 M 60 88 L 64 88" stroke="#2B2118" stroke-width="3" stroke-linecap="round"/>
-
-                        <!-- 手與揮手 -->
                         <path d="M 24 50 Q 17 52 18 58" stroke="#2B2118" stroke-width="3" stroke-linecap="round" fill="none"/>
                         <path d="M 72 48 Q 78 40 76 34" stroke="#2B2118" stroke-width="3" stroke-linecap="round" fill="none"/>
-
-                        <!-- ABC 對話框 -->
                         <g transform="translate(10, 0)">
                             <path d="M 52 14 L 80 14 C 85 14, 88 17, 88 22 L 88 32 C 88 37, 85 40, 80 40 L 68 40 L 62 46 L 63 40 L 52 40 C 47 40, 44 37, 44 32 L 44 22 C 44 17, 47 14, 52 14 Z" fill="#FFFFFF" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round"/>
                             <text x="50" y="31" font-family="'Inter', sans-serif" font-weight="800" font-size="11" fill="#4F46E5">A</text>
@@ -1344,94 +1283,200 @@
             </div>
 
             <div id="homeContentWrapper">
-                <div class="section-card-wrapper" data-card-id="practice">
-                    <div class="sort-controls">
-                        <button class="sort-btn" onclick="moveCard('practice', 'up')" title="往上移動">▲</button>
-                        <button class="sort-btn" onclick="moveCard('practice', 'down')" title="往下移動">▼</button>
-                    </div>
-                    <div class="section-header">練習</div>
-                    
-                    <div class="list-item" onclick="goToPracticePage()">
-                        <div class="item-icon-box" style="background: #F0F3FF; border-radius: 16px; color: var(--primary);">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                
+                <!-- 1. 練習卡片 (可展開) -->
+                <div class="section-card">
+                    <div class="section-header-clickable" onclick="toggleAccordion('practiceList')">
+                        <div class="header-title-box">
+                            <div class="mascot-icon-box">
+                                <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M 18 68 C 8 68, 2 72, 4 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                    <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                    <circle cx="36" cy="80" r="4" fill="#E2861E"/>
+                                    <circle cx="66" cy="98" r="3.5" fill="#E2861E"/>
+                                    <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+                                    <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                    <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                    <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                    <path d="M 98 60 Q 112 48 102 38" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <g transform="translate(86, 20) rotate(-12)">
+                                        <rect x="2" y="10" width="38" height="8" rx="4" fill="#231F20"/>
+                                        <rect x="-6" y="0" width="9" height="28" rx="3" fill="#231F20"/>
+                                        <rect x="-11" y="4" width="5" height="20" rx="2" fill="#3D383A"/>
+                                        <rect x="37" y="0" width="9" height="28" rx="3" fill="#231F20"/>
+                                        <rect x="46" y="4" width="5" height="20" rx="2" fill="#3D383A"/>
+                                    </g>
+                                </svg>
+                            </div>
+                            <div class="section-title-group">
+                                <div class="section-title">練習</div>
+                            </div>
+                            <div class="item-arrow">⌄</div>
                         </div>
-                        <div class="item-content">
-                            <div class="item-title">聽力練習</div>
-                            <div class="item-desc">聆聽標準發音與拼讀，輕鬆熟悉單字！</div>
-                        </div>
-                        <div class="item-arrow">›</div>
                     </div>
 
-                    <div class="list-item" onclick="goToFlashcardPage()">
-                        <div class="item-icon-box" style="background: #F0F3FF; border-radius: 16px; color: var(--primary);">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                    <div class="collapsible-list" id="practiceList">
+                        <div class="list-item" onclick="goToPracticePage()">
+                            <div class="item-icon-box">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">聽力練習</div>
+                                <div class="item-desc">聆聽標準發音與拼讀，輕鬆熟悉單字！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
                         </div>
-                        <div class="item-content">
-                            <div class="item-title">字卡練習</div>
-                            <div class="item-desc">透過刷卡來記住單字，強化印象！</div>
+
+                        <div class="list-item" onclick="goToFlashcardPage()">
+                            <div class="item-icon-box">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">字卡練習</div>
+                                <div class="item-desc">透過刷卡來記住單字，強化印象！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 測驗卡片 (可展開) -->
+                <div class="section-card">
+                    <div class="section-header-clickable" onclick="toggleAccordion('examList')">
+                        <div class="header-title-box">
+                            <div class="mascot-icon-box">
+                                <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M 22 68 C 12 68, 6 72, 8 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <path d="M 12 74 C 18 70, 24 74, 22 82" stroke="#231F20" stroke-width="5" stroke-linecap="round" fill="none"/>
+                                    <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                    <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                    <circle cx="40" cy="82" r="3.5" fill="#E2861E"/>
+                                    <circle cx="64" cy="98" r="3.5" fill="#E2861E"/>
+                                    <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+                                    <circle cx="101" cy="50" r="3" fill="#E2861E"/>
+                                    <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                    <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                    <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                    <path d="M 104 60 C 100 58, 98 55, 102 52" stroke="#231F20" stroke-width="5" stroke-linecap="round" fill="none"/>
+                                    <g transform="translate(100, 15) rotate(22)">
+                                        <path d="M 10 0 L 18 0 L 14 -6 Z" fill="#2563EB" stroke="#231F20" stroke-width="2"/>
+                                        <rect x="8" y="0" width="12" height="12" rx="2" fill="#60A5FA" stroke="#231F20" stroke-width="2.5"/>
+                                        <rect x="6" y="12" width="16" height="28" fill="#FACC15" stroke="#231F20" stroke-width="2.5"/>
+                                        <rect x="6" y="40" width="16" height="26" fill="#4ADE80" stroke="#231F20" stroke-width="2.5"/>
+                                        <path d="M 6 66 L 22 66 L 22 74 C 22 76, 20 78, 14 78 C 8 78, 6 76, 6 74 Z" fill="#EF4444" stroke="#231F20" stroke-width="2.5"/>
+                                    </g>
+                                </svg>
+                            </div>
+                            <div class="section-title-group">
+                                <div class="section-title">測驗</div>
+                            </div>
+                            <div class="item-arrow">⌄</div>
+                        </div>
+                    </div>
+
+                    <div class="collapsible-list" id="examList">
+                        <div class="list-item" onclick="goToExamPage()">
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">聽力測驗</div>
+                                <div class="item-desc">聽音打字測驗，檢驗學習成效！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+
+                        <div class="list-item" onclick="goToCardExamPage()">
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">字卡測驗</div>
+                                <div class="item-desc">翻轉字卡即時自我評量，突破盲點！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+
+                        <div class="list-item" onclick="openHistoryModal()">
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">測驗紀錄</div>
+                                <div class="item-desc">檢視歷次測驗成績、答對率與錯題本！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 題庫卡片 (單行) -->
+                <div class="section-card" onclick="goToEditorPage()">
+                    <div class="header-title-box">
+                        <div class="mascot-icon-box">
+                            <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 32 80 C 22 85, 16 92, 22 100" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                <circle cx="42" cy="84" r="3.5" fill="#E2861E"/>
+                                <circle cx="68" cy="100" r="3.5" fill="#E2861E"/>
+                                <circle cx="98" cy="78" r="3.5" fill="#E2861E"/>
+                                <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 42 78 C 50 82, 58 76, 62 70" stroke="#231F20" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+                                <g transform="translate(64, 46)">
+                                    <rect x="0" y="0" width="36" height="28" rx="3" fill="#78350F" stroke="#231F20" stroke-width="3"/>
+                                    <path d="M 18 0 L 18 28" stroke="#231F20" stroke-width="2.5"/>
+                                    <path d="M 5 8 Q 11 6 15 10" stroke="#231F20" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M 21 8 Q 27 6 31 10" stroke="#231F20" stroke-width="2" stroke-linecap="round"/>
+                                </g>
+                            </svg>
+                        </div>
+                        <div class="section-title-group">
+                            <div class="section-title">題庫</div>
+                            <div class="section-desc">自訂題庫標題、管理 10 組題庫單字！</div>
                         </div>
                         <div class="item-arrow">›</div>
                     </div>
                 </div>
 
-                <div class="section-card-wrapper" data-card-id="exam">
-                    <div class="sort-controls">
-                        <button class="sort-btn" onclick="moveCard('exam', 'up')" title="往上移動">▲</button>
-                        <button class="sort-btn" onclick="moveCard('exam', 'down')" title="往下移動">▼</button>
-                    </div>
-                    <div class="section-header">測驗</div>
-                    
-                    <div class="list-item" onclick="goToExamPage()">
-                        <div class="item-icon-box">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                <!-- 4. 雞塊補給站卡片 (單行) -->
+                <div class="section-card" onclick="alert('🛍️ 雞塊補給站即將上線，敬請期待！')">
+                    <div class="header-title-box">
+                        <div class="mascot-icon-box">
+                            <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 20 30 L 28 38 M 132 30 L 124 38 M 76 12 L 76 22 M 20 90 L 28 82 M 132 90 L 124 82" stroke="#FACC15" stroke-width="5" stroke-linecap="round"/>
+                                <circle cx="76" cy="68" r="48" fill="#FEF08A" opacity="0.25"/>
+                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <path d="M 124 68 C 134 68, 140 72, 138 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                <circle cx="36" cy="80" r="4" fill="#E2861E"/>
+                                <circle cx="66" cy="98" r="3.5" fill="#E2861E"/>
+                                <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+                                <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                            </svg>
                         </div>
-                        <div class="item-content">
-                            <div class="item-title">聽力測驗</div>
-                            <div class="item-desc">聽音打字測驗，檢驗學習成效！</div>
-                        </div>
-                        <div class="item-arrow">›</div>
-                    </div>
-
-                    <div class="list-item" onclick="goToCardExamPage()">
-                        <div class="item-icon-box">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>
-                        </div>
-                        <div class="item-content">
-                            <div class="item-title">字卡測驗</div>
-                            <div class="item-desc">翻轉字卡即時自我評量，突破盲點！</div>
-                        </div>
-                        <div class="item-arrow">›</div>
-                    </div>
-
-                    <div class="list-item" onclick="openHistoryModal()">
-                        <div class="item-icon-box">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                        </div>
-                        <div class="item-content">
-                            <div class="item-title">測驗紀錄</div>
-                            <div class="item-desc">檢視歷次測驗成績、答對率與錯題本！</div>
+                        <div class="section-title-group">
+                            <div class="section-title">雞塊補給站</div>
+                            <div class="section-desc">用雞塊新增或擴充新功能！</div>
                         </div>
                         <div class="item-arrow">›</div>
                     </div>
                 </div>
 
-                <div class="section-card-wrapper" data-card-id="editor">
-                    <div class="sort-controls">
-                        <button class="sort-btn" onclick="moveCard('editor', 'up')" title="往上移動">▲</button>
-                        <button class="sort-btn" onclick="moveCard('editor', 'down')" title="往下移動">▼</button>
-                    </div>
-                    <div class="section-header">英文題庫</div>
-                    <div class="list-item" onclick="goToEditorPage()">
-                        <div class="item-icon-box">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                        </div>
-                        <div class="item-content">
-                            <div class="item-title">題庫管理與編輯</div>
-                            <div class="item-desc">自訂題庫標題、編輯與管理 30 組題庫單字！</div>
-                        </div>
-                        <div class="item-arrow">›</div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -2261,7 +2306,6 @@
     let isPlaying = false, isPaused = false, wordsData = [], currentWordIndex = 0;
     let isExamRunning = false, examTimerId = null, examTimeLeft = 0, examResults = [], currentExamRanges = "";
     
-    // 2. 載入時保留最近 10 筆歷史紀錄
     let examHistory = (JSON.parse(localStorage.getItem('dictation_exam_history')) || []).slice(0, 10);
     let cardExamHistory = (JSON.parse(localStorage.getItem('dictation_card_exam_history')) || []).slice(0, 10);
     
@@ -2306,7 +2350,6 @@
         initCardExamGrid();
         initEditorSelector();
         initExamCheckboxes();
-        loadHomeCardOrder();
         initFlashcardTouchListeners();
         loadCollapseStates();
 
@@ -2422,6 +2465,11 @@
                 }, 100);
             }
         }
+    }
+
+    function toggleAccordion(listId) {
+        const list = document.getElementById(listId);
+        list.classList.toggle('expanded');
     }
 
     function initFlashcardTouchListeners() {
@@ -2655,41 +2703,6 @@
     function backToHomeWithoutSaving() {
         wordLists = JSON.parse(localStorage.getItem('dictation_word_lists')) || wordLists;
         backToHome();
-    }
-
-    function moveCard(cardId, direction) {
-        let wrapper = document.getElementById('homeContentWrapper');
-        let cards = Array.from(wrapper.querySelectorAll('.section-card-wrapper'));
-        let index = cards.findIndex(c => c.getAttribute('data-card-id') === cardId);
-        
-        if (index === -1) return;
-        
-        if (direction === 'up' && index > 0) {
-            wrapper.insertBefore(cards[index], cards[index - 1]);
-        } else if (direction === 'down' && index < cards.length - 1) {
-            wrapper.insertBefore(cards[index + 1], cards[index]);
-        }
-        saveHomeCardOrder();
-    }
-
-    function saveHomeCardOrder() {
-        let cards = Array.from(document.querySelectorAll('#homeContentWrapper .section-card-wrapper'));
-        let order = cards.map(c => c.getAttribute('data-card-id'));
-        localStorage.setItem('dictation_home_order', JSON.stringify(order));
-    }
-
-    function loadHomeCardOrder() {
-        let saved = localStorage.getItem('dictation_home_order');
-        if (saved) {
-            try {
-                let order = JSON.parse(saved);
-                let wrapper = document.getElementById('homeContentWrapper');
-                order.forEach(id => {
-                    let card = wrapper.querySelector(`.section-card-wrapper[data-card-id="${id}"]`);
-                    if (card) wrapper.appendChild(card);
-                });
-            } catch(e) {}
-        }
     }
 
     function initPracticeCardGrid() {
@@ -4412,4 +4425,3 @@
 </script>
 </body>
 </html>
-`
