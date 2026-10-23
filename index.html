@@ -176,6 +176,49 @@
             box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
         }
 
+        /* 雞塊獎勵快捷按鈕 (首頁左上角綠色框處) */
+        .chicken-reward-btn {
+            position: absolute;
+            top: 20px;
+            left: 24px;
+            background: #1B1E27;
+            border: 2px solid #2B303C;
+            border-radius: 14px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 60;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .chicken-reward-btn:hover { transform: scale(1.05); border-color: #FACC15; }
+        .chicken-icon-img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+        /* 紅色醒目勾勾 */
+        .reward-badge-dot {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #EF4444;
+            color: white;
+            font-size: 11px;
+            font-weight: 800;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5);
+            border: 2px solid #1B1E27;
+        }
+
         .app-header {
             text-align: center;
             margin-bottom: 24px;
@@ -798,9 +841,6 @@
             box-sizing: border-box;
         }
 
-        /* ---------------------------------
-           題庫清單專屬樣式 (對應圖1)
-           --------------------------------- */
         .list-card-container {
             display: flex;
             flex-direction: column;
@@ -833,7 +873,6 @@
         }
         .list-card-menu-btn:hover { background: rgba(0,0,0,0.05); color: var(--text-main); }
 
-        /* 卡片右側 3 個點點開的下拉選單 (支援動態向上延伸防切掉) */
         .dropdown-menu {
             display: none; position: absolute; right: 16px; top: 60px; background: #FFFFFF;
             border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
@@ -852,9 +891,6 @@
         .dropdown-item.danger { color: #EF4444; }
         .dropdown-item.danger:hover { background: #FEF2F2; }
 
-        /* ---------------------------------
-           單字編輯內頁 UI
-           --------------------------------- */
         .editor-top-section {
             display: flex;
             flex-direction: column;
@@ -1211,6 +1247,27 @@
         }
         body.power-saving-mode .history-detail { color: #CBD5E1 !important; border-color: #2B303C !important; }
 
+        /* 雞塊任務列表樣式 */
+        .reward-task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        body.power-saving-mode .reward-task-item { background: #1B1E27 !important; border-color: #2B303C !important; }
+        .reward-task-info { display: flex; flex-direction: column; gap: 2px; }
+        .reward-task-title { font-size: 14.5px; font-weight: 700; color: var(--text-main); }
+        body.power-saving-mode .reward-task-title { color: #FFFFFF !important; }
+        .reward-task-desc { font-size: 12px; color: var(--text-muted); }
+        .reward-action-area { display: flex; align-items: center; gap: 8px; }
+        .task-status-text { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .task-status-text.completed { color: #10B981; }
+
         @media screen and (max-width: 768px) {
             body { padding: 12px 8px; }
             .scale-wrapper, .scale-wrapper-practice { transform: none !important; margin: 0 0 40px 0 !important; max-width: 100% !important; width: 100% !important; }
@@ -1247,6 +1304,12 @@
         
         <!-- ================= 🏠 首頁儀表板檢視 ================= -->
         <div id="homeDashboardView" class="app-view active">
+            <!-- 首頁左上角：雞塊獎勵按鈕 (圖2綠色框處) -->
+            <button class="chicken-reward-btn" onclick="openChickenRewardModal()" title="雞塊獎勵中心">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z' fill='%23F3A63B' stroke='%232B2118' stroke-width='3'/></svg>" class="chicken-icon-img" alt="雞塊">
+                <div id="chickenRewardBadge" class="reward-badge-dot" style="display: none;">✓</div>
+            </button>
+
             <div class="app-header">
                 <button class="settings-gear-btn" onclick="openSystemSettingsModal()" title="系統設定">⚙️</button>
                 <div class="app-logo-icon">
@@ -1447,7 +1510,7 @@
                 </div>
 
                 <!-- 4. 雞塊補給站卡片 (單行) -->
-                <div class="section-card" onclick="alert('🛍️ 雞塊補給站即將上線，敬請期待！')">
+                <div class="section-card" onclick="openChickenRewardModal()">
                     <div class="header-title-box">
                         <div class="mascot-icon-box">
                             <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1469,7 +1532,7 @@
                         </div>
                         <div class="section-title-group">
                             <div class="section-title">雞塊補給站</div>
-                            <div class="section-desc">用雞塊新增或擴充新功能！</div>
+                            <div class="section-desc">完成每日任務，領取雞塊獎勵！</div>
                         </div>
                         <div class="item-arrow">›</div>
                     </div>
@@ -1869,6 +1932,30 @@
 </div>
 
 <!-- ================= 彈窗區塊 ================= -->
+
+<!-- 雞塊獎勵中心彈窗 -->
+<div id="chickenRewardModal" class="modal">
+    <div class="modal-content" style="max-width: 520px;">
+        <span class="close-modal" onclick="closeChickenRewardModal()">&times;</span>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; color: var(--primary);">
+                <span>🍗</span> 雞塊獎勵中心
+            </div>
+            <div style="background: #EEF2FF; color: var(--primary); padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 14px;">
+                目前雞塊數量：<span id="chickenCountDisplay">0</span> 塊
+            </div>
+        </div>
+
+        <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px;">每日任務於凌晨 00:00 更新，完成後可點擊領取雞塊！</p>
+
+        <div id="rewardTasksContainer">
+            <!-- 任務項目將由 JS 動態生成 -->
+        </div>
+
+        <button class="action-btn btn-start" style="margin-top: 16px; width: 100%;" onclick="closeChickenRewardModal()">關閉視窗</button>
+    </div>
+</div>
+
 <div id="flashcardSettingsModal" class="modal">
     <div class="modal-content">
         <div style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 18px;">
@@ -2311,7 +2398,6 @@
     
     let lastSelectedList = parseInt(localStorage.getItem('dictation_last_selected_list')) || 0;
 
-    const MAX_WORDS_PER_LIST_DEFAULT = 100;
     const MAX_LISTS_DEFAULT = 10;
     
     let wordLists = JSON.parse(localStorage.getItem('dictation_word_lists')) || [];
@@ -2321,6 +2407,150 @@
         wordLists.push({ title: `unit 1-1`, content: "courage 勇氣\n*foreigner 外國人\n*fantastic 極好的 形容詞", createdAt: nowTs });
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
     }
+
+    // ---------------------------------
+    // 🍗 雞塊獎勵系統邏輯
+    // ---------------------------------
+    let chickenData = JSON.parse(localStorage.getItem('chicky_chicken_data')) || {
+        count: 0,
+        lastDate: "",
+        tasks: {
+            dailyLogin: { done: false, claimed: false },
+            listeningPractice: { done: false, claimed: false },
+            cardPractice: { done: false, claimed: false },
+            listeningPerfect: { done: false, claimed: false },
+            cardPerfect: { done: false, claimed: false }
+        }
+    };
+
+    function checkDailyReset() {
+        let todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        if (chickenData.lastDate !== todayStr) {
+            chickenData.lastDate = todayStr;
+            chickenData.tasks.dailyLogin = { done: true, claimed: false }; // 每日登入自動完成
+            chickenData.tasks.listeningPractice = { done: false, claimed: false };
+            chickenData.tasks.cardPractice = { done: false, claimed: false };
+            chickenData.tasks.listeningPerfect = { done: false, claimed: false };
+            chickenData.tasks.cardPerfect = { done: false, claimed: false };
+            saveChickenData();
+        }
+    }
+
+    function saveChickenData() {
+        localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
+        updateChickenBadgeUI();
+    }
+
+    function updateChickenBadgeUI() {
+        checkDailyReset();
+        let badge = document.getElementById('chickenRewardBadge');
+        if (!badge) return;
+
+        // 檢查是否有「已達成但未領取」的任務
+        let hasUnclaimed = Object.values(chickenData.tasks).some(t => t.done && !t.claimed);
+        if (hasUnclaimed) {
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function openChickenRewardModal() {
+        checkDailyReset();
+        updateChickenModalUI();
+        document.getElementById('chickenRewardModal').style.display = 'block';
+    }
+
+    function closeChickenRewardModal() {
+        document.getElementById('chickenRewardModal').style.display = 'none';
+    }
+
+    function updateChickenModalUI() {
+        document.getElementById('chickenCountDisplay').innerText = chickenData.count;
+        let container = document.getElementById('rewardTasksContainer');
+        if (!container) return;
+
+        const taskDefs = [
+            { key: 'dailyLogin', title: '1. 每日登入', desc: '每日開啟系統自動完成' },
+            { key: 'listeningPractice', title: '2. 完成一次聽力測驗', desc: '完成任意聽力測驗一次' },
+            { key: 'cardPractice', title: '3. 完成一次字卡測驗', desc: '完成任意字卡測驗一次' },
+            { key: 'listeningPerfect', title: '4. 聽力測驗10題以上獲得滿分', desc: '聽力測驗題目 ≥ 10 且 100 分' },
+            { key: 'cardPerfect', title: '5. 字卡測驗10題以上獲得滿分', desc: '字卡測驗題目 ≥ 10 且 100 分' }
+        ];
+
+        let html = '';
+        taskDefs.forEach(def => {
+            let t = chickenData.tasks[def.key];
+            let statusHtml = '';
+            if (t.claimed) {
+                statusHtml = `<span class="task-status-text completed">✓ 已領取</span>`;
+            } else if (t.done) {
+                statusHtml = `<button class="cloud-btn" onclick="claimChickenReward('${def.key}')">領取 (+1)</button>`;
+            } else {
+                statusHtml = `<span class="task-status-text">未完成</span>`;
+            }
+
+            html += `
+                <div class="reward-task-item">
+                    <div class="reward-task-info">
+                        <div class="reward-task-title">${def.title} ${t.done ? '<span style="color:#10B981;">✓</span>' : ''}</div>
+                        <div class="reward-task-desc">${def.desc}</div>
+                    </div>
+                    <div class="reward-action-area">
+                        ${statusHtml}
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function claimChickenReward(taskKey) {
+        let t = chickenData.tasks[taskKey];
+        if (t.done && !t.claimed) {
+            t.claimed = true;
+            chickenData.count += 1;
+            saveChickenData();
+            updateChickenModalUI();
+            triggerAutoSaveToCloud();
+        }
+    }
+
+    // 觸發任務完成檢查 (供外部呼叫)
+    function triggerTaskCheck(taskType, data = {}) {
+        checkDailyReset();
+        let updated = false;
+
+        if (taskType === 'listening_exam_done') {
+            if (!chickenData.tasks.listeningPractice.claimed) {
+                chickenData.tasks.listeningPractice.done = true;
+                updated = true;
+            }
+            if (data.total >= 10 && data.score === 100) {
+                if (!chickenData.tasks.listeningPerfect.claimed) {
+                    chickenData.tasks.listeningPerfect.done = true;
+                    updated = true;
+                }
+            }
+        } else if (taskType === 'card_exam_done') {
+            if (!chickenData.tasks.cardPractice.claimed) {
+                chickenData.tasks.cardPractice.done = true;
+                updated = true;
+            }
+            if (data.total >= 10 && data.score === 100) {
+                if (!chickenData.tasks.cardPerfect.claimed) {
+                    chickenData.tasks.cardPerfect.done = true;
+                    updated = true;
+                }
+            }
+        }
+
+        if (updated) {
+            saveChickenData();
+        }
+    }
+
+    // ---------------------------------
 
     let flashcardActiveList = [];
     let currentFcIndex = 0;
@@ -2354,7 +2584,11 @@
         initFlashcardTouchListeners();
         loadCollapseStates();
 
-        // 點擊畫面任意處自動關閉下拉選單
+        // 初始化雞塊系統與每日登入任務
+        checkDailyReset();
+        triggerTaskCheck('dailyLogin');
+        updateChickenBadgeUI();
+
         window.addEventListener('click', function(e) {
             if (!e.target.closest('.list-card-menu-btn') && !e.target.closest('.dropdown-menu')) {
                 document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
@@ -2612,6 +2846,11 @@
                         cardExamHistory = cloudData.cardExamHistory.slice(0, 10);
                         localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
                     }
+                    if (cloudData.chickenData) {
+                        chickenData = cloudData.chickenData;
+                        localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
+                        updateChickenBadgeUI();
+                    }
                     initPracticeCardGrid();
                     initExamCardGrid();
                     initFlashcardGrid();
@@ -2644,6 +2883,7 @@
                 wordLists, 
                 examHistory: examHistory.slice(0, 10), 
                 cardExamHistory: cardExamHistory.slice(0, 10), 
+                chickenData,
                 appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}') 
             };
             let fileContent = JSON.stringify(cloudData);
@@ -2754,7 +2994,6 @@
         });
     }
 
-    // 動態判斷選單位置：若按鈕位置偏下方，則讓選單往上延伸以防被切掉
     function toggleDropdownMenu(idx, event) {
         document.querySelectorAll('.dropdown-menu').forEach(m => {
             if (m.id !== `dropdownMenu_${idx}`) m.classList.remove('show');
@@ -2765,11 +3004,9 @@
 
         let isShown = menu.classList.contains('show');
         if (!isShown) {
-            // 計算按鈕相對於容器或畫面的位置，若靠近下方則加上 drop-up 樣式
             let btnRect = event.currentTarget.getBoundingClientRect();
             let containerRect = document.getElementById('editorListCardContainer').getBoundingClientRect();
             
-            // 如果按鈕距離容器底部小於 160px，代表在下方，將選單往上彈出
             if (btnRect.bottom > containerRect.bottom - 150) {
                 menu.classList.add('drop-up');
             } else {
@@ -3401,6 +3638,9 @@
 
         let correct = cardExamResults.filter(r => r.isCorrect).length;
         let score = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+        // 觸發字卡測驗雞塊任務檢查
+        triggerTaskCheck('card_exam_done', { total, score });
 
         let newRecord = { date: new Date().toLocaleString(), range: currentCardExamRanges || '預設範圍', total, score, results: cardExamResults };
         cardExamHistory.unshift(newRecord);
@@ -4079,6 +4319,9 @@
         let correct = examResults.filter(r => r.isCorrect).length;
         let score = total > 0 ? Math.round((correct / total) * 100) : 0;
         
+        // 觸發聽力測驗雞塊任務檢查
+        triggerTaskCheck('listening_exam_done', { total, score });
+
         let newRecord = { date: new Date().toLocaleString(), range: currentExamRanges, total, score, results: examResults };
         examHistory.unshift(newRecord);
         
