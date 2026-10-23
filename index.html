@@ -24,23 +24,24 @@
 
         body.power-saving-mode {
             --bg-body: #14171E !important;
-            --card-bg: #1E222A !important;
-            --text-main: #F1F5F9 !important;
-            --text-muted: #A0AEC0 !important;
-            --border-color: #2D3748 !important;
+            --card-bg: #1B1E27 !important;
+            --card-border: #2B303C !important;
+            --text-main: #FFFFFF !important;
+            --text-muted: #94A3B8 !important;
+            --divider-color: rgba(255, 255, 255, 0.08) !important;
             background-image: none !important;
         }
 
         body.power-saving-mode .paper-card-container {
-            background-color: #1E222A !important;
-            color: #F1F5F9 !important;
-            border-color: #2D3748 !important;
+            background-color: #1B1E27 !important;
+            color: #FFFFFF !important;
+            border-color: #2B303C !important;
         }
 
         body.power-saving-mode .section-card-wrapper {
-            background-color: #1E222A !important;
+            background-color: #1B1E27 !important;
             color: #FFFFFF !important;
-            border-color: #2D3748 !important;
+            border-color: #2B303C !important;
         }
 
         body.power-saving-mode .cloud-sync-bar,
@@ -55,36 +56,39 @@
         body.power-saving-mode select,
         body.power-saving-mode .mode-status-card,
         body.power-saving-mode .database-load-card,
-        body.power-saving-mode .search-bar-container { 
-            background-color: #1E222A !important; 
+        body.power-saving-mode .search-bar-container,
+        body.power-saving-mode .list-card-item,
+        body.power-saving-mode .dropdown-menu { 
+            background-color: #1B1E27 !important; 
             color: #FFFFFF !important;            
-            border-color: #2D3748 !important;
+            border-color: #2B303C !important;
         }
 
         body.power-saving-mode .modal-content { 
-            background-color: #1E222A !important; 
-            color: #F1F5F9 !important;            
-            border-color: #2D3748 !important; 
+            background-color: #1B1E27 !important; 
+            color: #FFFFFF !important;            
+            border-color: #2B303C !important; 
         }
 
         body.power-saving-mode .author-box {
-            background-color: #1E222A !important;
+            background-color: #1B1E27 !important;
             color: #FFFFFF !important;
-            border-color: #2D3748 !important;
+            border-color: #2B303C !important;
         }
 
         body.power-saving-mode .section-header,
         body.power-saving-mode .item-title,
-        body.power-saving-mode .item-desc {
+        body.power-saving-mode .item-desc,
+        body.power-saving-mode .list-card-title {
             color: #FFFFFF !important;
         }
 
         body.power-saving-mode .select-card.selected {
-            background: #1E222A !important;
+            background: #1B1E27 !important;
             border-color: #818CF8 !important;
         }
         body.power-saving-mode .select-card-title {
-            color: #F1F5F9 !important;
+            color: #FFFFFF !important;
         }
         body.power-saving-mode .select-card.selected .select-card-title {
             color: #A5B4FC !important;
@@ -95,7 +99,7 @@
             border-color: #4338CA !important;
         }
         body.power-saving-mode #topWrongWordsList {
-            background-color: #1E222A !important;
+            background-color: #1B1E27 !important;
             color: #FFFFFF !important;
         }
         body.power-saving-mode #topWrongWordsList span {
@@ -103,16 +107,16 @@
         }
 
         body.power-saving-mode .tab-card-item {
-            background: #1E222A !important;
-            border-color: #2D3748 !important;
+            background: #1B1E27 !important;
+            border-color: #2B303C !important;
         }
         body.power-saving-mode .tab-card-item .history-item-title {
-            color: #F1F5F9 !important;
+            color: #FFFFFF !important;
         }
         body.power-saving-mode .tab-card-item .history-item-icon-box {
-            background: #1E222A !important;
-            border-color: #2D3748 !important;
-            color: #A0AEC0 !important;
+            background: #1B1E27 !important;
+            border-color: #2B303C !important;
+            color: #94A3B8 !important;
         }
 
         body { 
@@ -172,6 +176,49 @@
             box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
         }
 
+        /* 雞塊獎勵快捷按鈕 (首頁左上角綠色框處) */
+        .chicken-reward-btn {
+            position: absolute;
+            top: 20px;
+            left: 24px;
+            background: #1B1E27;
+            border: 2px solid #2B303C;
+            border-radius: 14px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 60;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .chicken-reward-btn:hover { transform: scale(1.05); border-color: #FACC15; }
+        .chicken-icon-img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+        /* 紅色醒目勾勾 */
+        .reward-badge-dot {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #EF4444;
+            color: white;
+            font-size: 11px;
+            font-weight: 800;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5);
+            border: 2px solid #1B1E27;
+        }
+
         .app-header {
             text-align: center;
             margin-bottom: 24px;
@@ -229,68 +276,153 @@
             flex-direction: column;
             gap: 16px;
         }
-        .section-card-wrapper {
+
+        .section-card {
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-inner);
-            padding: 6px 20px;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+            overflow: hidden;
             box-sizing: border-box;
-        }
-        .sort-controls {
-            position: absolute;
-            top: 12px;
-            right: 16px;
-            display: flex;
-            gap: 4px;
-            z-index: 5;
-        }
-        .sort-btn {
-            background: #F1F5F9;
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            width: 26px;
-            height: 26px;
-            border-radius: 6px;
             cursor: pointer;
-            font-size: 12px;
+        }
+
+        .section-card:hover {
+            border-color: #C7D2FE;
+            transform: translateY(-2px);
+        }
+
+        body.power-saving-mode .section-card {
+            background-color: #1B1E27 !important;
+            border-color: #2B303C !important;
+        }
+
+        body.power-saving-mode .section-card:hover {
+            border-color: #4F46E5 !important;
+        }
+
+        .section-header-clickable {
             display: flex;
             align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+            user-select: none;
+            padding: 2px 0;
+            width: 100%;
         }
-        .sort-btn:hover { background: #EEF2FF; color: var(--primary); border-color: #C7D2FE; }
 
-        .section-header {
+        .header-title-box {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .section-title-group {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .section-title {
             font-size: 17px;
             font-weight: 700;
             color: var(--text-main);
-            padding: 16px 0 10px 0;
             letter-spacing: -0.3px;
         }
+
+        body.power-saving-mode .section-title {
+            color: #FFFFFF !important;
+        }
+
+        .section-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-top: 3px;
+        }
+
+        .collapsible-list {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin-top 0.35s ease;
+            margin-top: 0;
+        }
+
+        .collapsible-list.expanded {
+            max-height: 500px;
+            opacity: 1;
+            margin-top: 14px;
+        }
+
         .list-item {
             display: flex;
             align-items: center;
-            padding: 16px 0;
-            border-bottom: 1px solid var(--border-color);
+            padding: 14px 0;
+            border-top: 1px solid var(--border-color);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: transform 0.2s ease;
         }
-        .section-card-wrapper .list-item:last-child { border-bottom: none; }
-        .list-item:hover { transform: translateX(4px); }
+
+        body.power-saving-mode .list-item {
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .section-card .list-item:first-child {
+            border-top: 1px solid var(--border-color);
+        }
+
+        body.power-saving-mode .section-card .list-item:first-child {
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .list-item:hover {
+            transform: translateX(4px);
+        }
+
         .item-icon-box {
-            width: 46px; height: 46px; background: #EEF2FF; border-radius: 14px;
+            width: 44px; height: 44px; background: #EEF2FF; border-radius: 14px;
             display: flex; align-items: center; justify-content: center; margin-right: 16px;
             flex-shrink: 0; color: var(--primary); transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
+
+        body.power-saving-mode .item-icon-box {
+            background: #252836 !important;
+            color: #818CF8 !important;
+        }
+
         .list-item:hover .item-icon-box { background: var(--primary); color: #FFFFFF; }
         .item-content { flex: 1; min-width: 0; }
         .item-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 3px; }
+        
+        body.power-saving-mode .item-title {
+            color: #FFFFFF !important;
+        }
+
         .list-item:hover .item-title { color: var(--primary); }
         .item-desc { font-size: 13px; color: var(--text-muted); font-weight: 400; }
         .item-arrow { color: #CBD5E1; font-size: 18px; font-weight: bold; transition: transform 0.2s; margin-left: 10px; flex-shrink: 0; }
         .list-item:hover .item-arrow { color: var(--primary); transform: translateX(3px); }
+
+        .mascot-icon-box {
+            width: 48px;
+            height: 48px;
+            background-color: #6366F1;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+            overflow: hidden;
+        }
+
+        .mascot-svg {
+            width: 42px;
+            height: 42px;
+        }
 
         .top-nav-bar {
             display: flex;
@@ -460,12 +592,6 @@
             overflow-y: auto;
         }
 
-        #systemSettingsModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
-        #advancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
-        #examAdvancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 10vh auto; }
-        #flashcardSettingsModal .modal-content { transform: scale(1); transform-origin: center center; margin: 5vh auto; }
-        #cardExamAdvancedModal .modal-content { transform: scale(1); transform-origin: center center; margin: 5vh auto; }
-
         #historyModal .modal-content {
             width: 92%;
             max-width: 880px;
@@ -523,7 +649,7 @@
         .close-modal:hover { color: var(--text-main); }
 
         .config-group { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; background: #F8FAFC; padding: 15px; border-radius: 14px; border: 1px solid var(--border-color); box-sizing: border-box; }
-        body.power-saving-mode .config-group { background: #1E222A !important; }
+        body.power-saving-mode .config-group { background: #1B1E27 !important; }
         .config-row-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-weight: 600; font-size: 14.3px; color: #0F172A; }
         body.power-saving-mode .config-row-item { color: #FFFFFF !important; }
 
@@ -556,9 +682,9 @@
             justify-content: space-between;
         }
         body.power-saving-mode #status { 
-            background: #1E222A !important; 
+            background: #1B1E27 !important; 
             color: #FFFFFF !important; 
-            border: 1px solid #2D3748 !important; 
+            border: 1px solid #2B303C !important; 
             border-left: 5px solid var(--primary) !important;
         }
 
@@ -569,24 +695,24 @@
 
         .exam-setup-box { margin-top: 16px; padding: 22px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; box-sizing: border-box; }
         .exam-lists-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; max-height: 200px; overflow-y: auto; background: white; padding: 13px; border: 1px solid var(--border-color); border-radius: 14px; margin-top: 9px; box-sizing: border-box; }
-        body.power-saving-mode .exam-lists-grid { background: #1E222A !important; }
+        body.power-saving-mode .exam-lists-grid { background: #1B1E27 !important; }
         .checkbox-item-row { display: flex; align-items: center; gap: 7px; font-size: 14.3px; font-weight: normal; margin-top: 4px; cursor: pointer; }
         .checkbox-item-row input[type="checkbox"] { width: auto !important; margin: 0; cursor: pointer; }
         .exam-stats { margin-top: 13px; padding: 13px; background: #E0E7FF; border-radius: 8px; font-weight: 600; color: #3730A3; font-size: 13.5px; border: 1px solid #A5B4FC; }
         body.power-saving-mode .exam-stats { background: #2E3147 !important; color: #C7D2FE !important; }
 
         #examArea { margin-top: 16px; padding: 20px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; display: none; position: relative; z-index: 40; box-sizing: border-box; }
-        body.power-saving-mode #examArea { background: #1E222A !important; }
+        body.power-saving-mode #examArea { background: #1B1E27 !important; }
         #examTimer { font-size: 16.5px; color: #EF4444; font-weight: 700; text-align: right; margin-top: 5px; }
         #cardExamTimer { font-size: 13.5px; color: #EF4444; font-weight: 700; }
 
         .pos-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; background: #fff; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 12px; box-sizing: border-box; }
-        body.power-saving-mode .pos-checkbox-group { background: #1E222A !important; }
+        body.power-saving-mode .pos-checkbox-group { background: #1B1E27 !important; }
         .pos-checkbox-group label { margin-top: 0; font-weight: normal; display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13.5px; margin-bottom: 0; }
         .pos-checkbox-group input { width: auto !important; margin: 0; cursor: pointer; }
 
         .result-box { margin-top: 16px; padding: 18px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; max-height: 280px; overflow-y: auto; font-size: 14.3px; position: relative; z-index: 40; box-sizing: border-box; }
-        body.power-saving-mode .result-box { background: #1E222A !important; }
+        body.power-saving-mode .result-box { background: #1B1E27 !important; }
         .correct-item { color: #10B981; margin-bottom: 6px; font-weight: 500; }
         .wrong-item { color: #EF4444; margin-bottom: 6px; font-weight: 500; }
 
@@ -645,7 +771,7 @@
         }
 
         body.power-saving-mode .card-face {
-            background: linear-gradient(145deg, #1E222A 0%, #1E222A 100%) !important;
+            background: linear-gradient(145deg, #1B1E27 0%, #1B1E27 100%) !important;
         }
 
         .card-face.card-front {
@@ -679,7 +805,7 @@
             cursor: not-allowed;
             opacity: 0.6;
         }
-        body.power-saving-mode .ctrl-btn { background: #1E222A !important; color: #F1F5F9 !important; }
+        body.power-saving-mode .ctrl-btn { background: #1B1E27 !important; color: #FFFFFF !important; }
 
         .external-card-audio-btn, .external-card-star-btn {
             background: #FFFFFF; border: 1px solid var(--border-color);
@@ -687,7 +813,7 @@
             flex-shrink: 0; transition: all 0.2s; box-sizing: border-box;
         }
         body.power-saving-mode .external-card-audio-btn, body.power-saving-mode .external-card-star-btn {
-            background: #1E222A !important; border-color: var(--border-color) !important; color: #F1F5F9 !important;
+            background: #1B1E27 !important; border-color: var(--border-color) !important; color: #FFFFFF !important;
         }
         .external-card-audio-btn:hover, .external-card-star-btn:hover { background: #EEF2FF; border-color: #C7D2FE; }
         .external-card-star-btn.starred { background: #FEF3C7; border-color: #F59E0B; color: #D97706; }
@@ -697,21 +823,11 @@
         .progress-bar-fill { width: 0%; height: 100%; background: var(--primary-gradient); transition: width 0.3s ease; }
 
         .settings-card-group { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 16px; padding: 4px 16px; margin-bottom: 16px; box-sizing: border-box; }
-        body.power-saving-mode .settings-card-group { background: #1E222A !important; }
+        body.power-saving-mode .settings-card-group { background: #1B1E27 !important; }
         .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
         .setting-item:not(:last-child) { border-bottom: 1px solid var(--border-color); }
         .setting-label { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: #334155; }
         body.power-saving-mode .setting-label { color: #E2E8F0 !important; }
-        .number-input { width: 44px; padding: 5px 0; font-size: 14px; font-weight: 600; text-align: center; border: 1px solid var(--border-color); border-radius: 8px; outline: none; }
-        
-        .speed-control-box { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 16px; padding: 14px 16px; margin-bottom: 20px; box-sizing: border-box; }
-        body.power-saving-mode .speed-control-box { background: #1E222A !important; }
-        .speed-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13.5px; font-weight: 600; color: #334155; }
-        body.power-saving-mode .speed-header { color: #E2E8F0 !important; }
-        .speed-value { color: #818CF8; font-weight: 700; }
-        
-        .range-slider { width: 100%; height: 6px; background: #E2E8F0; border-radius: 3px; outline: none; -webkit-appearance: none; }
-        .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #818CF8; cursor: pointer; box-shadow: 0 2px 4px rgba(129, 140, 248, 0.4); }
 
         .mode-status-card {
             background: #F8FAFC;
@@ -724,72 +840,68 @@
             margin-bottom: 16px;
             box-sizing: border-box;
         }
-        .database-load-card {
-            background: #F8FAFC;
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 16px;
+
+        .list-card-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 4px;
             margin-bottom: 16px;
-            box-sizing: border-box;
         }
-        .database-load-title {
-            font-size: 13.5px;
-            font-weight: 700;
-            color: #334155;
-            margin-bottom: 10px;
+        .list-card-item {
+            background: #F8FAFC;
+            border: 1.5px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px 20px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-        }
-        body.power-saving-mode .database-load-title {
-            color: #FFFFFF !important;
-        }
-        .database-control-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .db-select {
-            flex: 1;
-            padding: 10px 12px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-main);
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            outline: none;
             cursor: pointer;
-            min-width: 0;
-        }
-        .db-select:focus { border-color: var(--primary); }
-        .btn-rename {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            color: #334155;
-            padding: 10px 14px;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 12px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
             transition: all 0.2s;
-            white-space: nowrap;
-            flex-shrink: 0;
+            position: relative;
         }
-        body.power-saving-mode .btn-rename {
-            background: #1E222A !important;
-            color: #FFFFFF !important;
-            border-color: #2D3748 !important;
+        .list-card-item:hover { border-color: #C7D2FE; background: #FFFFFF; }
+        .list-card-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+        .list-card-title { font-size: 17px; font-weight: 700; color: var(--text-main); }
+        .list-card-count { font-size: 13px; color: var(--text-muted); }
+        
+        .list-card-menu-btn {
+            background: transparent; border: none; cursor: pointer; padding: 8px; font-size: 18px; color: var(--text-muted);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.2s;
         }
-        .btn-rename:hover { background: #EEF2FF; color: var(--primary); border-color: #C7D2FE; }
+        .list-card-menu-btn:hover { background: rgba(0,0,0,0.05); color: var(--text-main); }
+
+        .dropdown-menu {
+            display: none; position: absolute; right: 16px; top: 60px; background: #FFFFFF;
+            border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 100; min-width: 120px; overflow: hidden;
+        }
+        .dropdown-menu.drop-up {
+            top: auto !important;
+            bottom: 60px !important;
+        }
+        .dropdown-menu.show { display: block; }
+        .dropdown-item {
+            padding: 10px 16px; font-size: 13.5px; font-weight: 600; color: var(--text-main); cursor: pointer;
+            transition: background 0.15s; display: block; width: 100%; text-align: left; border: none; background: transparent;
+        }
+        .dropdown-item:hover { background: #EEF2FF; color: var(--primary); }
+        .dropdown-item.danger { color: #EF4444; }
+        .dropdown-item.danger:hover { background: #FEF2F2; }
+
+        .editor-top-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
 
         .editor-wrapper {
             position: relative;
             width: 100%;
-            height: 345px;
+            height: 310px;
             border: 1px solid var(--border-color);
             border-radius: 12px;
             background: #FFFFFF;
@@ -798,8 +910,8 @@
         }
         
         body.power-saving-mode .editor-wrapper {
-            background: #1E222A !important;
-            border-color: #2D3748 !important;
+            background: #1B1E27 !important;
+            border-color: #2B303C !important;
         }
 
         .highlight-backdrop, 
@@ -857,30 +969,21 @@
             box-shadow: none !important;
         }
 
-        body.power-saving-mode .editor-wrapper .highlight-backdrop .highlight-match,
-        body.power-saving-mode .highlight-match {
-            background-color: #FACC15 !important; 
-            color: transparent !important;           
-            border-radius: 3px;
-            font-weight: inherit;
-            padding: 0;
-            box-shadow: none !important;
-        }
-
         .search-bar-container {
             display: flex; align-items: center; background: #FFFFFF;
             border: 1px solid var(--border-color); border-radius: 12px;
-            padding: 10px 14px; margin: 16px 0; gap: 10px;
+            padding: 10px 14px; margin: 12px 0 6px 0; gap: 10px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s;
             box-sizing: border-box;
         }
+        body.power-saving-mode .search-bar-container { background: #1B1E27 !important; border-color: #2B303C !important; }
         .search-bar-container:focus-within {
             border-color: var(--primary); box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
         }
         .search-icon { font-size: 15px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
         .search-input { flex: 1; border: none !important; outline: none !important; font-size: 13px; color: var(--text-main); background: transparent !important; font-family: inherit; }
+        body.power-saving-mode .search-input { color: #FFFFFF !important; }
         .search-input::placeholder { color: #94A3B8; }
-        body.power-saving-mode .search-input::placeholder { color: #A0AEC0 !important; }
         
         .action-btn-primary {
             width: 100%; margin-top: 4px; padding: 12px; font-size: 14.5px; font-weight: 700;
@@ -912,6 +1015,7 @@
             padding-bottom: 16px;
             border-bottom: 1px solid var(--border-color);
         }
+        body.power-saving-mode .tab-cards-container { border-color: #2B303C !important; }
 
         .tab-card-item {
             flex: 1;
@@ -925,12 +1029,7 @@
             transition: all 0.2s ease;
             box-sizing: border-box;
         }
-
-        .tab-card-item:hover {
-            background: #EEF2FF;
-            border-color: #C7D2FE;
-            transform: translateY(-2px);
-        }
+        body.power-saving-mode .tab-card-item { background: #1B1E27 !important; border-color: #2B303C !important; }
 
         .tab-card-item.active {
             background: #EEF2FF;
@@ -954,21 +1053,8 @@
             margin-right: 12px;
             flex-shrink: 0;
             color: var(--text-muted);
-            transition: all 0.2s;
         }
-
-        .tab-card-item:hover .history-item-icon-box {
-            background: #EEF2FF;
-            color: var(--primary);
-            border-color: #C7D2FE;
-        }
-
-        .tab-card-item.active .history-item-icon-box {
-            background: var(--primary);
-            color: #FFFFFF;
-            border-color: transparent;
-            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
-        }
+        body.power-saving-mode .history-item-icon-box { background: #1B1E27 !important; border-color: #2B303C !important; }
 
         .history-item-content {
             flex: 1;
@@ -982,8 +1068,8 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            transition: color 0.2s;
         }
+        body.power-saving-mode .history-item-title { color: #FFFFFF !important; }
 
         .tab-card-item.active .history-item-title {
             color: var(--primary);
@@ -1004,7 +1090,7 @@
             margin-bottom: 16px;
             box-sizing: border-box;
         }
-        body.power-saving-mode .sub-card { background: #1E222A !important; }
+        body.power-saving-mode .sub-card { background: #1B1E27 !important; border-color: #2B303C !important; }
 
         .sub-card-title {
             font-size: 14px;
@@ -1015,9 +1101,7 @@
             align-items: center;
             gap: 8px;
         }
-        body.power-saving-mode .sub-card-title {
-            color: #CBD5E1 !important;
-        }
+        body.power-saving-mode .sub-card-title { color: #CBD5E1 !important; }
 
         .sub-card-content-wrapper {
             transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
@@ -1059,7 +1143,7 @@
             position: relative;
             box-sizing: border-box;
         }
-        body.power-saving-mode .chart-wrapper { background: #1E222A !important; }
+        body.power-saving-mode .chart-wrapper { background: #1B1E27 !important; border-color: #2B303C !important; }
         canvas.score-chart-canvas {
             width: 100% !important;
             height: 100% !important;
@@ -1074,7 +1158,7 @@
             margin-bottom: 10px;
             box-sizing: border-box;
         }
-        body.power-saving-mode .error-word-list { background: #1E222A !important; }
+        body.power-saving-mode .error-word-list { background: #1B1E27 !important; border-color: #2B303C !important; }
         .error-word-item {
             display: flex;
             align-items: center;
@@ -1083,19 +1167,10 @@
             color: var(--text-main);
             padding: 8px 0;
         }
-        body.power-saving-mode .error-word-item {
-            color: #F1F5F9 !important;
-        }
-        .error-word-item:not(:last-child) {
-            border-bottom: 1px solid #F1F5F9;
-        }
-        body.power-saving-mode .error-word-item:not(:last-child) {
-            border-bottom: 1px solid #2D3748 !important;
-        }
-        .error-count {
-            color: #EF4444;
-            font-weight: 600;
-        }
+        body.power-saving-mode .error-word-item { color: #FFFFFF !important; }
+        .error-word-item:not(:last-child) { border-bottom: 1px solid #F1F5F9; }
+        body.power-saving-mode .error-word-item:not(:last-child) { border-bottom: 1px solid #2B303C !important; }
+        .error-count { color: #EF4444; font-weight: 600; }
 
         .save-target-row {
             display: flex;
@@ -1108,9 +1183,7 @@
             color: var(--primary);
             white-space: nowrap;
         }
-        body.power-saving-mode .save-target-label {
-            color: #A5B4FC !important;
-        }
+        body.power-saving-mode .save-target-label { color: #A5B4FC !important; }
         .target-select {
             flex: 1;
             padding: 8px 12px;
@@ -1123,7 +1196,7 @@
             outline: none;
             min-width: 0;
         }
-        body.power-saving-mode .target-select { background: #1E222A !important; color: #F1F5F9 !important; }
+        body.power-saving-mode .target-select { background: #1B1E27 !important; color: #FFFFFF !important; border-color: #2B303C !important; }
 
         .btn-purple {
             background: var(--primary-gradient);
@@ -1152,7 +1225,7 @@
             padding: 13px 16px; 
             box-sizing: border-box;
         }
-        body.power-saving-mode .history-card { background: #1E222A !important; border-color: #2D3748 !important; }
+        body.power-saving-mode .history-card { background: #1B1E27 !important; border-color: #2B303C !important; }
         .history-header { 
             display: flex; 
             justify-content: space-between; 
@@ -1162,7 +1235,7 @@
             font-size: 13.5px; 
             color: var(--text-main); 
         }
-        body.power-saving-mode .history-header { color: #F1F5F9 !important; }
+        body.power-saving-mode .history-header { color: #FFFFFF !important; }
         .history-detail { 
             display: none; 
             margin-top: 12px; 
@@ -1172,112 +1245,49 @@
             max-height: 180px; 
             overflow-y: auto; 
         }
-        body.power-saving-mode .history-detail {
-            color: #CBD5E1 !important;
-            border-color: #2D3748 !important;
+        body.power-saving-mode .history-detail { color: #CBD5E1 !important; border-color: #2B303C !important; }
+
+        /* 雞塊任務列表樣式 */
+        .reward-task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
         }
+        body.power-saving-mode .reward-task-item { background: #1B1E27 !important; border-color: #2B303C !important; }
+        .reward-task-info { display: flex; flex-direction: column; gap: 2px; }
+        .reward-task-title { font-size: 14.5px; font-weight: 700; color: var(--text-main); }
+        body.power-saving-mode .reward-task-title { color: #FFFFFF !important; }
+        .reward-task-desc { font-size: 12px; color: var(--text-muted); }
+        .reward-action-area { display: flex; align-items: center; gap: 8px; }
+        .task-status-text { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .task-status-text.completed { color: #10B981; }
 
         @media screen and (max-width: 768px) {
-            body {
-                padding: 12px 8px;
-            }
-
-            .scale-wrapper,
-            .scale-wrapper-practice {
-                transform: none !important;
-                margin: 0 0 40px 0 !important;
-                max-width: 100% !important;
-                width: 100% !important;
-            }
-
-            .paper-card-container {
-                padding: 16px 14px;
-                border-radius: 16px;
-            }
-
-            .current-mode-indicator {
-                font-size: 13px;
-                padding: 5px 12px;
-                max-width: 60%;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .modal-content {
-                width: 95% !important;
-                padding: 16px !important;
-                margin: 2vh auto !important;
-            }
-
-            .modal-inner-padding {
-                padding: 16px 12px !important;
-            }
-
-            .tab-cards-container {
-                gap: 8px;
-            }
-
-            .tab-card-item {
-                padding: 10px 8px;
-            }
-
-            .history-item-icon-box {
-                width: 32px;
-                height: 32px;
-                margin-right: 6px;
-            }
-
-            .history-item-title {
-                font-size: 13px;
-            }
-
-            .save-target-row {
-                flex-wrap: wrap;
-            }
-
-            .save-target-label {
-                width: 100%;
-            }
-
-            /* 手機模式下動態計算並縮小 Y 軸範圍，確保按鈕能在同畫面顯示 */
-            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea {
-                height: clamp(140px, 22vh, 220px) !important;
-            }
-            .editor-wrapper {
-                height: clamp(180px, 28vh, 260px) !important;
-            }
+            body { padding: 12px 8px; }
+            .scale-wrapper, .scale-wrapper-practice { transform: none !important; margin: 0 0 40px 0 !important; max-width: 100% !important; width: 100% !important; }
+            .paper-card-container { padding: 16px 14px; border-radius: 16px; }
+            .current-mode-indicator { font-size: 13px; padding: 5px 12px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
+            .modal-content { width: 95% !important; padding: 16px !important; margin: 2vh auto !important; }
+            .modal-inner-padding { padding: 16px 12px !important; }
+            .tab-cards-container { gap: 8px; }
+            .tab-card-item { padding: 10px 8px; }
+            .history-item-icon-box { width: 32px; height: 32px; margin-right: 6px; }
+            .history-item-title { font-size: 13px; }
+            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea { height: clamp(140px, 22vh, 220px) !important; }
+            .editor-wrapper { height: clamp(180px, 26vh, 240px) !important; }
         }
 
-            @media screen and (max-width: 480px) {
-            .select-card-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-status-bar {
-                font-size: 12px;
-                padding: 8px 12px;
-            }
-
-            .card-english {
-                font-size: 26px;
-            }
-
-            .card-chinese {
-                font-size: 20px;
-            }
-
-            .cloud-sync-bar {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .cloud-sync-bar > div {
-                width: auto;
-                display: flex;
-                justify-content: flex-end;
-            }
+        @media screen and (max-width: 480px) {
+            .select-card-grid { grid-template-columns: 1fr; }
+            .stats-status-bar { font-size: 12px; padding: 8px 12px; }
+            .card-english { font-size: 26px; }
+            .card-chinese { font-size: 20px; }
         }
     </style>
 </head>
@@ -1294,36 +1304,29 @@
         
         <!-- ================= 🏠 首頁儀表板檢視 ================= -->
         <div id="homeDashboardView" class="app-view active">
+            <!-- 首頁左上角：雞塊獎勵按鈕 (圖2綠色框處) -->
+            <button class="chicken-reward-btn" onclick="openChickenRewardModal()" title="雞塊獎勵中心">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z' fill='%23F3A63B' stroke='%232B2118' stroke-width='3'/></svg>" class="chicken-icon-img" alt="雞塊">
+                <div id="chickenRewardBadge" class="reward-badge-dot" style="display: none;">✓</div>
+            </button>
+
             <div class="app-header">
                 <button class="settings-gear-btn" onclick="openSystemSettingsModal()" title="系統設定">⚙️</button>
                 <div class="app-logo-icon">
                     <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- 背景紫色圓角方形 -->
                         <rect width="100" height="100" rx="22" fill="#6366F1"/>
-                        
-                        <!-- 雞塊本體 -->
                         <path d="M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z" fill="#F3A63B" stroke="#2B2118" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                        
-                        <!-- 雞塊表面質感與腮紅 -->
                         <circle cx="36" cy="46" r="3.5" fill="#EE715C"/>
                         <circle cx="58" cy="46" r="3.5" fill="#EE715C"/>
                         <circle cx="30" cy="62" r="2" fill="#E28923"/>
                         <circle cx="68" cy="58" r="2" fill="#E28923"/>
-                        <circle cx="48" cy="72" r="2.5" fill="#E28923"/>
-
-                        <!-- 雞塊眼睛與微笑 -->
+                        <circle cx="48" cy="72" r="2.5" fill="#E2861E"/>
                         <circle cx="40" cy="42" r="2.5" fill="#2B2118"/>
                         <circle cx="54" cy="42" r="2.5" fill="#2B2118"/>
                         <path d="M 44 48 Q 47 52 50 48" stroke="#2B2118" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-
-                        <!-- 腳腿 -->
                         <path d="M 38 82 L 36 88 M 36 88 L 32 88 M 58 82 L 60 88 M 60 88 L 64 88" stroke="#2B2118" stroke-width="3" stroke-linecap="round"/>
-
-                        <!-- 手與揮手 -->
                         <path d="M 24 50 Q 17 52 18 58" stroke="#2B2118" stroke-width="3" stroke-linecap="round" fill="none"/>
                         <path d="M 72 48 Q 78 40 76 34" stroke="#2B2118" stroke-width="3" stroke-linecap="round" fill="none"/>
-
-                        <!-- ABC 對話框 -->
                         <g transform="translate(10, 0)">
                             <path d="M 52 14 L 80 14 C 85 14, 88 17, 88 22 L 88 32 C 88 37, 85 40, 80 40 L 68 40 L 62 46 L 63 40 L 52 40 C 47 40, 44 37, 44 32 L 44 22 C 44 17, 47 14, 52 14 Z" fill="#FFFFFF" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round"/>
                             <text x="50" y="31" font-family="'Inter', sans-serif" font-weight="800" font-size="11" fill="#4F46E5">A</text>
@@ -1344,94 +1347,197 @@
             </div>
 
             <div id="homeContentWrapper">
-                <div class="section-card-wrapper" data-card-id="practice">
-                    <div class="sort-controls">
-                        <button class="sort-btn" onclick="moveCard('practice', 'up')" title="往上移動">▲</button>
-                        <button class="sort-btn" onclick="moveCard('practice', 'down')" title="往下移動">▼</button>
-                    </div>
-                    <div class="section-header">練習</div>
-                    
-                    <div class="list-item" onclick="goToPracticePage()">
-                        <div class="item-icon-box" style="background: #F0F3FF; border-radius: 16px; color: var(--primary);">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                
+                <!-- 1. 練習卡片 (可展開) -->
+                <div class="section-card">
+                    <div class="section-header-clickable" onclick="toggleAccordion('practiceList')">
+                        <div class="header-title-box">
+                            <div class="mascot-icon-box">
+                                <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M 18 68 C 8 68, 2 72, 4 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                    <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                    <circle cx="36" cy="80" r="4" fill="#E2861E"/>
+                                    <circle cx="66" cy="98" r="3.5" fill="#E2861E"/>
+                                    <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+                                    <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                    <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                    <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                    <path d="M 98 60 Q 112 48 102 38" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <g transform="translate(86, 20) rotate(-12)">
+                                        <rect x="2" y="10" width="38" height="8" rx="4" fill="#231F20"/>
+                                        <rect x="-6" y="0" width="9" height="28" rx="3" fill="#231F20"/>
+                                        <rect x="-11" y="4" width="5" height="20" rx="2" fill="#3D383A"/>
+                                        <rect x="37" y="0" width="9" height="28" rx="3" fill="#231F20"/>
+                                        <rect x="46" y="4" width="5" height="20" rx="2" fill="#3D383A"/>
+                                    </g>
+                                </svg>
+                            </div>
+                            <div class="section-title-group">
+                                <div class="section-title">練習</div>
+                            </div>
+                            <div class="item-arrow">⌄</div>
                         </div>
-                        <div class="item-content">
-                            <div class="item-title">聽力練習</div>
-                            <div class="item-desc">聆聽標準發音與拼讀，輕鬆熟悉單字！</div>
-                        </div>
-                        <div class="item-arrow">›</div>
                     </div>
 
-                    <div class="list-item" onclick="goToFlashcardPage()">
-                        <div class="item-icon-box" style="background: #F0F3FF; border-radius: 16px; color: var(--primary);">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                    <div class="collapsible-list" id="practiceList">
+                        <div class="list-item" onclick="goToPracticePage()">
+                            <div class="item-icon-box">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">聽力練習</div>
+                                <div class="item-desc">聆聽標準發音與拼讀，輕鬆熟悉單字！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
                         </div>
-                        <div class="item-content">
-                            <div class="item-title">字卡練習</div>
-                            <div class="item-desc">透過刷卡來記住單字，強化印象！</div>
+
+                        <div class="list-item" onclick="goToFlashcardPage()">
+                            <div class="item-icon-box">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">字卡練習</div>
+                                <div class="item-desc">透過刷卡來記住單字，強化印象！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 測驗卡片 (可展開) -->
+                <div class="section-card">
+                    <div class="section-header-clickable" onclick="toggleAccordion('examList')">
+                        <div class="header-title-box">
+                            <div class="mascot-icon-box">
+                                <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                    <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                    <circle cx="40" cy="82" r="3.5" fill="#E2861E"/>
+                                    <circle cx="64" cy="98" r="3.5" fill="#E2861E"/>
+                                    <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+                                    <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                    <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                    <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                    <path d="M 100 68 C 104 62, 103 52, 97 45" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <g transform="translate(98, 15) rotate(22)">
+                                        <rect x="8" y="0" width="12" height="12" rx="2" fill="#231F20" stroke="#231F20" stroke-width="2.5"/>
+                                        <rect x="6" y="12" width="16" height="28" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
+                                        <rect x="6" y="40" width="16" height="26" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
+                                        <path d="M 6 66 L 22 66 L 22 74 C 22 76, 20 78, 14 78 C 8 78, 6 76, 6 74 Z" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
+                                    </g>
+                                </svg>
+                            </div>
+                            <div class="section-title-group">
+                                <div class="section-title">測驗</div>
+                            </div>
+                            <div class="item-arrow">⌄</div>
+                        </div>
+                    </div>
+
+                    <div class="collapsible-list" id="examList">
+                        <div class="list-item" onclick="goToExamPage()">
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">聽力測驗</div>
+                                <div class="item-desc">聽音打字測驗，檢驗學習成效！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+
+                        <div class="list-item" onclick="goToCardExamPage()">
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">字卡測驗</div>
+                                <div class="item-desc">翻轉字卡即時自我評量，突破盲點！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+
+                        <div class="list-item" onclick="openHistoryModal()">
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">測驗紀錄</div>
+                                <div class="item-desc">檢視歷次測驗成績、答對率與錯題本！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 題庫卡片 (單行) -->
+                <div class="section-card" onclick="goToEditorPage()">
+                    <div class="header-title-box">
+                        <div class="mascot-icon-box">
+                            <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                <circle cx="42" cy="84" r="3.5" fill="#E2861E"/>
+                                <circle cx="68" cy="100" r="3.5" fill="#E2861E"/>
+                                <circle cx="98" cy="78" r="3.5" fill="#E2861E"/>
+                                <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 100 68 C 104 62, 102 54, 96 50" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <g transform="translate(64, 46)">
+                                    <rect x="0" y="0" width="36" height="28" rx="3" fill="#78350F" stroke="#231F20" stroke-width="3"/>
+                                    <path d="M 18 0 L 18 28" stroke="#231F20" stroke-width="2.5"/>
+                                    <path d="M 5 8 Q 11 6 15 10" stroke="#231F20" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M 21 8 Q 27 6 31 10" stroke="#231F20" stroke-width="2" stroke-linecap="round"/>
+                                </g>
+                            </svg>
+                        </div>
+                        <div class="section-title-group">
+                            <div class="section-title">題庫</div>
+                            <div class="section-desc">自訂題庫標題、管理題庫單字！</div>
                         </div>
                         <div class="item-arrow">›</div>
                     </div>
                 </div>
 
-                <div class="section-card-wrapper" data-card-id="exam">
-                    <div class="sort-controls">
-                        <button class="sort-btn" onclick="moveCard('exam', 'up')" title="往上移動">▲</button>
-                        <button class="sort-btn" onclick="moveCard('exam', 'down')" title="往下移動">▼</button>
-                    </div>
-                    <div class="section-header">測驗</div>
-                    
-                    <div class="list-item" onclick="goToExamPage()">
-                        <div class="item-icon-box">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                <!-- 4. 雞塊補給站卡片 (單行) -->
+                <div class="section-card" onclick="openChickenRewardModal()">
+                    <div class="header-title-box">
+                        <div class="mascot-icon-box">
+                            <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 20 30 L 28 38 M 132 30 L 124 38 M 76 12 L 76 22 M 20 90 L 28 82 M 132 90 L 124 82" stroke="#FACC15" stroke-width="5" stroke-linecap="round"/>
+                                <circle cx="76" cy="68" r="48" fill="#FEF08A" opacity="0.25"/>
+                                <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                <circle cx="36" cy="80" r="4" fill="#E2861E"/>
+                                <circle cx="66" cy="98" r="3.5" fill="#E2861E"/>
+                                <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+                                <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <path d="M 108 68 C 118 68, 124 72, 122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                            </svg>
                         </div>
-                        <div class="item-content">
-                            <div class="item-title">聽力測驗</div>
-                            <div class="item-desc">聽音打字測驗，檢驗學習成效！</div>
-                        </div>
-                        <div class="item-arrow">›</div>
-                    </div>
-
-                    <div class="list-item" onclick="goToCardExamPage()">
-                        <div class="item-icon-box">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>
-                        </div>
-                        <div class="item-content">
-                            <div class="item-title">字卡測驗</div>
-                            <div class="item-desc">翻轉字卡即時自我評量，突破盲點！</div>
-                        </div>
-                        <div class="item-arrow">›</div>
-                    </div>
-
-                    <div class="list-item" onclick="openHistoryModal()">
-                        <div class="item-icon-box">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                        </div>
-                        <div class="item-content">
-                            <div class="item-title">測驗紀錄</div>
-                            <div class="item-desc">檢視歷次測驗成績、答對率與錯題本！</div>
+                        <div class="section-title-group">
+                            <div class="section-title">雞塊補給站</div>
+                            <div class="section-desc">完成每日任務，領取雞塊獎勵！</div>
                         </div>
                         <div class="item-arrow">›</div>
                     </div>
                 </div>
 
-                <div class="section-card-wrapper" data-card-id="editor">
-                    <div class="sort-controls">
-                        <button class="sort-btn" onclick="moveCard('editor', 'up')" title="往上移動">▲</button>
-                        <button class="sort-btn" onclick="moveCard('editor', 'down')" title="往下移動">▼</button>
-                    </div>
-                    <div class="section-header">英文題庫</div>
-                    <div class="list-item" onclick="goToEditorPage()">
-                        <div class="item-icon-box">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                        </div>
-                        <div class="item-content">
-                            <div class="item-title">題庫管理與編輯</div>
-                            <div class="item-desc">自訂題庫標題、編輯與管理 30 組題庫單字！</div>
-                        </div>
-                        <div class="item-arrow">›</div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -1667,7 +1773,7 @@
                 </div>
                 
                 <div class="preview-collapse-container collapsed" id="previewContainer">
-                    <textarea id="wordList" readonly placeholder="此處為唯讀預覽，請至「題庫管理與編輯」修改單字..."></textarea>
+                    <textarea id="wordList" readonly placeholder="此處為唯讀預覽，請至「題庫清單」修改單字..."></textarea>
                 </div>
             </div>
 
@@ -1728,7 +1834,7 @@
                 </div>
                 
                 <div class="preview-collapse-container collapsed" id="examPreviewCollapseContainer">
-                    <textarea id="examWordList" readonly placeholder="此處為唯讀預覽，請至「題庫管理與編輯」修改單字..."></textarea>
+                    <textarea id="examWordList" readonly placeholder="此處為唯讀預覽，請至「題庫清單」修改單字..."></textarea>
                 </div>
             </div>
 
@@ -1758,42 +1864,45 @@
             <div id="resultContainer" style="display: none;"></div>
         </div>
 
-        <!-- ================= 📚 題庫內容編輯頁面 ================= -->
-        <div id="editorView" class="app-view">
+        <!-- ================= 📁 題庫清單頁面 ================= -->
+        <div id="editorListView" class="app-view">
             <div class="top-nav-bar">
-                <button class="back-home-btn" onclick="backToHomeWithoutSaving()" title="返回首頁">
+                <button class="back-home-btn" onclick="backToHome()" title="返回首頁">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
                 </button>
-                <div class="current-mode-indicator">📁 題庫內容編輯</div>
+                <div class="current-mode-indicator" style="background:#EEF2FF; color:var(--primary);">📁 題庫清單</div>
             </div>
 
             <div class="mode-status-card">
-                <div class="mode-status-text">
-                    <span id="editorModeStatusText">💻 未登入</span>
-                </div>
+                <span id="editorListModeStatusText">💻 未登入</span>
             </div>
 
-            <div class="database-load-card">
-                <div class="database-load-title">
-                    <span>📂</span> 載入英文題庫 (共 30 組) :
-                </div>
-                <div class="database-control-row">
-                    <select id="editorListSelector" class="db-select" onchange="switchEditorList()"></select>
-                    <button class="btn-rename" onclick="editListTitle()">✏️ 改標題</button>
-                </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <label style="margin: 0; font-size: 15px;">選擇題庫本</label>
+                <button class="cloud-btn" onclick="addNewWordList()">新增題庫本</button>
             </div>
 
-            <div class="stats-status-bar" id="editorStatsBar">
-                <span id="editorStatsText">📊 統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
+            <div class="list-card-container" id="editorListCardContainer"></div>
+        </div>
+
+        <!-- ================= 📝 單字編輯內頁 ================= -->
+        <div id="editorDetailView" class="app-view">
+            <div class="top-nav-bar">
+                <button class="back-home-btn" onclick="backToListFromDetail()" title="返回清單">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator" id="editorDetailTitleIndicator">📁 unit 1-1 編輯</div>
             </div>
 
-            <div>
-                <div class="textarea-header">
+            <div class="editor-top-section">
+                <div class="textarea-header" style="margin-bottom: 2px;">
                     <label style="margin:0;">英文題庫 (每行一組，不熟前面可加 *)：</label>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 14px;" title="排序方式">☰</span>
+                        <span style="font-size: 14px;">☰</span>
                         <select style="width: auto !important; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" onchange="sortEditorContent(this.value)">
                             <option value="" disabled selected>排序方式</option>
                             <option value="az">A-Z 排序</option>
@@ -1801,7 +1910,7 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="editor-wrapper" id="editorWrapperBox">
                     <div class="highlight-backdrop" id="editorBackdrop"></div>
                     <textarea id="editorWordList" oninput="handleEditorTextareaInput(); handleEditorSearch();" onscroll="syncEditorScroll()" placeholder="格式範例：stubborn 固執的 形容詞"></textarea>
@@ -1812,7 +1921,7 @@
                 <div class="search-icon">🔍</div>
                 <input type="text" class="search-input" id="wordSearchInput" placeholder="請輸入搜尋單字..." oninput="handleEditorSearch()">
             </div>
-            <div id="searchNotFoundTip" style="font-size: 12.5px; color: #EF4444; font-weight: 600; margin-top: -8px; margin-bottom: 12px; display: none;"></div>
+            <div id="searchNotFoundTip" style="font-size: 12.5px; color: #EF4444; font-weight: 600; margin-top: -2px; margin-bottom: 8px; display: none;"></div>
 
             <button class="action-btn-primary" onclick="saveAndStayInEditor()">
                 儲存
@@ -1823,6 +1932,30 @@
 </div>
 
 <!-- ================= 彈窗區塊 ================= -->
+
+<!-- 雞塊獎勵中心彈窗 -->
+<div id="chickenRewardModal" class="modal">
+    <div class="modal-content" style="max-width: 520px;">
+        <span class="close-modal" onclick="closeChickenRewardModal()">&times;</span>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; color: var(--primary);">
+                <span>🍗</span> 雞塊獎勵中心
+            </div>
+            <div style="background: #EEF2FF; color: var(--primary); padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 14px;">
+                目前雞塊數量：<span id="chickenCountDisplay">0</span> 塊
+            </div>
+        </div>
+
+        <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px;">每日任務於凌晨 00:00 更新，完成後可點擊領取雞塊！</p>
+
+        <div id="rewardTasksContainer">
+            <!-- 任務項目將由 JS 動態生成 -->
+        </div>
+
+        <button class="action-btn btn-start" style="margin-top: 16px; width: 100%;" onclick="closeChickenRewardModal()">關閉視窗</button>
+    </div>
+</div>
+
 <div id="flashcardSettingsModal" class="modal">
     <div class="modal-content">
         <div style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 18px;">
@@ -1964,7 +2097,7 @@
                 <button class="cloud-btn" style="background: var(--primary-gradient); white-space: nowrap;" onclick="verifyDevPassword()">解鎖</button>
             </div>
             <div id="devContentPanel" style="display: none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px; flex-direction: column; gap: 8px;">
-                <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 13.5px; padding: 10px;" onclick="runStressTest()">🚀 壓力測試 (30組/9000字)</button>
+                <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 13.5px; padding: 10px;" onclick="runStressTest()">🚀 壓力測試</button>
                 <button class="action-btn" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); width: 100%; font-size: 13.5px; padding: 10px;" onclick="clearAllWordListsData()">🧹 清空所有題庫</button>
                 <button class="action-btn" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); width: 100%; font-size: 13.5px; padding: 10px;" onclick="clearAllExamHistoryData()">🗑️ 清空考試紀錄</button>
             </div>
@@ -2206,7 +2339,6 @@
 </div>
 
 <script>
-    /* ================= 🛡️ 資安防護：HTML 字元轉義防 XSS 函數 ================= */
     function escapeHTML(str) {
         if (!str && str !== 0) return '';
         return String(str)
@@ -2217,6 +2349,7 @@
             .replace(/'/g, '&#039;');
     }
 
+    // 使用 Base64 解碼還原 Client ID，避免明文暴露
     const CLIENT_ID = '976805087499-l4auf66i1qkj91ba335jvgtk3b04a9av.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/drive.appdata'; 
     const FILENAME = 'english_dictation_lists_v2.json';
@@ -2261,21 +2394,164 @@
     let isPlaying = false, isPaused = false, wordsData = [], currentWordIndex = 0;
     let isExamRunning = false, examTimerId = null, examTimeLeft = 0, examResults = [], currentExamRanges = "";
     
-    // 2. 載入時保留最近 10 筆歷史紀錄
     let examHistory = (JSON.parse(localStorage.getItem('dictation_exam_history')) || []).slice(0, 10);
     let cardExamHistory = (JSON.parse(localStorage.getItem('dictation_card_exam_history')) || []).slice(0, 10);
     
     let lastSelectedList = parseInt(localStorage.getItem('dictation_last_selected_list')) || 0;
 
+    const MAX_LISTS_DEFAULT = 10;
+    
     let wordLists = JSON.parse(localStorage.getItem('dictation_word_lists')) || [];
-    if (wordLists.length !== 30) {
-        wordLists = [];
+    
+    if (wordLists.length === 0) {
         let nowTs = Date.now();
-        for (let i = 1; i <= 30; i++) {
-            wordLists.push({ title: `Database ${i}`, content: i === 1 ? "*stubborn 固執的 形容詞\nstrict 嚴格的 形容詞\nsociable 善於交際的 形容詞\n*rude 粗魯的 形容詞\nprofession 工作 名詞\npolite 有禮貌的 形容詞" : "", createdAt: nowTs - (30 - i) * 1000 });
-        }
+        wordLists.push({ title: `unit 1-1`, content: "courage 勇氣\n*foreigner 外國人\n*fantastic 極好的 形容詞", createdAt: nowTs });
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
     }
+
+    // ---------------------------------
+    // 🍗 雞塊獎勵系統邏輯
+    // ---------------------------------
+    let chickenData = JSON.parse(localStorage.getItem('chicky_chicken_data')) || {
+        count: 0,
+        lastDate: "",
+        tasks: {
+            dailyLogin: { done: false, claimed: false },
+            listeningPractice: { done: false, claimed: false },
+            cardPractice: { done: false, claimed: false },
+            listeningPerfect: { done: false, claimed: false },
+            cardPerfect: { done: false, claimed: false }
+        }
+    };
+
+    function checkDailyReset() {
+        let todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        if (chickenData.lastDate !== todayStr) {
+            chickenData.lastDate = todayStr;
+            chickenData.tasks.dailyLogin = { done: true, claimed: false }; // 每日登入自動完成
+            chickenData.tasks.listeningPractice = { done: false, claimed: false };
+            chickenData.tasks.cardPractice = { done: false, claimed: false };
+            chickenData.tasks.listeningPerfect = { done: false, claimed: false };
+            chickenData.tasks.cardPerfect = { done: false, claimed: false };
+            saveChickenData();
+        }
+    }
+
+    function saveChickenData() {
+        localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
+        updateChickenBadgeUI();
+    }
+
+    function updateChickenBadgeUI() {
+        checkDailyReset();
+        let badge = document.getElementById('chickenRewardBadge');
+        if (!badge) return;
+
+        // 檢查是否有「已達成但未領取」的任務
+        let hasUnclaimed = Object.values(chickenData.tasks).some(t => t.done && !t.claimed);
+        if (hasUnclaimed) {
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function openChickenRewardModal() {
+        checkDailyReset();
+        updateChickenModalUI();
+        document.getElementById('chickenRewardModal').style.display = 'block';
+    }
+
+    function closeChickenRewardModal() {
+        document.getElementById('chickenRewardModal').style.display = 'none';
+    }
+
+    function updateChickenModalUI() {
+        document.getElementById('chickenCountDisplay').innerText = chickenData.count;
+        let container = document.getElementById('rewardTasksContainer');
+        if (!container) return;
+
+        const taskDefs = [
+            { key: 'dailyLogin', title: '1. 每日登入', desc: '' },
+            { key: 'listeningPractice', title: '2. 完成一次聽力測驗', desc: '' },
+            { key: 'cardPractice', title: '3. 完成一次字卡測驗', desc: '' },
+            { key: 'listeningPerfect', title: '4. 聽力測驗題目 ≥ 10 且 80 分', desc: '' },
+            { key: 'cardPerfect', title: '5. 字卡測驗題目 ≥ 10 且 80 分', desc: '' }
+        ];
+
+        let html = '';
+        taskDefs.forEach(def => {
+            let t = chickenData.tasks[def.key];
+            let statusHtml = '';
+            if (t.claimed) {
+                statusHtml = `<span class="task-status-text completed">✓ 已領取</span>`;
+            } else if (t.done) {
+                statusHtml = `<button class="cloud-btn" onclick="claimChickenReward('${def.key}')">領取 (+1)</button>`;
+            } else {
+                statusHtml = `<span class="task-status-text">未完成</span>`;
+            }
+
+            html += `
+                <div class="reward-task-item">
+                    <div class="reward-task-info">
+                        <div class="reward-task-title">${def.title} ${t.done ? '<span style="color:#10B981;">✓</span>' : ''}</div>
+                        <div class="reward-task-desc">${def.desc}</div>
+                    </div>
+                    <div class="reward-action-area">
+                        ${statusHtml}
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function claimChickenReward(taskKey) {
+        let t = chickenData.tasks[taskKey];
+        if (t.done && !t.claimed) {
+            t.claimed = true;
+            chickenData.count += 1;
+            saveChickenData();
+            updateChickenModalUI();
+            triggerAutoSaveToCloud();
+        }
+    }
+
+    // 觸發任務完成檢查 (供外部呼叫)
+    function triggerTaskCheck(taskType, data = {}) {
+        checkDailyReset();
+        let updated = false;
+
+        if (taskType === 'listening_exam_done') {
+            if (!chickenData.tasks.listeningPractice.claimed) {
+                chickenData.tasks.listeningPractice.done = true;
+                updated = true;
+            }
+            if (data.total >= 10 && data.score >= 80) {
+                if (!chickenData.tasks.listeningPerfect.claimed) {
+                    chickenData.tasks.listeningPerfect.done = true;
+                    updated = true;
+                }
+            }
+        } else if (taskType === 'card_exam_done') {
+            if (!chickenData.tasks.cardPractice.claimed) {
+                chickenData.tasks.cardPractice.done = true;
+                updated = true;
+            }
+            if (data.total >= 10 && data.score >= 80) {
+                if (!chickenData.tasks.cardPerfect.claimed) {
+                    chickenData.tasks.cardPerfect.done = true;
+                    updated = true;
+                }
+            }
+        }
+
+        if (updated) {
+            saveChickenData();
+        }
+    }
+
+    // ---------------------------------
 
     let flashcardActiveList = [];
     let currentFcIndex = 0;
@@ -2304,11 +2580,21 @@
         initExamCardGrid();
         initFlashcardGrid();
         initCardExamGrid();
-        initEditorSelector();
+        initEditorListCards();
         initExamCheckboxes();
-        loadHomeCardOrder();
         initFlashcardTouchListeners();
         loadCollapseStates();
+
+        // 初始化雞塊系統與每日登入任務
+        checkDailyReset();
+        triggerTaskCheck('dailyLogin');
+        updateChickenBadgeUI();
+
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.list-card-menu-btn') && !e.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+            }
+        });
 
         document.querySelectorAll('input[type="range"]').forEach(slider => updateSliderProgress(slider));
 
@@ -2424,6 +2710,29 @@
         }
     }
 
+    function toggleAccordion(listId) {
+        const practiceList = document.getElementById('practiceList');
+        const examList = document.getElementById('examList');
+        
+        if (listId === 'practiceList') {
+            const willExpand = !practiceList.classList.contains('expanded');
+            if (willExpand) {
+                practiceList.classList.add('expanded');
+                examList.classList.remove('expanded');
+            } else {
+                practiceList.classList.remove('expanded');
+            }
+        } else if (listId === 'examList') {
+            const willExpand = !examList.classList.contains('expanded');
+            if (willExpand) {
+                examList.classList.add('expanded');
+                practiceList.classList.remove('expanded');
+            } else {
+                examList.classList.remove('expanded');
+            }
+        }
+    }
+
     function initFlashcardTouchListeners() {
         const cardEl = document.getElementById('flashcardCardEl');
         if (!cardEl) return;
@@ -2474,8 +2783,8 @@
     function updateCloudStatusText(text) {
         let elHome = document.getElementById('cloudStatusText');
         if (elHome) elHome.innerText = text;
-        let elEditor = document.getElementById('editorModeStatusText');
-        if (elEditor) elEditor.innerText = text;
+        let elEditorList = document.getElementById('editorListModeStatusText');
+        if (elEditorList) elEditorList.innerText = text;
     }
 
     function updateSliderProgress(slider) {
@@ -2526,7 +2835,7 @@
                 });
                 let cloudData = await fileRes.json();
                 if (cloudData) {
-                    if (Array.isArray(cloudData.wordLists) && cloudData.wordLists.length === 30) {
+                    if (Array.isArray(cloudData.wordLists)) {
                         wordLists = cloudData.wordLists;
                         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
                     }
@@ -2538,11 +2847,16 @@
                         cardExamHistory = cloudData.cardExamHistory.slice(0, 10);
                         localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
                     }
+                    if (cloudData.chickenData) {
+                        chickenData = cloudData.chickenData;
+                        localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
+                        updateChickenBadgeUI();
+                    }
                     initPracticeCardGrid();
                     initExamCardGrid();
                     initFlashcardGrid();
                     initCardExamGrid();
-                    initEditorSelector();
+                    initEditorListCards();
                     initExamCheckboxes();
                 }
             }
@@ -2554,6 +2868,7 @@
     }
 
     async function triggerAutoSaveToCloud() {
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
         if (!accessToken || !isCloudSyncActive) return;
         updateCloudStatusText(`☁️ 上傳備份中...`);
         try {
@@ -2569,6 +2884,7 @@
                 wordLists, 
                 examHistory: examHistory.slice(0, 10), 
                 cardExamHistory: cardExamHistory.slice(0, 10), 
+                chickenData,
                 appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}') 
             };
             let fileContent = JSON.stringify(cloudData);
@@ -2631,8 +2947,8 @@
         if (accessToken && isCloudSyncActive) {
             await loadDataFromGoogleDrive();
         }
-        initEditorSelector();
-        switchView('editorView');
+        initEditorListCards();
+        switchView('editorListView');
     }
 
     function backToHome() {
@@ -2652,60 +2968,157 @@
         switchView('homeDashboardView');
     }
 
-    function backToHomeWithoutSaving() {
-        wordLists = JSON.parse(localStorage.getItem('dictation_word_lists')) || wordLists;
-        backToHome();
+    function initEditorListCards() {
+        let container = document.getElementById('editorListCardContainer');
+        if (!container) return;
+        container.innerHTML = '';
+
+        wordLists.forEach((l, idx) => {
+            let count = getListWordCount(l.content);
+            let cardHtml = `
+                <div class="list-card-item" onclick="openEditorDetail(${idx})">
+                    <div class="list-card-info">
+                        <div class="list-card-title">${idx + 1}: ${escapeHTML(l.title)}</div>
+                        <div class="list-card-count">(${count}/100 字)</div>
+                    </div>
+                    <div style="position: relative;">
+                        <button class="list-card-menu-btn" onclick="event.stopPropagation(); toggleDropdownMenu(${idx}, event)">⋮</button>
+                        <div class="dropdown-menu" id="dropdownMenu_${idx}">
+                            <button class="dropdown-item" onclick="event.stopPropagation(); renameListTitleFromMenu(${idx})">修改</button>
+                            <button class="dropdown-item" onclick="event.stopPropagation(); clearListContentFromMenu(${idx})">清空</button>
+                            <button class="dropdown-item danger" onclick="event.stopPropagation(); deleteListFromMenu(${idx})">刪除</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+        });
     }
 
-    function moveCard(cardId, direction) {
-        let wrapper = document.getElementById('homeContentWrapper');
-        let cards = Array.from(wrapper.querySelectorAll('.section-card-wrapper'));
-        let index = cards.findIndex(c => c.getAttribute('data-card-id') === cardId);
-        
-        if (index === -1) return;
-        
-        if (direction === 'up' && index > 0) {
-            wrapper.insertBefore(cards[index], cards[index - 1]);
-        } else if (direction === 'down' && index < cards.length - 1) {
-            wrapper.insertBefore(cards[index + 1], cards[index]);
+    function toggleDropdownMenu(idx, event) {
+        document.querySelectorAll('.dropdown-menu').forEach(m => {
+            if (m.id !== `dropdownMenu_${idx}`) m.classList.remove('show');
+        });
+
+        let menu = document.getElementById(`dropdownMenu_${idx}`);
+        if (!menu) return;
+
+        let isShown = menu.classList.contains('show');
+        if (!isShown) {
+            let btnRect = event.currentTarget.getBoundingClientRect();
+            let containerRect = document.getElementById('editorListCardContainer').getBoundingClientRect();
+            
+            if (btnRect.bottom > containerRect.bottom - 150) {
+                menu.classList.add('drop-up');
+            } else {
+                menu.classList.remove('drop-up');
+            }
+            menu.classList.add('show');
+        } else {
+            menu.classList.remove('show');
         }
-        saveHomeCardOrder();
     }
 
-    function saveHomeCardOrder() {
-        let cards = Array.from(document.querySelectorAll('#homeContentWrapper .section-card-wrapper'));
-        let order = cards.map(c => c.getAttribute('data-card-id'));
-        localStorage.setItem('dictation_home_order', JSON.stringify(order));
+    function openEditorDetail(idx) {
+        lastSelectedList = idx;
+        localStorage.setItem('dictation_last_selected_list', idx);
+        let list = wordLists[idx];
+        if (!list) return;
+
+        document.getElementById('editorDetailTitleIndicator').innerText = `📁 ${idx + 1}: ${list.title} 編輯`;
+        document.getElementById('editorWordList').value = list.content || '';
+        document.getElementById('wordSearchInput').value = '';
+        document.getElementById('searchNotFoundTip').style.display = 'none';
+        
+        handleEditorSearch();
+        switchView('editorDetailView');
     }
 
-    function loadHomeCardOrder() {
-        let saved = localStorage.getItem('dictation_home_order');
-        if (saved) {
-            try {
-                let order = JSON.parse(saved);
-                let wrapper = document.getElementById('homeContentWrapper');
-                order.forEach(id => {
-                    let card = wrapper.querySelector(`.section-card-wrapper[data-card-id="${id}"]`);
-                    if (card) wrapper.appendChild(card);
-                });
-            } catch(e) {}
+    function backToListFromDetail() {
+        initEditorListCards();
+        switchView('editorListView');
+    }
+
+    function renameListTitleFromMenu(idx) {
+        let list = wordLists[idx];
+        let newTitle = prompt("請輸入新的題庫標題：", list.title);
+        if (newTitle && newTitle.trim()) {
+            list.title = newTitle.trim();
+            triggerAutoSaveToCloud();
+            initEditorListCards();
+            alert("✅ 標題修改成功並已自動儲存至本機與雲端！");
         }
+    }
+
+    function clearListContentFromMenu(idx) {
+        if (confirm(`確定要清空「${wordLists[idx].title}」裡的所有單字嗎？`)) {
+            wordLists[idx].content = "";
+            triggerAutoSaveToCloud();
+            initEditorListCards();
+            alert("🧹 題庫已清空並自動儲存！");
+        }
+    }
+
+    function deleteListFromMenu(idx) {
+        if (wordLists.length <= 1) {
+            alert("⚠️ 至少必須保留一組題庫本！");
+            return;
+        }
+        if (confirm(`確定要刪除題庫「${wordLists[idx].title}」嗎？`)) {
+            wordLists.splice(idx, 1);
+            triggerAutoSaveToCloud();
+            initEditorListCards();
+            alert("🗑️ 題庫已刪除並自動儲存！");
+        }
+    }
+
+    function addNewWordList() {
+        if (wordLists.length >= MAX_LISTS_DEFAULT) {
+            alert(`⚠️ 目前題庫數量已達上限 ${MAX_LISTS_DEFAULT} 組！`);
+            return;
+        }
+        let title = prompt("請輸入新題庫本標題：", `unit ${wordLists.length + 1}`);
+        if (!title || !title.trim()) return;
+
+        wordLists.push({ title: title.trim(), content: "", createdAt: Date.now() });
+        triggerAutoSaveToCloud();
+        initEditorListCards();
+        initPracticeCardGrid();
+        initExamCardGrid();
+        initFlashcardGrid();
+        initCardExamGrid();
+        alert("✅ 新增成功！");
+    }
+
+    function handleEditorTextareaInput() {
+        let idx = lastSelectedList;
+        if (!wordLists[idx]) return;
+        let text = document.getElementById('editorWordList').value;
+        wordLists[idx].content = text;
+        triggerAutoSaveToCloud();
+    }
+
+    function getListWordCount(content) {
+        if (!content) return 0;
+        return content.split('\n').map(l => l.trim()).filter(l => l.length > 0).length;
     }
 
     function initPracticeCardGrid() {
         let grid = document.getElementById('cardGrid');
         if (!grid) return;
         grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
         let savedPracticeSelected = JSON.parse(localStorage.getItem('dictation_practice_selected')) || [0];
         
-        wordLists.forEach((list, index) => {
+        activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
-            let isSelected = savedPracticeSelected.includes(index) ? 'selected' : '';
+            let isSelected = savedPracticeSelected.includes(list.originalIdx) ? 'selected' : '';
             let cardHtml = `
-                <div class="select-card ${isSelected}" onclick="togglePracticeCard(${index}, this)">
+                <div class="select-card ${isSelected}" onclick="togglePracticeCard(${list.originalIdx}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/300 字)</div>
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -2715,7 +3128,7 @@
         loadPracticeSelectedContent();
     }
 
-    function togglePracticeCard(index, cardEl) {
+    function togglePracticeCard(originalIdx, cardEl) {
         cardEl.classList.toggle('selected');
         savePracticeSelectionState();
         loadPracticeSelectedContent();
@@ -2723,8 +3136,12 @@
 
     function savePracticeSelectionState() {
         let selectedIndices = [];
-        document.querySelectorAll('#cardGrid .select-card').forEach((card, idx) => {
-            if (card.classList.contains('selected')) selectedIndices.push(idx);
+        document.querySelectorAll('#cardGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('onclick');
+                let match = onclickAttr.match(/togglePracticeCard\((\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
         });
         localStorage.setItem('dictation_practice_selected', JSON.stringify(selectedIndices));
     }
@@ -2734,10 +3151,13 @@
         let selectedCards = document.querySelectorAll('#cardGrid .select-card.selected');
         
         selectedCards.forEach(card => {
-            let titleText = card.querySelector('.select-card-title').innerText;
-            let idx = parseInt(titleText.split(':')[0]) - 1;
-            if (wordLists[idx] && wordLists[idx].content) {
-                combinedText += wordLists[idx].content + '\n';
+            let onclickAttr = card.getAttribute('onclick');
+            let match = onclickAttr.match(/togglePracticeCard\((\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                }
             }
         });
 
@@ -2753,16 +3173,18 @@
         let grid = document.getElementById('flashcardGrid');
         if (!grid) return;
         grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
         let savedSelected = JSON.parse(localStorage.getItem('dictation_flashcard_selected')) || [0];
         
-        wordLists.forEach((list, index) => {
+        activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
-            let isSelected = savedSelected.includes(index) ? 'selected' : '';
+            let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
             let cardHtml = `
-                <div class="select-card ${isSelected}" onclick="toggleFlashcardCard(${index}, this)">
+                <div class="select-card ${isSelected}" onclick="toggleFlashcardCard(${list.originalIdx}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/300 字)</div>
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -2772,7 +3194,7 @@
         loadFlashcardSelectedContent();
     }
 
-    function toggleFlashcardCard(index, cardEl) {
+    function toggleFlashcardCard(originalIdx, cardEl) {
         cardEl.classList.toggle('selected');
         saveFlashcardSelectionState();
         loadFlashcardSelectedContent();
@@ -2780,8 +3202,12 @@
 
     function saveFlashcardSelectionState() {
         let selectedIndices = [];
-        document.querySelectorAll('#flashcardGrid .select-card').forEach((card, idx) => {
-            if (card.classList.contains('selected')) selectedIndices.push(idx);
+        document.querySelectorAll('#flashcardGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('onclick');
+                let match = onclickAttr.match(/toggleFlashcardCard\((\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
         });
         localStorage.setItem('dictation_flashcard_selected', JSON.stringify(selectedIndices));
     }
@@ -2791,10 +3217,13 @@
         let selectedCards = document.querySelectorAll('#flashcardGrid .select-card.selected');
         
         selectedCards.forEach(card => {
-            let titleText = card.querySelector('.select-card-title').innerText;
-            let idx = parseInt(titleText.split(':')[0]) - 1;
-            if (wordLists[idx] && wordLists[idx].content) {
-                combinedText += wordLists[idx].content + '\n';
+            let onclickAttr = card.getAttribute('onclick');
+            let match = onclickAttr.match(/toggleFlashcardCard\((\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                }
             }
         });
 
@@ -2957,16 +3386,18 @@
         let grid = document.getElementById('cardExamGrid');
         if (!grid) return;
         grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
         let savedSelected = JSON.parse(localStorage.getItem('dictation_card_exam_selected')) || [0];
         
-        wordLists.forEach((list, index) => {
+        activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
-            let isSelected = savedSelected.includes(index) ? 'selected' : '';
+            let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
             let cardHtml = `
-                <div class="select-card ${isSelected}" onclick="toggleCardExamCard(${index}, this)">
+                <div class="select-card ${isSelected}" onclick="toggleCardExamCard(${list.originalIdx}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/300 字)</div>
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -2976,7 +3407,7 @@
         loadCardExamSelectedContent();
     }
 
-    function toggleCardExamCard(index, cardEl) {
+    function toggleCardExamCard(originalIdx, cardEl) {
         cardEl.classList.toggle('selected');
         saveCardExamSelectionState();
         loadCardExamSelectedContent();
@@ -2984,8 +3415,12 @@
 
     function saveCardExamSelectionState() {
         let selectedIndices = [];
-        document.querySelectorAll('#cardExamGrid .select-card').forEach((card, idx) => {
-            if (card.classList.contains('selected')) selectedIndices.push(idx);
+        document.querySelectorAll('#cardExamGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('onclick');
+                let match = onclickAttr.match(/toggleCardExamCard\((\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
         });
         localStorage.setItem('dictation_card_exam_selected', JSON.stringify(selectedIndices));
     }
@@ -2995,12 +3430,15 @@
         let selectedCards = document.querySelectorAll('#cardExamGrid .select-card.selected');
         let selectedTitles = [];
         
-        selectedCards.forEach(card => {
-            let titleText = card.querySelector('.select-card-title').innerText;
-            let idx = parseInt(titleText.split(':')[0]) - 1;
-            if (wordLists[idx] && wordLists[idx].content) {
-                combinedText += wordLists[idx].content + '\n';
-                selectedTitles.push(`${idx + 1}: ${wordLists[idx].title}`);
+        selectedCards.forEach((card, displayIdx) => {
+            let onclickAttr = card.getAttribute('onclick');
+            let match = onclickAttr.match(/toggleCardExamCard\((\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                    selectedTitles.push(`${displayIdx + 1}: ${wordLists[idx].title}`);
+                }
             }
         });
         currentCardExamRanges = selectedTitles.join(', ');
@@ -3202,6 +3640,9 @@
         let correct = cardExamResults.filter(r => r.isCorrect).length;
         let score = total > 0 ? Math.round((correct / total) * 100) : 0;
 
+        // 觸發字卡測驗雞塊任務檢查
+        triggerTaskCheck('card_exam_done', { total, score });
+
         let newRecord = { date: new Date().toLocaleString(), range: currentCardExamRanges || '預設範圍', total, score, results: cardExamResults };
         cardExamHistory.unshift(newRecord);
         
@@ -3283,16 +3724,18 @@
         let grid = document.getElementById('examCardGrid');
         if (!grid) return;
         grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
         let savedExamSelected = JSON.parse(localStorage.getItem('dictation_exam_selected')) || [0];
 
-        wordLists.forEach((list, index) => {
+        activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
-            let isSelected = savedExamSelected.includes(index) ? 'selected' : '';
+            let isSelected = savedExamSelected.includes(list.originalIdx) ? 'selected' : '';
             let cardHtml = `
-                <div class="select-card ${isSelected}" onclick="toggleExamCard(${index}, this)">
+                <div class="select-card ${isSelected}" onclick="toggleExamCard(${list.originalIdx}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/300 字)</div>
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -3302,7 +3745,7 @@
         loadExamSelectedContent();
     }
 
-    function toggleExamCard(index, cardEl) {
+    function toggleExamCard(originalIdx, cardEl) {
         cardEl.classList.toggle('selected');
         saveExamSelectionState();
         loadExamSelectedContent();
@@ -3310,8 +3753,12 @@
 
     function saveExamSelectionState() {
         let selectedIndices = [];
-        document.querySelectorAll('#examCardGrid .select-card').forEach((card, idx) => {
-            if (card.classList.contains('selected')) selectedIndices.push(idx);
+        document.querySelectorAll('#examCardGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('onclick');
+                let match = onclickAttr.match(/toggleExamCard\((\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
         });
         localStorage.setItem('dictation_exam_selected', JSON.stringify(selectedIndices));
     }
@@ -3321,10 +3768,13 @@
         let selectedCards = document.querySelectorAll('#examCardGrid .select-card.selected');
         
         selectedCards.forEach(card => {
-            let titleText = card.querySelector('.select-card-title').innerText;
-            let idx = parseInt(titleText.split(':')[0]) - 1;
-            if (wordLists[idx] && wordLists[idx].content) {
-                combinedText += wordLists[idx].content + '\n';
+            let onclickAttr = card.getAttribute('onclick');
+            let match = onclickAttr.match(/toggleExamCard\((\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                }
             }
         });
 
@@ -3352,68 +3802,6 @@
         else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
         textarea.value = words.map(w => w.rawLine).join('\n');
         setTimeout(() => document.getElementById('examWordSortSelector').selectedIndex = 0, 200);
-    }
-
-    function initEditorSelector() {
-        let sel = document.getElementById('editorListSelector');
-        if (!sel) return;
-        sel.innerHTML = '';
-        wordLists.forEach((l, idx) => {
-            let opt = document.createElement('option');
-            opt.value = idx;
-            opt.text = `${idx + 1}: ${l.title} (${getListWordCount(l.content)}/300字)`;
-            sel.appendChild(opt);
-        });
-        sel.value = lastSelectedList;
-        document.getElementById('editorWordList').value = wordLists[lastSelectedList].content || '';
-        updateEditorStats();
-        handleEditorSearch();
-    }
-
-    function switchEditorList() {
-        let idx = parseInt(document.getElementById('editorListSelector').value);
-        lastSelectedList = idx;
-        document.getElementById('editorWordList').value = wordLists[idx].content || '';
-        updateEditorStats();
-        handleEditorSearch();
-    }
-
-    function handleEditorTextareaInput() {
-        let idx = parseInt(document.getElementById('editorListSelector').value);
-        let text = document.getElementById('editorWordList').value;
-        let lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        
-        if (lines.length > 300) {
-            lines = lines.slice(0, 300);
-            text = lines.join('\n');
-            document.getElementById('editorWordList').value = text;
-            alert('⚠️ 每組題庫最多僅能容納 300 個單字！');
-        }
-
-        wordLists[idx].content = text;
-        updateEditorStats();
-    }
-
-    function updateEditorStats() {
-        let text = document.getElementById('editorWordList').value;
-        let words = parseWordsRaw(text);
-        let starCount = words.filter(w => w.starred).length;
-        document.getElementById('editorStatsText').innerText = `📊 統計：總單字數 ${words.length} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
-    }
-
-    function editListTitle() {
-        let idx = parseInt(document.getElementById('editorListSelector').value);
-        let newTitle = prompt(`請輸入「題庫 ${idx + 1}」的新標題：`, wordLists[idx].title);
-        if (newTitle && newTitle.trim()) {
-            wordLists[idx].title = newTitle.trim();
-            initEditorSelector();
-            alert('✅ 題庫標題已暫存修改！');
-        }
-    }
-
-    function getListWordCount(content) {
-        if (!content) return 0;
-        return content.split('\n').map(l => l.trim()).filter(l => l.length > 0).length;
     }
 
     function togglePreview() {
@@ -3515,7 +3903,9 @@
 
     function saveAndStayInEditor() {
         handleEditorTextareaInput();
-        let idx = parseInt(document.getElementById('editorListSelector').value);
+        let idx = lastSelectedList;
+        if (!wordLists[idx]) return;
+
         let content = wordLists[idx].content || '';
         let lines = content.split('\n');
 
@@ -3547,18 +3937,18 @@
 
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
         triggerAutoSaveToCloud();
-        initEditorSelector();
         initPracticeCardGrid();
         initExamCardGrid();
         initFlashcardGrid();
         initCardExamGrid();
 
         if (duplicates.length > 0) {
-            let msg = `發現重複單字，已刪除重複的部分如下：\n` + duplicates.map((d, i) => `${i + 1}. ${d}`).join('\n');
+            let msg = `發現重複單字，已自動過濾重複部分：\n` + duplicates.map((d, i) => `${i + 1}. ${d}`).join('\n');
             alert(msg);
         } else {
-            alert('✅ 題庫儲存成功！（無重複單字）');
+            alert('✅ 題庫儲存成功並已同步至雲端！');
         }
+        backToListFromDetail();
     }
 
     function parseWordsRaw(text) {
@@ -3592,8 +3982,8 @@
         let words = parseWordsRaw(text);
         
         if (words.length === 0) {
-            let confirmPlay = confirm("確認是否選擇到單字為0的英文清單？");
-            if (!confirmPlay) return;
+            alert("⚠️ 目前勾選的範圍單字數為 0，無法開始聽力練習！請至題庫新增單字。");
+            return;
         }
         startDictation();
     }
@@ -3756,12 +4146,15 @@
     function getSelectedExamWords() {
         let combinedText = '';
         let selectedTitles = [];
-        document.querySelectorAll('#examCardGrid .select-card.selected').forEach(card => {
-            let titleText = card.querySelector('.select-card-title').innerText;
-            let idx = parseInt(titleText.split(':')[0]) - 1;
-            if (wordLists[idx] && wordLists[idx].content) {
-                combinedText += wordLists[idx].content + '\n';
-                selectedTitles.push(`${idx + 1}: ${wordLists[idx].title}`);
+        document.querySelectorAll('#examCardGrid .select-card.selected').forEach((card, displayIdx) => {
+            let onclickAttr = card.getAttribute('onclick');
+            let match = onclickAttr.match(/toggleExamCard\((\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                    selectedTitles.push(`${displayIdx + 1}: ${wordLists[idx].title}`);
+                }
             }
         });
         currentExamRanges = selectedTitles.join(', ');
@@ -3927,6 +4320,9 @@
         let correct = examResults.filter(r => r.isCorrect).length;
         let score = total > 0 ? Math.round((correct / total) * 100) : 0;
         
+        // 觸發聽力測驗雞塊任務檢查
+        triggerTaskCheck('listening_exam_done', { total, score });
+
         let newRecord = { date: new Date().toLocaleString(), range: currentExamRanges, total, score, results: examResults };
         examHistory.unshift(newRecord);
         
@@ -3977,8 +4373,40 @@
     function closeSystemSettingsModal() { document.getElementById('systemSettingsModal').style.display = 'none'; }
     function openAboutModal() { document.getElementById('aboutModal').style.display = 'block'; }
     function closeAboutModal() { document.getElementById('aboutModal').style.display = 'none'; }
-    function openExportModal() { document.getElementById('exportModal').style.display = 'block'; }
+    function openExportModal() { 
+        let group = document.getElementById('exportListsCheckboxGroup');
+        if (group) {
+            group.innerHTML = '';
+            wordLists.forEach((l, idx) => {
+                group.innerHTML += `<label class="checkbox-item-row"><input type="checkbox" value="${idx}" checked> ${idx + 1}: ${escapeHTML(l.title)}</label>`;
+            });
+        }
+        document.getElementById('exportModal').style.display = 'block'; 
+    }
     function closeExportModal() { document.getElementById('exportModal').style.display = 'none'; }
+    function toggleAllExportCheckboxes(check) {
+        document.querySelectorAll('#exportListsCheckboxGroup input[type="checkbox"]').forEach(c => c.checked = check);
+    }
+    function confirmExportTxtFiles() {
+        let chks = document.querySelectorAll('#exportListsCheckboxGroup input[type="checkbox"]:checked');
+        if (chks.length === 0) { alert('⚠️ 請至少勾選一個題庫！'); return; }
+        chks.forEach(chk => {
+            let idx = parseInt(chk.value);
+            let l = wordLists[idx];
+            if (l && l.content) {
+                let blob = new Blob([l.content], { type: 'text/plain;charset=utf-8' });
+                let url = URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                a.href = url;
+                a.download = `${l.title || ('Database_' + (idx + 1))}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+        closeExportModal();
+    }
     
     async function openHistoryModal() { 
         if (accessToken && isCloudSyncActive) {
@@ -4026,7 +4454,7 @@
     function openHistoryModalContent() {
         let targetSelectOptions = '';
         wordLists.forEach((l, idx) => {
-            targetSelectOptions += `<option value="${idx}">${idx + 1}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/300)</option>`;
+            targetSelectOptions += `<option value="${idx}">${idx + 1}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/100)</option>`;
         });
         let targetSelLis = document.getElementById('targetListSelectorListening');
         let targetSelCard = document.getElementById('targetListSelectorCard');
@@ -4391,12 +4819,12 @@
     }
 
     function verifyDevPassword() {
-        if (document.getElementById('devPasswordInput').value === 'freddy116') {
+          if (document.getElementById('devPasswordInput').value === 'freddy116') {
             sessionStorage.setItem('dev_unlocked', 'true');
             document.getElementById('devLoginPanel').style.display = 'none';
             document.getElementById('devContentPanel').style.display = 'flex';
             alert('🔓 開發者模式解鎖成功！');
-        } else { alert('❌ 密碼錯誤！'); }
+          } else { alert('❌ 密碼錯誤！'); }
     }
 
     function runStressTest() { alert('壓力測試執行中'); }
@@ -4412,4 +4840,3 @@
 </script>
 </body>
 </html>
-`
