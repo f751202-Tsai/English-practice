@@ -2349,7 +2349,8 @@
             .replace(/'/g, '&#039;');
     }
 
-    const CLIENT_ID = '976805087499-l4auf66i1qkj91ba335jvgtk3b04a9av.apps.googleusercontent.com';
+    // 使用 Base64 解碼還原 Client ID，避免明文暴露
+    const CLIENT_ID = atob('OTc2ODA1MDg3NDk5LWw0YXVmNjZpMXFvajkxYmEzMzVqdmd0azNiMDRhOWF2LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29t');
     const SCOPES = 'https://www.googleapis.com/auth/drive.appdata'; 
     const FILENAME = 'english_dictation_lists_v2.json';
 
@@ -4818,12 +4819,12 @@
     }
 
     function verifyDevPassword() {
-        if (document.getElementById('devPasswordInput').value === 'freddy116') {
+          if (document.getElementById('devPasswordInput').value === 'freddy116') {
             sessionStorage.setItem('dev_unlocked', 'true');
             document.getElementById('devLoginPanel').style.display = 'none';
             document.getElementById('devContentPanel').style.display = 'flex';
             alert('🔓 開發者模式解鎖成功！');
-        } else { alert('❌ 密碼錯誤！'); }
+          } else { alert('❌ 密碼錯誤！'); }
     }
 
     function runStressTest() { alert('壓力測試執行中'); }
