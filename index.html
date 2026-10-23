@@ -56,7 +56,9 @@
         body.power-saving-mode select,
         body.power-saving-mode .mode-status-card,
         body.power-saving-mode .database-load-card,
-        body.power-saving-mode .search-bar-container { 
+        body.power-saving-mode .search-bar-container,
+        body.power-saving-mode .list-card-item,
+        body.power-saving-mode .dropdown-menu { 
             background-color: #1B1E27 !important; 
             color: #FFFFFF !important;            
             border-color: #2B303C !important;
@@ -76,7 +78,8 @@
 
         body.power-saving-mode .section-header,
         body.power-saving-mode .item-title,
-        body.power-saving-mode .item-desc {
+        body.power-saving-mode .item-desc,
+        body.power-saving-mode .list-card-title {
             color: #FFFFFF !important;
         }
 
@@ -231,7 +234,6 @@
             gap: 16px;
         }
 
-        /* 新版首頁卡片樣式 */
         .section-card {
             background-color: #FFFFFF;
             border: 1px solid var(--border-color);
@@ -297,7 +299,6 @@
             margin-top: 3px;
         }
 
-        /* 可折疊的清單容器 */
         .collapsible-list {
             max-height: 0;
             opacity: 0;
@@ -337,7 +338,6 @@
             transform: translateX(4px);
         }
 
-        /* 子項目的白色圓角圖示盒 */
         .item-icon-box {
             width: 44px; height: 44px; background: #EEF2FF; border-radius: 14px;
             display: flex; align-items: center; justify-content: center; margin-right: 16px;
@@ -363,7 +363,6 @@
         .item-arrow { color: #CBD5E1; font-size: 18px; font-weight: bold; transition: transform 0.2s; margin-left: 10px; flex-shrink: 0; }
         .list-item:hover .item-arrow { color: var(--primary); transform: translateX(3px); }
 
-        /* 標題左側的紫色圓角吉祥物圖示盒 */
         .mascot-icon-box {
             width: 48px;
             height: 48px;
@@ -798,73 +797,71 @@
             margin-bottom: 16px;
             box-sizing: border-box;
         }
-        .database-load-card {
-            background: #F8FAFC;
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 16px;
+
+        /* ---------------------------------
+           題庫清單專屬樣式 (對應圖1)
+           --------------------------------- */
+        .list-card-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 4px;
             margin-bottom: 16px;
-            box-sizing: border-box;
         }
-        .database-load-title {
-            font-size: 13.5px;
-            font-weight: 700;
-            color: #334155;
-            margin-bottom: 10px;
+        .list-card-item {
+            background: #F8FAFC;
+            border: 1.5px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px 20px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-        }
-        body.power-saving-mode .database-load-title {
-            color: #FFFFFF !important;
-        }
-        .database-control-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .db-select {
-            flex: 1;
-            padding: 10px 12px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-main);
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            outline: none;
             cursor: pointer;
-            min-width: 0;
-        }
-        body.power-saving-mode .db-select { background: #1B1E27 !important; color: #FFFFFF !important; }
-        .db-select:focus { border-color: var(--primary); }
-        .btn-rename {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            color: #334155;
-            padding: 10px 14px;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 12px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
             transition: all 0.2s;
-            white-space: nowrap;
-            flex-shrink: 0;
+            position: relative;
         }
-        body.power-saving-mode .btn-rename {
-            background: #1B1E27 !important;
-            color: #FFFFFF !important;
-            border-color: #2B303C !important;
+        .list-card-item:hover { border-color: #C7D2FE; background: #FFFFFF; }
+        .list-card-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+        .list-card-title { font-size: 17px; font-weight: 700; color: var(--text-main); }
+        .list-card-count { font-size: 13px; color: var(--text-muted); }
+        
+        .list-card-menu-btn {
+            background: transparent; border: none; cursor: pointer; padding: 8px; font-size: 18px; color: var(--text-muted);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.2s;
         }
-        .btn-rename:hover { background: #EEF2FF; color: var(--primary); border-color: #C7D2FE; }
+        .list-card-menu-btn:hover { background: rgba(0,0,0,0.05); color: var(--text-main); }
+
+        /* 卡片右側 3 個點點開的下拉選單 */
+        .dropdown-menu {
+            display: none; position: absolute; right: 16px; top: 60px; background: #FFFFFF;
+            border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 100; min-width: 120px; overflow: hidden;
+        }
+        .dropdown-menu.show { display: block; }
+        .dropdown-item {
+            padding: 10px 16px; font-size: 13.5px; font-weight: 600; color: var(--text-main); cursor: pointer;
+            transition: background 0.15s; display: block; width: 100%; text-align: left; border: none; background: transparent;
+        }
+        .dropdown-item:hover { background: #EEF2FF; color: var(--primary); }
+        .dropdown-item.danger { color: #EF4444; }
+        .dropdown-item.danger:hover { background: #FEF2F2; }
+
+        /* ---------------------------------
+           單字編輯內頁 UI (對應圖2：上方佈局調整以防手機鍵盤遮擋)
+           --------------------------------- */
+        .editor-top-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
 
         .editor-wrapper {
             position: relative;
             width: 100%;
-            height: 345px;
+            height: 310px;
             border: 1px solid var(--border-color);
             border-radius: 12px;
             background: #FFFFFF;
@@ -935,7 +932,7 @@
         .search-bar-container {
             display: flex; align-items: center; background: #FFFFFF;
             border: 1px solid var(--border-color); border-radius: 12px;
-            padding: 10px 14px; margin: 16px 0; gap: 10px;
+            padding: 10px 14px; margin: 12px 0 6px 0; gap: 10px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s;
             box-sizing: border-box;
         }
@@ -1222,7 +1219,7 @@
             .history-item-icon-box { width: 32px; height: 32px; margin-right: 6px; }
             .history-item-title { font-size: 13px; }
             #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea { height: clamp(140px, 22vh, 220px) !important; }
-            .editor-wrapper { height: clamp(180px, 28vh, 260px) !important; }
+            .editor-wrapper { height: clamp(180px, 26vh, 240px) !important; }
         }
 
         @media screen and (max-width: 480px) {
@@ -1349,26 +1346,23 @@
                         <div class="header-title-box">
                             <div class="mascot-icon-box">
                                 <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M 22 68 C 12 68, 6 72, 8 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
-                                    <path d="M 12 74 C 18 70, 24 74, 22 82" stroke="#231F20" stroke-width="5" stroke-linecap="round" fill="none"/>
+                                    <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
                                     <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
                                     <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
                                     <circle cx="40" cy="82" r="3.5" fill="#E2861E"/>
                                     <circle cx="64" cy="98" r="3.5" fill="#E2861E"/>
                                     <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
-                                    <circle cx="101" cy="50" r="3" fill="#E2861E"/>
                                     <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
                                     <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
                                     <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
                                     <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
                                     <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-                                    <path d="M 104 60 C 100 58, 98 55, 102 52" stroke="#231F20" stroke-width="5" stroke-linecap="round" fill="none"/>
-                                    <g transform="translate(100, 15) rotate(22)">
-                                        <path d="M 10 0 L 18 0 L 14 -6 Z" fill="#2563EB" stroke="#231F20" stroke-width="2"/>
-                                        <rect x="8" y="0" width="12" height="12" rx="2" fill="#60A5FA" stroke="#231F20" stroke-width="2.5"/>
-                                        <rect x="6" y="12" width="16" height="28" fill="#FACC15" stroke="#231F20" stroke-width="2.5"/>
-                                        <rect x="6" y="40" width="16" height="26" fill="#4ADE80" stroke="#231F20" stroke-width="2.5"/>
-                                        <path d="M 6 66 L 22 66 L 22 74 C 22 76, 20 78, 14 78 C 8 78, 6 76, 6 74 Z" fill="#EF4444" stroke="#231F20" stroke-width="2.5"/>
+                                    <path d="M 100 68 C 104 62, 103 52, 97 45" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <g transform="translate(98, 15) rotate(22)">
+                                        <rect x="8" y="0" width="12" height="12" rx="2" fill="#231F20" stroke="#231F20" stroke-width="2.5"/>
+                                        <rect x="6" y="12" width="16" height="28" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
+                                        <rect x="6" y="40" width="16" height="26" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
+                                        <path d="M 6 66 L 22 66 L 22 74 C 22 76, 20 78, 14 78 C 8 78, 6 76, 6 74 Z" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
                                     </g>
                                 </svg>
                             </div>
@@ -1420,7 +1414,7 @@
                     <div class="header-title-box">
                         <div class="mascot-icon-box">
                             <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M 32 80 C 22 85, 16 92, 22 100" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
                                 <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
                                 <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
                                 <circle cx="42" cy="84" r="3.5" fill="#E2861E"/>
@@ -1431,7 +1425,7 @@
                                 <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
                                 <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
                                 <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-                                <path d="M 42 78 C 50 82, 58 76, 62 70" stroke="#231F20" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 100 68 C 104 62, 102 54, 96 50" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
                                 <g transform="translate(64, 46)">
                                     <rect x="0" y="0" width="36" height="28" rx="3" fill="#78350F" stroke="#231F20" stroke-width="3"/>
                                     <path d="M 18 0 L 18 28" stroke="#231F20" stroke-width="2.5"/>
@@ -1442,7 +1436,7 @@
                         </div>
                         <div class="section-title-group">
                             <div class="section-title">題庫</div>
-                            <div class="section-desc">自訂題庫標題、管理 10 組題庫單字！</div>
+                            <div class="section-desc">自訂題庫標題、管理題庫單字！</div>
                         </div>
                         <div class="item-arrow">›</div>
                     </div>
@@ -1455,8 +1449,6 @@
                             <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M 20 30 L 28 38 M 132 30 L 124 38 M 76 12 L 76 22 M 20 90 L 28 82 M 132 90 L 124 82" stroke="#FACC15" stroke-width="5" stroke-linecap="round"/>
                                 <circle cx="76" cy="68" r="48" fill="#FEF08A" opacity="0.25"/>
-                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
-                                <path d="M 124 68 C 134 68, 140 72, 138 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
                                 <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
                                 <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
                                 <circle cx="36" cy="80" r="4" fill="#E2861E"/>
@@ -1467,6 +1459,8 @@
                                 <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
                                 <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
                                 <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <path d="M 108 68 C 118 68, 124 72, 122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
                             </svg>
                         </div>
                         <div class="section-title-group">
@@ -1712,7 +1706,7 @@
                 </div>
                 
                 <div class="preview-collapse-container collapsed" id="previewContainer">
-                    <textarea id="wordList" readonly placeholder="此處為唯讀預覽，請至「題庫管理與編輯」修改單字..."></textarea>
+                    <textarea id="wordList" readonly placeholder="此處為唯讀預覽，請至「題庫清單」修改單字..."></textarea>
                 </div>
             </div>
 
@@ -1773,7 +1767,7 @@
                 </div>
                 
                 <div class="preview-collapse-container collapsed" id="examPreviewCollapseContainer">
-                    <textarea id="examWordList" readonly placeholder="此處為唯讀預覽，請至「題庫管理與編輯」修改單字..."></textarea>
+                    <textarea id="examWordList" readonly placeholder="此處為唯讀預覽，請至「題庫清單」修改單字..."></textarea>
                 </div>
             </div>
 
@@ -1803,42 +1797,45 @@
             <div id="resultContainer" style="display: none;"></div>
         </div>
 
-        <!-- ================= 📚 題庫內容編輯頁面 ================= -->
-        <div id="editorView" class="app-view">
+        <!-- ================= 📁 題庫清單頁面 (對應圖1) ================= -->
+        <div id="editorListView" class="app-view">
             <div class="top-nav-bar">
-                <button class="back-home-btn" onclick="backToHomeWithoutSaving()" title="返回首頁">
+                <button class="back-home-btn" onclick="backToHome()" title="返回首頁">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
                 </button>
-                <div class="current-mode-indicator">📁 題庫內容編輯</div>
+                <div class="current-mode-indicator" style="background:#EEF2FF; color:var(--primary);">📁 題庫清單</div>
             </div>
 
             <div class="mode-status-card">
-                <div class="mode-status-text">
-                    <span id="editorModeStatusText">💻 未登入</span>
-                </div>
+                <span id="editorListModeStatusText">💻 未登入</span>
             </div>
 
-            <div class="database-load-card">
-                <div class="database-load-title">
-                    <span>📂</span> 載入英文題庫 (共 30 組) :
-                </div>
-                <div class="database-control-row">
-                    <select id="editorListSelector" class="db-select" onchange="switchEditorList()"></select>
-                    <button class="btn-rename" onclick="editListTitle()">✏️ 改標題</button>
-                </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <label style="margin: 0; font-size: 15px;">選擇題庫本</label>
+                <button class="cloud-btn" onclick="addNewWordList()">新增題庫本</button>
             </div>
 
-            <div class="stats-status-bar" id="editorStatsBar">
-                <span id="editorStatsText">📊 統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
+            <div class="list-card-container" id="editorListCardContainer"></div>
+        </div>
+
+        <!-- ================= 📝 單字編輯內頁 (對應圖2：上方佈局調整以防手機鍵盤遮擋) ================= -->
+        <div id="editorDetailView" class="app-view">
+            <div class="top-nav-bar">
+                <button class="back-home-btn" onclick="backToListFromDetail()" title="返回清單">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator" id="editorDetailTitleIndicator">📁 unit 1-1 編輯</div>
             </div>
 
-            <div>
-                <div class="textarea-header">
+            <div class="editor-top-section">
+                <div class="textarea-header" style="margin-bottom: 2px;">
                     <label style="margin:0;">英文題庫 (每行一組，不熟前面可加 *)：</label>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 14px;" title="排序方式">☰</span>
+                        <span style="font-size: 14px;">☰</span>
                         <select style="width: auto !important; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" onchange="sortEditorContent(this.value)">
                             <option value="" disabled selected>排序方式</option>
                             <option value="az">A-Z 排序</option>
@@ -1846,7 +1843,7 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="editor-wrapper" id="editorWrapperBox">
                     <div class="highlight-backdrop" id="editorBackdrop"></div>
                     <textarea id="editorWordList" oninput="handleEditorTextareaInput(); handleEditorSearch();" onscroll="syncEditorScroll()" placeholder="格式範例：stubborn 固執的 形容詞"></textarea>
@@ -1857,7 +1854,7 @@
                 <div class="search-icon">🔍</div>
                 <input type="text" class="search-input" id="wordSearchInput" placeholder="請輸入搜尋單字..." oninput="handleEditorSearch()">
             </div>
-            <div id="searchNotFoundTip" style="font-size: 12.5px; color: #EF4444; font-weight: 600; margin-top: -8px; margin-bottom: 12px; display: none;"></div>
+            <div id="searchNotFoundTip" style="font-size: 12.5px; color: #EF4444; font-weight: 600; margin-top: -2px; margin-bottom: 8px; display: none;"></div>
 
             <button class="action-btn-primary" onclick="saveAndStayInEditor()">
                 儲存
@@ -2009,7 +2006,7 @@
                 <button class="cloud-btn" style="background: var(--primary-gradient); white-space: nowrap;" onclick="verifyDevPassword()">解鎖</button>
             </div>
             <div id="devContentPanel" style="display: none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px; flex-direction: column; gap: 8px;">
-                <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 13.5px; padding: 10px;" onclick="runStressTest()">🚀 壓力測試 (30組/9000字)</button>
+                <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 13.5px; padding: 10px;" onclick="runStressTest()">🚀 壓力測試</button>
                 <button class="action-btn" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); width: 100%; font-size: 13.5px; padding: 10px;" onclick="clearAllWordListsData()">🧹 清空所有題庫</button>
                 <button class="action-btn" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); width: 100%; font-size: 13.5px; padding: 10px;" onclick="clearAllExamHistoryData()">🗑️ 清空考試紀錄</button>
             </div>
@@ -2251,7 +2248,6 @@
 </div>
 
 <script>
-    /* ================= 🛡️ 資安防護：HTML 字元轉義防 XSS 函數 ================= */
     function escapeHTML(str) {
         if (!str && str !== 0) return '';
         return String(str)
@@ -2311,13 +2307,14 @@
     
     let lastSelectedList = parseInt(localStorage.getItem('dictation_last_selected_list')) || 0;
 
+    const MAX_WORDS_PER_LIST_DEFAULT = 100;
+    const MAX_LISTS_DEFAULT = 10;
+    
     let wordLists = JSON.parse(localStorage.getItem('dictation_word_lists')) || [];
-    if (wordLists.length !== 30) {
-        wordLists = [];
+    
+    if (wordLists.length === 0) {
         let nowTs = Date.now();
-        for (let i = 1; i <= 30; i++) {
-            wordLists.push({ title: `Database ${i}`, content: i === 1 ? "*stubborn 固執的 形容詞\nstrict 嚴格的 形容詞\nsociable 善於交際的 形容詞\n*rude 粗魯的 形容詞\nprofession 工作 名詞\npolite 有禮貌的 形容詞" : "", createdAt: nowTs - (30 - i) * 1000 });
-        }
+        wordLists.push({ title: `unit 1-1`, content: "courage 勇氣\n*foreigner 外國人\n*fantastic 極好的 形容詞", createdAt: nowTs });
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
     }
 
@@ -2348,10 +2345,17 @@
         initExamCardGrid();
         initFlashcardGrid();
         initCardExamGrid();
-        initEditorSelector();
+        initEditorListCards();
         initExamCheckboxes();
         initFlashcardTouchListeners();
         loadCollapseStates();
+
+        // 點擊畫面任意處自動關閉下拉選單
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.list-card-menu-btn') && !e.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+            }
+        });
 
         document.querySelectorAll('input[type="range"]').forEach(slider => updateSliderProgress(slider));
 
@@ -2468,8 +2472,26 @@
     }
 
     function toggleAccordion(listId) {
-        const list = document.getElementById(listId);
-        list.classList.toggle('expanded');
+        const practiceList = document.getElementById('practiceList');
+        const examList = document.getElementById('examList');
+        
+        if (listId === 'practiceList') {
+            const willExpand = !practiceList.classList.contains('expanded');
+            if (willExpand) {
+                practiceList.classList.add('expanded');
+                examList.classList.remove('expanded');
+            } else {
+                practiceList.classList.remove('expanded');
+            }
+        } else if (listId === 'examList') {
+            const willExpand = !examList.classList.contains('expanded');
+            if (willExpand) {
+                examList.classList.add('expanded');
+                practiceList.classList.remove('expanded');
+            } else {
+                examList.classList.remove('expanded');
+            }
+        }
     }
 
     function initFlashcardTouchListeners() {
@@ -2522,8 +2544,8 @@
     function updateCloudStatusText(text) {
         let elHome = document.getElementById('cloudStatusText');
         if (elHome) elHome.innerText = text;
-        let elEditor = document.getElementById('editorModeStatusText');
-        if (elEditor) elEditor.innerText = text;
+        let elEditorList = document.getElementById('editorListModeStatusText');
+        if (elEditorList) elEditorList.innerText = text;
     }
 
     function updateSliderProgress(slider) {
@@ -2574,7 +2596,7 @@
                 });
                 let cloudData = await fileRes.json();
                 if (cloudData) {
-                    if (Array.isArray(cloudData.wordLists) && cloudData.wordLists.length === 30) {
+                    if (Array.isArray(cloudData.wordLists)) {
                         wordLists = cloudData.wordLists;
                         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
                     }
@@ -2590,7 +2612,7 @@
                     initExamCardGrid();
                     initFlashcardGrid();
                     initCardExamGrid();
-                    initEditorSelector();
+                    initEditorListCards();
                     initExamCheckboxes();
                 }
             }
@@ -2602,6 +2624,7 @@
     }
 
     async function triggerAutoSaveToCloud() {
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
         if (!accessToken || !isCloudSyncActive) return;
         updateCloudStatusText(`☁️ 上傳備份中...`);
         try {
@@ -2675,12 +2698,13 @@
         switchView('examView');
     }
 
+    // 進入圖 1 的題庫清單頁面
     async function goToEditorPage() {
         if (accessToken && isCloudSyncActive) {
             await loadDataFromGoogleDrive();
         }
-        initEditorSelector();
-        switchView('editorView');
+        initEditorListCards();
+        switchView('editorListView');
     }
 
     function backToHome() {
@@ -2700,25 +2724,148 @@
         switchView('homeDashboardView');
     }
 
-    function backToHomeWithoutSaving() {
-        wordLists = JSON.parse(localStorage.getItem('dictation_word_lists')) || wordLists;
-        backToHome();
+    // 初始化圖 1 的題庫清單 UI
+    function initEditorListCards() {
+        let container = document.getElementById('editorListCardContainer');
+        if (!container) return;
+        container.innerHTML = '';
+
+        wordLists.forEach((l, idx) => {
+            let count = getListWordCount(l.content);
+            let cardHtml = `
+                <div class="list-card-item" onclick="openEditorDetail(${idx})">
+                    <div class="list-card-info">
+                        <div class="list-card-title">${idx + 1}: ${escapeHTML(l.title)}</div>
+                        <div class="list-card-count">(${count}/100 字)</div>
+                    </div>
+                    <div style="position: relative;">
+                        <button class="list-card-menu-btn" onclick="event.stopPropagation(); toggleDropdownMenu(${idx}, event)">⋮</button>
+                        <div class="dropdown-menu" id="dropdownMenu_${idx}">
+                            <button class="dropdown-item" onclick="event.stopPropagation(); renameListTitleFromMenu(${idx})">修改</button>
+                            <button class="dropdown-item" onclick="event.stopPropagation(); clearListContentFromMenu(${idx})">清空</button>
+                            <button class="dropdown-item danger" onclick="event.stopPropagation(); deleteListFromMenu(${idx})">刪除</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+        });
+    }
+
+    function toggleDropdownMenu(idx, event) {
+        document.querySelectorAll('.dropdown-menu').forEach(m => {
+            if (m.id !== `dropdownMenu_${idx}`) m.classList.remove('show');
+        });
+        let menu = document.getElementById(`dropdownMenu_${idx}`);
+        if (menu) menu.classList.toggle('show');
+    }
+
+    // 點擊字卡進入該題庫內容編輯內頁 (圖 2)
+    function openEditorDetail(idx) {
+        lastSelectedList = idx;
+        localStorage.setItem('dictation_last_selected_list', idx);
+        let list = wordLists[idx];
+        if (!list) return;
+
+        document.getElementById('editorDetailTitleIndicator').innerText = `📁 ${idx + 1}: ${list.title} 編輯`;
+        document.getElementById('editorWordList').value = list.content || '';
+        document.getElementById('wordSearchInput').value = '';
+        document.getElementById('searchNotFoundTip').style.display = 'none';
+        
+        handleEditorSearch();
+        switchView('editorDetailView');
+    }
+
+    function backToListFromDetail() {
+        initEditorListCards();
+        switchView('editorListView');
+    }
+
+    // 來自圖 1 菜單的「修改」標題
+    function renameListTitleFromMenu(idx) {
+        let list = wordLists[idx];
+        let newTitle = prompt("請輸入新的題庫標題：", list.title);
+        if (newTitle && newTitle.trim()) {
+            list.title = newTitle.trim();
+            triggerAutoSaveToCloud();
+            initEditorListCards();
+            alert("✅ 標題修改成功並已自動儲存至本機與雲端！");
+        }
+    }
+
+    // 來自圖 1 菜單的「清空」單字
+    function clearListContentFromMenu(idx) {
+        if (confirm(`確定要清空「${wordLists[idx].title}」裡的所有單字嗎？`)) {
+            wordLists[idx].content = "";
+            triggerAutoSaveToCloud();
+            initEditorListCards();
+            alert("🧹 題庫已清空並自動儲存！");
+        }
+    }
+
+    // 來自圖 1 菜單的「刪除」題庫
+    function deleteListFromMenu(idx) {
+        if (wordLists.length <= 1) {
+            alert("⚠️ 至少必須保留一組題庫本！");
+            return;
+        }
+        if (confirm(`確定要刪除題庫「${wordLists[idx].title}」嗎？`)) {
+            wordLists.splice(idx, 1);
+            triggerAutoSaveToCloud();
+            initEditorListCards();
+            alert("🗑️ 題庫已刪除並自動儲存！");
+        }
+    }
+
+    // 新增題庫本
+    function addNewWordList() {
+        if (wordLists.length >= MAX_LISTS_DEFAULT) {
+            alert(`⚠️ 目前題庫數量已達上限 ${MAX_LISTS_DEFAULT} 組！`);
+            return;
+        }
+        let title = prompt("請輸入新題庫本標題：", `unit ${wordLists.length + 1}`);
+        if (!title || !title.trim()) return;
+
+        wordLists.push({ title: title.trim(), content: "", createdAt: Date.now() });
+        triggerAutoSaveToCloud();
+        initEditorListCards();
+        initPracticeCardGrid();
+        initExamCardGrid();
+        initFlashcardGrid();
+        initCardExamGrid();
+        alert("✅ 新增成功！");
+    }
+
+    // 每次修改、清空、刪除後的即時儲存支援 (對應需求1：每次修改、清空、刪除後會儲存至本機跟雲端)
+    function handleEditorTextareaInput() {
+        let idx = lastSelectedList;
+        if (!wordLists[idx]) return;
+        let text = document.getElementById('editorWordList').value;
+        wordLists[idx].content = text;
+        triggerAutoSaveToCloud();
+    }
+
+    function getListWordCount(content) {
+        if (!content) return 0;
+        return content.split('\n').map(l => l.trim()).filter(l => l.length > 0).length;
     }
 
     function initPracticeCardGrid() {
         let grid = document.getElementById('cardGrid');
         if (!grid) return;
         grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
         let savedPracticeSelected = JSON.parse(localStorage.getItem('dictation_practice_selected')) || [0];
         
-        wordLists.forEach((list, index) => {
+        activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
-            let isSelected = savedPracticeSelected.includes(index) ? 'selected' : '';
+            let isSelected = savedPracticeSelected.includes(list.originalIdx) ? 'selected' : '';
             let cardHtml = `
-                <div class="select-card ${isSelected}" onclick="togglePracticeCard(${index}, this)">
+                <div class="select-card ${isSelected}" onclick="togglePracticeCard(${list.originalIdx}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/300 字)</div>
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -2728,7 +2875,7 @@
         loadPracticeSelectedContent();
     }
 
-    function togglePracticeCard(index, cardEl) {
+    function togglePracticeCard(originalIdx, cardEl) {
         cardEl.classList.toggle('selected');
         savePracticeSelectionState();
         loadPracticeSelectedContent();
@@ -2736,8 +2883,12 @@
 
     function savePracticeSelectionState() {
         let selectedIndices = [];
-        document.querySelectorAll('#cardGrid .select-card').forEach((card, idx) => {
-            if (card.classList.contains('selected')) selectedIndices.push(idx);
+        document.querySelectorAll('#cardGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('onclick');
+                let match = onclickAttr.match(/togglePracticeCard\((\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
         });
         localStorage.setItem('dictation_practice_selected', JSON.stringify(selectedIndices));
     }
@@ -2747,10 +2898,13 @@
         let selectedCards = document.querySelectorAll('#cardGrid .select-card.selected');
         
         selectedCards.forEach(card => {
-            let titleText = card.querySelector('.select-card-title').innerText;
-            let idx = parseInt(titleText.split(':')[0]) - 1;
-            if (wordLists[idx] && wordLists[idx].content) {
-                combinedText += wordLists[idx].content + '\n';
+            let onclickAttr = card.getAttribute('onclick');
+            let match = onclickAttr.match(/togglePracticeCard\((\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                }
             }
         });
 
@@ -2766,16 +2920,18 @@
         let grid = document.getElementById('flashcardGrid');
         if (!grid) return;
         grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
         let savedSelected = JSON.parse(localStorage.getItem('dictation_flashcard_selected')) || [0];
         
-        wordLists.forEach((list, index) => {
+        activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
-            let isSelected = savedSelected.includes(index) ? 'selected' : '';
+            let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
             let cardHtml = `
-                <div class="select-card ${isSelected}" onclick="toggleFlashcardCard(${index}, this)">
+                <div class="select-card ${isSelected}" onclick="toggleFlashcardCard(${list.originalIdx}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/300 字)</div>
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -2785,7 +2941,7 @@
         loadFlashcardSelectedContent();
     }
 
-    function toggleFlashcardCard(index, cardEl) {
+    function toggleFlashcardCard(originalIdx, cardEl) {
         cardEl.classList.toggle('selected');
         saveFlashcardSelectionState();
         loadFlashcardSelectedContent();
@@ -2793,8 +2949,12 @@
 
     function saveFlashcardSelectionState() {
         let selectedIndices = [];
-        document.querySelectorAll('#flashcardGrid .select-card').forEach((card, idx) => {
-            if (card.classList.contains('selected')) selectedIndices.push(idx);
+        document.querySelectorAll('#flashcardGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('onclick');
+                let match = onclickAttr.match(/toggleFlashcardCard\((\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
         });
         localStorage.setItem('dictation_flashcard_selected', JSON.stringify(selectedIndices));
     }
@@ -2804,10 +2964,13 @@
         let selectedCards = document.querySelectorAll('#flashcardGrid .select-card.selected');
         
         selectedCards.forEach(card => {
-            let titleText = card.querySelector('.select-card-title').innerText;
-            let idx = parseInt(titleText.split(':')[0]) - 1;
-            if (wordLists[idx] && wordLists[idx].content) {
-                combinedText += wordLists[idx].content + '\n';
+            let onclickAttr = card.getAttribute('onclick');
+            let match = onclickAttr.match(/toggleFlashcardCard\((\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                }
             }
         });
 
@@ -2970,16 +3133,18 @@
         let grid = document.getElementById('cardExamGrid');
         if (!grid) return;
         grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
         let savedSelected = JSON.parse(localStorage.getItem('dictation_card_exam_selected')) || [0];
         
-        wordLists.forEach((list, index) => {
+        activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
-            let isSelected = savedSelected.includes(index) ? 'selected' : '';
+            let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
             let cardHtml = `
-                <div class="select-card ${isSelected}" onclick="toggleCardExamCard(${index}, this)">
+                <div class="select-card ${isSelected}" onclick="toggleCardExamCard(${list.originalIdx}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/300 字)</div>
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -2989,7 +3154,7 @@
         loadCardExamSelectedContent();
     }
 
-    function toggleCardExamCard(index, cardEl) {
+    function toggleCardExamCard(originalIdx, cardEl) {
         cardEl.classList.toggle('selected');
         saveCardExamSelectionState();
         loadCardExamSelectedContent();
@@ -2997,8 +3162,12 @@
 
     function saveCardExamSelectionState() {
         let selectedIndices = [];
-        document.querySelectorAll('#cardExamGrid .select-card').forEach((card, idx) => {
-            if (card.classList.contains('selected')) selectedIndices.push(idx);
+        document.querySelectorAll('#cardExamGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('onclick');
+                let match = onclickAttr.match(/toggleCardExamCard\((\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
         });
         localStorage.setItem('dictation_card_exam_selected', JSON.stringify(selectedIndices));
     }
@@ -3008,12 +3177,15 @@
         let selectedCards = document.querySelectorAll('#cardExamGrid .select-card.selected');
         let selectedTitles = [];
         
-        selectedCards.forEach(card => {
-            let titleText = card.querySelector('.select-card-title').innerText;
-            let idx = parseInt(titleText.split(':')[0]) - 1;
-            if (wordLists[idx] && wordLists[idx].content) {
-                combinedText += wordLists[idx].content + '\n';
-                selectedTitles.push(`${idx + 1}: ${wordLists[idx].title}`);
+        selectedCards.forEach((card, displayIdx) => {
+            let onclickAttr = card.getAttribute('onclick');
+            let match = onclickAttr.match(/toggleCardExamCard\((\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                    selectedTitles.push(`${displayIdx + 1}: ${wordLists[idx].title}`);
+                }
             }
         });
         currentCardExamRanges = selectedTitles.join(', ');
@@ -3296,16 +3468,18 @@
         let grid = document.getElementById('examCardGrid');
         if (!grid) return;
         grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
         let savedExamSelected = JSON.parse(localStorage.getItem('dictation_exam_selected')) || [0];
 
-        wordLists.forEach((list, index) => {
+        activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
-            let isSelected = savedExamSelected.includes(index) ? 'selected' : '';
+            let isSelected = savedExamSelected.includes(list.originalIdx) ? 'selected' : '';
             let cardHtml = `
-                <div class="select-card ${isSelected}" onclick="toggleExamCard(${index}, this)">
+                <div class="select-card ${isSelected}" onclick="toggleExamCard(${list.originalIdx}, this)">
                     <div class="select-card-info">
-                        <div class="select-card-title">${index + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/300 字)</div>
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -3315,7 +3489,7 @@
         loadExamSelectedContent();
     }
 
-    function toggleExamCard(index, cardEl) {
+    function toggleExamCard(originalIdx, cardEl) {
         cardEl.classList.toggle('selected');
         saveExamSelectionState();
         loadExamSelectedContent();
@@ -3323,8 +3497,12 @@
 
     function saveExamSelectionState() {
         let selectedIndices = [];
-        document.querySelectorAll('#examCardGrid .select-card').forEach((card, idx) => {
-            if (card.classList.contains('selected')) selectedIndices.push(idx);
+        document.querySelectorAll('#examCardGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('onclick');
+                let match = onclickAttr.match(/toggleExamCard\((\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
         });
         localStorage.setItem('dictation_exam_selected', JSON.stringify(selectedIndices));
     }
@@ -3334,10 +3512,13 @@
         let selectedCards = document.querySelectorAll('#examCardGrid .select-card.selected');
         
         selectedCards.forEach(card => {
-            let titleText = card.querySelector('.select-card-title').innerText;
-            let idx = parseInt(titleText.split(':')[0]) - 1;
-            if (wordLists[idx] && wordLists[idx].content) {
-                combinedText += wordLists[idx].content + '\n';
+            let onclickAttr = card.getAttribute('onclick');
+            let match = onclickAttr.match(/toggleExamCard\((\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                }
             }
         });
 
@@ -3365,68 +3546,6 @@
         else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
         textarea.value = words.map(w => w.rawLine).join('\n');
         setTimeout(() => document.getElementById('examWordSortSelector').selectedIndex = 0, 200);
-    }
-
-    function initEditorSelector() {
-        let sel = document.getElementById('editorListSelector');
-        if (!sel) return;
-        sel.innerHTML = '';
-        wordLists.forEach((l, idx) => {
-            let opt = document.createElement('option');
-            opt.value = idx;
-            opt.text = `${idx + 1}: ${l.title} (${getListWordCount(l.content)}/300字)`;
-            sel.appendChild(opt);
-        });
-        sel.value = lastSelectedList;
-        document.getElementById('editorWordList').value = wordLists[lastSelectedList].content || '';
-        updateEditorStats();
-        handleEditorSearch();
-    }
-
-    function switchEditorList() {
-        let idx = parseInt(document.getElementById('editorListSelector').value);
-        lastSelectedList = idx;
-        document.getElementById('editorWordList').value = wordLists[idx].content || '';
-        updateEditorStats();
-        handleEditorSearch();
-    }
-
-    function handleEditorTextareaInput() {
-        let idx = parseInt(document.getElementById('editorListSelector').value);
-        let text = document.getElementById('editorWordList').value;
-        let lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        
-        if (lines.length > 300) {
-            lines = lines.slice(0, 300);
-            text = lines.join('\n');
-            document.getElementById('editorWordList').value = text;
-            alert('⚠️ 每組題庫最多僅能容納 300 個單字！');
-        }
-
-        wordLists[idx].content = text;
-        updateEditorStats();
-    }
-
-    function updateEditorStats() {
-        let text = document.getElementById('editorWordList').value;
-        let words = parseWordsRaw(text);
-        let starCount = words.filter(w => w.starred).length;
-        document.getElementById('editorStatsText').innerText = `📊 統計：總單字數 ${words.length} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
-    }
-
-    function editListTitle() {
-        let idx = parseInt(document.getElementById('editorListSelector').value);
-        let newTitle = prompt(`請輸入「題庫 ${idx + 1}」的新標題：`, wordLists[idx].title);
-        if (newTitle && newTitle.trim()) {
-            wordLists[idx].title = newTitle.trim();
-            initEditorSelector();
-            alert('✅ 題庫標題已暫存修改！');
-        }
-    }
-
-    function getListWordCount(content) {
-        if (!content) return 0;
-        return content.split('\n').map(l => l.trim()).filter(l => l.length > 0).length;
     }
 
     function togglePreview() {
@@ -3526,9 +3645,12 @@
         }
     }
 
+    // 點擊最下方「儲存」按鈕時執行的動作（對應需求2：按下最下面的儲存才會存檔至雲端）
     function saveAndStayInEditor() {
         handleEditorTextareaInput();
-        let idx = parseInt(document.getElementById('editorListSelector').value);
+        let idx = lastSelectedList;
+        if (!wordLists[idx]) return;
+
         let content = wordLists[idx].content || '';
         let lines = content.split('\n');
 
@@ -3560,18 +3682,18 @@
 
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
         triggerAutoSaveToCloud();
-        initEditorSelector();
         initPracticeCardGrid();
         initExamCardGrid();
         initFlashcardGrid();
         initCardExamGrid();
 
         if (duplicates.length > 0) {
-            let msg = `發現重複單字，已刪除重複的部分如下：\n` + duplicates.map((d, i) => `${i + 1}. ${d}`).join('\n');
+            let msg = `發現重複單字，已自動過濾重複部分：\n` + duplicates.map((d, i) => `${i + 1}. ${d}`).join('\n');
             alert(msg);
         } else {
-            alert('✅ 題庫儲存成功！（無重複單字）');
+            alert('✅ 題庫儲存成功並已同步至雲端！');
         }
+        backToListFromDetail();
     }
 
     function parseWordsRaw(text) {
@@ -3605,8 +3727,8 @@
         let words = parseWordsRaw(text);
         
         if (words.length === 0) {
-            let confirmPlay = confirm("確認是否選擇到單字為0的英文清單？");
-            if (!confirmPlay) return;
+            alert("⚠️ 目前勾選的範圍單字數為 0，無法開始聽力練習！請至題庫新增單字。");
+            return;
         }
         startDictation();
     }
@@ -3769,12 +3891,15 @@
     function getSelectedExamWords() {
         let combinedText = '';
         let selectedTitles = [];
-        document.querySelectorAll('#examCardGrid .select-card.selected').forEach(card => {
-            let titleText = card.querySelector('.select-card-title').innerText;
-            let idx = parseInt(titleText.split(':')[0]) - 1;
-            if (wordLists[idx] && wordLists[idx].content) {
-                combinedText += wordLists[idx].content + '\n';
-                selectedTitles.push(`${idx + 1}: ${wordLists[idx].title}`);
+        document.querySelectorAll('#examCardGrid .select-card.selected').forEach((card, displayIdx) => {
+            let onclickAttr = card.getAttribute('onclick');
+            let match = onclickAttr.match(/toggleExamCard\((\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                    selectedTitles.push(`${displayIdx + 1}: ${wordLists[idx].title}`);
+                }
             }
         });
         currentExamRanges = selectedTitles.join(', ');
@@ -3990,8 +4115,40 @@
     function closeSystemSettingsModal() { document.getElementById('systemSettingsModal').style.display = 'none'; }
     function openAboutModal() { document.getElementById('aboutModal').style.display = 'block'; }
     function closeAboutModal() { document.getElementById('aboutModal').style.display = 'none'; }
-    function openExportModal() { document.getElementById('exportModal').style.display = 'block'; }
+    function openExportModal() { 
+        let group = document.getElementById('exportListsCheckboxGroup');
+        if (group) {
+            group.innerHTML = '';
+            wordLists.forEach((l, idx) => {
+                group.innerHTML += `<label class="checkbox-item-row"><input type="checkbox" value="${idx}" checked> ${idx + 1}: ${escapeHTML(l.title)}</label>`;
+            });
+        }
+        document.getElementById('exportModal').style.display = 'block'; 
+    }
     function closeExportModal() { document.getElementById('exportModal').style.display = 'none'; }
+    function toggleAllExportCheckboxes(check) {
+        document.querySelectorAll('#exportListsCheckboxGroup input[type="checkbox"]').forEach(c => c.checked = check);
+    }
+    function confirmExportTxtFiles() {
+        let chks = document.querySelectorAll('#exportListsCheckboxGroup input[type="checkbox"]:checked');
+        if (chks.length === 0) { alert('⚠️ 請至少勾選一個題庫！'); return; }
+        chks.forEach(chk => {
+            let idx = parseInt(chk.value);
+            let l = wordLists[idx];
+            if (l && l.content) {
+                let blob = new Blob([l.content], { type: 'text/plain;charset=utf-8' });
+                let url = URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                a.href = url;
+                a.download = `${l.title || ('Database_' + (idx + 1))}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+        closeExportModal();
+    }
     
     async function openHistoryModal() { 
         if (accessToken && isCloudSyncActive) {
@@ -4039,7 +4196,7 @@
     function openHistoryModalContent() {
         let targetSelectOptions = '';
         wordLists.forEach((l, idx) => {
-            targetSelectOptions += `<option value="${idx}">${idx + 1}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/300)</option>`;
+            targetSelectOptions += `<option value="${idx}">${idx + 1}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/100)</option>`;
         });
         let targetSelLis = document.getElementById('targetListSelectorListening');
         let targetSelCard = document.getElementById('targetListSelectorCard');
