@@ -879,6 +879,9 @@
         .list-card-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
         .list-card-title { font-size: 17px; font-weight: 700; color: var(--text-main); }
         .list-card-count { font-size: 13px; color: var(--text-muted); }
+        .lang-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+        .lang-tag-en { background: #DBEAFE; color: #1D4ED8; }
+        .lang-tag-ko { background: #FCE7F3; color: #BE185D; }
         
         .list-card-menu-btn {
             background: transparent; border: none; cursor: pointer; padding: 8px; font-size: 18px; color: var(--text-muted);
@@ -1582,15 +1585,15 @@
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
                         </button>
-                        <label style="margin:0;">英文題庫預覽：</label>
+                        <label style="margin:0;" data-t-en="英文題庫預覽：" data-t-ko="韓文題庫預覽：">英文題庫預覽：</label>
                     </div>
 
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 14px;">☰</span>
                         <select id="flashcardSortSelector" style="width: auto; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortFlashcardPreview",["$value"]]]'>
                             <option value="" disabled selected>排序方式</option>
-                            <option value="az">A-Z 排序</option>
-                            <option value="za">Z-A 排序</option>
+                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
+                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
                         </select>
                     </div>
                 </div>
@@ -1675,15 +1678,15 @@
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
                         </button>
-                        <label style="margin:0;">英文題庫預覽：</label>
+                        <label style="margin:0;" data-t-en="英文題庫預覽：" data-t-ko="韓文題庫預覽：">英文題庫預覽：</label>
                     </div>
 
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 14px;">☰</span>
                         <select id="cardExamSortSelector" style="width: auto; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortCardExamPreview",["$value"]]]'>
                             <option value="" disabled selected>排序方式</option>
-                            <option value="az">A-Z 排序</option>
-                            <option value="za">Z-A 排序</option>
+                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
+                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
                         </select>
                     </div>
                 </div>
@@ -1779,8 +1782,8 @@
                         <span style="font-size: 14px;" title="排序方式">☰</span>
                         <select id="wordSortSelector" style="width: auto !important; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortWordListContent",["$value"]]]'>
                             <option value="" disabled selected>排序方式</option>
-                            <option value="az">A-Z 排序</option>
-                            <option value="za">Z-A 排序</option>
+                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
+                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
                         </select>
                     </div>
                 </div>
@@ -1840,8 +1843,8 @@
                         <span style="font-size: 14px;" title="排序方式">☰</span>
                         <select id="examWordSortSelector" style="width: auto !important; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortExamWordListContent",["$value"]]]'>
                             <option value="" disabled selected>排序方式</option>
-                            <option value="az">A-Z 排序</option>
-                            <option value="za">Z-A 排序</option>
+                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
+                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
                         </select>
                     </div>
                 </div>
@@ -1864,8 +1867,8 @@
                 <div id="examProgressStatus" style="font-weight: 600; color: var(--primary); margin-bottom: 8px; font-size: 14.3px;">🎧 正在進行考試... 請聆聽並於下方作答</div>
                 <div id="examTimer">作答剩餘時間：<span id="timeLeft">0</span> 秒</div>
                 
-                <label>請輸入聽到的英文：</label>
-                <input type="text" id="examInputEng" placeholder="輸入英文..." autocomplete="off" data-on-keydown='[["handleInputKeyDown",["$event","eng"]]]' disabled>
+                <label data-t-en="請輸入聽到的英文：" data-t-ko="請輸入聽到的韓文：">請輸入聽到的英文：</label>
+                <input type="text" id="examInputEng" placeholder="輸入英文..." data-p-en="輸入英文..." data-p-ko="輸入韓文..." autocomplete="off" data-on-keydown='[["handleInputKeyDown",["$event","eng"]]]' disabled>
                 
                 <label style="margin-top: 10px;">請輸入中文意思：</label>
                 <input type="text" id="examInputChi" placeholder="輸入中文..." autocomplete="off" data-on-keydown='[["handleInputKeyDown",["$event","chi"]]]' disabled>
@@ -1892,6 +1895,8 @@
                 <span id="editorListModeStatusText">💻 未登入</span>
             </div>
 
+            <div id="listQuotaBar" style="text-align:center; font-size:14px; font-weight:600; color:var(--text-muted); margin-bottom:10px;"></div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <label style="margin: 0; font-size: 15px;">選擇題庫本</label>
                 <button class="cloud-btn" data-on-click='[["addNewWordList",[]]]'>新增題庫本</button>
@@ -1913,20 +1918,20 @@
 
             <div class="editor-top-section">
                 <div class="textarea-header" style="margin-bottom: 2px;">
-                    <label style="margin:0;">英文題庫 (每行一組，不熟前面可加 *)：</label>
+                    <label style="margin:0;" data-t-en="英文題庫 (每行一組，不熟前面可加 *)：" data-t-ko="韓文題庫 (每行一組，不熟前面可加 *)：">英文題庫 (每行一組，不熟前面可加 *)：</label>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 14px;">☰</span>
                         <select style="width: auto !important; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortEditorContent",["$value"]]]'>
                             <option value="" disabled selected>排序方式</option>
-                            <option value="az">A-Z 排序</option>
-                            <option value="za">Z-A 排序</option>
+                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
+                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="editor-wrapper" id="editorWrapperBox">
                     <div class="highlight-backdrop" id="editorBackdrop"></div>
-                    <textarea id="editorWordList" data-on-input='[["handleEditorTextareaInput",[]],["handleEditorSearch",[]]]' data-on-scroll='[["syncEditorScroll",[]]]' placeholder="格式範例：stubborn 固執的 形容詞"></textarea>
+                    <textarea id="editorWordList" data-on-input='[["handleEditorTextareaInput",[]],["handleEditorSearch",[]]]' data-on-scroll='[["syncEditorScroll",[]]]' data-on-change='[["enforceCurrentEditorLanguage",[]]]' placeholder="格式範例：stubborn 固執的 形容詞" data-p-en="格式範例：stubborn 固執的 形容詞" data-p-ko="格式範例：고집 固執 名詞"></textarea>
                 </div>
             </div>
 
@@ -2058,14 +2063,14 @@
 
         <div class="config-group" style="margin-top: 12px;">
             <label for="learningLanguage" style="margin-top:0;">🌐 學習語言：</label>
-            <select id="learningLanguage" data-on-change='[["saveSystemSettings",[]]]' style="margin-top: 4px;">
+            <select id="learningLanguage" data-on-change='[["onLearningLanguageChange",[]]]' style="margin-top: 4px;">
                 <option value="en" selected>英文 (English)</option>
                 <option value="ko">韓文 (한국어)</option>
             </select>
         </div>
 
         <div class="config-group">
-            <label style="margin-top:0;">📂 匯出英文題庫 (.txt)：</label>
+            <label style="margin-top:0;" data-t-en="📂 匯出英文題庫 (.txt)：" data-t-ko="📂 匯出韓文題庫 (.txt)：">📂 匯出英文題庫 (.txt)：</label>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
                 <span style="font-size: 13.5px; color: var(--text-muted);">下載獨立 txt 檔備份：</span>
                 <button class="cloud-btn" style="background: var(--primary-gradient);" data-on-click='[["openExportModal",[]]]'>匯出 txt</button>
@@ -2130,7 +2135,7 @@
 <div id="exportModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" data-on-click='[["closeExportModal",[]]]'>&times;</span>
-        <h3 style="margin-top:0; color:var(--primary); font-size:18px; font-weight:700;">📂 匯出英文題庫</h3>
+        <h3 style="margin-top:0; color:var(--primary); font-size:18px; font-weight:700;" data-t-en="📂 匯出英文題庫" data-t-ko="📂 匯出韓文題庫">📂 匯出英文題庫</h3>
         <p style="font-size: 13.5px; color: var(--text-muted);">勾選想要匯出的題庫清單：</p>
         <div style="display: flex; gap: 8px; margin-bottom: 10px;">
             <button class="btn-advanced" style="padding: 6px 12px; font-size: 12.5px;" data-on-click='[["toggleAllExportCheckboxes",[true]]]'>全選</button>
@@ -2326,7 +2331,7 @@
                 <label class="switch"><input type="checkbox" id="enableShuffle" data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label>
             </div>
             <div class="config-row-item">
-                <span>🔠 拼讀字母 (a-p-p-l-e)</span>
+                <span data-t-en="🔠 拼讀字母 (a-p-p-l-e)" data-t-ko="🔠 拼讀音節 (사-과-나-무)">🔠 拼讀字母 (a-p-p-l-e)</span>
                 <label class="switch"><input type="checkbox" id="enableSpell" checked data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label>
             </div>
             <div class="config-row-item">
