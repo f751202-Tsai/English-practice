@@ -53,8 +53,8 @@
     let isPlaying = false, isPaused = false, wordsData = [], currentWordIndex = 0;
     let isExamRunning = false, examTimerId = null, examTimeLeft = 0, examResults = [], currentExamRanges = "";
     
-    let examHistory = (JSON.parse(localStorage.getItem('dictation_exam_history')) || []).slice(0, 10);
-    let cardExamHistory = (JSON.parse(localStorage.getItem('dictation_card_exam_history')) || []).slice(0, 10);
+    let examHistory = (JSON.parse(localStorage.getItem('dictation_exam_history')) || []);
+    let cardExamHistory = (JSON.parse(localStorage.getItem('dictation_card_exam_history')) || []);
     
     let lastSelectedList = parseInt(localStorage.getItem('dictation_last_selected_list')) || 0;
 
@@ -324,6 +324,7 @@
         loadAppSettings();
         loadExamAppSettings();
         loadSystemSettings();
+        applyLanguageUI();
         loadFlashcardAppSettings();
         loadCardExamAppSettings();
         initPracticeCardGrid();
@@ -562,6 +563,147 @@
         return langSelect ? langSelect.value : 'en';
     }
 
+    // ═══════════ 多語言：題庫標籤 / 過濾 / 驗證 ═══════════
+    const LANG_NAME = { en: '英文', ko: '韓文' };
+    const OTHER_LANG = { en: 'ko', ko: 'en' };
+    const RE_LATIN  = /[A-Za-z]/;
+    const RE_HANGUL = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
+
+    function getLangName(lang) { return LANG_NAME[lang] || LANG_NAME.en; }
+
+    // 題庫的語言標籤；舊題庫沒有 lang 欄位時視為英文
+    function getListLang(list) { return (list && list.lang === 'ko') ? 'ko' : 'en'; }
+    function isListInCurrentLang(list) { return getListLang(list) === getLearningLanguage(); }
+
+    // 此題庫在「同語言題庫」中的順位（顯示用編號 1,2,3…）
+    function getLangSeq(idx) {
+        let lang = getListLang(wordLists[idx]), seq = 0;
+        for (let i = 0; i <= idx; i++) if (getListLang(wordLists[i]) === lang) seq++;
+        return seq;
+    }
+
+    function countListsByLang() {
+        let c = { en: 0, ko: 0 };
+        wordLists.forEach(l => { c[getListLang(l)]++; });
+        return c;
+    }
+
+    // 題庫頁上方：英文 4 ｜ 韓文 6 ｜ 剩餘 0
+    function updateListQuotaBar() {
+        let bar = document.getElementById('listQuotaBar');
+        if (!bar) return;
+        let c = countListsByLang(), cur = getLearningLanguage();
+        let remain = Math.max(0, MAX_LISTS_DEFAULT - wordLists.length);
+        let part = (lang) => `<span style="${cur === lang ? 'color:var(--primary); font-weight:800;' : ''}">${getLangName(lang)} ${c[lang]}</span>`;
+        bar.innerHTML = `${part('en')} ｜ ${part('ko')} ｜ <span>剩餘 ${remain}</span>`;
+    }
+
+    // 單字行的「外語部分」：第一個中文字之前的內容（與 parseWordsRaw 的切法一致）
+    function getForeignPart(line) {
+        let t = line.trim();
+        if (t.startsWith('*')) t = t.substring(1).trim();
+        let i = t.search(/[\u4e00-\u9fa5]/);
+        return (i !== -1 ? t.substring(0, i) : t).trim();
+    }
+
+    // 依題庫語言把內容分成「保留」與「語言不符、要刪除」的行
+    function splitLinesByLanguage(content, lang) {
+        let kept = [], removed = [];
+        (content || '').split('\n').forEach(line => {
+            if (!line.trim()) { kept.push(line); return; }
+            let foreign = getForeignPart(line);
+            let wrong = (lang === 'ko') ? RE_LATIN.test(foreign) : RE_HANGUL.test(foreign);
+            (wrong ? removed : kept).push(line);
+        });
+        return { kept, removed };
+    }
+
+    function formatRemovedLines(removed) {
+        let show = removed.slice(0, 8).map(l => '• ' + l.trim()).join('\n');
+        return removed.length > 8 ? show + `\n…等共 ${removed.length} 行` : show;
+    }
+
+    // 檢查並移除與題庫語言不符的單字（有刪除時彈出警告）；回傳刪除行數
+    function enforceListLanguage(idx) {
+        let list = wordLists[idx];
+        if (!list || !list.content) return 0;
+        let lang = getListLang(list);
+        let r = splitLinesByLanguage(list.content, lang);
+        if (r.removed.length === 0) return 0;
+        list.content = r.kept.join('\n');
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        triggerAutoSaveToCloud();
+        let ta = document.getElementById('editorWordList');
+        if (ta && lastSelectedList === idx && document.getElementById('editorDetailView').classList.contains('active')) {
+            ta.value = list.content;
+            handleEditorSearch();
+        }
+        alert(`⚠️ 「${list.title}」是${getLangName(lang)}題庫，偵測到 ${r.removed.length} 行含有${getLangName(OTHER_LANG[lang])}的單字，已自動刪除：\n\n${formatRemovedLines(r.removed)}`);
+        return r.removed.length;
+    }
+
+    // 編輯框離開焦點時檢查（打字中不干擾）
+    function enforceCurrentEditorLanguage() {
+        if (wordLists[lastSelectedList]) enforceListLanguage(lastSelectedList);
+    }
+
+    // 題庫選單：更換語言（內容中語言不符的行會被刪除，先確認）
+    function changeListLanguageFromMenu(idx) {
+        let list = wordLists[idx];
+        if (!list) return;
+        let from = getListLang(list), to = OTHER_LANG[from];
+        let r = splitLinesByLanguage(list.content, to);
+        let msg = `要把「${list.title}」從${getLangName(from)}題庫改成${getLangName(to)}題庫嗎？`;
+        if (r.removed.length > 0) msg += `\n\n⚠️ 其中 ${r.removed.length} 行含有${getLangName(from)}單字，更換後會被刪除：\n${formatRemovedLines(r.removed)}`;
+        if (!confirm(msg)) return;
+        list.lang = to;
+        list.content = r.kept.join('\n');
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        triggerAutoSaveToCloud();
+        refreshAllListViews();
+        alert(`✅ 已改為${getLangName(to)}題庫。切換到「${getLangName(to)}」學習語言即可看到它。`);
+    }
+
+    // 歷史紀錄：舊紀錄沒有 lang 欄位時視為英文
+    function filterHistoryByLang(arr) {
+        let cur = getLearningLanguage();
+        return (arr || []).filter(h => (h && h.lang === 'ko' ? 'ko' : 'en') === cur);
+    }
+    // 每種語言各保留最近 10 筆
+    function trimHistoryPerLang(arr) {
+        let cnt = { en: 0, ko: 0 };
+        return (arr || []).filter(h => {
+            let l = (h && h.lang === 'ko') ? 'ko' : 'en';
+            return ++cnt[l] <= 10;
+        });
+    }
+
+    function refreshAllListViews() {
+        initPracticeCardGrid();
+        initExamCardGrid();
+        initFlashcardGrid();
+        initCardExamGrid();
+        initEditorListCards();
+    }
+
+    // 依學習語言切換介面文字（data-t-en / data-t-ko、data-p-en / data-p-ko）
+    function applyLanguageUI() {
+        let lang = getLearningLanguage();
+        document.querySelectorAll('[data-t-en]').forEach(el => { el.textContent = el.getAttribute('data-t-' + lang); });
+        document.querySelectorAll('[data-p-en]').forEach(el => { el.placeholder = el.getAttribute('data-p-' + lang); });
+        document.documentElement.setAttribute('data-learning-lang', lang);
+    }
+
+    // 設定中切換學習語言：只換「顯示哪個語言」，不動每日任務與雞塊
+    function onLearningLanguageChange() {
+        saveSystemSettings();
+        applyLanguageUI();
+        refreshAllListViews();
+        updateListQuotaBar();
+        let hm = document.getElementById('historyModal');
+        if (hm && hm.style.display === 'block') openHistoryModalContent();
+    }
+
     function getSelectedVoiceForLearning() {
         let lang = getLearningLanguage();
         let langCode = (lang === 'ko') ? 'ko-KR' : 'en-US';
@@ -613,11 +755,11 @@
                         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
                     }
                     if (cloudData.examHistory) {
-                        examHistory = cloudData.examHistory.slice(0, 10);
+                        examHistory = trimHistoryPerLang(cloudData.examHistory);
                         localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
                     }
                     if (cloudData.cardExamHistory) {
-                        cardExamHistory = cloudData.cardExamHistory.slice(0, 10);
+                        cardExamHistory = trimHistoryPerLang(cloudData.cardExamHistory);
                         localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
                     }
                     if (cloudData.chickenData) {
@@ -676,8 +818,8 @@
             let cloudData = { 
                 activeDeviceId: myDeviceId, 
                 wordLists, 
-                examHistory: examHistory.slice(0, 10), 
-                cardExamHistory: cardExamHistory.slice(0, 10), 
+                examHistory: trimHistoryPerLang(examHistory), 
+                cardExamHistory: trimHistoryPerLang(cardExamHistory), 
                 chickenData,
                 appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}') 
             };
@@ -766,19 +908,25 @@
         let container = document.getElementById('editorListCardContainer');
         if (!container) return;
         container.innerHTML = '';
+        updateListQuotaBar();
 
+        let cur = getLearningLanguage(), shown = 0;
         wordLists.forEach((l, idx) => {
+            if (getListLang(l) !== cur) return;
+            shown++;
             let count = getListWordCount(l.content);
+            let lang = getListLang(l);
             let cardHtml = `
                 <div class="list-card-item" data-on-click='[["openEditorDetail",[${idx}]]]'>
                     <div class="list-card-info">
-                        <div class="list-card-title">${idx + 1}: ${escapeHTML(l.title)}</div>
+                        <div class="list-card-title">${shown}: ${escapeHTML(l.title)} <span class="lang-tag lang-tag-${lang}">${getLangName(lang)}</span></div>
                         <div class="list-card-count">(${count}/100 字)</div>
                     </div>
                     <div style="position: relative;">
                         <button class="list-card-menu-btn" data-on-click='[["$stop",[]],["toggleDropdownMenu",[${idx},"$event"]]]'>⋮</button>
                         <div class="dropdown-menu" id="dropdownMenu_${idx}">
                             <button class="dropdown-item" data-on-click='[["$stop",[]],["renameListTitleFromMenu",[${idx}]]]'>修改</button>
+                            <button class="dropdown-item" data-on-click='[["$stop",[]],["changeListLanguageFromMenu",[${idx}]]]'>更換語言</button>
                             <button class="dropdown-item" data-on-click='[["$stop",[]],["clearListContentFromMenu",[${idx}]]]'>清空</button>
                             <button class="dropdown-item danger" data-on-click='[["$stop",[]],["deleteListFromMenu",[${idx}]]]'>刪除</button>
                         </div>
@@ -787,6 +935,9 @@
             `;
             container.insertAdjacentHTML('beforeend', cardHtml);
         });
+        if (shown === 0) {
+            container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:24px 8px; font-size:14px;">目前還沒有${getLangName(cur)}題庫<br>按右上角「新增題庫本」開始建立</div>`;
+        }
     }
 
     function toggleDropdownMenu(idx, event) {
@@ -819,7 +970,7 @@
         let list = wordLists[idx];
         if (!list) return;
 
-        document.getElementById('editorDetailTitleIndicator').innerText = `📁 ${idx + 1}: ${list.title} 編輯`;
+        document.getElementById('editorDetailTitleIndicator').innerText = `📁 ${getLangSeq(idx)}: ${list.title} 編輯（${getLangName(getListLang(list))}）`;
         document.getElementById('editorWordList').value = list.content || '';
         document.getElementById('wordSearchInput').value = '';
         document.getElementById('searchNotFoundTip').style.display = 'none';
@@ -829,6 +980,7 @@
     }
 
     function backToListFromDetail() {
+        enforceCurrentEditorLanguage();
         initEditorListCards();
         switchView('editorListView');
     }
@@ -862,26 +1014,29 @@
             wordLists.splice(idx, 1);
             triggerAutoSaveToCloud();
             initEditorListCards();
+            refreshAllListViews();
             alert("🗑️ 題庫已刪除並自動儲存！");
         }
     }
 
     function addNewWordList() {
+        let curLang = getLearningLanguage();
         if (wordLists.length >= MAX_LISTS_DEFAULT) {
-            alert(`⚠️ 目前題庫數量已達上限 ${MAX_LISTS_DEFAULT} 組！`);
+            let c = countListsByLang();
+            alert(`⚠️ 目前題庫數量已達上限 ${MAX_LISTS_DEFAULT} 組！（英文 ${c.en} ｜ 韓文 ${c.ko}）\n可刪除不用的題庫來釋出名額。`);
             return;
         }
-        let title = prompt("請輸入新題庫本標題：", `unit ${wordLists.length + 1}`);
+        let title = prompt(`請輸入新${getLangName(curLang)}題庫本標題：`, `unit ${countListsByLang()[curLang] + 1}`);
         if (!title || !title.trim()) return;
 
-        wordLists.push({ title: title.trim(), content: "", createdAt: Date.now() });
+        wordLists.push({ title: title.trim(), content: "", createdAt: Date.now(), lang: curLang });
         triggerAutoSaveToCloud();
         initEditorListCards();
         initPracticeCardGrid();
         initExamCardGrid();
         initFlashcardGrid();
         initCardExamGrid();
-        alert("✅ 新增成功！");
+        alert(`✅ 已新增${getLangName(curLang)}題庫！`);
     }
 
     function handleEditorTextareaInput() {
@@ -902,7 +1057,7 @@
         if (!grid) return;
         grid.innerHTML = '';
         
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
         let savedPracticeSelected = JSON.parse(localStorage.getItem('dictation_practice_selected')) || [0];
         
         activeLists.forEach((list, displayIdx) => {
@@ -968,7 +1123,7 @@
         if (!grid) return;
         grid.innerHTML = '';
         
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
         let savedSelected = JSON.parse(localStorage.getItem('dictation_flashcard_selected')) || [0];
         
         activeLists.forEach((list, displayIdx) => {
@@ -1039,8 +1194,8 @@
         if (!sortType) return;
         let textarea = document.getElementById('flashcardPreviewTextarea');
         let words = parseWordsRaw(textarea.value);
-        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
-        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
+        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
         textarea.value = words.map(w => w.rawLine).join('\n');
         setTimeout(() => document.getElementById('flashcardSortSelector').selectedIndex = 0, 200);
     }
@@ -1181,7 +1336,7 @@
         if (!grid) return;
         grid.innerHTML = '';
         
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
         let savedSelected = JSON.parse(localStorage.getItem('dictation_card_exam_selected')) || [0];
         
         activeLists.forEach((list, displayIdx) => {
@@ -1255,8 +1410,8 @@
         if (!sortType) return;
         let textarea = document.getElementById('cardExamPreviewTextarea');
         let words = parseWordsRaw(textarea.value);
-        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
-        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
+        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
         textarea.value = words.map(w => w.rawLine).join('\n');
         setTimeout(() => document.getElementById('cardExamSortSelector').selectedIndex = 0, 200);
     }
@@ -1437,12 +1592,9 @@
         // 觸發字卡測驗雞塊任務檢查
         triggerTaskCheck('card_exam_done', { total, score });
 
-        let newRecord = { date: new Date().toLocaleString(), range: currentCardExamRanges || '預設範圍', total, score, results: cardExamResults };
+        let newRecord = { date: new Date().toLocaleString(), range: currentCardExamRanges || '預設範圍', total, score, results: cardExamResults, lang: getLearningLanguage() };
         cardExamHistory.unshift(newRecord);
-        
-        if (cardExamHistory.length > 10) {
-            cardExamHistory = cardExamHistory.slice(0, 10);
-        }
+        cardExamHistory = trimHistoryPerLang(cardExamHistory);
 
         localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
         triggerAutoSaveToCloud();
@@ -1521,7 +1673,7 @@
         if (!grid) return;
         grid.innerHTML = '';
         
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
         let savedExamSelected = JSON.parse(localStorage.getItem('dictation_exam_selected')) || [0];
 
         activeLists.forEach((list, displayIdx) => {
@@ -1594,8 +1746,8 @@
         if (!sortType) return;
         let textarea = document.getElementById('examWordList');
         let words = parseWordsRaw(textarea.value);
-        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
-        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
+        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
         textarea.value = words.map(w => w.rawLine).join('\n');
         setTimeout(() => document.getElementById('examWordSortSelector').selectedIndex = 0, 200);
     }
@@ -1612,8 +1764,8 @@
         if (!sortType) return;
         let textarea = document.getElementById('wordList');
         let words = parseWordsRaw(textarea.value);
-        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
-        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
+        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
         textarea.value = words.map(w => w.rawLine).join('\n');
         setTimeout(() => document.getElementById('wordSortSelector').selectedIndex = 0, 200);
     }
@@ -1622,8 +1774,8 @@
         if (!sortType) return;
         let textarea = document.getElementById('editorWordList');
         let words = parseWordsRaw(textarea.value);
-        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
-        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
+        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
         textarea.value = words.map(w => w.rawLine).join('\n');
         handleEditorTextareaInput();
         handleEditorSearch();
@@ -1856,7 +2008,9 @@
         }
 
         if (document.getElementById('enableSpell').checked && item.english) {
-            let letters = item.english.replace(/[^a-zA-Z]/g, '').toLowerCase().split('').join(' - ');
+            let letters = (getLearningLanguage() === 'ko')
+                ? Array.from(item.english.replace(/\s+/g, '')).join(' - ')
+                : item.english.replace(/[^a-zA-Z]/g, '').toLowerCase().split('').join(' - ');
             if (letters) queue.push({ text: letters, isEng: true });
         }
         if (document.getElementById('enableChinese').checked && item.chinese) {
@@ -2122,12 +2276,9 @@
         // 觸發聽力測驗雞塊任務檢查
         triggerTaskCheck('listening_exam_done', { total, score });
 
-        let newRecord = { date: new Date().toLocaleString(), range: currentExamRanges, total, score, results: examResults };
+        let newRecord = { date: new Date().toLocaleString(), range: currentExamRanges, total, score, results: examResults, lang: getLearningLanguage() };
         examHistory.unshift(newRecord);
-        
-        if (examHistory.length > 10) {
-            examHistory = examHistory.slice(0, 10);
-        }
+        examHistory = trimHistoryPerLang(examHistory);
 
         localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
         triggerAutoSaveToCloud();
@@ -2177,7 +2328,8 @@
         if (group) {
             group.innerHTML = '';
             wordLists.forEach((l, idx) => {
-                group.innerHTML += `<label class="checkbox-item-row"><input type="checkbox" value="${idx}" checked> ${idx + 1}: ${escapeHTML(l.title)}</label>`;
+                if (!isListInCurrentLang(l)) return;
+                group.innerHTML += `<label class="checkbox-item-row"><input type="checkbox" value="${idx}" checked> ${getLangSeq(idx)}: ${escapeHTML(l.title)}</label>`;
             });
         }
         document.getElementById('exportModal').style.display = 'block'; 
@@ -2214,8 +2366,8 @@
         openHistoryModalContent(); 
         document.getElementById('historyModal').style.display = 'block'; 
         setTimeout(() => {
-            renderScoreChart('listeningScoreCanvas', examHistory);
-            renderScoreChart('cardScoreCanvas', cardExamHistory);
+            renderScoreChart('listeningScoreCanvas', filterHistoryByLang(examHistory));
+            renderScoreChart('cardScoreCanvas', filterHistoryByLang(cardExamHistory));
         }, 80);
     }
     function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
@@ -2245,15 +2397,18 @@
         }
 
         setTimeout(() => {
-            if (tabName === 'listening') renderScoreChart('listeningScoreCanvas', examHistory);
-            else renderScoreChart('cardScoreCanvas', cardExamHistory);
+            if (tabName === 'listening') renderScoreChart('listeningScoreCanvas', filterHistoryByLang(examHistory));
+            else renderScoreChart('cardScoreCanvas', filterHistoryByLang(cardExamHistory));
         }, 50);
     }
 
     function openHistoryModalContent() {
+        const examHistoryView = filterHistoryByLang(examHistory);
+        const cardExamHistoryView = filterHistoryByLang(cardExamHistory);
         let targetSelectOptions = '';
         wordLists.forEach((l, idx) => {
-            targetSelectOptions += `<option value="${idx}">${idx + 1}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/100)</option>`;
+            if (!isListInCurrentLang(l)) return;
+            targetSelectOptions += `<option value="${idx}">${getLangSeq(idx)}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/100)</option>`;
         });
         let targetSelLis = document.getElementById('targetListSelectorListening');
         let targetSelCard = document.getElementById('targetListSelectorCard');
@@ -2261,10 +2416,10 @@
         if (targetSelCard) targetSelCard.innerHTML = targetSelectOptions;
 
         let listeningHistoryHtml = '';
-        if (examHistory.length === 0) {
-            listeningHistoryHtml = `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 13px;">尚無聽力測驗紀錄</div>`;
+        if (examHistoryView.length === 0) {
+            listeningHistoryHtml = `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 13px;">尚無${getLangName(getLearningLanguage())}聽力測驗紀錄</div>`;
         } else {
-            examHistory.forEach((h, hIdx) => {
+            examHistoryView.forEach((h, hIdx) => {
                 let wrongCount = h.results ? h.results.filter(r => !r.isCorrect).length : 0;
                 listeningHistoryHtml += `
                     <div class="history-card">
@@ -2296,10 +2451,10 @@
         if (examHistoryListEl) examHistoryListEl.innerHTML = listeningHistoryHtml;
 
         let cardHistoryHtml = '';
-        if (cardExamHistory.length === 0) {
-            cardHistoryHtml = `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 13px;">尚無字卡測驗紀錄</div>`;
+        if (cardExamHistoryView.length === 0) {
+            cardHistoryHtml = `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 13px;">尚無${getLangName(getLearningLanguage())}字卡測驗紀錄</div>`;
         } else {
-            cardExamHistory.forEach((h, hIdx) => {
+            cardExamHistoryView.forEach((h, hIdx) => {
                 let wrongCount = h.results ? h.results.filter(r => !r.isCorrect).length : 0;
                 cardHistoryHtml += `
                     <div class="history-card">
@@ -2328,7 +2483,7 @@
         if (cardExamHistoryListEl) cardExamHistoryListEl.innerHTML = cardHistoryHtml;
 
         let listeningWrongMap = {};
-        examHistory.forEach(h => {
+        examHistoryView.forEach(h => {
             if (h.results) {
                 h.results.forEach(r => {
                     if (!r.isCorrect) {
@@ -2357,7 +2512,7 @@
         if (listeningTopWrongWordsEl) listeningTopWrongWordsEl.innerHTML = listeningWrongHtml;
 
         let cardWrongMap = {};
-        cardExamHistory.forEach(h => {
+        cardExamHistoryView.forEach(h => {
             if (h.results) {
                 h.results.forEach(r => {
                     if (!r.isCorrect) {
@@ -2492,6 +2647,10 @@
         let containerId = type === 'listening' ? 'listeningTopWrongWords' : 'cardTopWrongWords';
         
         let targetListIdx = parseInt(document.getElementById(selectorId).value);
+        if (isNaN(targetListIdx) || !wordLists[targetListIdx]) {
+            alert(`⚠️ 目前沒有可儲存的${getLangName(getLearningLanguage())}題庫，請先到「題庫清單」新增。`);
+            return;
+        }
         let checkboxes = document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`);
         
         if (checkboxes.length === 0) {
@@ -2650,6 +2809,9 @@
     // 只有登記在 INLINE_ACTIONS 的函式能被呼叫（白名單）
     // ═════════════════════════════════════════════════════════════
     const INLINE_ACTIONS = {
+        enforceCurrentEditorLanguage,
+        changeListLanguageFromMenu,
+        onLearningLanguageChange,
         addNewWordList,
         backToFlashcardSetup,
         backToHome,
