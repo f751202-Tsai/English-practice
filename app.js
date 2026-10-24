@@ -220,8 +220,8 @@
             { key: 'dailyLogin', title: '1. 每日登入', desc: '' },
             { key: 'listeningPractice', title: '2. 完成一次聽力測驗', desc: '' },
             { key: 'cardPractice', title: '3. 完成一次字卡測驗', desc: '' },
-            { key: 'listeningPerfect', title: '4. 聽力測驗題目 ≥ 10 且 80 分', desc: '' },
-            { key: 'cardPerfect', title: '5. 字卡測驗題目 ≥ 10 且 80 分', desc: '' }
+            { key: 'listeningPerfect', title: '4. 聽力測驗 80 分且題數≥ 10 ', desc: '' },
+            { key: 'cardPerfect', title: '5. 字卡測驗 80 分且題數≥ 10', desc: '' }
         ];
 
         let html = '';
@@ -229,9 +229,9 @@
             let t = chickenData.tasks[def.key];
             let statusHtml = '';
             if (t.claimed) {
-                statusHtml = `<span class="task-status-text completed">✓ 已領取</span>`;
+                statusHtml = `<span class="task-status-text completed">已領取</span>`;
             } else if (t.done) {
-                statusHtml = `<button class="cloud-btn" data-on-click='[["claimChickenReward",["${def.key}"]]]'>領取 (+1)</button>`;
+                statusHtml = `<button class="cloud-btn" data-on-click='[["claimChickenReward",["${def.key}"]]]'>領1個</button>`;
             } else {
                 statusHtml = `<span class="task-status-text">未完成</span>`;
             }
@@ -264,6 +264,37 @@
             saveChickenData();
             updateChickenModalUI();
             triggerAutoSaveToCloud();
+
+            // 🌟 動態 +1 浮動動畫效果（維持右上角定位不變）
+            let chickenCountEl = document.getElementById('chickenCountDisplay');
+            if (chickenCountEl) {
+                let badgeContainer = chickenCountEl.parentElement;
+                if (badgeContainer) {
+                    let floatSpan = document.createElement('span');
+                    floatSpan.innerText = '+1';
+                    floatSpan.style.position = 'absolute';
+                    floatSpan.style.left = '50%';
+                    floatSpan.style.top = '-10px';
+                    floatSpan.style.transform = 'translateX(-50%)';
+                    floatSpan.style.color = '#EF4444'; // 紅色
+                    floatSpan.style.fontWeight = '800';
+                    floatSpan.style.fontSize = '14px';
+                    floatSpan.style.pointerEvents = 'none';
+                    floatSpan.style.transition = 'all 1s ease';
+                    floatSpan.style.opacity = '1';
+                    
+                    badgeContainer.appendChild(floatSpan);
+
+                    setTimeout(() => {
+                        floatSpan.style.transform = 'translateX(-50%) translateY(-25px)';
+                        floatSpan.style.opacity = '0';
+                    }, 50);
+
+                    setTimeout(() => {
+                        floatSpan.remove();
+                    }, 1050);
+                }
+            }
         }
     }
 
