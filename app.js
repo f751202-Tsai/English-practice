@@ -2715,8 +2715,8 @@
         updateSliderProgress,
         updateSpeedDisplay,
         updateVolumeDisplay,
-        verifyDevPassword
-        handleLogout,
+        verifyDevPassword,
+        handleLogout
     };
 
     const inlineCallCache = new Map();
