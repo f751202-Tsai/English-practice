@@ -1,0 +1,2659 @@
+    function escapeHTML(str) {
+        if (!str && str !== 0) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // 使用 Base64 解碼還原 Client ID，避免明文暴露
+    const CLIENT_ID = '976805087499-l4auf66i1qkj91ba335jvgtk3b04a9av.apps.googleusercontent.com';
+    const SCOPES = 'https://www.googleapis.com/auth/drive.appdata'; 
+    const FILENAME = 'english_dictation_lists_v2.json';
+
+    let tokenClient, accessToken = null, isCloudSyncActive = false;
+    let myDeviceId = localStorage.getItem('dictation_device_id');
+    if (!myDeviceId) {
+        myDeviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('dictation_device_id', myDeviceId);
+    }
+
+    let wakeLockSentinel = null;
+
+    async function requestWakeLock() {
+        if ('wakeLock' in navigator) {
+            try {
+                wakeLockSentinel = await navigator.wakeLock.request('screen');
+            } catch (err) {
+                console.log('Wake Lock Error:', err.name, err.message);
+            }
+        }
+    }
+
+    async function releaseWakeLock() {
+        if (wakeLockSentinel !== null) {
+            try {
+                await wakeLockSentinel.release();
+                wakeLockSentinel = null;
+            } catch (err) {
+                console.log('Wake Lock Release Error:', err.name, err.message);
+            }
+        }
+    }
+
+    document.addEventListener('visibilitychange', async () => {
+        if (wakeLockSentinel !== null && document.visibilityState === 'visible') {
+            await requestWakeLock();
+        }
+    });
+
+    let synth = window.speechSynthesis, timeoutId = null, voices = [];
+    let isPlaying = false, isPaused = false, wordsData = [], currentWordIndex = 0;
+    let isExamRunning = false, examTimerId = null, examTimeLeft = 0, examResults = [], currentExamRanges = "";
+    
+    let examHistory = (JSON.parse(localStorage.getItem('dictation_exam_history')) || []).slice(0, 10);
+    let cardExamHistory = (JSON.parse(localStorage.getItem('dictation_card_exam_history')) || []).slice(0, 10);
+    
+    let lastSelectedList = parseInt(localStorage.getItem('dictation_last_selected_list')) || 0;
+
+    const MAX_LISTS_DEFAULT = 10;
+    
+    let wordLists = JSON.parse(localStorage.getItem('dictation_word_lists')) || [];
+    
+    if (wordLists.length === 0) {
+        let nowTs = Date.now();
+        wordLists.push({ title: `unit 1-1`, content: "courage 勇氣\n*foreigner 外國人\n*fantastic 極好的 形容詞", createdAt: nowTs });
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+    }
+
+    // ---------------------------------
+    // 🍗 雞塊獎勵系統邏輯
+    // ---------------------------------
+    let chickenData = JSON.parse(localStorage.getItem('chicky_chicken_data')) || {
+        count: 0,
+        lastDate: "",
+        tasks: {
+            dailyLogin: { done: false, claimed: false },
+            listeningPractice: { done: false, claimed: false },
+            cardPractice: { done: false, claimed: false },
+            listeningPerfect: { done: false, claimed: false },
+            cardPerfect: { done: false, claimed: false }
+        }
+    };
+
+    // 取得「本地時區」的今天日期（YYYY-MM-DD），台灣時間 00:00 即換日
+    function getLocalDateStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function checkDailyReset() {
+        let todayStr = getLocalDateStr();
+        if (chickenData.lastDate !== todayStr) {
+            chickenData.lastDate = todayStr;
+            chickenData.tasks.dailyLogin = { done: true, claimed: false }; // 每日登入自動完成
+            chickenData.tasks.listeningPractice = { done: false, claimed: false };
+            chickenData.tasks.cardPractice = { done: false, claimed: false };
+            chickenData.tasks.listeningPerfect = { done: false, claimed: false };
+            chickenData.tasks.cardPerfect = { done: false, claimed: false };
+            saveChickenData();
+            triggerAutoSaveToCloud(); // 重置後同步到雲端（未登入時只存本機）
+        }
+    }
+
+    function saveChickenData() {
+        localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
+        updateChickenBadgeUI();
+    }
+
+    function updateChickenBadgeUI() {
+        checkDailyReset();
+        let rewardModal = document.getElementById('chickenRewardModal');
+        if (rewardModal && rewardModal.style.display === 'block') updateChickenModalUI();
+        let badge = document.getElementById('chickenRewardBadge');
+        if (!badge) return;
+
+        // 檢查是否有「已達成但未領取」的任務
+        let hasUnclaimed = Object.values(chickenData.tasks).some(t => t.done && !t.claimed);
+        if (hasUnclaimed) {
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function openChickenRewardModal() {
+        checkDailyReset();
+        updateChickenModalUI();
+        document.getElementById('chickenRewardModal').style.display = 'block';
+    }
+
+    function closeChickenRewardModal() {
+        document.getElementById('chickenRewardModal').style.display = 'none';
+    }
+
+    function updateChickenModalUI() {
+        document.getElementById('chickenCountDisplay').innerText = chickenData.count;
+        let container = document.getElementById('rewardTasksContainer');
+        if (!container) return;
+
+        const taskDefs = [
+            { key: 'dailyLogin', title: '1. 每日登入', desc: '' },
+            { key: 'listeningPractice', title: '2. 完成一次聽力測驗', desc: '' },
+            { key: 'cardPractice', title: '3. 完成一次字卡測驗', desc: '' },
+            { key: 'listeningPerfect', title: '4. 聽力測驗題目 ≥ 10 且 80 分', desc: '' },
+            { key: 'cardPerfect', title: '5. 字卡測驗題目 ≥ 10 且 80 分', desc: '' }
+        ];
+
+        let html = '';
+        taskDefs.forEach(def => {
+            let t = chickenData.tasks[def.key];
+            let statusHtml = '';
+            if (t.claimed) {
+                statusHtml = `<span class="task-status-text completed">✓ 已領取</span>`;
+            } else if (t.done) {
+                statusHtml = `<button class="cloud-btn" data-on-click='[["claimChickenReward",["${def.key}"]]]'>領取 (+1)</button>`;
+            } else {
+                statusHtml = `<span class="task-status-text">未完成</span>`;
+            }
+
+            html += `
+                <div class="reward-task-item">
+                    <div class="reward-task-info">
+                        <div class="reward-task-title">${def.title} ${t.done ? '<span style="color:#10B981;">✓</span>' : ''}</div>
+                        <div class="reward-task-desc">${def.desc}</div>
+                    </div>
+                    <div class="reward-action-area">
+                        ${statusHtml}
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function claimChickenReward(taskKey) {
+        let t = chickenData.tasks[taskKey];
+        if (t.done && !t.claimed) {
+            t.claimed = true;
+            chickenData.count += 1;
+            saveChickenData();
+            updateChickenModalUI();
+            triggerAutoSaveToCloud();
+        }
+    }
+
+    // 觸發任務完成檢查 (供外部呼叫)
+    function triggerTaskCheck(taskType, data = {}) {
+        checkDailyReset();
+        let updated = false;
+
+        if (taskType === 'listening_exam_done') {
+            if (!chickenData.tasks.listeningPractice.claimed) {
+                chickenData.tasks.listeningPractice.done = true;
+                updated = true;
+            }
+            if (data.total >= 10 && data.score >= 80) {
+                if (!chickenData.tasks.listeningPerfect.claimed) {
+                    chickenData.tasks.listeningPerfect.done = true;
+                    updated = true;
+                }
+            }
+        } else if (taskType === 'card_exam_done') {
+            if (!chickenData.tasks.cardPractice.claimed) {
+                chickenData.tasks.cardPractice.done = true;
+                updated = true;
+            }
+            if (data.total >= 10 && data.score >= 80) {
+                if (!chickenData.tasks.cardPerfect.claimed) {
+                    chickenData.tasks.cardPerfect.done = true;
+                    updated = true;
+                }
+            }
+        }
+
+        if (updated) {
+            saveChickenData();
+        }
+    }
+
+    // ---------------------------------
+
+    let flashcardActiveList = [];
+    let currentFcIndex = 0;
+
+    let cardExamActiveList = [];
+    let currentCardExamIndex = 0;
+    let cardExamTimerId = null;
+    let cardExamTimeLeft = 0;
+    let cardExamResults = [];
+    let currentCardExamRanges = "";
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let isSwipeAction = false;
+
+    window.onload = function() {
+        checkAndRedirectInAppBrowser();
+        loadVoices();
+        if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+        loadAppSettings();
+        loadExamAppSettings();
+        loadSystemSettings();
+        loadFlashcardAppSettings();
+        loadCardExamAppSettings();
+        initPracticeCardGrid();
+        initExamCardGrid();
+        initFlashcardGrid();
+        initCardExamGrid();
+        initEditorListCards();
+        initExamCheckboxes();
+        initFlashcardTouchListeners();
+        loadCollapseStates();
+
+        // 初始化雞塊系統與每日登入任務
+        checkDailyReset();
+        updateChickenBadgeUI();
+
+        // 切回 app 時檢查是否已跨日
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') updateChickenBadgeUI();
+        });
+        // app 開著不動時，每分鐘檢查一次是否跨日
+        setInterval(updateChickenBadgeUI, 60 * 1000);
+
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.list-card-menu-btn') && !e.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+            }
+        });
+
+        document.querySelectorAll('input[type="range"]').forEach(slider => updateSliderProgress(slider));
+
+        if (typeof google !== 'undefined') {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: async (resp) => {
+                    if (resp.error !== undefined || !resp.access_token) {
+                        accessToken = null; isCloudSyncActive = false;
+                        updateCloudStatusText(`💻 未登入`);
+                        return;
+                    }
+                    accessToken = resp.access_token;
+                    isCloudSyncActive = true;
+                    updateCloudStatusText(`✅ 已連結 Google 雲端`);
+                    let authBtn = document.getElementById('cloudAuthBtn');
+                    authBtn.innerText = '🔒 登出'; authBtn.className = 'cloud-btn logout';
+                    authBtn.setAttribute('data-on-click', '[["handleLogout",[]]]');
+                    loadDataFromGoogleDrive();
+                }
+            });
+        }
+    };
+
+    function loadCollapseStates() {
+        let collapseStates = JSON.parse(localStorage.getItem('dictation_collapse_states')) || {
+            practice: true,
+            flashcard: true,
+            exam: true,
+            cardExam: true,
+            listening_score_chart: false,
+            listening_top_wrong: false,
+            listening_history_list: false,
+            card_score_chart: false,
+            card_top_wrong: false,
+            card_history_list: false
+        };
+
+        applyCollapseState('previewContainer', 'collapseBtn', collapseStates.practice);
+        applyCollapseState('fcPreviewContainer', 'fcCollapseBtn', collapseStates.flashcard);
+        applyCollapseState('examPreviewCollapseContainer', 'examCollapseBtn', collapseStates.exam);
+        applyCollapseState('cardExamPreviewContainer', 'cardExamCollapseBtn', collapseStates.cardExam);
+
+        applySubCardCollapseState('listeningScoreChartContent', 'listeningScoreChartToggleBtn', collapseStates.listening_score_chart);
+        applySubCardCollapseState('listeningTopWrongContent', 'listeningTopWrongToggleBtn', collapseStates.listening_top_wrong);
+        applySubCardCollapseState('listeningHistoryListContent', 'listeningHistoryListToggleBtn', collapseStates.listening_history_list);
+        applySubCardCollapseState('cardScoreChartContent', 'cardScoreChartToggleBtn', collapseStates.card_score_chart);
+        applySubCardCollapseState('cardTopWrongContent', 'cardTopWrongToggleBtn', collapseStates.card_top_wrong);
+        applySubCardCollapseState('cardHistoryListContent', 'cardHistoryListToggleBtn', collapseStates.card_history_list);
+    }
+
+    function applyCollapseState(containerId, btnId, isCollapsed) {
+        const container = document.getElementById(containerId);
+        const btn = document.getElementById(btnId);
+        if (container && btn) {
+            if (isCollapsed) {
+                container.classList.add('collapsed');
+                btn.classList.add('collapsed');
+            } else {
+                container.classList.remove('collapsed');
+                btn.classList.remove('collapsed');
+            }
+        }
+    }
+
+    function applySubCardCollapseState(contentId, btnId, isCollapsed) {
+        const content = document.getElementById(contentId);
+        const btn = document.getElementById(btnId);
+        if (content && btn) {
+            if (isCollapsed) {
+                content.classList.add('collapsed');
+                btn.classList.add('collapsed');
+            } else {
+                content.classList.remove('collapsed');
+                btn.classList.remove('collapsed');
+            }
+        }
+    }
+
+    function saveCollapseState(key, isCollapsed) {
+        let collapseStates = JSON.parse(localStorage.getItem('dictation_collapse_states')) || {
+            practice: true,
+            flashcard: true,
+            exam: true,
+            cardExam: true,
+            listening_score_chart: false,
+            listening_top_wrong: false,
+            listening_history_list: false,
+            card_score_chart: false,
+            card_top_wrong: false,
+            card_history_list: false
+        };
+        collapseStates[key] = isCollapsed;
+        localStorage.setItem('dictation_collapse_states', JSON.stringify(collapseStates));
+    }
+
+    function toggleSubCard(contentId, btnId, stateKey) {
+        const content = document.getElementById(contentId);
+        const btn = document.getElementById(btnId);
+        if (content && btn) {
+            content.classList.toggle('collapsed');
+            btn.classList.toggle('collapsed');
+            let isCollapsed = content.classList.contains('collapsed');
+            saveCollapseState(stateKey, isCollapsed);
+            
+            if (!isCollapsed && (stateKey === 'listening_score_chart' || stateKey === 'card_score_chart')) {
+                setTimeout(() => {
+                    if (stateKey === 'listening_score_chart') renderScoreChart('listeningScoreCanvas', examHistory);
+                    else renderScoreChart('cardScoreCanvas', cardExamHistory);
+                }, 100);
+            }
+        }
+    }
+
+    function toggleAccordion(listId) {
+        const practiceList = document.getElementById('practiceList');
+        const examList = document.getElementById('examList');
+        
+        if (listId === 'practiceList') {
+            const willExpand = !practiceList.classList.contains('expanded');
+            if (willExpand) {
+                practiceList.classList.add('expanded');
+                examList.classList.remove('expanded');
+            } else {
+                practiceList.classList.remove('expanded');
+            }
+        } else if (listId === 'examList') {
+            const willExpand = !examList.classList.contains('expanded');
+            if (willExpand) {
+                examList.classList.add('expanded');
+                practiceList.classList.remove('expanded');
+            } else {
+                examList.classList.remove('expanded');
+            }
+        }
+    }
+
+    function initFlashcardTouchListeners() {
+        const cardEl = document.getElementById('flashcardCardEl');
+        if (!cardEl) return;
+
+        cardEl.addEventListener('touchstart', e => { 
+            touchStartX = e.changedTouches[0].screenX;
+            isSwipeAction = false;
+        }, { passive: true });
+
+        cardEl.addEventListener('touchend', e => { 
+            touchEndX = e.changedTouches[0].screenX;
+            let diffX = touchEndX - touchStartX;
+            
+            if (Math.abs(diffX) > 40) {
+                isSwipeAction = true;
+                if (diffX < -40) nextFlashcard();
+                else if (diffX > 40) prevFlashcard();
+            } else {
+                cardEl.classList.toggle('flipped');
+            }
+        }, false);
+
+        cardEl.addEventListener('click', e => {
+            if (!('ontouchstart' in window)) {
+                cardEl.classList.toggle('flipped');
+            }
+        });
+    }
+
+    function hideInAppBrowserWarning() {
+        document.getElementById('inAppBrowserWarning').style.display = 'none';
+    }
+
+    function checkAndRedirectInAppBrowser() {
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isLine = /Line/i.test(ua);
+        const isInApp = /FBAN|FBAV|Instagram|MicroMessenger/i.test(ua) || isLine;
+
+        if (isInApp) {
+            const currentUrl = window.location.href;
+            if (/Android/i.test(ua)) {
+                const intentUrl = 'intent://' + currentUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+                window.location.href = intentUrl;
+            } else if (/iPhone|iPad|iPod/i.test(ua)) {
+                document.getElementById('inAppBrowserWarning').style.display = 'block';
+            } else {
+                document.getElementById('inAppBrowserWarning').style.display = 'block';
+            }
+        }
+    }
+
+    function updateCloudStatusText(text) {
+        let elHome = document.getElementById('cloudStatusText');
+        if (elHome) elHome.innerText = text;
+        let elEditorList = document.getElementById('editorListModeStatusText');
+        if (elEditorList) elEditorList.innerText = text;
+    }
+
+    function updateSliderProgress(slider) {
+        let min = parseFloat(slider.min) || 0;
+        let max = parseFloat(slider.max) || 100;
+        let val = parseFloat(slider.value);
+        let percentage = ((val - min) / (max - min)) * 100;
+        slider.style.background = `linear-gradient(to right, #818CF8 ${percentage}%, #E2E8F0 ${percentage}%)`;
+    }
+
+    function loadVoices() { voices = synth.getVoices(); }
+
+    function getSelectedVoice(langCode) {
+        if (voices.length === 0) voices = synth.getVoices();
+        let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
+        return standardVoice || null;
+    }
+
+    function handleAuthClick() {
+        if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
+    }
+    function handleLogout() {
+        if (accessToken) {
+            google.accounts.oauth2.revoke(accessToken, () => {
+                accessToken = null; isCloudSyncActive = false;
+                updateCloudStatusText(`💻 未登入`);
+                let authBtn = document.getElementById('cloudAuthBtn');
+                authBtn.innerText = '登入 Google 雲端'; authBtn.className = 'cloud-btn';
+                authBtn.setAttribute('data-on-click', '[["handleAuthClick",[]]]');
+                alert("🔒 已登出 Google 帳號。");
+            });
+        }
+    }
+
+    async function loadDataFromGoogleDrive() {
+        if (!accessToken) return;
+        updateCloudStatusText(`☁️ 雲端資料同步中...`);
+        try {
+            let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
+            let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            let data = await res.json();
+            if (data.files && data.files.length > 0) {
+                let fileId = data.files[0].id;
+                let fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                let cloudData = await fileRes.json();
+                if (cloudData) {
+                    if (Array.isArray(cloudData.wordLists)) {
+                        wordLists = cloudData.wordLists;
+                        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+                    }
+                    if (cloudData.examHistory) {
+                        examHistory = cloudData.examHistory.slice(0, 10);
+                        localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
+                    }
+                    if (cloudData.cardExamHistory) {
+                        cardExamHistory = cloudData.cardExamHistory.slice(0, 10);
+                        localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
+                    }
+                    if (cloudData.chickenData) {
+                        chickenData = cloudData.chickenData;
+                        localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
+                        updateChickenBadgeUI();
+                    }
+                    initPracticeCardGrid();
+                    initExamCardGrid();
+                    initFlashcardGrid();
+                    initCardExamGrid();
+                    initEditorListCards();
+                    initExamCheckboxes();
+                }
+            }
+            updateCloudStatusText(`✅ 已連結 Google 雲端`);
+        } catch (err) { 
+            console.error("雲端載入失敗", err); 
+            updateCloudStatusText(`⚠️ 雲端同步失敗`);
+        }
+    }
+
+    async function triggerAutoSaveToCloud() {
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        if (!accessToken || !isCloudSyncActive) return;
+        updateCloudStatusText(`☁️ 上傳備份中...`);
+        try {
+            let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
+            let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            let data = await res.json();
+            let fileId = (data.files && data.files.length > 0) ? data.files[0].id : null;
+            
+            let cloudData = { 
+                activeDeviceId: myDeviceId, 
+                wordLists, 
+                examHistory: examHistory.slice(0, 10), 
+                cardExamHistory: cardExamHistory.slice(0, 10), 
+                chickenData,
+                appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}') 
+            };
+            let fileContent = JSON.stringify(cloudData);
+
+            if (fileId) {
+                await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                    body: fileContent
+                });
+            } else {
+                let metadata = { name: FILENAME, parents: ['appDataFolder'] };
+                let form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', new Blob([fileContent], { type: 'application/json' }));
+                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}` }, body: form
+                });
+            }
+            updateCloudStatusText(`✅ 已連結 Google 雲端`);
+        } catch(e) { 
+            console.error("雲端存檔失敗", e); 
+            updateCloudStatusText(`⚠️ 雲端同步失敗`);
+        }
+    }
+
+    function switchView(viewId) {
+        document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        
+        let wrapper = document.getElementById('mainScaleWrapper');
+        if (viewId === 'practiceView' || viewId === 'examView' || viewId === 'flashcardPlayView' || viewId === 'flashcardSetupView' || viewId === 'cardExamSetupView' || viewId === 'cardExamPlayView') {
+            wrapper.className = 'scale-wrapper-practice';
+        } else {
+            wrapper.className = 'scale-wrapper';
+        }
+    }
+
+    function goToPracticePage() {
+        initPracticeCardGrid();
+        switchView('practiceView');
+    }
+
+    function goToFlashcardPage() {
+        initFlashcardGrid();
+        switchView('flashcardSetupView');
+    }
+
+    function goToCardExamPage() {
+        initCardExamGrid();
+        switchView('cardExamSetupView');
+    }
+
+    function goToExamPage() {
+        initExamCardGrid();
+        switchView('examView');
+    }
+
+    async function goToEditorPage() {
+        if (accessToken && isCloudSyncActive) {
+            await loadDataFromGoogleDrive();
+        }
+        initEditorListCards();
+        switchView('editorListView');
+    }
+
+    function backToHome() {
+        stopDictation();
+        stopCardExamSession();
+        releaseWakeLock();
+        switchView('homeDashboardView');
+    }
+
+    function backToHomeFromExam() {
+        if (isExamRunning) {
+            alert("⚠️ 目前正在考試中，請先結束考試！");
+            return;
+        }
+        stopExamMode();
+        releaseWakeLock();
+        switchView('homeDashboardView');
+    }
+
+    function initEditorListCards() {
+        let container = document.getElementById('editorListCardContainer');
+        if (!container) return;
+        container.innerHTML = '';
+
+        wordLists.forEach((l, idx) => {
+            let count = getListWordCount(l.content);
+            let cardHtml = `
+                <div class="list-card-item" data-on-click='[["openEditorDetail",[${idx}]]]'>
+                    <div class="list-card-info">
+                        <div class="list-card-title">${idx + 1}: ${escapeHTML(l.title)}</div>
+                        <div class="list-card-count">(${count}/100 字)</div>
+                    </div>
+                    <div style="position: relative;">
+                        <button class="list-card-menu-btn" data-on-click='[["$stop",[]],["toggleDropdownMenu",[${idx},"$event"]]]'>⋮</button>
+                        <div class="dropdown-menu" id="dropdownMenu_${idx}">
+                            <button class="dropdown-item" data-on-click='[["$stop",[]],["renameListTitleFromMenu",[${idx}]]]'>修改</button>
+                            <button class="dropdown-item" data-on-click='[["$stop",[]],["clearListContentFromMenu",[${idx}]]]'>清空</button>
+                            <button class="dropdown-item danger" data-on-click='[["$stop",[]],["deleteListFromMenu",[${idx}]]]'>刪除</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+        });
+    }
+
+    function toggleDropdownMenu(idx, event) {
+        document.querySelectorAll('.dropdown-menu').forEach(m => {
+            if (m.id !== `dropdownMenu_${idx}`) m.classList.remove('show');
+        });
+
+        let menu = document.getElementById(`dropdownMenu_${idx}`);
+        if (!menu) return;
+
+        let isShown = menu.classList.contains('show');
+        if (!isShown) {
+            let btnRect = event.currentTarget.getBoundingClientRect();
+            let containerRect = document.getElementById('editorListCardContainer').getBoundingClientRect();
+            
+            if (btnRect.bottom > containerRect.bottom - 150) {
+                menu.classList.add('drop-up');
+            } else {
+                menu.classList.remove('drop-up');
+            }
+            menu.classList.add('show');
+        } else {
+            menu.classList.remove('show');
+        }
+    }
+
+    function openEditorDetail(idx) {
+        lastSelectedList = idx;
+        localStorage.setItem('dictation_last_selected_list', idx);
+        let list = wordLists[idx];
+        if (!list) return;
+
+        document.getElementById('editorDetailTitleIndicator').innerText = `📁 ${idx + 1}: ${list.title} 編輯`;
+        document.getElementById('editorWordList').value = list.content || '';
+        document.getElementById('wordSearchInput').value = '';
+        document.getElementById('searchNotFoundTip').style.display = 'none';
+        
+        handleEditorSearch();
+        switchView('editorDetailView');
+    }
+
+    function backToListFromDetail() {
+        initEditorListCards();
+        switchView('editorListView');
+    }
+
+    function renameListTitleFromMenu(idx) {
+        let list = wordLists[idx];
+        let newTitle = prompt("請輸入新的題庫標題：", list.title);
+        if (newTitle && newTitle.trim()) {
+            list.title = newTitle.trim();
+            triggerAutoSaveToCloud();
+            initEditorListCards();
+            alert("✅ 標題修改成功並已自動儲存至本機與雲端！");
+        }
+    }
+
+    function clearListContentFromMenu(idx) {
+        if (confirm(`確定要清空「${wordLists[idx].title}」裡的所有單字嗎？`)) {
+            wordLists[idx].content = "";
+            triggerAutoSaveToCloud();
+            initEditorListCards();
+            alert("🧹 題庫已清空並自動儲存！");
+        }
+    }
+
+    function deleteListFromMenu(idx) {
+        if (wordLists.length <= 1) {
+            alert("⚠️ 至少必須保留一組題庫本！");
+            return;
+        }
+        if (confirm(`確定要刪除題庫「${wordLists[idx].title}」嗎？`)) {
+            wordLists.splice(idx, 1);
+            triggerAutoSaveToCloud();
+            initEditorListCards();
+            alert("🗑️ 題庫已刪除並自動儲存！");
+        }
+    }
+
+    function addNewWordList() {
+        if (wordLists.length >= MAX_LISTS_DEFAULT) {
+            alert(`⚠️ 目前題庫數量已達上限 ${MAX_LISTS_DEFAULT} 組！`);
+            return;
+        }
+        let title = prompt("請輸入新題庫本標題：", `unit ${wordLists.length + 1}`);
+        if (!title || !title.trim()) return;
+
+        wordLists.push({ title: title.trim(), content: "", createdAt: Date.now() });
+        triggerAutoSaveToCloud();
+        initEditorListCards();
+        initPracticeCardGrid();
+        initExamCardGrid();
+        initFlashcardGrid();
+        initCardExamGrid();
+        alert("✅ 新增成功！");
+    }
+
+    function handleEditorTextareaInput() {
+        let idx = lastSelectedList;
+        if (!wordLists[idx]) return;
+        let text = document.getElementById('editorWordList').value;
+        wordLists[idx].content = text;
+        triggerAutoSaveToCloud();
+    }
+
+    function getListWordCount(content) {
+        if (!content) return 0;
+        return content.split('\n').map(l => l.trim()).filter(l => l.length > 0).length;
+    }
+
+    function initPracticeCardGrid() {
+        let grid = document.getElementById('cardGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
+        let savedPracticeSelected = JSON.parse(localStorage.getItem('dictation_practice_selected')) || [0];
+        
+        activeLists.forEach((list, displayIdx) => {
+            let count = getListWordCount(list.content);
+            let isSelected = savedPracticeSelected.includes(list.originalIdx) ? 'selected' : '';
+            let cardHtml = `
+                <div class="select-card ${isSelected}" data-on-click='[["togglePracticeCard",[${list.originalIdx},"$this"]]]'>
+                    <div class="select-card-info">
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
+                    </div>
+                    <div class="checkmark-badge">✓</div>
+                </div>
+            `;
+            grid.insertAdjacentHTML('beforeend', cardHtml);
+        });
+        loadPracticeSelectedContent();
+    }
+
+    function togglePracticeCard(originalIdx, cardEl) {
+        cardEl.classList.toggle('selected');
+        savePracticeSelectionState();
+        loadPracticeSelectedContent();
+    }
+
+    function savePracticeSelectionState() {
+        let selectedIndices = [];
+        document.querySelectorAll('#cardGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('data-on-click');
+                let match = onclickAttr.match(/"togglePracticeCard",\[(\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
+        });
+        localStorage.setItem('dictation_practice_selected', JSON.stringify(selectedIndices));
+    }
+
+    function loadPracticeSelectedContent() {
+        let combinedText = '';
+        let selectedCards = document.querySelectorAll('#cardGrid .select-card.selected');
+        
+        selectedCards.forEach(card => {
+            let onclickAttr = card.getAttribute('data-on-click');
+            let match = onclickAttr.match(/"togglePracticeCard",\[(\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                }
+            }
+        });
+
+        document.getElementById('wordList').value = combinedText.trim();
+        
+        let allWords = parseWordsRaw(combinedText);
+        let totalWords = allWords.length;
+        let starCount = allWords.filter(w => w.starred).length;
+        document.getElementById('practiceStatsText').innerText = `📊 範圍統計：總單字數 ${totalWords} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
+    }
+
+    function initFlashcardGrid() {
+        let grid = document.getElementById('flashcardGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
+        let savedSelected = JSON.parse(localStorage.getItem('dictation_flashcard_selected')) || [0];
+        
+        activeLists.forEach((list, displayIdx) => {
+            let count = getListWordCount(list.content);
+            let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
+            let cardHtml = `
+                <div class="select-card ${isSelected}" data-on-click='[["toggleFlashcardCard",[${list.originalIdx},"$this"]]]'>
+                    <div class="select-card-info">
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
+                    </div>
+                    <div class="checkmark-badge">✓</div>
+                </div>
+            `;
+            grid.insertAdjacentHTML('beforeend', cardHtml);
+        });
+        loadFlashcardSelectedContent();
+    }
+
+    function toggleFlashcardCard(originalIdx, cardEl) {
+        cardEl.classList.toggle('selected');
+        saveFlashcardSelectionState();
+        loadFlashcardSelectedContent();
+    }
+
+    function saveFlashcardSelectionState() {
+        let selectedIndices = [];
+        document.querySelectorAll('#flashcardGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('data-on-click');
+                let match = onclickAttr.match(/"toggleFlashcardCard",\[(\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
+        });
+        localStorage.setItem('dictation_flashcard_selected', JSON.stringify(selectedIndices));
+    }
+
+    function loadFlashcardSelectedContent() {
+        let combinedText = '';
+        let selectedCards = document.querySelectorAll('#flashcardGrid .select-card.selected');
+        
+        selectedCards.forEach(card => {
+            let onclickAttr = card.getAttribute('data-on-click');
+            let match = onclickAttr.match(/"toggleFlashcardCard",\[(\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                }
+            }
+        });
+
+        document.getElementById('flashcardPreviewTextarea').value = combinedText.trim();
+        let allWords = parseWordsRaw(combinedText);
+        let starCount = allWords.filter(w => w.starred).length;
+        document.getElementById('flashcardStatsText').innerText = `📊 範圍統計：總單字數 ${allWords.length} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
+    }
+
+    function toggleFlashcardPreview() {
+        let container = document.getElementById('fcPreviewContainer');
+        let btn = document.getElementById('fcCollapseBtn');
+        container.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed');
+        saveCollapseState('flashcard', container.classList.contains('collapsed'));
+    }
+
+    function sortFlashcardPreview(sortType) {
+        if (!sortType) return;
+        let textarea = document.getElementById('flashcardPreviewTextarea');
+        let words = parseWordsRaw(textarea.value);
+        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
+        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+        textarea.value = words.map(w => w.rawLine).join('\n');
+        setTimeout(() => document.getElementById('flashcardSortSelector').selectedIndex = 0, 200);
+    }
+
+    function openFlashcardSettingsModal() { document.getElementById('flashcardSettingsModal').style.display = 'block'; }
+    function closeFlashcardSettingsModal() { document.getElementById('flashcardSettingsModal').style.display = 'none'; }
+    
+    function saveFlashcardSettings() {
+        let settings = {
+            fcOnlyStarred: document.getElementById('fcSettingStarred').checked,
+            fcEnableShuffle: document.getElementById('fcSettingShuffle').checked,
+            fcSpeakRate: document.getElementById('fcSpeakRate').value
+        };
+        localStorage.setItem('dictation_flashcard_app_settings', JSON.stringify(settings));
+        closeFlashcardSettingsModal();
+    }
+
+    function loadFlashcardAppSettings() {
+        let saved = localStorage.getItem('dictation_flashcard_app_settings');
+        if (saved) {
+            let s = JSON.parse(saved);
+            if (s.fcOnlyStarred !== undefined) document.getElementById('fcSettingStarred').checked = s.fcOnlyStarred;
+            if (s.fcEnableShuffle !== undefined) document.getElementById('fcSettingShuffle').checked = s.fcEnableShuffle;
+            if (s.fcSpeakRate !== undefined) {
+                let slider = document.getElementById('fcSpeakRate');
+                slider.value = s.fcSpeakRate;
+                updateSpeedDisplay('fcSpeakRate', 'fcSpeedValue');
+                updateSliderProgress(slider);
+            }
+        }
+    }
+
+    function startFlashcardSession() {
+        let text = document.getElementById('flashcardPreviewTextarea').value.trim();
+        let words = parseWordsRaw(text);
+
+        if (document.getElementById('fcSettingStarred').checked) {
+            words = words.filter(w => w.starred);
+        }
+        if (document.getElementById('fcSettingShuffle').checked) {
+            words = words.sort(() => Math.random() - 0.5);
+        }
+
+        if (words.length === 0) {
+            alert('⚠️ 範圍內沒有符合條件的單字，請重新勾選！');
+            return;
+        }
+
+        requestWakeLock();
+
+        flashcardActiveList = words;
+        currentFcIndex = 0;
+        switchView('flashcardPlayView');
+        updateFlashcardView();
+    }
+
+    function backToFlashcardSetup() {
+        releaseWakeLock();
+        switchView('flashcardSetupView');
+    }
+
+    function resetFlashcardFlipState() {
+        const cardEl = document.getElementById('flashcardCardEl');
+        if (cardEl) {
+            cardEl.classList.remove('flipped');
+        }
+    }
+
+    function updateFlashcardView() {
+        if (flashcardActiveList.length === 0) return;
+        
+        resetFlashcardFlipState();
+
+        let card = flashcardActiveList[currentFcIndex];
+        document.getElementById('fcCardEng').innerText = card.english;
+        document.getElementById('fcCardChi').innerText = card.chinese || '(無中文)';
+        document.getElementById('fcCardPos').innerText = card.pos || '單字';
+        document.getElementById('fcProgressText').innerText = `${currentFcIndex + 1} / ${flashcardActiveList.length} 題`;
+        
+        let percent = ((currentFcIndex + 1) / flashcardActiveList.length) * 100;
+        document.getElementById('fcProgressBar').style.width = `${percent}%`;
+
+        let starBtn = document.getElementById('fcStarBtn');
+        if (card.starred) {
+            starBtn.classList.add('starred');
+            starBtn.innerText = '⭐';
+        } else {
+            starBtn.classList.remove('starred');
+            starBtn.innerText = '☆';
+        }
+
+        let prevBtn = document.getElementById('fcPrevBtn');
+        if (currentFcIndex === 0) {
+            prevBtn.disabled = true;
+        } else {
+            prevBtn.disabled = false;
+        }
+
+        let nextBtn = document.getElementById('fcNextBtn');
+        if (currentFcIndex === flashcardActiveList.length - 1) {
+            nextBtn.innerHTML = '結束 🏁';
+        } else {
+            nextBtn.innerHTML = '下一張 ▶';
+        }
+    }
+
+    function nextFlashcard() {
+        if (currentFcIndex < flashcardActiveList.length - 1) {
+            currentFcIndex++;
+            updateFlashcardView();
+        } else {
+            backToFlashcardSetup();
+        }
+    }
+
+    function prevFlashcard() {
+        if (currentFcIndex > 0) {
+            currentFcIndex--;
+            updateFlashcardView();
+        }
+    }
+
+    function toggleCurrentCardStar() {
+        let card = flashcardActiveList[currentFcIndex];
+        card.starred = !card.starred;
+        
+        updateDatabaseWithStarredState(card.english, card.starred);
+
+        updateFlashcardView();
+        initFlashcardGrid();
+        initPracticeCardGrid();
+        initExamCardGrid();
+        initCardExamGrid();
+    }
+
+    function initCardExamGrid() {
+        let grid = document.getElementById('cardExamGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
+        let savedSelected = JSON.parse(localStorage.getItem('dictation_card_exam_selected')) || [0];
+        
+        activeLists.forEach((list, displayIdx) => {
+            let count = getListWordCount(list.content);
+            let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
+            let cardHtml = `
+                <div class="select-card ${isSelected}" data-on-click='[["toggleCardExamCard",[${list.originalIdx},"$this"]]]'>
+                    <div class="select-card-info">
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
+                    </div>
+                    <div class="checkmark-badge">✓</div>
+                </div>
+            `;
+            grid.insertAdjacentHTML('beforeend', cardHtml);
+        });
+        loadCardExamSelectedContent();
+    }
+
+    function toggleCardExamCard(originalIdx, cardEl) {
+        cardEl.classList.toggle('selected');
+        saveCardExamSelectionState();
+        loadCardExamSelectedContent();
+    }
+
+    function saveCardExamSelectionState() {
+        let selectedIndices = [];
+        document.querySelectorAll('#cardExamGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('data-on-click');
+                let match = onclickAttr.match(/"toggleCardExamCard",\[(\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
+        });
+        localStorage.setItem('dictation_card_exam_selected', JSON.stringify(selectedIndices));
+    }
+
+    function loadCardExamSelectedContent() {
+        let combinedText = '';
+        let selectedCards = document.querySelectorAll('#cardExamGrid .select-card.selected');
+        let selectedTitles = [];
+        
+        selectedCards.forEach((card, displayIdx) => {
+            let onclickAttr = card.getAttribute('data-on-click');
+            let match = onclickAttr.match(/"toggleCardExamCard",\[(\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                    selectedTitles.push(`${displayIdx + 1}: ${wordLists[idx].title}`);
+                }
+            }
+        });
+        currentCardExamRanges = selectedTitles.join(', ');
+
+        document.getElementById('cardExamPreviewTextarea').value = combinedText.trim();
+        let allWords = parseWordsRaw(combinedText);
+        let starCount = allWords.filter(w => w.starred).length;
+        document.getElementById('cardExamStatsText').innerText = `📊 範圍統計：總單字數 ${allWords.length} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
+    }
+
+    function toggleCardExamPreview() {
+        let container = document.getElementById('cardExamPreviewContainer');
+        let btn = document.getElementById('cardExamCollapseBtn');
+        container.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed');
+        saveCollapseState('cardExam', container.classList.contains('collapsed'));
+    }
+
+    function sortCardExamPreview(sortType) {
+        if (!sortType) return;
+        let textarea = document.getElementById('cardExamPreviewTextarea');
+        let words = parseWordsRaw(textarea.value);
+        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
+        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+        textarea.value = words.map(w => w.rawLine).join('\n');
+        setTimeout(() => document.getElementById('cardExamSortSelector').selectedIndex = 0, 200);
+    }
+
+    function openCardExamSettingsModal() { document.getElementById('cardExamSettingsModal').style.display = 'block'; }
+    function closeCardExamSettingsModal() { document.getElementById('cardExamSettingsModal').style.display = 'none'; }
+    
+    function saveCardExamSettings() {
+        let settings = {
+            cardExamOnlyStarred: document.getElementById('cardExamSettingStarred').checked,
+            cardExamQuestionCount: document.getElementById('cardExamQuestionCount').value,
+            cardExamAnswerTime: document.getElementById('cardExamAnswerTime').value
+        };
+        localStorage.setItem('dictation_card_exam_app_settings', JSON.stringify(settings));
+        closeCardExamSettingsModal();
+    }
+
+    function loadCardExamAppSettings() {
+        let saved = localStorage.getItem('dictation_card_exam_app_settings');
+        if (saved) {
+            let s = JSON.parse(saved);
+            if (s.cardExamOnlyStarred !== undefined) document.getElementById('cardExamSettingStarred').checked = s.cardExamOnlyStarred;
+            if (s.cardExamQuestionCount !== undefined) document.getElementById('cardExamQuestionCount').value = s.cardExamQuestionCount;
+            if (s.cardExamAnswerTime !== undefined) document.getElementById('cardExamAnswerTime').value = s.cardExamAnswerTime;
+        }
+    }
+
+    function startCardExamSession() {
+        let text = document.getElementById('cardExamPreviewTextarea').value.trim();
+        let words = parseWordsRaw(text);
+
+        if (document.getElementById('cardExamSettingStarred').checked) {
+            words = words.filter(w => w.starred);
+        }
+
+        for (let i = words.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [words[i], words[j]] = [words[j], words[i]];
+        }
+
+        let qCount = parseInt(document.getElementById('cardExamQuestionCount').value) || 0;
+        if (qCount > 0 && words.length > qCount) {
+            words = words.slice(0, qCount);
+        }
+
+        if (words.length === 0) {
+            alert('⚠️ 範圍內沒有符合條件的單字，請重新勾選！');
+            return;
+        }
+
+        requestWakeLock();
+
+        cardExamActiveList = words;
+        currentCardExamIndex = 0;
+        cardExamResults = [];
+        switchView('cardExamPlayView');
+        playCurrentCardExamQuestion();
+    }
+
+    function backToCardExamSetup() {
+        stopCardExamSession();
+        releaseWakeLock();
+        switchView('cardExamSetupView');
+    }
+
+    function stopCardExamSession() {
+        if (cardExamTimerId) clearInterval(cardExamTimerId);
+        releaseWakeLock();
+    }
+
+    function playCurrentCardExamQuestion() {
+        if (currentCardExamIndex >= cardExamActiveList.length) {
+            finishCardExamSession();
+            return;
+        }
+
+        let card = cardExamActiveList[currentCardExamIndex];
+        document.getElementById('cardExamCardEng').innerText = card.english;
+        document.getElementById('cardExamProgressText').innerText = `${currentCardExamIndex + 1} / ${cardExamActiveList.length} 題`;
+        
+        let percent = ((currentCardExamIndex + 1) / cardExamActiveList.length) * 100;
+        document.getElementById('cardExamProgressBar').style.width = `${percent}%`;
+
+        document.getElementById('cardExamInputChi').value = '';
+        document.querySelectorAll('.card-exam-pos-chk').forEach(c => c.checked = false);
+
+        let posGroup = document.getElementById('cardExamPosCheckboxGroup');
+        let posLabel = document.getElementById('cardExamPosLabel');
+        if (!card.pos || card.pos.trim() === '') {
+            posGroup.style.opacity = '0.4';
+            posGroup.style.pointerEvents = 'none';
+            if (posLabel) posLabel.innerText = '詞性選擇（此單字無詞性，略過）：';
+        } else {
+            posGroup.style.opacity = '1';
+            posGroup.style.pointerEvents = 'auto';
+            if (posLabel) posLabel.innerText = '詞性選擇（可複選）：';
+        }
+
+        document.getElementById('cardExamInputChi').focus();
+
+        if (cardExamTimerId) clearInterval(cardExamTimerId);
+        cardExamTimeLeft = parseInt(document.getElementById('cardExamAnswerTime').value) || 20;
+        document.getElementById('cardExamTimeLeft').innerText = cardExamTimeLeft;
+        cardExamTimerId = setInterval(() => {
+            cardExamTimeLeft--;
+            document.getElementById('cardExamTimeLeft').innerText = cardExamTimeLeft;
+            if (cardExamTimeLeft <= 0) {
+                clearInterval(cardExamTimerId);
+                submitCardExamAnswer();
+            }
+        }, 1000);
+    }
+
+    function submitCardExamAnswer() {
+        if (cardExamTimerId) clearInterval(cardExamTimerId);
+        let userChi = document.getElementById('cardExamInputChi').value.trim();
+        let userPosArr = [];
+        document.querySelectorAll('.card-exam-pos-chk:checked').forEach(chk => userPosArr.push(chk.value.trim()));
+
+        let currentItem = cardExamActiveList[currentCardExamIndex];
+        let chiMatch = (!currentItem.chinese || userChi === currentItem.chinese);
+
+        let correctPosArr = currentItem.pos ? currentItem.pos.split(/\s+/).map(s => s.trim()).filter(s => s.length > 0) : [];
+        let posMatch = true;
+        if (correctPosArr.length > 0 || userPosArr.length > 0) {
+            if (correctPosArr.length !== userPosArr.length) {
+                posMatch = false;
+            } else {
+                let setCorrect = new Set(correctPosArr);
+                let setUser = new Set(userPosArr);
+                if (setCorrect.size !== setUser.size) {
+                    posMatch = false;
+                } else {
+                    for (let p of setCorrect) {
+                        if (!setUser.has(p)) { posMatch = false; break; }
+                    }
+                }
+            }
+        }
+
+        let isCorrect = chiMatch && posMatch;
+
+        cardExamResults.push({
+            english: currentItem.english,
+            chinese: currentItem.chinese,
+            pos: currentItem.pos,
+            userChi,
+            userPos: userPosArr.join(' '),
+            isCorrect,
+            chiMatch,
+            posMatch
+        });
+
+        currentCardExamIndex++;
+        playCurrentCardExamQuestion();
+    }
+
+    function handleCardExamKeyDown(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitCardExamAnswer();
+        }
+    }
+
+    function finishCardExamSession() {
+        if (cardExamTimerId) clearInterval(cardExamTimerId);
+        releaseWakeLock();
+        
+        let total = cardExamResults.length;
+        if (total === 0) {
+            backToCardExamSetup();
+            return;
+        }
+
+        let correct = cardExamResults.filter(r => r.isCorrect).length;
+        let score = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+        // 觸發字卡測驗雞塊任務檢查
+        triggerTaskCheck('card_exam_done', { total, score });
+
+        let newRecord = { date: new Date().toLocaleString(), range: currentCardExamRanges || '預設範圍', total, score, results: cardExamResults };
+        cardExamHistory.unshift(newRecord);
+        
+        if (cardExamHistory.length > 10) {
+            cardExamHistory = cardExamHistory.slice(0, 10);
+        }
+
+        localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
+        triggerAutoSaveToCloud();
+
+        let html = `<div class="result-box">
+            <div style="font-weight:700; margin-bottom:12px; font-size:15px; color:var(--text-main);">※ 字卡測驗結束！以下為您的測驗結果：</div>
+            <div style="font-weight:600; margin-bottom:14px; color:var(--primary);">📊 成績統計：得分 ${score} 分 (總題數 ${total} 題，完全答對 ${correct} 題)</div>`;
+        
+        cardExamResults.forEach((r, i) => {
+            let titleColor = r.isCorrect ? '#10B981' : '#EF4444';
+            let icon = r.isCorrect ? '✅' : '❌';
+            let correctInfo = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')}) ${r.pos ? '/ ' + escapeHTML(r.pos) : ''}`;
+            
+            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '[(未填)]')}</span>`;
+            let posDisplay = r.posMatch ? `<span style="color:#10B981;">${escapeHTML(r.userPos || '[(未選)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userPos || '[(未選)]')}</span>`;
+            let userAnsInfo = `${chiDisplay} ${r.pos ? '/ ' + posDisplay : ''}`;
+
+            html += `<div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
+                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${escapeHTML(r.english)} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
+                <div style="font-size:13.5px; color:var(--text-muted);">您的回答：${userAnsInfo}</div>
+            </div>`;
+        });
+        html += `</div>`;
+        
+        document.getElementById('modalResultBody').innerHTML = html;
+        document.getElementById('examResultModal').style.display = 'block';
+
+        backToCardExamSetup();
+    }
+
+    function updateDatabaseWithStarredState(targetEng, isStarred) {
+        wordLists.forEach(list => {
+            if (!list.content) return;
+            let lines = list.content.split('\n');
+            let updated = false;
+            let newLines = lines.map(line => {
+                let trimmed = line.trim();
+                if (!trimmed) return line;
+                let curStarred = trimmed.startsWith('*');
+                let cleanLine = curStarred ? trimmed.substring(1).trim() : trimmed;
+                let firstChiIndex = cleanLine.search(/[\u4e00-\u9fa5]/);
+                let engPart = firstChiIndex !== -1 ? cleanLine.substring(0, firstChiIndex).trim() : cleanLine.trim();
+                
+                if (engPart.toLowerCase() === targetEng.toLowerCase()) {
+                    updated = true;
+                    return isStarred ? `*${cleanLine}` : cleanLine;
+                }
+                return line;
+            });
+            if (updated) {
+                list.content = newLines.join('\n');
+            }
+        });
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        triggerAutoSaveToCloud();
+    }
+
+    function playCurrentFlashcardAudio() {
+        let word = flashcardActiveList[currentFcIndex].english;
+        let utterance = new SpeechSynthesisUtterance(word);
+        let chosenVoice = getSelectedVoice('en-US');
+        if (chosenVoice) utterance.voice = chosenVoice;
+        utterance.lang = 'en-US';
+        utterance.rate = parseFloat(document.getElementById('fcSpeakRate').value) || 0.8;
+    
+        let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+        utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function initExamCardGrid() {
+        let grid = document.getElementById('examCardGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0);
+        let savedExamSelected = JSON.parse(localStorage.getItem('dictation_exam_selected')) || [0];
+
+        activeLists.forEach((list, displayIdx) => {
+            let count = getListWordCount(list.content);
+            let isSelected = savedExamSelected.includes(list.originalIdx) ? 'selected' : '';
+            let cardHtml = `
+                <div class="select-card ${isSelected}" data-on-click='[["toggleExamCard",[${list.originalIdx},"$this"]]]'>
+                    <div class="select-card-info">
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${count}/100 字)</div>
+                    </div>
+                    <div class="checkmark-badge">✓</div>
+                </div>
+            `;
+            grid.insertAdjacentHTML('beforeend', cardHtml);
+        });
+        loadExamSelectedContent();
+    }
+
+    function toggleExamCard(originalIdx, cardEl) {
+        cardEl.classList.toggle('selected');
+        saveExamSelectionState();
+        loadExamSelectedContent();
+    }
+
+    function saveExamSelectionState() {
+        let selectedIndices = [];
+        document.querySelectorAll('#examCardGrid .select-card').forEach((card) => {
+            if (card.classList.contains('selected')) {
+                let onclickAttr = card.getAttribute('data-on-click');
+                let match = onclickAttr.match(/"toggleExamCard",\[(\d+),/);
+                if (match) selectedIndices.push(parseInt(match[1]));
+            }
+        });
+        localStorage.setItem('dictation_exam_selected', JSON.stringify(selectedIndices));
+    }
+
+    function loadExamSelectedContent() {
+        let combinedText = '';
+        let selectedCards = document.querySelectorAll('#examCardGrid .select-card.selected');
+        
+        selectedCards.forEach(card => {
+            let onclickAttr = card.getAttribute('data-on-click');
+            let match = onclickAttr.match(/"toggleExamCard",\[(\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                }
+            }
+        });
+
+        document.getElementById('examWordList').value = combinedText.trim();
+        
+        let allWords = parseWordsRaw(combinedText);
+        let totalWords = allWords.length;
+        let starCount = allWords.filter(w => w.starred).length;
+        document.getElementById('examStatsText').innerText = `📊 範圍統計：總單字數 ${totalWords} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
+    }
+
+    function toggleExamPreview() {
+        let container = document.getElementById('examPreviewCollapseContainer');
+        let btn = document.getElementById('examCollapseBtn');
+        container.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed');
+        saveCollapseState('exam', container.classList.contains('collapsed'));
+    }
+
+    function sortExamWordListContent(sortType) {
+        if (!sortType) return;
+        let textarea = document.getElementById('examWordList');
+        let words = parseWordsRaw(textarea.value);
+        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
+        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+        textarea.value = words.map(w => w.rawLine).join('\n');
+        setTimeout(() => document.getElementById('examWordSortSelector').selectedIndex = 0, 200);
+    }
+
+    function togglePreview() {
+        let container = document.getElementById('previewContainer');
+        let btn = document.getElementById('collapseBtn');
+        container.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed');
+        saveCollapseState('practice', container.classList.contains('collapsed'));
+    }
+
+    function sortWordListContent(sortType) {
+        if (!sortType) return;
+        let textarea = document.getElementById('wordList');
+        let words = parseWordsRaw(textarea.value);
+        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
+        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+        textarea.value = words.map(w => w.rawLine).join('\n');
+        setTimeout(() => document.getElementById('wordSortSelector').selectedIndex = 0, 200);
+    }
+
+    function sortEditorContent(sortType) {
+        if (!sortType) return;
+        let textarea = document.getElementById('editorWordList');
+        let words = parseWordsRaw(textarea.value);
+        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase()));
+        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase()));
+        textarea.value = words.map(w => w.rawLine).join('\n');
+        handleEditorTextareaInput();
+        handleEditorSearch();
+    }
+
+    function syncEditorScroll() {
+        const textarea = document.getElementById('editorWordList');
+        const backdrop = document.getElementById('editorBackdrop');
+        if (textarea && backdrop) {
+            backdrop.scrollTop = textarea.scrollTop;
+            backdrop.scrollLeft = textarea.scrollLeft;
+        }
+    }
+
+    function handleEditorSearch() {
+        const textarea = document.getElementById('editorWordList');
+        const searchInput = document.getElementById('wordSearchInput');
+        const backdrop = document.getElementById('editorBackdrop');
+        const notFoundTip = document.getElementById('searchNotFoundTip');
+        
+        if (!textarea || !searchInput || !backdrop) return;
+        
+        const text = textarea.value;
+        const query = searchInput.value.trim();
+
+        syncEditorScroll();
+
+        if (!query) {
+            backdrop.innerHTML = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+            if (notFoundTip) notFoundTip.style.display = 'none';
+            return;
+        }
+
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapedQuery})`, 'gi');
+
+        const hasMatch = regex.test(text);
+        regex.lastIndex = 0;
+
+        if (!hasMatch) {
+            if (notFoundTip) {
+                notFoundTip.innerText = `找不到該單字 "${query}"`;
+                notFoundTip.style.display = 'block';
+            }
+            backdrop.innerHTML = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+            return;
+        } else {
+            if (notFoundTip) notFoundTip.style.display = 'none';
+        }
+
+        const highlightedText = text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(regex, '<span class="highlight-match">$1</span>');
+
+        backdrop.innerHTML = highlightedText;
+
+        let firstMatchIndex = text.toLowerCase().indexOf(query.toLowerCase());
+        if (firstMatchIndex !== -1) {
+            let linesBefore = text.substring(0, firstMatchIndex).split('\n').length;
+            let targetScrollTop = Math.max(0, (linesBefore - 3) * 22);
+            textarea.scrollTop = targetScrollTop;
+            backdrop.scrollTop = textarea.scrollTop;
+        }
+    }
+
+    function saveAndStayInEditor() {
+        handleEditorTextareaInput();
+        let idx = lastSelectedList;
+        if (!wordLists[idx]) return;
+
+        let content = wordLists[idx].content || '';
+        let lines = content.split('\n');
+
+        let seenKeys = new Set();
+        let cleanLines = [];
+        let duplicates = [];
+
+        lines.forEach(line => {
+            let trimmed = line.trim();
+            if (!trimmed) return;
+            let isStarred = trimmed.startsWith('*');
+            let cleanLine = isStarred ? trimmed.substring(1).trim() : trimmed;
+            let firstChiIndex = cleanLine.search(/[\u4e00-\u9fa5]/);
+            let engPart = firstChiIndex !== -1 ? cleanLine.substring(0, firstChiIndex).trim() : cleanLine.trim();
+            let key = engPart.toLowerCase();
+
+            if (key) {
+                if (seenKeys.has(key)) {
+                    duplicates.push(engPart);
+                } else {
+                    seenKeys.add(key);
+                    cleanLines.push(trimmed);
+                }
+            }
+        });
+
+        wordLists[idx].content = cleanLines.join('\n');
+        document.getElementById('editorWordList').value = wordLists[idx].content;
+
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        triggerAutoSaveToCloud();
+        initPracticeCardGrid();
+        initExamCardGrid();
+        initFlashcardGrid();
+        initCardExamGrid();
+
+        if (duplicates.length > 0) {
+            let msg = `發現重複單字，已自動過濾重複部分：\n` + duplicates.map((d, i) => `${i + 1}. ${d}`).join('\n');
+            alert(msg);
+        } else {
+            alert('✅ 題庫儲存成功並已同步至雲端！');
+        }
+        backToListFromDetail();
+    }
+
+    function parseWordsRaw(text) {
+        let lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        let allWords = [], seen = new Set();
+        lines.forEach((line) => {
+            let isStarred = line.startsWith('*');
+            let cleanLine = isStarred ? line.substring(1).trim() : line;
+            let firstChiIndex = cleanLine.search(/[\u4e00-\u9fa5]/);
+            let engPart = firstChiIndex !== -1 ? cleanLine.substring(0, firstChiIndex).trim() : cleanLine.trim();
+            let restPart = firstChiIndex !== -1 ? cleanLine.substring(firstChiIndex).trim() : "";
+            let chiPart = "", posPart = "";
+            if (restPart) {
+                let parts = restPart.split(/\s+/);
+                chiPart = parts[0] || "";
+                if (parts.length > 1) posPart = parts.slice(1).join(" ");
+            }
+            let key = engPart.toLowerCase();
+            if (key && !seen.has(key)) {
+                seen.add(key);
+                allWords.push({ english: engPart, chinese: chiPart, pos: posPart, starred: isStarred, rawLine: line });
+            }
+        });
+        return allWords;
+    }
+
+    function toggleDictation() { isPlaying ? stopDictation() : checkAndStartDictation(); }
+    
+    function checkAndStartDictation() {
+        let text = document.getElementById('wordList').value.trim();
+        let words = parseWordsRaw(text);
+        
+        if (words.length === 0) {
+            alert("⚠️ 目前勾選的範圍單字數為 0，無法開始聽力練習！請至題庫新增單字。");
+            return;
+        }
+        startDictation();
+    }
+
+    function startDictation() {
+        let text = document.getElementById('wordList').value.trim();
+        wordsData = parseWordsRaw(text);
+        
+        if (document.getElementById('onlyStarred').checked) {
+            wordsData = wordsData.filter(w => w.starred);
+        }
+        if (document.getElementById('enableShuffle').checked) {
+            wordsData = wordsData.sort(() => Math.random() - 0.5);
+        }
+
+        if (wordsData.length === 0) { alert('找不到有效單字或無符合條件的單字！'); return; }
+        
+        requestWakeLock();
+
+        currentWordIndex = 0; isPlaying = true; isPaused = false;
+        
+        document.getElementById('practiceRangeContainer').style.display = 'none';
+        document.getElementById('practiceStatsBar').style.display = 'none';
+        document.getElementById('practicePreviewContainer').style.display = 'none';
+        document.getElementById('advancedBtnContainer').style.display = 'none';
+        document.getElementById('practiceBackBtn').style.display = 'none';
+
+        document.getElementById('status').style.display = 'flex';
+        
+        let toggleBtn = document.getElementById('toggleDictationBtn');
+        toggleBtn.innerText = '⏹ 停止練習'; toggleBtn.className = 'action-btn btn-stop';
+        document.getElementById('pauseDictationBtn').style.display = 'block';
+        
+        playNextWord();
+    }
+
+    function playNextWord() {
+        if (!isPlaying || isPaused) return;
+        
+        if (currentWordIndex >= wordsData.length) {
+            let isLoop = document.getElementById('enableLoop').checked;
+            if (isLoop) {
+                currentWordIndex = 0;
+            } else {
+                stopDictation();
+                document.getElementById('status').style.display = 'flex';
+                document.getElementById('status').innerHTML = `<span>🎉 練習結束！</span>`;
+                return;
+            }
+        }
+
+        let item = wordsData[currentWordIndex];
+        let rate = parseFloat(document.getElementById('speakRate').value) || 0.8;
+        let isLoop = document.getElementById('enableLoop').checked;
+        let targetRepeat = parseInt(document.getElementById('repeatCount').value) || 1;
+        if (targetRepeat < 1) targetRepeat = 1;
+
+        let loopSymbolHtml = isLoop ? `<span style="color:#3B82F6; font-size:17px; margin-left:6px; font-weight:bold;">∞</span>` : '';
+        let leftPart = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${escapeHTML(item.english)}</strong> <span style="font-weight:600; color:#475569;">(第 1/${targetRepeat} 次)</span>`;
+        let rightPart = `<span style="color:#4F46E5; font-weight:700;">(${currentWordIndex + 1}/${wordsData.length})</span>${loopSymbolHtml}`;
+        
+        document.getElementById('status').innerHTML = `<div>${leftPart}</div><div style="display:flex; align-items:center;">${rightPart}</div>`;
+
+        let queue = [];
+        for (let r = 1; r <= targetRepeat; r++) {
+            queue.push({
+                text: item.english,
+                isEng: true,
+                onPlay: () => {
+                    let newLeft = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${escapeHTML(item.english)}</strong> <span style="font-weight:600; color:#475569;">(第 ${r}/${targetRepeat} 次)</span>`;
+                    document.getElementById('status').children[0].innerHTML = newLeft;
+                }
+            });
+        }
+
+        if (document.getElementById('enableSpell').checked && item.english) {
+            let letters = item.english.replace(/[^a-zA-Z]/g, '').toLowerCase().split('').join(' - ');
+            if (letters) queue.push({ text: letters, isEng: true });
+        }
+        if (document.getElementById('enableChinese').checked && item.chinese) {
+            queue.push({ text: item.chinese, isEng: false });
+        }
+        if (document.getElementById('enablePOS').checked && item.pos) {
+            queue.push({ text: item.pos, isEng: false });
+        }
+
+        playQueue(queue, rate, () => {
+            if (!isPlaying || isPaused) return;
+            currentWordIndex++;
+            let pauseSec = parseInt(document.getElementById('pauseTime').value);
+            if (isNaN(pauseSec)) pauseSec = 2;
+            timeoutId = setTimeout(playNextWord, pauseSec * 1000);
+        });
+    }
+
+    function playQueue(queueItems, rate, onComplete) {
+        if (queueItems.length === 0) {
+            if (onComplete) onComplete();
+            return;
+        }
+        let item = queueItems.shift();
+        if (item.onPlay) item.onPlay();
+
+        let utterance = new SpeechSynthesisUtterance(item.text);
+        let langCode = item.isEng ? 'en-US' : 'zh-TW';
+        let chosenVoice = getSelectedVoice(langCode);
+
+        if (chosenVoice) utterance.voice = chosenVoice;
+        utterance.lang = langCode;
+        utterance.rate = rate;
+
+        let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+        let baseVol = (parseInt(sysVol) || 100) / 100;
+        utterance.volume = Math.max(0, Math.min(1.0, baseVol));
+
+        utterance.onend = () => {
+            if (!isPlaying || isPaused) return;
+            setTimeout(() => {
+                playQueue(queueItems, rate, onComplete);
+            }, 1000);
+        };
+        synth.speak(utterance);
+    }
+
+    function stopDictation() {
+        isPlaying = false; isPaused = false; synth.cancel(); clearTimeout(timeoutId);
+        releaseWakeLock();
+        
+        document.getElementById('practiceRangeContainer').style.display = 'block';
+        document.getElementById('practiceStatsBar').style.display = 'flex';
+        document.getElementById('practicePreviewContainer').style.display = 'block';
+        document.getElementById('advancedBtnContainer').style.display = 'block';
+        document.getElementById('practiceBackBtn').style.display = 'inline-flex';
+
+        document.getElementById('status').innerText = '準備就緒 🔥';
+        document.getElementById('status').style.display = 'none';
+        
+        let toggleBtn = document.getElementById('toggleDictationBtn');
+        toggleBtn.innerText = '▶ 開始聽力練習'; toggleBtn.className = 'action-btn btn-start';
+        
+        let pauseBtn = document.getElementById('pauseDictationBtn');
+        pauseBtn.innerText = '⏸ 暫停'; pauseBtn.className = 'action-btn btn-pause';
+        pauseBtn.style.display = 'none';
+    }
+
+    function togglePauseDictation() {
+        let btn = document.getElementById('pauseDictationBtn');
+        if (!isPaused) {
+            isPaused = true; synth.cancel(); clearTimeout(timeoutId);
+            btn.innerText = '▶ 繼續'; btn.className = 'action-btn btn-resume';
+        } else {
+            isPaused = false;
+            btn.innerText = '⏸ 暫停'; btn.className = 'action-btn btn-pause';
+            playNextWord();
+        }
+    }
+
+    function initExamCheckboxes() {}
+
+    function getSelectedExamWords() {
+        let combinedText = '';
+        let selectedTitles = [];
+        document.querySelectorAll('#examCardGrid .select-card.selected').forEach((card, displayIdx) => {
+            let onclickAttr = card.getAttribute('data-on-click');
+            let match = onclickAttr.match(/"toggleExamCard",\[(\d+),/);
+            if (match) {
+                let idx = parseInt(match[1]);
+                if (wordLists[idx] && wordLists[idx].content) {
+                    combinedText += wordLists[idx].content + '\n';
+                    selectedTitles.push(`${displayIdx + 1}: ${wordLists[idx].title}`);
+                }
+            }
+        });
+        currentExamRanges = selectedTitles.join(', ');
+        let words = parseWordsRaw(combinedText);
+        
+        if (document.getElementById('examOnlyStarred') && document.getElementById('examOnlyStarred').checked) {
+            words = words.filter(w => w.starred);
+        }
+        
+        for (let i = words.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [words[i], words[j]] = [words[j], words[i]];
+        }
+
+        let qCount = parseInt(document.getElementById('examQuestionCount').value) || 0;
+        if (qCount > 0 && words.length > qCount) {
+            words = words.slice(0, qCount);
+        }
+        return words;
+    }
+
+    function startExamMode() {
+        let words = getSelectedExamWords();
+        if (words.length === 0) { alert('⚠️ 請至少勾選一個考試範圍或確認範圍內有符合條件的單字！'); return; }
+
+        let resultContainerEl = document.getElementById('resultContainer');
+        if (resultContainerEl) {
+            resultContainerEl.innerHTML = '';
+            resultContainerEl.style.display = 'none';
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        requestWakeLock();
+
+        wordsData = words;
+        currentWordIndex = 0; isPlaying = true; isExamRunning = true; examResults = [];
+        
+        document.getElementById('examRangeContainer').style.display = 'none';
+        document.getElementById('examStatsBar').style.display = 'none';
+        document.getElementById('examPreviewContainer').style.display = 'none';
+        document.getElementById('examAdvancedBtnContainer').style.display = 'none';
+        document.getElementById('startExamBtn').style.display = 'none';
+        document.getElementById('examBackBtn').style.display = 'none';
+        document.getElementById('examArea').style.display = 'block';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        playExamQuestion();
+    }
+
+    function playExamQuestion() {
+        if (!isPlaying || currentWordIndex >= wordsData.length) { finishExam(); return; }
+        
+        document.getElementById('examProgressStatus').innerText = `🎧 正在進行考試... 請聆聽並於下方作答 (${currentWordIndex + 1}/${wordsData.length})`;
+
+        let item = wordsData[currentWordIndex];
+        let rate = parseFloat(document.getElementById('examSpeakRate').value) || 0.8;
+        let repeatCount = parseInt(document.getElementById('examRepeatCount').value) || 1;
+
+        let utteranceCount = 0;
+        function speakSingle() {
+            let utterance = new SpeechSynthesisUtterance(item.english);
+            let chosenVoice = getSelectedVoice('en-US');
+            if (chosenVoice) utterance.voice = chosenVoice;
+            utterance.lang = 'en-US';
+            
+            utterance.rate = rate;
+            let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+            utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
+
+            utterance.onend = () => {
+                utteranceCount++;
+                if (utteranceCount < repeatCount) {
+                    setTimeout(speakSingle, 1000);
+                } else {
+                    document.getElementById('examInputEng').disabled = false;
+                    document.getElementById('examInputChi').disabled = false;
+                    document.getElementById('examSubmitBtn').disabled = false;
+                    document.getElementById('examInputEng').focus();
+                    
+                    examTimeLeft = parseInt(document.getElementById('examAnswerTime').value) || 26;
+                    document.getElementById('timeLeft').innerText = examTimeLeft;
+                    examTimerId = setInterval(() => {
+                        examTimeLeft--;
+                        document.getElementById('timeLeft').innerText = examTimeLeft;
+                        if (examTimeLeft <= 0) { clearInterval(examTimerId); submitExamAnswer(); }
+                    }, 1000);
+                }
+            };
+            synth.speak(utterance);
+        }
+        speakSingle();
+    }
+
+    function submitExamAnswer() {
+        if (examTimerId) clearInterval(examTimerId);
+        let userEng = document.getElementById('examInputEng').value.trim();
+        let userChi = document.getElementById('examInputChi').value.trim();
+
+        let currentItem = wordsData[currentWordIndex];
+        
+        let engMatch = (userEng.toLowerCase() === currentItem.english.toLowerCase());
+        let chiMatch = (!currentItem.chinese || userChi === currentItem.chinese);
+
+        let isCorrect = engMatch && chiMatch;
+
+        examResults.push({ 
+            english: currentItem.english, 
+            chinese: currentItem.chinese, 
+            userEng, 
+            userChi, 
+            isCorrect,
+            engMatch,
+            chiMatch
+        });
+
+        currentWordIndex++;
+
+        document.getElementById('examInputEng').value = '';
+        document.getElementById('examInputChi').value = '';
+        setExamInputsDisabled(true);
+        
+        let pauseSec = parseInt(document.getElementById('examPauseTime').value);
+        if (isNaN(pauseSec)) pauseSec = 1;
+        setTimeout(playExamQuestion, pauseSec * 1000);
+    }
+
+    function setExamInputsDisabled(disabled) {
+        document.getElementById('examInputEng').disabled = disabled;
+        document.getElementById('examInputChi').disabled = disabled;
+        document.getElementById('examSubmitBtn').disabled = disabled;
+    }
+
+    function stopExamMode() {
+        isPlaying = false; isExamRunning = false; synth.cancel();
+        if (examTimerId) clearInterval(examTimerId);
+        releaseWakeLock();
+        document.getElementById('examArea').style.display = 'none';
+        document.getElementById('examRangeContainer').style.display = 'block';
+        document.getElementById('examStatsBar').style.display = 'flex';
+        document.getElementById('examPreviewContainer').style.display = 'block';
+        document.getElementById('examAdvancedBtnContainer').style.display = 'block';
+        document.getElementById('startExamBtn').style.display = 'block';
+        document.getElementById('examBackBtn').style.display = 'inline-flex';
+    }
+
+    function finishExam() {
+        isPlaying = false; isExamRunning = false; synth.cancel();
+        if (examTimerId) clearInterval(examTimerId);
+        releaseWakeLock();
+        document.getElementById('examArea').style.display = 'none';
+        document.getElementById('examRangeContainer').style.display = 'block';
+        document.getElementById('examStatsBar').style.display = 'flex';
+        document.getElementById('examPreviewContainer').style.display = 'block';
+        document.getElementById('examAdvancedBtnContainer').style.display = 'block';
+        document.getElementById('startExamBtn').style.display = 'block';
+        document.getElementById('examBackBtn').style.display = 'inline-flex';
+        
+        let total = examResults.length;
+        if (total === 0) return;
+
+        let correct = examResults.filter(r => r.isCorrect).length;
+        let score = total > 0 ? Math.round((correct / total) * 100) : 0;
+        
+        // 觸發聽力測驗雞塊任務檢查
+        triggerTaskCheck('listening_exam_done', { total, score });
+
+        let newRecord = { date: new Date().toLocaleString(), range: currentExamRanges, total, score, results: examResults };
+        examHistory.unshift(newRecord);
+        
+        if (examHistory.length > 10) {
+            examHistory = examHistory.slice(0, 10);
+        }
+
+        localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
+        triggerAutoSaveToCloud();
+
+        let html = `<div class="result-box">
+            <div style="font-weight:700; margin-bottom:12px; font-size:15px; color:var(--text-main);">※ 聽力測驗結束！以下為您的測驗結果：</div>
+            <div style="font-weight:600; margin-bottom:14px; color:var(--primary);">📊 成績統計：得分 ${score} 分 (總題數 ${total} 題，完全答對 ${correct} 題)</div>`;
+        
+        examResults.forEach((r, i) => {
+            let titleColor = r.isCorrect ? '#10B981' : '#EF4444';
+            let icon = r.isCorrect ? '✅' : '❌';
+            let correctInfo = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')})`;
+            
+            let engDisplay = r.engMatch ? `<span style="color:#10B981;">${escapeHTML(r.userEng || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userEng || '[(未填)]')}</span>`;
+            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '[(未填)]')}</span>`;
+            let userAnsInfo = `${engDisplay} / ${chiDisplay}`;
+
+            html += `<div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
+                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${escapeHTML(r.english)} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
+                <div style="font-size:13.5px; color:var(--text-muted);">您的回答：${userAnsInfo}</div>
+            </div>`;
+        });
+        html += `</div>`;
+        
+        document.getElementById('modalResultBody').innerHTML = html;
+        document.getElementById('examResultModal').style.display = 'block';
+    }
+
+    function handleInputKeyDown(e, type) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (type === 'eng') document.getElementById('examInputChi').focus();
+            else submitExamAnswer();
+        }
+    }
+
+    function openSystemSettingsModal() { 
+        document.getElementById('systemSettingsModal').style.display = 'block'; 
+        let volSlider = document.getElementById('systemVolume');
+        if (volSlider) updateSliderProgress(volSlider);
+    }
+    function closeSystemSettingsModal() { document.getElementById('systemSettingsModal').style.display = 'none'; }
+    function openAboutModal() { document.getElementById('aboutModal').style.display = 'block'; }
+    function closeAboutModal() { document.getElementById('aboutModal').style.display = 'none'; }
+    function openExportModal() { 
+        let group = document.getElementById('exportListsCheckboxGroup');
+        if (group) {
+            group.innerHTML = '';
+            wordLists.forEach((l, idx) => {
+                group.innerHTML += `<label class="checkbox-item-row"><input type="checkbox" value="${idx}" checked> ${idx + 1}: ${escapeHTML(l.title)}</label>`;
+            });
+        }
+        document.getElementById('exportModal').style.display = 'block'; 
+    }
+    function closeExportModal() { document.getElementById('exportModal').style.display = 'none'; }
+    function toggleAllExportCheckboxes(check) {
+        document.querySelectorAll('#exportListsCheckboxGroup input[type="checkbox"]').forEach(c => c.checked = check);
+    }
+    function confirmExportTxtFiles() {
+        let chks = document.querySelectorAll('#exportListsCheckboxGroup input[type="checkbox"]:checked');
+        if (chks.length === 0) { alert('⚠️ 請至少勾選一個題庫！'); return; }
+        chks.forEach(chk => {
+            let idx = parseInt(chk.value);
+            let l = wordLists[idx];
+            if (l && l.content) {
+                let blob = new Blob([l.content], { type: 'text/plain;charset=utf-8' });
+                let url = URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                a.href = url;
+                a.download = `${l.title || ('Database_' + (idx + 1))}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+        closeExportModal();
+    }
+    
+    async function openHistoryModal() { 
+        if (accessToken && isCloudSyncActive) {
+            await loadDataFromGoogleDrive();
+        }
+        openHistoryModalContent(); 
+        document.getElementById('historyModal').style.display = 'block'; 
+        setTimeout(() => {
+            renderScoreChart('listeningScoreCanvas', examHistory);
+            renderScoreChart('cardScoreCanvas', cardExamHistory);
+        }, 80);
+    }
+    function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
+
+    function openAdvancedModal() { document.getElementById('advancedModal').style.display = 'block'; }
+    function closeAdvancedModal() { document.getElementById('advancedModal').style.display = 'none'; }
+    function openExamAdvancedModal() { document.getElementById('examAdvancedModal').style.display = 'block'; }
+    function closeExamAdvancedModal() { document.getElementById('examAdvancedModal').style.display = 'none'; }
+    function closeExamResultModal() { document.getElementById('examResultModal').style.display = 'none'; }
+
+    function switchHistoryTab(tabName) {
+        const cardListening = document.getElementById('cardListeningTab');
+        const cardWord = document.getElementById('cardWordTab');
+        const panelListening = document.getElementById('panelListeningHistory');
+        const panelWord = document.getElementById('panelWordHistory');
+
+        if (tabName === 'listening') {
+            cardListening.classList.add('active');
+            cardWord.classList.remove('active');
+            panelListening.classList.add('active');
+            panelWord.classList.remove('active');
+        } else {
+            cardWord.classList.add('active');
+            cardListening.classList.remove('active');
+            panelWord.classList.add('active');
+            panelListening.classList.remove('active');
+        }
+
+        setTimeout(() => {
+            if (tabName === 'listening') renderScoreChart('listeningScoreCanvas', examHistory);
+            else renderScoreChart('cardScoreCanvas', cardExamHistory);
+        }, 50);
+    }
+
+    function openHistoryModalContent() {
+        let targetSelectOptions = '';
+        wordLists.forEach((l, idx) => {
+            targetSelectOptions += `<option value="${idx}">${idx + 1}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/100)</option>`;
+        });
+        let targetSelLis = document.getElementById('targetListSelectorListening');
+        let targetSelCard = document.getElementById('targetListSelectorCard');
+        if (targetSelLis) targetSelLis.innerHTML = targetSelectOptions;
+        if (targetSelCard) targetSelCard.innerHTML = targetSelectOptions;
+
+        let listeningHistoryHtml = '';
+        if (examHistory.length === 0) {
+            listeningHistoryHtml = `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 13px;">尚無聽力測驗紀錄</div>`;
+        } else {
+            examHistory.forEach((h, hIdx) => {
+                let wrongCount = h.results ? h.results.filter(r => !r.isCorrect).length : 0;
+                listeningHistoryHtml += `
+                    <div class="history-card">
+                        <div class="history-header" data-on-click='[["toggleHistoryDetail",[${hIdx}]]]'>
+                            <span>📅 ${escapeHTML(h.date)} ｜ 範圍: ${escapeHTML(h.range || '預設範圍')}</span>
+                            <span style="color:var(--primary); font-weight:700;">🎯 ${escapeHTML(h.score)}分 (共${escapeHTML(h.total)}題/錯${wrongCount}題) <span id="arrow_${hIdx}">▼</span></span>
+                        </div>
+                        <div class="history-detail" id="detail_${hIdx}">
+                `;
+                if (h.results) {
+                    h.results.forEach((r, rIdx) => {
+                        let icon = r.isCorrect ? '✅' : '❌';
+                        let color = r.isCorrect ? '#10B981' : '#EF4444';
+                        
+                        let engDisplay = r.engMatch ? `<span style="color:#10B981;">${escapeHTML(r.userEng || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userEng || '未填')}</span>`;
+                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '未填')}</span>`;
+
+                        let correctStr = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')})`;
+                        let userStr = `${engDisplay} / ${chiDisplay}`;
+
+                        let ansText = r.isCorrect ? correctStr : `正確答案 ${correctStr} ｜ 您的回答: ${userStr}`;
+                        listeningHistoryHtml += `<div style="color:${color}; margin-bottom:6px;">${icon} 第${rIdx+1}題：${ansText}</div>`;
+                    });
+                }
+                listeningHistoryHtml += `</div></div>`;
+            });
+        }
+        let examHistoryListEl = document.getElementById('examHistoryList');
+        if (examHistoryListEl) examHistoryListEl.innerHTML = listeningHistoryHtml;
+
+        let cardHistoryHtml = '';
+        if (cardExamHistory.length === 0) {
+            cardHistoryHtml = `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 13px;">尚無字卡測驗紀錄</div>`;
+        } else {
+            cardExamHistory.forEach((h, hIdx) => {
+                let wrongCount = h.results ? h.results.filter(r => !r.isCorrect).length : 0;
+                cardHistoryHtml += `
+                    <div class="history-card">
+                        <div class="history-header" data-on-click='[["toggleCardHistoryDetail",[${hIdx}]]]'>
+                            <span>📅 ${escapeHTML(h.date)} ｜ 範圍: ${escapeHTML(h.range || '預設範圍')}</span>
+                            <span style="color:#10B981; font-weight:700;">🎯 ${escapeHTML(h.score)}分 (共${escapeHTML(h.total)}題/錯${wrongCount}題) <span id="cardArrow_${hIdx}">▼</span></span>
+                        </div>
+                        <div class="history-detail" id="cardDetail_${hIdx}">
+                `;
+                if (h.results) {
+                    h.results.forEach((r, rIdx) => {
+                        let icon = r.isCorrect ? '✅' : '❌';
+                        let color = r.isCorrect ? '#10B981' : '#EF4444';
+                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '未填')}</span>`;
+                        let posDisplay = r.posMatch ? `<span style="color:#10B981;">${escapeHTML(r.userPos || '未選')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userPos || '未選')}</span>`;
+                        let correctStr = `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')}) ${r.pos ? '/ ' + escapeHTML(r.pos) : ''}`;
+                        let userStr = `${chiDisplay} ${r.pos ? '/ ' + posDisplay : ''}`;
+                        let ansText = r.isCorrect ? correctStr : `正確答案 ${correctStr} ｜ 您的回答: ${userStr}`;
+                        cardHistoryHtml += `<div style="color:${color}; margin-bottom:4px;">${icon} 第${rIdx+1}題：${ansText}</div>`;
+                    });
+                }
+                cardHistoryHtml += `</div></div>`;
+            });
+        }
+        let cardExamHistoryListEl = document.getElementById('cardExamHistoryList');
+        if (cardExamHistoryListEl) cardExamHistoryListEl.innerHTML = cardHistoryHtml;
+
+        let listeningWrongMap = {};
+        examHistory.forEach(h => {
+            if (h.results) {
+                h.results.forEach(r => {
+                    if (!r.isCorrect) {
+                        let key = r.english.toLowerCase();
+                        if (!listeningWrongMap[key]) {
+                            listeningWrongMap[key] = { english: r.english, chinese: r.chinese, count: 0 };
+                        }
+                        listeningWrongMap[key].count++;
+                    }
+                });
+            }
+        });
+        let listeningWrongArr = Object.values(listeningWrongMap).sort((a, b) => b.count - a.count).slice(0, 20);
+        let listeningWrongHtml = '';
+        if (listeningWrongArr.length === 0) {
+            listeningWrongHtml = `<div style="text-align: center; color: var(--text-muted); padding: 10px; font-size: 12.5px;">目前沒有聽力錯題紀錄</div>`;
+        } else {
+            listeningWrongArr.forEach((w, idx) => {
+                listeningWrongHtml += `<div class="error-word-item">
+                    <input type="checkbox" checked value="${escapeHTML(w.english)}"> 
+                    <span>${idx + 1}. <b>${escapeHTML(w.english)}</b> (${escapeHTML(w.chinese || '')}) — <span class="error-count">錯誤 ${escapeHTML(w.count)} 次</span></span>
+                </div>`;
+            });
+        }
+        let listeningTopWrongWordsEl = document.getElementById('listeningTopWrongWords');
+        if (listeningTopWrongWordsEl) listeningTopWrongWordsEl.innerHTML = listeningWrongHtml;
+
+        let cardWrongMap = {};
+        cardExamHistory.forEach(h => {
+            if (h.results) {
+                h.results.forEach(r => {
+                    if (!r.isCorrect) {
+                        let key = r.english.toLowerCase();
+                        if (!cardWrongMap[key]) {
+                            cardWrongMap[key] = { english: r.english, chinese: r.chinese, count: 0 };
+                        }
+                        cardWrongMap[key].count++;
+                    }
+                });
+            }
+        });
+        let cardWrongArr = Object.values(cardWrongMap).sort((a, b) => b.count - a.count).slice(0, 20);
+        let cardWrongHtml = '';
+        if (cardWrongArr.length === 0) {
+            cardWrongHtml = `<div style="text-align: center; color: var(--text-muted); padding: 10px; font-size: 12.5px;">目前沒有字卡測驗錯題紀錄</div>`;
+        } else {
+            cardWrongArr.forEach((w, idx) => {
+                cardWrongHtml += `<div class="error-word-item">
+                    <input type="checkbox" checked value="${escapeHTML(w.english)}"> 
+                    <span>${idx + 1}. <b>${escapeHTML(w.english)}</b> (${escapeHTML(w.chinese || '')}) — <span class="error-count">錯誤 ${escapeHTML(w.count)} 次</span></span>
+                </div>`;
+            });
+        }
+        let cardTopWrongWordsEl = document.getElementById('cardTopWrongWords');
+        if (cardTopWrongWordsEl) cardTopWrongWordsEl.innerHTML = cardWrongHtml;
+    }
+
+    function toggleHistoryDetail(idx) {
+        let detail = document.getElementById(`detail_${idx}`);
+        let arrow = document.getElementById(`arrow_${idx}`);
+        if (detail.style.display === 'block') {
+            detail.style.display = 'none';
+            arrow.innerText = '▼';
+        } else {
+            detail.style.display = 'block';
+            arrow.innerText = '▲';
+        }
+    }
+
+    function toggleCardHistoryDetail(idx) {
+        let detail = document.getElementById(`cardDetail_${idx}`);
+        let arrow = document.getElementById(`cardArrow_${idx}`);
+        if (detail.style.display === 'block') {
+            detail.style.display = 'none';
+            arrow.innerText = '▼';
+        } else {
+            detail.style.display = 'block';
+            arrow.innerText = '▲';
+        }
+    }
+
+    function renderScoreChart(canvasId, dataList) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * window.devicePixelRatio;
+        canvas.height = rect.height * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+        const width = rect.width;
+        const height = rect.height;
+
+        ctx.clearRect(0, 0, width, height);
+
+        if (!dataList || dataList.length === 0) {
+            ctx.fillStyle = "#94A3B8";
+            ctx.font = "13px Inter, sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("尚無歷史成績資料", width / 2, height / 2);
+            return;
+        }
+
+        const scores = dataList.slice(0, 10).reverse().map(d => d.score);
+        const padding = 28;
+        const chartWidth = width - padding * 2;
+        const chartHeight = height - padding * 2;
+
+        ctx.strokeStyle = "#E2E8F0";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+
+        [0, 50, 100].forEach(scoreVal => {
+            let y = height - padding - (scoreVal / 100) * chartHeight;
+            ctx.beginPath();
+            ctx.moveTo(padding, y);
+            ctx.lineTo(width - padding, y);
+            ctx.stroke();
+        });
+
+        ctx.setLineDash([]);
+
+        const points = scores.map((score, index) => {
+            const x = scores.length === 1 ? width / 2 : padding + (index / (scores.length - 1)) * chartWidth;
+            const y = height - padding - (score / 100) * chartHeight;
+            return { x, y, score };
+        });
+
+        if (points.length > 1) {
+            ctx.beginPath();
+            ctx.strokeStyle = "#6366F1";
+            ctx.lineWidth = 3;
+            points.forEach((p, idx) => {
+                if (idx === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            });
+            ctx.stroke();
+        }
+
+        points.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = "#6366F1";
+            ctx.fill();
+            ctx.strokeStyle = "#FFFFFF";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            const isPowerSaving = document.body.classList.contains('power-saving-mode');
+            ctx.fillStyle = isPowerSaving ? "#C7D2FE" : "#4F46E5";
+            
+            ctx.font = "bold 15px Inter, sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(p.score, p.x, p.y - 12);
+        });
+    }
+
+    function saveSelectedWrongWords(type) {
+        let selectorId = type === 'listening' ? 'targetListSelectorListening' : 'targetListSelectorCard';
+        let containerId = type === 'listening' ? 'listeningTopWrongWords' : 'cardTopWrongWords';
+        
+        let targetListIdx = parseInt(document.getElementById(selectorId).value);
+        let checkboxes = document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`);
+        
+        if (checkboxes.length === 0) {
+            alert('⚠️ 請至少勾選一項錯題單字！');
+            return;
+        }
+
+        let addedCount = 0;
+        checkboxes.forEach(chk => {
+            let wordText = chk.value;
+            let currentContent = wordLists[targetListIdx].content || '';
+            if (!currentContent.toLowerCase().includes(wordText.toLowerCase())) {
+                wordLists[targetListIdx].content = currentContent + (currentContent ? '\n' : '') + wordText;
+                addedCount++;
+            }
+        });
+
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        triggerAutoSaveToCloud();
+        alert(`✅ 成功將 ${addedCount} 個錯題單字儲存至「${wordLists[targetListIdx].title}」！`);
+    }
+
+    function updateVolumeDisplay() {
+        document.getElementById('volumeValue').innerText = document.getElementById('systemVolume').value + '%';
+    }
+
+    function updateSpeedDisplay(sliderId, displayId) {
+        let slider = document.getElementById(sliderId);
+        let val = parseFloat(slider.value).toFixed(2);
+        document.getElementById(displayId).innerText = val + ' 倍';
+        updateSliderProgress(slider);
+    }
+
+    function togglePowerSavingMode() {
+        let isPowerSaving = document.getElementById('powerSavingToggle').checked;
+        document.body.classList.toggle('power-saving-mode', isPowerSaving);
+        saveSystemSettings();
+    }
+
+    function saveSystemSettings() {
+        let settings = {
+            volume: document.getElementById('systemVolume').value,
+            powerSaving: document.getElementById('powerSavingToggle').checked
+        };
+        localStorage.setItem('dictation_system_settings', JSON.stringify(settings));
+    }
+
+    function loadSystemSettings() {
+        let saved = localStorage.getItem('dictation_system_settings');
+        if (saved) {
+            let s = JSON.parse(saved);
+            if (s.volume) document.getElementById('systemVolume').value = s.volume;
+            if (s.powerSaving) {
+                document.getElementById('powerSavingToggle').checked = true;
+                document.body.classList.add('power-saving-mode');
+            }
+        }
+    }
+
+    function saveAppSettings() {
+        let settings = {
+            onlyStarred: document.getElementById('onlyStarred').checked,
+            enableShuffle: document.getElementById('enableShuffle').checked,
+            enableSpell: document.getElementById('enableSpell').checked,
+            enableChinese: document.getElementById('enableChinese').checked,
+            enablePOS: document.getElementById('enablePOS').checked,
+            enableLoop: document.getElementById('enableLoop').checked,
+            speakRate: document.getElementById('speakRate').value,
+            pauseTime: document.getElementById('pauseTime').value,
+            repeatCount: document.getElementById('repeatCount').value
+        };
+        localStorage.setItem('dictation_app_settings', JSON.stringify(settings));
+    }
+
+    function loadAppSettings() {
+        let saved = localStorage.getItem('dictation_app_settings');
+        if (saved) {
+            let s = JSON.parse(saved);
+            if (s.onlyStarred !== undefined) document.getElementById('onlyStarred').checked = s.onlyStarred;
+            if (s.enableShuffle !== undefined) document.getElementById('enableShuffle').checked = s.enableShuffle;
+            if (s.enableSpell !== undefined) document.getElementById('enableSpell').checked = s.enableSpell;
+            if (s.enableChinese !== undefined) document.getElementById('enableChinese').checked = s.enableChinese;
+            if (s.enablePOS !== undefined) document.getElementById('enablePOS').checked = s.enablePOS;
+            if (s.enableLoop !== undefined) document.getElementById('enableLoop').checked = s.enableLoop;
+            if (s.speakRate !== undefined) {
+                let slider = document.getElementById('speakRate');
+                slider.value = s.speakRate;
+                updateSpeedDisplay('speakRate', 'speedValue');
+                updateSliderProgress(slider);
+            }
+            if (s.pauseTime !== undefined) document.getElementById('pauseTime').value = s.pauseTime;
+            if (s.repeatCount !== undefined) document.getElementById('repeatCount').value = s.repeatCount;
+        }
+    }
+
+    function saveExamAppSettings() {
+        let settings = {
+            examOnlyStarred: document.getElementById('examOnlyStarred').checked,
+            examQuestionCount: document.getElementById('examQuestionCount').value,
+            examSpeakRate: document.getElementById('examSpeakRate').value,
+            examPauseTime: document.getElementById('examPauseTime').value,
+            examAnswerTime: document.getElementById('examAnswerTime').value,
+            examRepeatCount: document.getElementById('examRepeatCount').value
+        };
+        localStorage.setItem('dictation_exam_app_settings', JSON.stringify(settings));
+    }
+
+    function loadExamAppSettings() {
+        let saved = localStorage.getItem('dictation_exam_app_settings');
+        if (saved) {
+            let s = JSON.parse(saved);
+            if (s.examOnlyStarred !== undefined) document.getElementById('examOnlyStarred').checked = s.examOnlyStarred;
+            if (s.examQuestionCount !== undefined) document.getElementById('examQuestionCount').value = s.examQuestionCount;
+            if (s.examSpeakRate !== undefined) {
+                let slider = document.getElementById('examSpeakRate');
+                slider.value = s.examSpeakRate;
+                updateSpeedDisplay('examSpeakRate', 'examSpeedValue');
+                updateSliderProgress(slider);
+            }
+            if (s.examPauseTime !== undefined) document.getElementById('examPauseTime').value = s.examPauseTime;
+            if (s.examAnswerTime !== undefined) document.getElementById('examAnswerTime').value = s.examAnswerTime;
+            if (s.examRepeatCount !== undefined) document.getElementById('examRepeatCount').value = s.examRepeatCount;
+        }
+    }
+
+    function verifyDevPassword() {
+          if (document.getElementById('devPasswordInput').value === 'freddy116') {
+            sessionStorage.setItem('dev_unlocked', 'true');
+            document.getElementById('devLoginPanel').style.display = 'none';
+            document.getElementById('devContentPanel').style.display = 'flex';
+            alert('🔓 開發者模式解鎖成功！');
+          } else { alert('❌ 密碼錯誤！'); }
+    }
+
+    function runStressTest() { alert('壓力測試執行中'); }
+    function clearAllWordListsData() { wordLists.forEach(l => l.content = ''); alert('題庫已清空'); }
+    function clearAllExamHistoryData() { 
+        examHistory = []; 
+        cardExamHistory = [];
+        localStorage.removeItem('dictation_exam_history'); 
+        localStorage.removeItem('dictation_card_exam_history');
+        alert('所有考試紀錄已清空'); 
+    }
+    function loadInitialSettings() { if(confirm("確定重設？")) location.reload(); }
+
+
+    // ═════════════════════════════════════════════════════════════
+    // 事件委派：取代原本寫在 HTML 裡的 onclick / onchange 等 inline 事件
+    // HTML 以 data-on-click='[["函式名稱",[參數...]]]' 描述要呼叫什麼
+    // 特殊參數："$this" = 觸發的元素、"$event" = 事件物件、"$value" = 元素的 value
+    // 只有登記在 INLINE_ACTIONS 的函式能被呼叫（白名單）
+    // ═════════════════════════════════════════════════════════════
+    const INLINE_ACTIONS = {
+        addNewWordList,
+        backToFlashcardSetup,
+        backToHome,
+        backToHomeFromExam,
+        backToListFromDetail,
+        claimChickenReward,
+        clearAllExamHistoryData,
+        clearAllWordListsData,
+        clearListContentFromMenu,
+        closeAboutModal,
+        closeAdvancedModal,
+        closeChickenRewardModal,
+        closeExamAdvancedModal,
+        closeExamResultModal,
+        closeExportModal,
+        closeHistoryModal,
+        closeSystemSettingsModal,
+        confirmExportTxtFiles,
+        deleteListFromMenu,
+        finishCardExamSession,
+        finishExam,
+        goToCardExamPage,
+        goToEditorPage,
+        goToExamPage,
+        goToFlashcardPage,
+        goToPracticePage,
+        handleAuthClick,
+        handleCardExamKeyDown,
+        handleEditorSearch,
+        handleEditorTextareaInput,
+        handleInputKeyDown,
+        hideInAppBrowserWarning,
+        loadInitialSettings,
+        nextFlashcard,
+        openAboutModal,
+        openAdvancedModal,
+        openCardExamSettingsModal,
+        openChickenRewardModal,
+        openEditorDetail,
+        openExamAdvancedModal,
+        openExportModal,
+        openFlashcardSettingsModal,
+        openHistoryModal,
+        openSystemSettingsModal,
+        playCurrentFlashcardAudio,
+        prevFlashcard,
+        renameListTitleFromMenu,
+        runStressTest,
+        saveAndStayInEditor,
+        saveAppSettings,
+        saveCardExamSettings,
+        saveExamAppSettings,
+        saveFlashcardSettings,
+        saveSelectedWrongWords,
+        saveSystemSettings,
+        sortCardExamPreview,
+        sortEditorContent,
+        sortExamWordListContent,
+        sortFlashcardPreview,
+        sortWordListContent,
+        startCardExamSession,
+        startExamMode,
+        startFlashcardSession,
+        submitCardExamAnswer,
+        submitExamAnswer,
+        switchHistoryTab,
+        syncEditorScroll,
+        toggleAccordion,
+        toggleAllExportCheckboxes,
+        toggleCardExamCard,
+        toggleCardExamPreview,
+        toggleCardHistoryDetail,
+        toggleCurrentCardStar,
+        toggleDictation,
+        toggleDropdownMenu,
+        toggleExamCard,
+        toggleExamPreview,
+        toggleFlashcardCard,
+        toggleFlashcardPreview,
+        toggleHistoryDetail,
+        togglePauseDictation,
+        togglePowerSavingMode,
+        togglePracticeCard,
+        togglePreview,
+        toggleSubCard,
+        updateSliderProgress,
+        updateSpeedDisplay,
+        updateVolumeDisplay,
+        verifyDevPassword
+    };
+
+    const inlineCallCache = new Map();
+
+    function runInlineCalls(el, raw, ev) {
+        let calls = inlineCallCache.get(raw);
+        if (!calls) {
+            try { calls = JSON.parse(raw); } catch (e) { console.warn('data-on-* 格式錯誤:', raw); return false; }
+            inlineCallCache.set(raw, calls);
+        }
+        let stopped = false;
+        for (const [name, args] of calls) {
+            if (name === '$stop') { ev.stopPropagation(); stopped = true; continue; }
+            const fn = INLINE_ACTIONS[name];
+            if (typeof fn !== 'function') { console.warn('未登記的動作:', name); continue; }
+            fn(...args.map(a => a === '$this' ? el : a === '$event' ? ev : a === '$value' ? el.value : a));
+        }
+        return stopped;
+    }
+
+    // click / change / input / keydown 都會冒泡，從點擊目標一路往上找，行為與原本 inline 事件相同
+    ['click', 'change', 'input', 'keydown'].forEach(type => {
+        document.addEventListener(type, ev => {
+            let el = ev.target instanceof Element ? ev.target : null;
+            while (el) {
+                const raw = el.getAttribute('data-on-' + type);
+                if (raw) {
+                    // 讓 event.currentTarget 指向「掛有 data-on-* 的元素」，與原本 inline 事件一致
+                    Object.defineProperty(ev, 'currentTarget', { value: el, configurable: true });
+                    const stopped = runInlineCalls(el, raw, ev);
+                    delete ev.currentTarget;
+                    if (stopped) break;
+                }
+                el = el.parentElement;
+            }
+        });
+    });
+
+    // scroll 不會冒泡，改用捕獲階段監聽
+    document.addEventListener('scroll', ev => {
+        const el = ev.target instanceof Element ? ev.target : null;
+        const raw = el && el.getAttribute('data-on-scroll');
+        if (raw) runInlineCalls(el, raw, ev);
+    }, true);
