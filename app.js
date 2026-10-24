@@ -567,16 +567,16 @@
         if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
     }
     function handleLogout() {
-        if (accessToken) {
-            google.accounts.oauth2.revoke(accessToken, () => {
-                accessToken = null; isCloudSyncActive = false;
-                updateCloudStatusText(`💻 未登入`);
-                let authBtn = document.getElementById('cloudAuthBtn');
-                authBtn.innerText = '登入 Google 雲端'; authBtn.className = 'cloud-btn';
-                authBtn.setAttribute('data-on-click', '[["handleAuthClick",[]]]');
-                alert("🔒 已登出 Google 帳號。");
-            });
-        }
+        if (!accessToken) return;
+        const tokenToRevoke = accessToken;
+        // 先在本機完成登出（不依賴網路），再盡力通知 Google 撤銷授權
+        accessToken = null; isCloudSyncActive = false;
+        updateCloudStatusText(`💻 未登入`);
+        let authBtn = document.getElementById('cloudAuthBtn');
+        authBtn.innerText = '登入 Google 雲端'; authBtn.className = 'cloud-btn';
+        authBtn.setAttribute('data-on-click', '[["handleAuthClick",[]]]');
+        try { google.accounts.oauth2.revoke(tokenToRevoke, () => {}); } catch (e) { console.warn('撤銷授權失敗（本機已登出）', e); }
+        alert("🔒 已登出 Google 帳號。");
     }
 
     async function loadDataFromGoogleDrive() {
@@ -2716,6 +2716,7 @@
         updateSpeedDisplay,
         updateVolumeDisplay,
         verifyDevPassword
+        handleLogout,
     };
 
     const inlineCallCache = new Map();
