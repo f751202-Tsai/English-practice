@@ -557,6 +557,19 @@
 
     function loadVoices() { voices = synth.getVoices(); }
 
+    function getLearningLanguage() {
+        let langSelect = document.getElementById('learningLanguage');
+        return langSelect ? langSelect.value : 'en';
+    }
+
+    function getSelectedVoiceForLearning() {
+        let lang = getLearningLanguage();
+        let langCode = (lang === 'ko') ? 'ko-KR' : 'en-US';
+        if (voices.length === 0) voices = synth.getVoices();
+        let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
+        return standardVoice || null;
+    }    
+
     function getSelectedVoice(langCode) {
         if (voices.length === 0) voices = synth.getVoices();
         let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
@@ -1490,9 +1503,11 @@
     function playCurrentFlashcardAudio() {
         let word = flashcardActiveList[currentFcIndex].english;
         let utterance = new SpeechSynthesisUtterance(word);
-        let chosenVoice = getSelectedVoice('en-US');
+        let lang = getLearningLanguage();
+        let langCode = (lang === 'ko') ? 'ko-KR' : 'en-US';
+        let chosenVoice = getSelectedVoiceForLearning();
         if (chosenVoice) utterance.voice = chosenVoice;
-        utterance.lang = 'en-US';
+        utterance.lang = langCode;
         utterance.rate = parseFloat(document.getElementById('fcSpeakRate').value) || 0.8;
     
         let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
@@ -1869,8 +1884,9 @@
         if (item.onPlay) item.onPlay();
 
         let utterance = new SpeechSynthesisUtterance(item.text);
-        let langCode = item.isEng ? 'en-US' : 'zh-TW';
-        let chosenVoice = getSelectedVoice(langCode);
+        let learningLang = getLearningLanguage();
+        let langCode = item.isEng ? ((learningLang === 'ko') ? 'ko-KR' : 'en-US') : 'zh-TW';
+        let chosenVoice = item.isEng ? getSelectedVoiceForLearning() : getSelectedVoice('zh-TW');
 
         if (chosenVoice) utterance.voice = chosenVoice;
         utterance.lang = langCode;
@@ -1999,9 +2015,11 @@
         let utteranceCount = 0;
         function speakSingle() {
             let utterance = new SpeechSynthesisUtterance(item.english);
-            let chosenVoice = getSelectedVoice('en-US');
+            let learningLang = getLearningLanguage();
+            let langCode = (learningLang === 'ko') ? 'ko-KR' : 'en-US';
+            let chosenVoice = getSelectedVoiceForLearning();
             if (chosenVoice) utterance.voice = chosenVoice;
-            utterance.lang = 'en-US';
+            utterance.lang = langCode;
             
             utterance.rate = rate;
             let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
@@ -2516,7 +2534,8 @@
     function saveSystemSettings() {
         let settings = {
             volume: document.getElementById('systemVolume').value,
-            powerSaving: document.getElementById('powerSavingToggle').checked
+            powerSaving: document.getElementById('powerSavingToggle').checked,
+            learningLanguage: document.getElementById('learningLanguage').value
         };
         localStorage.setItem('dictation_system_settings', JSON.stringify(settings));
     }
@@ -2529,6 +2548,10 @@
             if (s.powerSaving) {
                 document.getElementById('powerSavingToggle').checked = true;
                 document.body.classList.add('power-saving-mode');
+            }
+            if (s.learningLanguage) {
+                let langSel = document.getElementById('learningLanguage');
+                if (langSel) langSel.value = s.learningLanguage;
             }
         }
     }
