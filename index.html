@@ -10,6 +10,7 @@
         font-src https://fonts.gstatic.com;
         img-src 'self' data:;
         connect-src 'self' https://www.googleapis.com https://accounts.google.com;
+        https://oauth2.googleapis.com;
         frame-src https://accounts.google.com;
         object-src 'none';
         base-uri 'self';
@@ -1316,9 +1317,9 @@
         
         <!-- ================= 🏠 首頁儀表板檢視 ================= -->
         <div id="homeDashboardView" class="app-view active">
-            <!-- 首頁左上角：雞塊獎勵按鈕 (圖2綠色框處) -->
-            <button class="chicken-reward-btn" data-on-click='[["openChickenRewardModal",[]]]' title="雞塊獎勵中心">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z' fill='%23F3A63B' stroke='%232B2118' stroke-width='3'/></svg>" class="chicken-icon-img" alt="雞塊">
+             <!-- 首頁左上角：雞塊獎勵按鈕 (圖2綠色框處) -->
+            <button class="chicken-reward-btn" data-on-click='[["openChickenRewardModal",[]]]' title="雞塊獎勵中心" style="background: #FFFFFF; border-color: #E2E8F0;">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='10 10 80 80'><path d='M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z' fill='%23F3A63B' stroke='%23C27803' stroke-width='3'/><path d='M 38 42 Q 43 45 40 50' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M 58 52 Q 62 58 56 64' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><circle cx='46' cy='38' r='2' fill='%23C27803'/><circle cx='54' cy='68' r='2' fill='%23C27803'/><circle cx='64' cy='42' r='2.5' fill='%23C27803'/><circle cx='34' cy='58' r='2' fill='%23C27803'/><circle cx='48' cy='52' r='2.5' fill='%23C27803'/></svg>" class="chicken-icon-img" alt="雞塊">
                 <div id="chickenRewardBadge" class="reward-badge-dot" style="display: none;">✓</div>
             </button>
 
@@ -2053,6 +2054,14 @@
                 <input type="range" id="systemVolume" min="0" max="100" value="100" data-on-input='[["updateVolumeDisplay",[]],["saveSystemSettings",[]],["updateSliderProgress",["$this"]]]' class="range-slider">
                 <span id="volumeValue" class="speed-val">100%</span>
             </div>
+        </div>
+
+        <div class="config-group" style="margin-top: 12px;">
+            <label for="learningLanguage" style="margin-top:0;">🌐 學習語言：</label>
+            <select id="learningLanguage" data-on-change='[["saveSystemSettings",[]]]' style="margin-top: 4px;">
+                <option value="en" selected>英文 (English)</option>
+                <option value="ko">韓文 (한국어)</option>
+            </select>
         </div>
 
         <div class="config-group">
