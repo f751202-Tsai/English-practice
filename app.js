@@ -907,6 +907,7 @@
     function initEditorListCards() {
         let container = document.getElementById('editorListCardContainer');
         if (!container) return;
+        document.querySelectorAll('body > .dropdown-menu').forEach(m => m.remove()); // 清掉搬到最外層的舊選單
         container.innerHTML = '';
         updateListQuotaBar();
 
@@ -943,26 +944,49 @@
     function toggleDropdownMenu(idx, event) {
         document.querySelectorAll('.dropdown-menu').forEach(m => {
             if (m.id !== `dropdownMenu_${idx}`) m.classList.remove('show');
-        });
+            });
 
         let menu = document.getElementById(`dropdownMenu_${idx}`);
         if (!menu) return;
 
-        let isShown = menu.classList.contains('show');
-        if (!isShown) {
-            let btnRect = event.currentTarget.getBoundingClientRect();
-            let containerRect = document.getElementById('editorListCardContainer').getBoundingClientRect();
-            
-            if (btnRect.bottom > containerRect.bottom - 150) {
-                menu.classList.add('drop-up');
-            } else {
-                menu.classList.remove('drop-up');
-            }
-            menu.classList.add('show');
-        } else {
+        if (menu.classList.contains('show')) {
             menu.classList.remove('show');
+            return;
         }
+
+        let btnRect = event.currentTarget.getBoundingClientRect();
+
+        // 搬到 <body> 最外層：避開外層容器的 overflow 裁切，以及桌面版整體放大(transform)造成的定位錯誤
+        if (menu.parentElement !== document.body) document.body.appendChild(menu);
+        let wrap = document.querySelector('.scale-wrapper');
+        let scale = (wrap && wrap.offsetWidth) ? (wrap.getBoundingClientRect().width / wrap.offsetWidth) : 1;
+        menu.style.transformOrigin = 'top left';
+        menu.style.transform = (Math.abs(scale - 1) > 0.01) ? `scale(${scale})` : '';
+
+        menu.classList.remove('drop-up');
+        menu.classList.add('show');                       // 先顯示才量得到選單大小
+
+        let menuH = menu.offsetHeight * scale, menuW = menu.offsetWidth * scale, gap = 4, edge = 8;
+        let spaceBelow = window.innerHeight - btnRect.bottom;
+        let spaceAbove = btnRect.top;
+        let top;
+        if (spaceBelow >= menuH + gap + edge || spaceBelow >= spaceAbove) {
+            top = btnRect.bottom + gap;                   // 下方放得下（或下方空間較大）→ 往下展開
+        } else {
+            top = btnRect.top - menuH - gap;              // 否則往上展開
+        }
+        top = Math.max(edge, Math.min(top, window.innerHeight - menuH - edge));
+        let left = Math.max(edge, Math.min(btnRect.right - menuW, window.innerWidth - menuW - edge));
+        menu.style.top = top + 'px';
+        menu.style.left = left + 'px';
     }
+
+    // 選單是固定定位，捲動或改變視窗大小時直接關閉，避免懸在錯的位置
+    function closeAllDropdownMenus() {
+        document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
+    }
+    document.addEventListener('scroll', closeAllDropdownMenus, true);
+    window.addEventListener('resize', closeAllDropdownMenus);
 
     function openEditorDetail(idx) {
         lastSelectedList = idx;
