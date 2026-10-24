@@ -899,6 +899,8 @@
             bottom: 60px !important;
         }
         .dropdown-menu.show { display: block; }
+        /* 選單改為固定定位：不會被題庫清單或卡片外框的 overflow 切掉，位置由程式依按鈕計算 */
+        .dropdown-menu { position: fixed !important; right: auto !important; bottom: auto !important; top: 0; left: 0; }        
         .dropdown-item {
             padding: 10px 16px; font-size: 13.5px; font-weight: 600; color: var(--text-main); cursor: pointer;
             transition: background 0.15s; display: block; width: 100%; text-align: left; border: none; background: transparent;
@@ -1565,7 +1567,7 @@
                         <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
                 </button>
-                <div class="current-mode-indicator">🗂️ 字卡練習模式</div>
+                <div class="current-mode-indicator" data-t-en="🗂️ 英文字卡練習" data-t-ko="🗂️ 韓文字卡練習">🗂️ 英文字卡練習</div>
             </div>
 
             <div>
@@ -1658,7 +1660,7 @@
                         <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
                 </button>
-                <div class="current-mode-indicator">📋 字卡測驗模式</div>
+                <div class="current-mode-indicator" data-t-en="📋 英文字卡測驗" data-t-ko="📋 韓文字卡測驗">📋 英文字卡測驗</div>
             </div>
 
             <div>
@@ -1755,7 +1757,7 @@
                         <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
                 </button>
-                <div class="current-mode-indicator">🎧 聽力練習模式</div>
+                <div class="current-mode-indicator" data-t-en="🎧 英文聽力練習" data-t-ko="🎧 韓文聽力練習">🎧 英文聽力練習</div>
             </div>
 
             <div id="practiceRangeContainer">
@@ -1775,7 +1777,7 @@
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
                         </button>
-                        <label style="margin:0;">練習題庫預覽：</label>
+                        <label style="margin:0;" data-t-en="英文題庫預覽：" data-t-ko="韓文題庫預覽：">英文題庫預覽：</label>
                     </div>
 
                     <div style="display: flex; align-items: center; gap: 4px;">
@@ -1815,7 +1817,7 @@
                 </button>
                 <div class="current-mode-indicator">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
-                    聽力測驗模式
+                    <span data-t-en="英文聽力測驗" data-t-ko="韓文聽力測驗">英文聽力測驗</span>
                 </div>
             </div>
 
@@ -1836,7 +1838,7 @@
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
                         </button>
-                        <label style="margin:0;">測驗題庫預覽：</label>
+                        <label style="margin:0;" data-t-en="英文題庫預覽：" data-t-ko="韓文題庫預覽：">英文題庫預覽：</label>
                     </div>
 
                     <div style="display: flex; align-items: center; gap: 4px;">
