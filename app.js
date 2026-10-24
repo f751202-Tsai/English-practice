@@ -12,7 +12,11 @@
     const CLIENT_ID = '976805087499-l4auf66i1qkj91ba335jvgtk3b04a9av.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/drive.appdata'; 
     const FILENAME = 'english_dictation_lists_v2.json';
+    const SUPABASE_URL = 'https://uofxthfbcerayugaxefn.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_-WzDzNfADAl83FBpt2OsOg_vUV1b80s';
 
+    // 初始化 Supabase 客戶端
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let tokenClient, accessToken = null, isCloudSyncActive = false;
     let myDeviceId = localStorage.getItem('dictation_device_id');
     if (!myDeviceId) {
@@ -180,9 +184,54 @@
         }
     }
 
-    function saveChickenData() {
+    // 🍗 儲存雞塊資料（同時寫入本機 LocalStorage 與 Supabase 雲端）
+    async function saveChickenData() {
+        // 1. 存入本機
         localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
         updateChickenBadgeUI();
+
+        // 2. 同步寫入 Supabase 雲端資料庫
+        try {
+            // 這裡我們用固定的測試 ID (或你的裝置ID)，確保雲端有對應的資料列
+            const profileId = '00000000-0000-0000-0000-000000000001'; 
+            
+            const { error } = await supabaseClient
+                .from('user_profiles')
+                .upsert({ 
+                    id: profileId, 
+                    chicken_count: chickenData.count,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (error) {
+                console.error('⚠️ 雲端雞塊同步失敗:', error.message);
+            } else {
+                console.log('☁️ 雞塊數量已成功同步至 Supabase！當前數量:', chickenData.count);
+            }
+        } catch (err) {
+            console.error('⚠️ 寫入 Supabase 發生例外錯誤:', err);
+        }
+    }
+
+    // ☁️ 從 Supabase 雲端讀取雞塊資料
+    async function loadChickenFromSupabase() {
+        try {
+            const profileId = '00000000-0000-0000-0000-000000000001';
+            let { data, error } = await supabaseClient
+                .from('user_profiles')
+                .select('chicken_count')
+                .eq('id', profileId)
+                .single();
+
+            if (data && typeof data.chicken_count === 'number') {
+                chickenData.count = data.chicken_count;
+                localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
+                updateChickenBadgeUI();
+                console.log('☁️ 已從 Supabase 成功載入雲端雞塊數:', chickenData.count);
+            }
+        } catch (err) {
+            console.log('ℹ️ 尚無雲端紀錄或初次使用，使用本機雞塊資料。');
+        }
     }
 
     function updateChickenBadgeUI() {
@@ -348,7 +397,9 @@
     let touchEndX = 0;
     let isSwipeAction = false;
 
-    window.onload = function() {
+    window.onload = async function() {
+        // 🌟 優先從 Supabase 雲端讀取最新的雞塊數量
+        await loadChickenFromSupabase();        
         checkAndRedirectInAppBrowser();
         loadVoices();
         if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
@@ -3001,3 +3052,17 @@
         const raw = el && el.getAttribute('data-on-scroll');
         if (raw) runInlineCalls(el, raw, ev);
     }, true);
+
+    async function testSupabaseConnection() {
+    let { data, error } = await supabaseClient.from('user_profiles').select('*');
+    if (error) {
+        console.error('❌ Supabase 連線失敗:', error);
+    } else {
+        console.log('✅ 成功連線 Supabase 資料庫！目前資料：', data);
+    }
+}
+
+// 網頁載入時自動執行測試
+document.addEventListener('DOMContentLoaded', () => {
+    testSupabaseConnection();
+});
