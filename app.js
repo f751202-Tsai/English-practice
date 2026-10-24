@@ -89,7 +89,82 @@
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
+    // ── 雞塊「領取紀錄表」：解決多裝置重複領取 ──────────────────────────
+    // claims: { "2026-10-24": ["dailyLogin", "cardPractice"] }  每天每個任務最多記一筆
+    // legacyBase: 舊版累積的雞塊數（升級前的存量）
+    // 雞塊總數 = legacyBase + 領取紀錄筆數。兩台裝置各自領同一個任務，合併後只會算一次。
+    const CHICKEN_TASK_KEYS = ['dailyLogin', 'listeningPractice', 'cardPractice', 'listeningPerfect', 'cardPerfect'];
+
+    function recalcChickenCount(d) {
+        let n = Number(d.legacyBase) || 0;
+        Object.values(d.claims).forEach(arr => { n += arr.length; });
+        d.count = n;
+        return d;
+    }
+
+    // 把「今天哪些任務已領」從紀錄表同步回任務狀態
+    function syncClaimedFromLedger(d) {
+        const todayClaims = d.claims[d.lastDate] || [];
+        CHICKEN_TASK_KEYS.forEach(k => {
+            if (!d.tasks[k]) d.tasks[k] = { done: false, claimed: false };
+            d.tasks[k].claimed = todayClaims.includes(k);
+            if (d.tasks[k].claimed) d.tasks[k].done = true;
+        });
+        return d;
+    }
+
+    // 舊格式資料（沒有紀錄表）→ 自動升級，不會改變原本的雞塊數
+    function ensureChickenLedger(d) {
+        if (d.claims && typeof d.legacyBase === 'number') return d;
+        d.claims = {};
+        const claimedToday = [];
+        if (d.lastDate && d.tasks) {
+            CHICKEN_TASK_KEYS.forEach(k => { if (d.tasks[k] && d.tasks[k].claimed) claimedToday.push(k); });
+            if (claimedToday.length) d.claims[d.lastDate] = claimedToday;
+        }
+        d.legacyBase = Math.max(0, (Number(d.count) || 0) - claimedToday.length);
+        return recalcChickenCount(d);
+    }
+
+    // 合併兩份雞塊資料（本機 + 雲端）：領取紀錄取聯集、任務完成進度取「任一邊完成」
+    // 合併是可重複執行的（跑幾次結果都一樣），所以登入、進題庫頁時重複載入也沒問題
+    function mergeChickenData(local, cloud) {
+        local = ensureChickenLedger(local);
+        if (!cloud || typeof cloud !== 'object' || !cloud.tasks) return local;
+        cloud = ensureChickenLedger(JSON.parse(JSON.stringify(cloud)));
+
+        const today = getLocalDateStr();
+        let newest = (cloud.lastDate || '') > (local.lastDate || '') ? cloud.lastDate : local.lastDate;
+        if (newest > today) newest = local.lastDate; // 對方時鐘比我們快：不採用未來的日期，避免來回覆蓋
+
+        const merged = { count: 0, lastDate: newest, tasks: {}, claims: {},
+                         legacyBase: Math.max(local.legacyBase, cloud.legacyBase) };
+
+        new Set([...Object.keys(local.claims), ...Object.keys(cloud.claims)]).forEach(date => {
+            merged.claims[date] = [...new Set([...(local.claims[date] || []), ...(cloud.claims[date] || [])])];
+        });
+
+        CHICKEN_TASK_KEYS.forEach(k => {
+            const fromLocal = local.lastDate === newest && local.tasks[k] && local.tasks[k].done;
+            const fromCloud = cloud.lastDate === newest && cloud.tasks[k] && cloud.tasks[k].done;
+            merged.tasks[k] = { done: !!(fromLocal || fromCloud), claimed: false };
+        });
+
+        syncClaimedFromLedger(merged);
+        return recalcChickenCount(merged);
+    }
+
+    // 用來判斷「合併後是否比雲端多了東西，需要回傳雲端」
+    function chickenSignature(d) {
+        d = ensureChickenLedger(JSON.parse(JSON.stringify(d)));
+        const keys = Object.keys(d.claims).sort();
+        return d.legacyBase + '|' + keys.map(k => k + ':' + [...d.claims[k]].sort().join(',')).join(';');
+    }
+
+    ensureChickenLedger(chickenData);
+
     function checkDailyReset() {
+        ensureChickenLedger(chickenData);
         let todayStr = getLocalDateStr();
         if (chickenData.lastDate !== todayStr) {
             chickenData.lastDate = todayStr;
@@ -98,6 +173,8 @@
             chickenData.tasks.cardPractice = { done: false, claimed: false };
             chickenData.tasks.listeningPerfect = { done: false, claimed: false };
             chickenData.tasks.cardPerfect = { done: false, claimed: false };
+            syncClaimedFromLedger(chickenData);
+            recalcChickenCount(chickenData);
             saveChickenData();
             triggerAutoSaveToCloud(); // 重置後同步到雲端（未登入時只存本機）
         }
@@ -175,10 +252,15 @@
     }
 
     function claimChickenReward(taskKey) {
+        checkDailyReset();
         let t = chickenData.tasks[taskKey];
-        if (t.done && !t.claimed) {
+        if (t && t.done && !t.claimed) {
             t.claimed = true;
-            chickenData.count += 1;
+            // 寫進領取紀錄表（同一天同一任務只會有一筆），雞塊數由紀錄表算出
+            let day = chickenData.lastDate;
+            chickenData.claims[day] = chickenData.claims[day] || [];
+            if (!chickenData.claims[day].includes(taskKey)) chickenData.claims[day].push(taskKey);
+            recalcChickenCount(chickenData);
             saveChickenData();
             updateChickenModalUI();
             triggerAutoSaveToCloud();
@@ -526,9 +608,14 @@
                         localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
                     }
                     if (cloudData.chickenData) {
-                        chickenData = cloudData.chickenData;
+                        // 合併（不是直接覆蓋）：兩邊的領取紀錄取聯集，重複領取只算一次
+                        let cloudSig = chickenSignature(cloudData.chickenData);
+                        chickenData = mergeChickenData(chickenData, cloudData.chickenData);
                         localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
                         updateChickenBadgeUI();
+                        if (document.getElementById('chickenRewardModal').style.display === 'block') updateChickenModalUI();
+                        // 本機有雲端沒有的領取紀錄 → 傳回雲端
+                        if (chickenSignature(chickenData) !== cloudSig) setTimeout(triggerAutoSaveToCloud, 0);
                     }
                     initPracticeCardGrid();
                     initExamCardGrid();
@@ -556,6 +643,22 @@
             });
             let data = await res.json();
             let fileId = (data.files && data.files.length > 0) ? data.files[0].id : null;
+                        // 上傳前先讀雲端最新的雞塊資料並合併，避免蓋掉另一台裝置剛領的獎勵
+            if (fileId) {
+                try {
+                    let latest = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+                    if (latest.ok) {
+                        let remote = await latest.json();
+                        if (remote && remote.chickenData) {
+                            chickenData = mergeChickenData(chickenData, remote.chickenData);
+                            localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
+                            updateChickenBadgeUI();
+                        }
+                    }
+                } catch (e) { console.warn('上傳前合併雞塊資料失敗，仍會上傳本機資料', e); }
+            }
             
             let cloudData = { 
                 activeDeviceId: myDeviceId, 
