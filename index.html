@@ -570,7 +570,7 @@
         }
         .preview-collapse-container.collapsed { max-height: 0; opacity: 0; margin-bottom: 0; }
 
-        #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea {
+        #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea, #speakExamPreviewTextarea {
             height: 345px !important;
         }
 
@@ -1028,7 +1028,7 @@
 
         .tab-cards-container {
             display: flex;
-            gap: 14px;
+            gap: 10px;
             margin-bottom: 20px;
             padding-bottom: 16px;
             border-bottom: 1px solid var(--border-color);
@@ -1299,7 +1299,15 @@
         .shop-item:hover { transform: translateY(-2px); border-color: #FACC15; }
         .shop-item:active { transform: scale(0.97); }
         .shop-empty { border-style: dashed; background: transparent; opacity: 0.55; }
-        .shop-icon { width: 64px; height: 64px; object-fit: contain; margin-bottom: 2px; }
+        .shop-icon { 
+            width: 64px; 
+            height: 64px; 
+            object-fit: contain; 
+            margin-bottom: 2px;
+            background: #FFFFFF; /* 一般模式下背景改為白色 */
+            border-radius: 14px; /* 加上適當圓角 */
+            padding: 4px;        /* 讓內部圖示與邊框保持間距 */
+        }
         .shop-name { font-size: 13.5px; font-weight: 700; text-align: center; line-height: 1.25; }
         .shop-sub { font-size: 11.5px; color: var(--text-muted); text-align: center; line-height: 1.25; }
         .shop-price { margin-top: auto; display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 700; color: #B45309; background: #FEF3C7; border-radius: 12px; padding: 3px 12px; }
@@ -1311,7 +1319,11 @@
         body.power-saving-mode .shop-cell { background: #1B1E27 !important; border-color: #2B303C !important; }
         body.power-saving-mode .shop-empty { background: transparent !important; }
         body.power-saving-mode .shop-name { color: #FFFFFF !important; }
-        body.power-saving-mode .shop-icon { border-radius: 16px; box-shadow: 0 0 0 1px rgba(255,255,255,0.10); }
+        body.power-saving-mode .shop-icon { 
+            background: #1B1E27 !important; 
+            border-radius: 16px; 
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.10); 
+        }
         body.power-saving-mode .shop-price { background: #3B2F12 !important; color: #FCD34D !important; }
         body.power-saving-mode .shop-item.is-poor .shop-price, body.power-saving-mode .shop-item.is-maxed .shop-price { background: #2B303C !important; color: #94A3B8 !important; }
         @media screen and (max-width: 480px) {
@@ -1330,7 +1342,7 @@
         body.power-saving-mode .editor-word-counter.is-near { background: #3B2F12; color: #FCD34D; }
         body.power-saving-mode .editor-word-counter.is-full { background: #3F1D1D; color: #FCA5A5; }
         @media screen and (max-width: 400px) { .editor-word-counter { font-size: 12px; padding: 4px 8px; } }
-        
+
         /* 選擇要擴增的題庫 */
         #shopListPickerModal { overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .picker-list { display: flex; flex-direction: column; gap: 8px; max-height: 55vh; overflow-y: auto; }
@@ -1350,6 +1362,41 @@
         body.power-saving-mode .picker-plus { background: #3B2F12 !important; color: #FCD34D !important; }
         body.power-saving-mode .picker-item.is-maxed .picker-plus { background: #2B303C !important; color: #94A3B8 !important; }        
 
+
+        /* ── 🎤 朗讀測驗 ── */
+        .speak-mic-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 14px 0 4px; }
+        .speak-mic-btn {
+            width: 96px; height: 96px; border-radius: 50%; border: none; cursor: pointer;
+            background: linear-gradient(135deg, #6366F1, #4F46E5); color: #FFFFFF;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
+            touch-action: none; -webkit-user-select: none; user-select: none;
+            -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+        .speak-mic-btn.recording { background: linear-gradient(135deg, #F43F5E, #E11D48); transform: scale(1.08); animation: speakPulse 1.2s infinite; }
+        .speak-mic-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        @keyframes speakPulse {
+            0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.5); }
+            70% { box-shadow: 0 0 0 22px rgba(244, 63, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+        }
+        #speakMicHint { font-size: 13px; color: var(--text-muted); min-height: 38px; text-align: center; line-height: 1.5; padding: 0 6px; }
+        #speakMicHint.warn { color: #D97706; }
+        .speak-result-box { display: none; text-align: center; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-inner); padding: 12px; margin-top: 6px; font-size: 14px; color: var(--text-main); }
+        .speak-result-box.show { display: block; }
+        .speak-score { font-size: 40px; font-weight: 800; line-height: 1.1; }
+        .speak-score small { font-size: 15px; font-weight: 700; margin-left: 2px; }
+        .speak-score.pass { color: #10B981; }
+        .speak-score.fail { color: #EF4444; }
+        .speak-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; }
+        body.power-saving-mode .speak-result-box { background: #1B1E27 !important; border-color: #2B303C !important; color: #FFFFFF !important; }
+        body.power-saving-mode .speak-sub { color: #94A3B8 !important; }
+        .adventure-soon { text-align: center; padding: 36px 12px 28px; color: var(--text-muted); font-size: 14px; line-height: 1.8; }
+        .adventure-soon .adv-emoji { font-size: 56px; margin-bottom: 8px; }
+        .adventure-soon .adv-title { font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 6px; }
+        body.power-saving-mode .adventure-soon .adv-title { color: #FFFFFF !important; }
+
         @media screen and (max-width: 768px) {
             body { padding: 12px 8px; }
             .scale-wrapper, .scale-wrapper-practice { transform: none !important; margin: 0 0 40px 0 !important; max-width: 100% !important; width: 100% !important; }
@@ -1357,11 +1404,12 @@
             .current-mode-indicator { font-size: 13px; padding: 5px 12px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
             .modal-content { width: 95% !important; padding: 16px !important; margin: 2vh auto !important; }
             .modal-inner-padding { padding: 16px 12px !important; }
-            .tab-cards-container { gap: 8px; }
-            .tab-card-item { padding: 10px 8px; }
-            .history-item-icon-box { width: 32px; height: 32px; margin-right: 6px; }
-            .history-item-title { font-size: 13px; }
-            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea { height: clamp(140px, 22vh, 220px) !important; }
+            .tab-cards-container { gap: 6px; }
+            .tab-card-item { flex-direction: column; justify-content: center; gap: 4px; padding: 8px 4px; min-width: 0; }
+            .history-item-icon-box { width: 30px; height: 30px; margin-right: 0; }
+            .history-item-content { flex: 0 1 auto; width: 100%; }
+            .history-item-title { font-size: 13px; text-align: center; }
+            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea, #speakExamPreviewTextarea { height: clamp(140px, 22vh, 220px) !important; }
             .editor-wrapper { height: clamp(180px, 26vh, 240px) !important; }
         }
 
@@ -1376,9 +1424,11 @@
 <body>
 
 <div id="inAppBrowserWarning" style="display:none;">
-    <h3>⚠️ 建議使用外部瀏覽器開啟</h3>
-    <p>偵測到您目前使用的是 LINE 或其他 App 的內嵌網頁，這會導致<b>語音無法播放</b>及<b>Google 登入白畫面</b>！</p>
-    <button class="action-btn btn-start" style="margin-top: 20px; max-width: 250px;" data-on-click='[["hideInAppBrowserWarning",[]]]'>我知道了，繼續使用</button>
+    <h3>⚠️ 請改用 Safari 開啟</h3>
+    <p>偵測到您目前使用的是 LINE、Facebook、Instagram 等 App 內嵌的網頁，這會導致<b>語音無法播放</b>、<b>麥克風無法使用</b>及<b>Google 登入出錯</b>！</p>
+    <p style="margin-top: 14px;">請點畫面角落的「⋯」或分享圖示，選擇<b>「在 Safari 中開啟」</b>；<br>或先複製網址，再貼到 Safari。</p>
+    <button class="action-btn btn-start" style="margin: 20px auto 0; max-width: 250px;" data-on-click='[["copyAppUrl",[]]]'>📋 複製網址</button>
+    <button class="action-btn btn-stop" style="margin: 10px auto 0; max-width: 250px;" data-on-click='[["hideInAppBrowserWarning",[]]]'>我知道了，繼續使用</button>
 </div>
 
 <div id="mainScaleWrapper" class="scale-wrapper">
@@ -1545,6 +1595,17 @@
                             <div class="item-arrow">›</div>
                         </div>
 
+                        <div class="list-item" data-on-click='[["goToSpeakExamPage",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">朗讀測驗</div>
+                                <div class="item-desc">按住麥克風朗讀單字，語音辨識評分！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+
                         <div class="list-item" data-on-click='[["openHistoryModal",[]]]'>
                             <div class="item-icon-box">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -1591,11 +1652,12 @@
                     </div>
                 </div>
 
-                <!-- 4. 雞塊補給站卡片 (單行) -->
-                <div class="section-card" data-on-click='[["openChickenShopModal",[]]]'>
-                    <div class="header-title-box">
-                        <div class="mascot-icon-box">
-                            <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- 4. 雞塊樂園 (可展開)：雞塊補給站 + 雞塊闖關模式 -->
+                <div class="section-card">
+                    <div class="section-header-clickable" data-on-click='[["toggleAccordion",["funList"]]]'>
+                        <div class="header-title-box">
+                            <div class="mascot-icon-box">
+                                <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M 20 30 L 28 38 M 132 30 L 124 38 M 76 12 L 76 22 M 20 90 L 28 82 M 132 90 L 124 82" stroke="#FACC15" stroke-width="5" stroke-linecap="round"/>
                                 <circle cx="76" cy="68" r="48" fill="#FEF08A" opacity="0.25"/>
                                 <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
@@ -1611,12 +1673,36 @@
                                 <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
                                 <path d="M 108 68 C 118 68, 124 72, 122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
                             </svg>
+                            </div>
+                            <div class="section-title-group">
+                                <div class="section-title">雞塊樂園</div>
+                            </div>
+                            <div class="item-arrow">⌄</div>
                         </div>
-                        <div class="section-title-group">
-                            <div class="section-title">雞塊補給站</div>
-                            <div class="section-desc">用雞塊兌換更多題庫與功能！</div>
+                    </div>
+
+                    <div class="collapsible-list" id="funList">
+                        <div class="list-item" data-on-click='[["openChickenShopModal",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">雞塊補給站</div>
+                                <div class="item-desc">用雞塊兌換更多題庫與功能！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
                         </div>
-                        <div class="item-arrow">›</div>
+
+                        <div class="list-item" data-on-click='[["goToAdventurePage",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"></path><path d="M4 4h13l-2 4 2 4H4"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">雞塊闖關模式</div>
+                                <div class="item-desc">闖關挑戰賺雞塊（敬請期待）！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
                     </div>
                 </div>
 
@@ -1811,6 +1897,113 @@
             <button class="action-btn btn-stop" style="margin-top: 6px; width: 100%; padding: 11px;" data-on-click='[["finishCardExamSession",[]]]'>
                 ■ 結束並停止測驗
             </button>
+        </div>
+
+        <!-- ================= 🎤 朗讀測驗：範圍與設定頁面 ================= -->
+        <div id="speakExamSetupView" class="app-view">
+            <div class="top-nav-bar">
+                <button class="back-home-btn" data-on-click='[["backToHome",[]]]' title="返回首頁">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator" data-t-en="🎤 英文朗讀測驗" data-t-ko="🎤 韓文朗讀測驗">🎤 英文朗讀測驗</div>
+            </div>
+
+            <div>
+                <label>請勾選測驗範圍（可複選）：</label>
+                <div class="select-card-grid" id="speakExamGrid"></div>
+            </div>
+
+            <div class="stats-status-bar">
+                <span id="speakExamStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
+            </div>
+
+            <div>
+                <div class="textarea-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="collapse-toggle-btn collapsed" id="speakExamCollapseBtn" data-on-click='[["toggleSpeakExamPreview",[]]]' title="展開/摺疊預覽">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <label style="margin:0;" data-t-en="英文題庫預覽：" data-t-ko="韓文題庫預覽：">英文題庫預覽：</label>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 14px;">☰</span>
+                        <select id="speakExamSortSelector" style="width: auto; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortSpeakExamPreview",["$value"]]]'>
+                            <option value="" disabled selected>排序方式</option>
+                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
+                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="preview-collapse-container collapsed" id="speakExamPreviewContainer">
+                    <textarea id="speakExamPreviewTextarea" readonly placeholder="點選上方範圍卡片即可預覽單字..."></textarea>
+                </div>
+            </div>
+
+            <button class="btn-advanced" data-on-click='[["openSpeakExamSettingsModal",[]]]'>⚙️ 朗讀測驗進階設定</button>
+
+            <button class="action-btn-primary" data-on-click='[["startSpeakExamSession",[]]]' style="margin-top: 12px;">
+                ▶ 開始朗讀測驗
+            </button>
+        </div>
+
+        <!-- ================= 🎤 朗讀測驗：執行介面 ================= -->
+        <div id="speakExamPlayView" class="app-view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div class="progress-indicator" id="speakExamProgressText" style="font-size: 13.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 3px 12px; border-radius: 20px;">1 / 1 題</div>
+                <button type="button" style="width: auto; border: none; border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 700; background: #EEF2FF; color: var(--primary); cursor: pointer;" data-on-click='[["playSpeakExamSample",[]]]'>🔊 聽標準發音</button>
+            </div>
+
+            <div class="progress-bar-container" style="margin-bottom: 8px; height: 5px;">
+                <div class="progress-bar-fill" id="speakExamProgressBar"></div>
+            </div>
+
+            <div class="flashcard-perspective" style="margin-bottom: 2px;">
+                <div class="flashcard" style="transform: none !important; transition: none !important; min-height: 120px;">
+                    <div class="card-face card-front" style="position: relative; transform: none !important; padding: 16px 16px;">
+                        <div class="card-english" id="speakExamCardEng">Introduce</div>
+                        <div id="speakExamCardChi" style="margin-top: 6px; font-size: 14px; color: var(--text-muted); text-align: center; min-height: 20px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="speak-mic-wrap">
+                <button type="button" class="speak-mic-btn" id="speakMicBtn" aria-label="按住麥克風說話" title="按住說話，放開後評分">
+                    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+                </button>
+                <div id="speakMicHint">按住麥克風朗讀上面的單字，說完再放開</div>
+            </div>
+
+            <div class="speak-result-box" id="speakResultBox"></div>
+
+            <button class="action-btn-primary" id="speakExamNextBtn" data-on-click='[["nextSpeakExamQuestion",[]]]' style="margin-top: 10px; padding: 11px;">
+                略過此題 ⏭
+            </button>
+            <button class="action-btn btn-stop" style="margin-top: 6px; width: 100%; padding: 11px;" data-on-click='[["finishSpeakExamSession",[]]]'>
+                ■ 結束並停止測驗
+            </button>
+        </div>
+
+        <!-- ================= 🏰 雞塊闖關模式（預留頁面，內容尚未實作） ================= -->
+        <div id="adventureView" class="app-view">
+            <div class="top-nav-bar">
+                <button class="back-home-btn" data-on-click='[["backToHome",[]]]' title="返回首頁">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator">🏰 雞塊闖關模式</div>
+            </div>
+            <div class="adventure-soon">
+                <div class="adv-emoji">🚧</div>
+                <div class="adv-title">闖關模式準備中</div>
+                雞塊們正在努力蓋關卡，<br>敬請期待！
+            </div>
         </div>
 
         <!-- ================= 🎧 聽力練習頁面 ================= -->
@@ -2160,6 +2353,36 @@
     </div>
 </div>
 
+<div id="speakExamSettingsModal" class="modal">
+    <div class="modal-content">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 18px;">
+            <span>⚙️</span> 朗讀測驗進階設定
+        </div>
+
+        <div class="settings-card-group">
+            <div class="setting-item">
+                <div class="setting-label"><span>🌟</span> 只選擇有加星號 (*) 的單字</div>
+                <label class="switch">
+                    <input type="checkbox" id="speakExamSettingStarred">
+                    <span class="slider-toggle"></span>
+                </label>
+            </div>
+        </div>
+
+        <label for="speakExamQuestionCount" style="margin-top: 14px;">題目數量 (0為全部)：</label>
+        <input type="number" id="speakExamQuestionCount" value="0" min="0">
+
+        <div style="margin-top: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.7;">
+            🎯 通過標準：發音評分 <b>70 分</b>以上。<br>
+            評分方式：系統把你說的話轉成文字，和目標單字比對相似度（無法分辨細微的口音差異）。
+        </div>
+
+        <button class="action-btn-primary" data-on-click='[["saveSpeakExamSettings",[]]]' style="margin-top: 18px;">
+            確定
+        </button>
+    </div>
+</div>
+
 <div id="examResultModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" data-on-click='[["closeExamResultModal",[]]]'>&times;</span>
@@ -2292,7 +2515,7 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
                     </div>
                     <div class="history-item-content">
-                        <div class="history-item-title">聽力測驗分析</div>
+                        <div class="history-item-title">聽力</div>
                     </div>
                 </div>
 
@@ -2301,7 +2524,16 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>
                     </div>
                     <div class="history-item-content">
-                        <div class="history-item-title">字卡測驗分析</div>
+                        <div class="history-item-title">字卡</div>
+                    </div>
+                </div>
+
+                <div class="tab-card-item" id="cardSpeakTab" data-on-click='[["switchHistoryTab",["speak"]]]'>
+                    <div class="history-item-icon-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+                    </div>
+                    <div class="history-item-content">
+                        <div class="history-item-title">朗讀</div>
                     </div>
                 </div>
             </div>
@@ -2408,6 +2640,58 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="tab-panel" id="panelSpeakHistory">
+                    <div class="sub-card">
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="speakScoreChartToggleBtn" data-on-click='[["toggleSubCard",["speakScoreChartContent","speakScoreChartToggleBtn","speak_score_chart"]]]' title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            📈 歷史成績曲線 (朗讀測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="speakScoreChartContent">
+                            <div class="chart-wrapper">
+                                <canvas id="speakScoreCanvas" class="score-chart-canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sub-card">
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="speakTopWrongToggleBtn" data-on-click='[["toggleSubCard",["speakTopWrongContent","speakTopWrongToggleBtn","speak_top_wrong"]]]' title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            🔥 錯誤率最高單字 (朗讀測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="speakTopWrongContent">
+                            <div id="speakTopWrongWords" class="error-word-list" style="max-height: 180px; overflow-y: auto;"></div>
+                            <div class="save-target-row" style="margin-top: 10px;">
+                                <span class="save-target-label">儲存至目標題庫：</span>
+                                <select id="targetListSelectorSpeak" class="target-select"></select>
+                                <button class="btn-purple" data-on-click='[["saveSelectedWrongWords",["speak"]]]'>📥 儲存勾選單字</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sub-card">
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="speakHistoryListToggleBtn" data-on-click='[["toggleSubCard",["speakHistoryListContent","speakHistoryListToggleBtn","speak_history_list"]]]' title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            📜 歷史分數紀錄 (朗讀測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="speakHistoryListContent">
+                            <div id="speakExamHistoryList" style="max-height: 240px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <button class="action-btn-primary" style="margin-top: 16px; padding: 13px;" data-on-click='[["closeHistoryModal",[]]]'>關閉視窗</button>
