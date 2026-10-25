@@ -570,7 +570,7 @@
         }
         .preview-collapse-container.collapsed { max-height: 0; opacity: 0; margin-bottom: 0; }
 
-        #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea, #speakExamPreviewTextarea {
+        #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea, #speakPracticePreviewTextarea {
             height: 345px !important;
         }
 
@@ -1363,7 +1363,7 @@
         body.power-saving-mode .picker-item.is-maxed .picker-plus { background: #2B303C !important; color: #94A3B8 !important; }        
 
 
-        /* ── 🎤 朗讀測驗 ── */
+        /* ── 🎤 朗讀練習 ── */
         .speak-mic-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 14px 0 4px; }
         .speak-mic-btn {
             width: 96px; height: 96px; border-radius: 50%; border: none; cursor: pointer;
@@ -1409,7 +1409,7 @@
             .history-item-icon-box { width: 30px; height: 30px; margin-right: 0; }
             .history-item-content { flex: 0 1 auto; width: 100%; }
             .history-item-title { font-size: 13px; text-align: center; }
-            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea, #speakExamPreviewTextarea { height: clamp(140px, 22vh, 220px) !important; }
+            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea, #speakPracticePreviewTextarea { height: clamp(140px, 22vh, 220px) !important; }
             .editor-wrapper { height: clamp(180px, 26vh, 240px) !important; }
         }
 
@@ -1536,6 +1536,17 @@
                             </div>
                             <div class="item-arrow">›</div>
                         </div>
+
+                        <div class="list-item" data-on-click='[["goToSpeakPracticePage",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">朗讀練習</div>
+                                <div class="item-desc">按住麥克風朗讀單字，即時評分練習！</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
                     </div>
                 </div>
 
@@ -1591,17 +1602,6 @@
                             <div class="item-content">
                                 <div class="item-title">字卡測驗</div>
                                 <div class="item-desc">翻轉字卡即時自我評量，突破盲點！</div>
-                            </div>
-                            <div class="item-arrow">›</div>
-                        </div>
-
-                        <div class="list-item" data-on-click='[["goToSpeakExamPage",[]]]'>
-                            <div class="item-icon-box">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
-                            </div>
-                            <div class="item-content">
-                                <div class="item-title">朗讀測驗</div>
-                                <div class="item-desc">按住麥克風朗讀單字，語音辨識評分！</div>
                             </div>
                             <div class="item-arrow">›</div>
                         </div>
@@ -1899,30 +1899,30 @@
             </button>
         </div>
 
-        <!-- ================= 🎤 朗讀測驗：範圍與設定頁面 ================= -->
-        <div id="speakExamSetupView" class="app-view">
+        <!-- ================= 🎤 朗讀練習：範圍與設定頁面 ================= -->
+        <div id="speakPracticeSetupView" class="app-view">
             <div class="top-nav-bar">
                 <button class="back-home-btn" data-on-click='[["backToHome",[]]]' title="返回首頁">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
                 </button>
-                <div class="current-mode-indicator" data-t-en="🎤 英文朗讀測驗" data-t-ko="🎤 韓文朗讀測驗">🎤 英文朗讀測驗</div>
+                <div class="current-mode-indicator" data-t-en="🎤 英文朗讀練習" data-t-ko="🎤 韓文朗讀練習">🎤 英文朗讀練習</div>
             </div>
 
             <div>
-                <label>請勾選測驗範圍（可複選）：</label>
-                <div class="select-card-grid" id="speakExamGrid"></div>
+                <label>請勾選練習範圍（可複選）：</label>
+                <div class="select-card-grid" id="speakPracticeGrid"></div>
             </div>
 
             <div class="stats-status-bar">
-                <span id="speakExamStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
+                <span id="speakPracticeStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
             </div>
 
             <div>
                 <div class="textarea-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <button class="collapse-toggle-btn collapsed" id="speakExamCollapseBtn" data-on-click='[["toggleSpeakExamPreview",[]]]' title="展開/摺疊預覽">
+                        <button class="collapse-toggle-btn collapsed" id="speakPracticeCollapseBtn" data-on-click='[["toggleSpeakPracticePreview",[]]]' title="展開/摺疊預覽">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
@@ -1932,7 +1932,7 @@
 
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 14px;">☰</span>
-                        <select id="speakExamSortSelector" style="width: auto; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortSpeakExamPreview",["$value"]]]'>
+                        <select id="speakPracticeSortSelector" style="width: auto; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortSpeakPracticePreview",["$value"]]]'>
                             <option value="" disabled selected>排序方式</option>
                             <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
                             <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
@@ -1940,34 +1940,34 @@
                     </div>
                 </div>
                 
-                <div class="preview-collapse-container collapsed" id="speakExamPreviewContainer">
-                    <textarea id="speakExamPreviewTextarea" readonly placeholder="點選上方範圍卡片即可預覽單字..."></textarea>
+                <div class="preview-collapse-container collapsed" id="speakPracticePreviewContainer">
+                    <textarea id="speakPracticePreviewTextarea" readonly placeholder="點選上方範圍卡片即可預覽單字..."></textarea>
                 </div>
             </div>
 
-            <button class="btn-advanced" data-on-click='[["openSpeakExamSettingsModal",[]]]'>⚙️ 朗讀測驗進階設定</button>
+            <button class="btn-advanced" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'>⚙️ 朗讀練習進階設定</button>
 
-            <button class="action-btn-primary" data-on-click='[["startSpeakExamSession",[]]]' style="margin-top: 12px;">
-                ▶ 開始朗讀測驗
+            <button class="action-btn-primary" data-on-click='[["startSpeakPracticeSession",[]]]' style="margin-top: 12px;">
+                ▶ 開始朗讀練習
             </button>
         </div>
 
-        <!-- ================= 🎤 朗讀測驗：執行介面 ================= -->
-        <div id="speakExamPlayView" class="app-view">
+        <!-- ================= 🎤 朗讀練習：執行介面 ================= -->
+        <div id="speakPracticePlayView" class="app-view">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <div class="progress-indicator" id="speakExamProgressText" style="font-size: 13.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 3px 12px; border-radius: 20px;">1 / 1 題</div>
-                <button type="button" style="width: auto; border: none; border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 700; background: #EEF2FF; color: var(--primary); cursor: pointer;" data-on-click='[["playSpeakExamSample",[]]]'>🔊 聽標準發音</button>
+                <div class="progress-indicator" id="speakPracticeProgressText" style="font-size: 13.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 3px 12px; border-radius: 20px;">1 / 1 題</div>
+                
             </div>
 
             <div class="progress-bar-container" style="margin-bottom: 8px; height: 5px;">
-                <div class="progress-bar-fill" id="speakExamProgressBar"></div>
+                <div class="progress-bar-fill" id="speakPracticeProgressBar"></div>
             </div>
 
             <div class="flashcard-perspective" style="margin-bottom: 2px;">
                 <div class="flashcard" style="transform: none !important; transition: none !important; min-height: 120px;">
                     <div class="card-face card-front" style="position: relative; transform: none !important; padding: 16px 16px;">
-                        <div class="card-english" id="speakExamCardEng">Introduce</div>
-                        <div id="speakExamCardChi" style="margin-top: 6px; font-size: 14px; color: var(--text-muted); text-align: center; min-height: 20px;"></div>
+                        <div class="card-english" id="speakPracticeCardEng">Introduce</div>
+                        <div id="speakPracticeCardChi" style="margin-top: 6px; font-size: 14px; color: var(--text-muted); text-align: center; min-height: 20px;"></div>
                     </div>
                 </div>
             </div>
@@ -1981,11 +1981,11 @@
 
             <div class="speak-result-box" id="speakResultBox"></div>
 
-            <button class="action-btn-primary" id="speakExamNextBtn" data-on-click='[["nextSpeakExamQuestion",[]]]' style="margin-top: 10px; padding: 11px;">
+            <button class="action-btn-primary" id="speakPracticeNextBtn" data-on-click='[["nextSpeakPracticeQuestion",[]]]' style="margin-top: 10px; padding: 11px;">
                 略過此題 ⏭
             </button>
-            <button class="action-btn btn-stop" style="margin-top: 6px; width: 100%; padding: 11px;" data-on-click='[["finishSpeakExamSession",[]]]'>
-                ■ 結束並停止測驗
+            <button class="action-btn btn-stop" style="margin-top: 6px; width: 100%; padding: 11px;" data-on-click='[["finishSpeakPracticeSession",[]]]'>
+                ■ 結束並停止練習
             </button>
         </div>
 
@@ -2253,13 +2253,13 @@
 
         <div class="shop-grid">
             <button type="button" id="shopItem_word_cap_50" class="shop-cell shop-item" data-on-click='[["buyShopItem",["word_cap_50"]]]'>
-                <img class="shop-icon" src="data:image/webp;base64,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" alt="單字上限 +50">
+                <img class="shop-icon" src="data:image/webp;base64,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" alt="單字上限 +50">
                 <div class="shop-name">單字上限 +50</div>
                 <div class="shop-sub" id="shopSub_word_cap_50">指定一本題庫</div>
                 <div class="shop-price" id="shopPrice_word_cap_50"><span class="chicken-mini"></span><b>30</b></div>
             </button>
             <button type="button" id="shopItem_list_slot_1" class="shop-cell shop-item" data-on-click='[["buyShopItem",["list_slot_1"]]]'>
-                <img class="shop-icon" src="data:image/webp;base64,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" alt="題庫數量 +1">
+                <img class="shop-icon" src="data:image/webp;base64,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" alt="題庫數量 +1">
                 <div class="shop-name">題庫數量 +1</div>
                 <div class="shop-sub" id="shopSub_list_slot_1">目前上限 10 本</div>
                 <div class="shop-price" id="shopPrice_list_slot_1"><span class="chicken-mini"></span><b>60</b></div>
@@ -2353,31 +2353,33 @@
     </div>
 </div>
 
-<div id="speakExamSettingsModal" class="modal">
+<div id="speakPracticeSettingsModal" class="modal">
     <div class="modal-content">
         <div style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 18px;">
-            <span>⚙️</span> 朗讀測驗進階設定
+            <span>⚙️</span> 朗讀練習進階設定
         </div>
 
         <div class="settings-card-group">
             <div class="setting-item">
                 <div class="setting-label"><span>🌟</span> 只選擇有加星號 (*) 的單字</div>
                 <label class="switch">
-                    <input type="checkbox" id="speakExamSettingStarred">
+                    <input type="checkbox" id="speakPracticeSettingStarred">
                     <span class="slider-toggle"></span>
                 </label>
             </div>
         </div>
 
-        <label for="speakExamQuestionCount" style="margin-top: 14px;">題目數量 (0為全部)：</label>
-        <input type="number" id="speakExamQuestionCount" value="0" min="0">
+        <label for="speakPracticeQuestionCount" style="margin-top: 14px;">題目數量 (0為全部)：</label>
+        <input type="number" id="speakPracticeQuestionCount" value="0" min="0">
 
-        <div style="margin-top: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.7;">
-            🎯 通過標準：發音評分 <b>70 分</b>以上。<br>
-            評分方式：系統把你說的話轉成文字，和目標單字比對相似度（無法分辨細微的口音差異）。
+        <label for="speakPracticePassScore" style="margin-top: 14px;">評分標準（60～100 分，達到才算通過）：</label>
+        <input type="number" id="speakPracticePassScore" value="70" min="60" max="100" step="1">
+        <div style="margin-top: 8px; font-size: 12.5px; color: var(--text-muted); line-height: 1.7;">
+            評分方式：系統把你說的話轉成文字，和目標單字比對相似度（同音字、發音相近的拼法會被視為相同）。<br>
+            這不是專業的發音分析，辨識結果仍可能受環境噪音、單字長短影響。
         </div>
 
-        <button class="action-btn-primary" data-on-click='[["saveSpeakExamSettings",[]]]' style="margin-top: 18px;">
+        <button class="action-btn-primary" data-on-click='[["saveSpeakPracticeSettings",[]]]' style="margin-top: 18px;">
             確定
         </button>
     </div>
@@ -2527,15 +2529,6 @@
                         <div class="history-item-title">字卡</div>
                     </div>
                 </div>
-
-                <div class="tab-card-item" id="cardSpeakTab" data-on-click='[["switchHistoryTab",["speak"]]]'>
-                    <div class="history-item-icon-box">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
-                    </div>
-                    <div class="history-item-content">
-                        <div class="history-item-title">朗讀</div>
-                    </div>
-                </div>
             </div>
 
             <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
@@ -2637,57 +2630,6 @@
                         </div>
                         <div class="sub-card-content-wrapper" id="cardHistoryListContent">
                             <div id="cardExamHistoryList" style="max-height: 240px; overflow-y: auto;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-panel" id="panelSpeakHistory">
-                    <div class="sub-card">
-                        <div class="sub-card-title">
-                            <button class="sub-card-toggle-btn" id="speakScoreChartToggleBtn" data-on-click='[["toggleSubCard",["speakScoreChartContent","speakScoreChartToggleBtn","speak_score_chart"]]]' title="展開/摺疊區塊">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </button>
-                            📈 歷史成績曲線 (朗讀測驗)
-                        </div>
-                        <div class="sub-card-content-wrapper" id="speakScoreChartContent">
-                            <div class="chart-wrapper">
-                                <canvas id="speakScoreCanvas" class="score-chart-canvas"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="sub-card">
-                        <div class="sub-card-title">
-                            <button class="sub-card-toggle-btn" id="speakTopWrongToggleBtn" data-on-click='[["toggleSubCard",["speakTopWrongContent","speakTopWrongToggleBtn","speak_top_wrong"]]]' title="展開/摺疊區塊">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </button>
-                            🔥 錯誤率最高單字 (朗讀測驗)
-                        </div>
-                        <div class="sub-card-content-wrapper" id="speakTopWrongContent">
-                            <div id="speakTopWrongWords" class="error-word-list" style="max-height: 180px; overflow-y: auto;"></div>
-                            <div class="save-target-row" style="margin-top: 10px;">
-                                <span class="save-target-label">儲存至目標題庫：</span>
-                                <select id="targetListSelectorSpeak" class="target-select"></select>
-                                <button class="btn-purple" data-on-click='[["saveSelectedWrongWords",["speak"]]]'>📥 儲存勾選單字</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="sub-card">
-                        <div class="sub-card-title">
-                            <button class="sub-card-toggle-btn" id="speakHistoryListToggleBtn" data-on-click='[["toggleSubCard",["speakHistoryListContent","speakHistoryListToggleBtn","speak_history_list"]]]' title="展開/摺疊區塊">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </button>
-                            📜 歷史分數紀錄 (朗讀測驗)
-                        </div>
-                        <div class="sub-card-content-wrapper" id="speakHistoryListContent">
-                            <div id="speakExamHistoryList" style="max-height: 240px; overflow-y: auto;"></div>
                         </div>
                     </div>
                 </div>
