@@ -71,6 +71,7 @@
         wordLists.push({ title: `unit 1-1`, content: "courage 勇氣\n*foreigner 外國人\n*fantastic 極好的 形容詞", createdAt: nowTs });
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
     }
+    ensureListIds();   // 舊題庫補上固定識別碼
 
     // ---------------------------------
     // 🍗 雞塊系統：雞塊數量、領取紀錄、購買紀錄一律以後端 (Supabase) 為準
@@ -103,7 +104,7 @@
             let w = JSON.parse(localStorage.getItem(WALLET_CACHE_KEY));
             if (w && typeof w.balance === 'number') return w;
         } catch (e) {}
-        return { balance: 0, day: '', claimedToday: [], purchases: {} };
+        return { balance: 0, day: '', claimedToday: [], purchases: {}, listCaps: {} };
     })();
     let walletBusy = false;      // 防止連點造成重複送出
     let walletOnline = true;     // 最近一次和後端通訊是否成功
@@ -112,8 +113,8 @@
     // ── 商品目錄：價格與上限以後端 shop_items 為準，這裡只是連不上時的預設值 ──
     const BASE_WORD_CAP = 100, WORD_CAP_STEP = 50;
     const SHOP_ITEM_META = {
-        word_cap_50: { name: '單字上限 +50',  desc: '每本題庫可放的單字數 +50' },
-        list_slot_1: { name: '題庫數量 +1',   desc: '增加 1 本空白題庫（可放單字數與其他題庫相同）' }
+        word_cap_50: { name: '單字上限 +50',  desc: '指定一本題庫，單字上限 +50' },
+        list_slot_1: { name: '題庫數量 +1',   desc: '增加 1 本空白題庫（可存放 100 個單字）' }
     };
     let shopCatalog = {
         word_cap_50: { price: 30, max: 4 },
@@ -121,7 +122,20 @@
     };
 
     function walletQty(key) { return Number((wallet.purchases || {})[key]) || 0; }
-    function getListWordCap() { return BASE_WORD_CAP + WORD_CAP_STEP * walletQty('word_cap_50'); }
+    // 每本題庫各自的單字上限：基本 100 字 + 這本題庫兌換過幾次「單字上限 +50」
+    function getListWordCap(list) {
+        let extra = (list && list.id) ? (Number((wallet.listCaps || {})[list.id]) || 0) : 0;
+        return BASE_WORD_CAP + WORD_CAP_STEP * extra;
+    }
+
+    // 題庫的固定識別碼：購買「單字上限」時，後端靠它知道是哪一本題庫
+    function newListId() { return 'l_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+    function ensureListIds() {
+        let changed = false;
+        wordLists.forEach(l => { if (!l.id) { l.id = newListId(); changed = true; } });
+        if (changed) localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        return changed;
+    }
     function getMaxLists() { return MAX_LISTS_DEFAULT + walletQty('list_slot_1'); }
     function isTaskClaimed(key) {
         return wallet.day === chickenData.lastDate && (wallet.claimedToday || []).indexOf(key) !== -1;
@@ -179,7 +193,8 @@
             balance: Number(w.balance) || 0,
             day: day || getLocalDateStr(),
             claimedToday: Array.isArray(w.claimed_today) ? w.claimed_today : [],
-            purchases: (w.purchases && typeof w.purchases === 'object') ? w.purchases : {}
+            purchases: (w.purchases && typeof w.purchases === 'object') ? w.purchases : {},
+            listCaps: (w.list_caps && typeof w.list_caps === 'object') ? w.list_caps : {}
         };
         try { localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify(wallet)); } catch (e) {}
         walletOnline = true;
@@ -187,6 +202,8 @@
         updateChickenBadgeUI();
         updateChickenShopUI();
         updateListQuotaBar();
+        let picker = document.getElementById('shopListPickerModal');
+        if (picker && picker.style.display === 'block') renderShopListPicker();
     }
 
     async function refreshWallet() {
@@ -375,19 +392,125 @@
             let cell = document.getElementById('shopItem_' + key);
             if (!cell) return;
             let cat = shopCatalog[key], qty = walletQty(key);
-            let maxed = qty >= cat.max || cat.enabled === false;
+            // 單字上限是「每本題庫」各自計算次數，所以整個商品不會有「全部買完」的狀態
+            let maxed = key === 'word_cap_50' ? (cat.enabled === false) : (qty >= cat.max || cat.enabled === false);
             let poor = !maxed && wallet.balance < cat.price;
             cell.classList.toggle('is-maxed', maxed);
             cell.classList.toggle('is-poor', poor);
             let sub = document.getElementById('shopSub_' + key);
             if (sub) {
                 sub.textContent = key === 'word_cap_50'
-                    ? `目前每本 ${getListWordCap()} 字`
+                    ? '指定一本題庫'
                     : `目前上限 ${getMaxLists()} 本`;
             }
             let price = document.getElementById('shopPrice_' + key);
             if (price) price.innerHTML = maxed ? '已達上限' : `<span class="chicken-mini"></span><b>${cat.price}</b>`;
         });
+    }
+
+    async function buyShopItem(key) {
+        let meta = SHOP_ITEM_META[key], cat = shopCatalog[key];
+        if (!meta || !cat || walletBusy) return;
+
+        // 單字上限：先選要擴增哪一本題庫
+        if (key === 'word_cap_50') {
+            if (cat.enabled === false) { alert('此商品目前無法兌換。'); return; }
+            if (wallet.balance < cat.price) {
+                alert(`🍗 雞塊不足！需要 ${cat.price} 個，目前有 ${wallet.balance} 個。`);
+                return;
+            }
+            openShopListPicker();
+            return;
+        }
+
+        if (cat.enabled === false || walletQty(key) >= cat.max) {
+            alert(`「${meta.name}」已達購買上限。`);
+            return;
+        }
+        if (wallet.balance < cat.price) {
+            alert(`🍗 雞塊不足！需要 ${cat.price} 個，目前有 ${wallet.balance} 個。`);
+            return;
+        }
+        if (!confirm(`要用 ${cat.price} 個雞塊兌換「${meta.name}」嗎？\n\n${meta.desc}`)) return;
+
+        walletBusy = true;
+        try {
+            let data = await walletRpc('buy_item', { p_item: key });
+            applyWallet(data, getLocalDateStr());
+            showChickenFloat('chickenShopCountDisplay', '-' + (data.spent || cat.price), '#EF4444');
+            refreshAllListViews();
+        } catch (e) {
+            console.warn('兌換失敗:', e && e.message || e);
+            alert(`❌ 兌換失敗：${walletErrorMessage(e)}`);
+            refreshWallet();
+        } finally {
+            walletBusy = false;
+        }
+    }
+
+    // ── 選擇要擴增單字上限的題庫 ──
+    function openShopListPicker() {
+        renderShopListPicker();
+        document.getElementById('shopListPickerModal').style.display = 'block';
+    }
+
+    function closeShopListPicker() {
+        document.getElementById('shopListPickerModal').style.display = 'none';
+    }
+
+    function renderShopListPicker() {
+        let box = document.getElementById('shopListPickerContainer');
+        if (!box) return;
+        let cat = shopCatalog.word_cap_50;
+        let html = '';
+        wordLists.forEach((l, idx) => {
+            let lang = getListLang(l);
+            let extra = Number((wallet.listCaps || {})[l.id]) || 0;
+            let maxed = extra >= cat.max;
+            let count = getListWordCount(l.content), cap = getListWordCap(l);
+            html += `
+                <button type="button" class="picker-item${maxed ? ' is-maxed' : ''}" data-on-click='[["buyWordCapForList",["${l.id}"]]]'>
+                    <div class="picker-main">
+                        <div class="picker-title">${getLangSeq(idx)}: ${escapeHTML(l.title)} <span class="lang-tag lang-tag-${lang}">${getLangName(lang)}</span></div>
+                        <div class="picker-sub">${count} / ${cap} 字　${maxed ? '已達擴充上限' : `兌換後 ${cap + WORD_CAP_STEP} 字`}</div>
+                    </div>
+                    <div class="picker-plus">${maxed ? '—' : '+' + WORD_CAP_STEP}</div>
+                </button>`;
+        });
+        box.innerHTML = html || '<div style="text-align:center; color:var(--text-muted); padding:20px;">目前沒有題庫</div>';
+    }
+
+    async function buyWordCapForList(listId) {
+        let cat = shopCatalog.word_cap_50;
+        let idx = wordLists.findIndex(l => l.id === listId);
+        if (idx < 0 || walletBusy) return;
+        let list = wordLists[idx];
+        let extra = Number((wallet.listCaps || {})[listId]) || 0;
+        if (extra >= cat.max) {
+            alert(`「${list.title}」的單字上限已擴充到最大（共可兌換 ${cat.max} 次）。`);
+            return;
+        }
+        if (wallet.balance < cat.price) {
+            alert(`🍗 雞塊不足！需要 ${cat.price} 個，目前有 ${wallet.balance} 個。`);
+            return;
+        }
+        let cap = getListWordCap(list);
+        if (!confirm(`要用 ${cat.price} 個雞塊，為「${list.title}」擴增單字上限嗎？\n\n${cap} 字 → ${cap + WORD_CAP_STEP} 字\n（只增加這一本題庫，其他題庫不變）`)) return;
+
+        walletBusy = true;
+        try {
+            let data = await walletRpc('buy_item', { p_item: 'word_cap_50', p_target: listId });
+            applyWallet(data, getLocalDateStr());
+            closeShopListPicker();
+            showChickenFloat('chickenShopCountDisplay', '-' + (data.spent || cat.price), '#EF4444');
+            refreshAllListViews();
+        } catch (e) {
+            console.warn('兌換失敗:', e && e.message || e);
+            alert(`❌ 兌換失敗：${walletErrorMessage(e)}`);
+            refreshWallet();
+        } finally {
+            walletBusy = false;
+        }
     }
 
     async function buyShopItem(key) {
@@ -805,7 +928,7 @@
     function enforceListWordCap(idx) {
         let list = wordLists[idx];
         if (!list || !list.content) return 0;
-        let limit = Math.max(getListWordCap(), idx === lastSelectedList ? editorOpenCount : 0);
+        let limit = Math.max(getListWordCap(list), idx === lastSelectedList ? editorOpenCount : 0);
         let kept = [], n = 0, removed = 0;
         list.content.split('\n').forEach(line => {
             if (!line.trim()) { kept.push(line); return; }
@@ -930,6 +1053,7 @@
                     if (Array.isArray(cloudData.wordLists)) {
                         wordLists = cloudData.wordLists;
                         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+                        if (ensureListIds()) setTimeout(triggerAutoSaveToCloud, 0);   // 雲端舊資料沒有識別碼：補上並回傳
                     }
                     if (cloudData.examHistory) {
                         examHistory = trimHistoryPerLang(cloudData.examHistory);
@@ -1079,7 +1203,7 @@
                 <div class="list-card-item" data-on-click='[["openEditorDetail",[${idx}]]]'>
                     <div class="list-card-info">
                         <div class="list-card-title">${shown}: ${escapeHTML(l.title)} <span class="lang-tag lang-tag-${lang}">${getLangName(lang)}</span></div>
-                        <div class="list-card-count">(${count}/${getListWordCap()} 字)</div>
+                        <div class="list-card-count">(${count}/${getListWordCap(1)} 字)</div>
                     </div>
                     <div style="position: relative;">
                         <button class="list-card-menu-btn" data-on-click='[["$stop",[]],["toggleDropdownMenu",[${idx},"$event"]]]'>⋮</button>
@@ -1193,7 +1317,9 @@
             alert("⚠️ 至少必須保留一組題庫本！");
             return;
         }
-        if (confirm(`確定要刪除題庫「${wordLists[idx].title}」嗎？`)) {
+        let upgraded = Number((wallet.listCaps || {})[wordLists[idx].id]) || 0;
+        let upgradeWarn = upgraded > 0 ? `\n\n⚠️ 這本題庫已兌換 ${upgraded * WORD_CAP_STEP} 字的單字上限，刪除後不會退還雞塊。` : '';
+        if (confirm(`確定要刪除題庫「${wordLists[idx].title}」嗎？${upgradeWarn}`)) {
             wordLists.splice(idx, 1);
             triggerAutoSaveToCloud();
             initEditorListCards();
@@ -1212,7 +1338,7 @@
         let title = prompt(`請輸入新${getLangName(curLang)}題庫本標題：`, `unit ${countListsByLang()[curLang] + 1}`);
         if (!title || !title.trim()) return;
 
-        wordLists.push({ title: title.trim(), content: "", createdAt: Date.now(), lang: curLang });
+        wordLists.push({ id: newListId(), title: title.trim(), content: "", createdAt: Date.now(), lang: curLang });
         triggerAutoSaveToCloud();
         initEditorListCards();
         initPracticeCardGrid();
@@ -1250,7 +1376,7 @@
                 <div class="select-card ${isSelected}" data-on-click='[["togglePracticeCard",[${list.originalIdx},"$this"]]]'>
                     <div class="select-card-info">
                         <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/${getListWordCap()} 字)</div>
+                        <div class="select-card-count">(${count}/${getListWordCap(list)} 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -1316,7 +1442,7 @@
                 <div class="select-card ${isSelected}" data-on-click='[["toggleFlashcardCard",[${list.originalIdx},"$this"]]]'>
                     <div class="select-card-info">
                         <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/${getListWordCap()} 字)</div>
+                        <div class="select-card-count">(${count}/${getListWordCap(list)} 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -1529,7 +1655,7 @@
                 <div class="select-card ${isSelected}" data-on-click='[["toggleCardExamCard",[${list.originalIdx},"$this"]]]'>
                     <div class="select-card-info">
                         <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/${getListWordCap()} 字)</div>
+                        <div class="select-card-count">(${count}/${getListWordCap(list)} 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -1866,7 +1992,7 @@
                 <div class="select-card ${isSelected}" data-on-click='[["toggleExamCard",[${list.originalIdx},"$this"]]]'>
                     <div class="select-card-info">
                         <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/${getListWordCap()} 字)</div>
+                        <div class="select-card-count">(${count}/${getListWordCap(list)} 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -2591,7 +2717,7 @@
         let targetSelectOptions = '';
         wordLists.forEach((l, idx) => {
             if (!isListInCurrentLang(l)) return;
-            targetSelectOptions += `<option value="${idx}">${getLangSeq(idx)}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/${getListWordCap()})</option>`;
+            targetSelectOptions += `<option value="${idx}">${getLangSeq(idx)}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/${getListWordCap(1)})</option>`;
         });
         let targetSelLis = document.getElementById('targetListSelectorListening');
         let targetSelCard = document.getElementById('targetListSelectorCard');
@@ -2846,7 +2972,7 @@
             let wordText = chk.value;
             let currentContent = wordLists[targetListIdx].content || '';
             if (!currentContent.toLowerCase().includes(wordText.toLowerCase())) {
-                if (getListWordCount(currentContent) >= getListWordCap()) { skippedFull++; return; }
+                if (getListWordCount(currentContent) >= getListWordCap(wordLists[targetListIdx])) { skippedFull++; return; }
                 wordLists[targetListIdx].content = currentContent + (currentContent ? '\n' : '') + wordText;
                 addedCount++;
             }
@@ -2854,7 +2980,7 @@
 
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
         triggerAutoSaveToCloud();
-        let fullNote = skippedFull > 0 ? `\n⚠️ 題庫已達 ${getListWordCap()} 字上限，有 ${skippedFull} 個單字沒有加入（可到「雞塊補給站」兌換單字上限 +50）。` : '';
+        let fullNote = skippedFull > 0 ? `\n⚠️ 題庫已達 ${getListWordCap(wordLists[targetListIdx])} 字上限，有 ${skippedFull} 個單字沒有加入（可到「雞塊補給站」兌換單字上限 +50）。` : '';
         alert(`✅ 成功將 ${addedCount} 個錯題單字儲存至「${wordLists[targetListIdx].title}」！${fullNote}`);
     }
 
@@ -2994,6 +3120,8 @@
     // 只有登記在 INLINE_ACTIONS 的函式能被呼叫（白名單）
     // ═════════════════════════════════════════════════════════════
     const INLINE_ACTIONS = {
+        closeShopListPicker,
+        buyWordCapForList,
         buyShopItem,
         closeChickenShopModal,
         openChickenShopModal,
