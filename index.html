@@ -1320,6 +1320,16 @@
             .shop-icon { width: 56px; height: 56px; }
             .shop-name { font-size: 12.5px; }
         }
+        /* 編輯頁右上角單字計數 */
+        #editorDetailTitleIndicator { max-width: 52%; overflow: hidden; text-overflow: ellipsis; }
+        .editor-word-counter { flex-shrink: 0; margin-left: auto; font-size: 13.5px; font-weight: 700; color: var(--text-muted); background: #F1F5F9; border-radius: 12px; padding: 5px 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .editor-word-counter:empty { display: none; }
+        .editor-word-counter.is-near { color: #B45309; background: #FEF3C7; }
+        .editor-word-counter.is-full { color: #B91C1C; background: #FEE2E2; }
+        body.power-saving-mode .editor-word-counter { background: #2B303C; color: #CBD5E1; }
+        body.power-saving-mode .editor-word-counter.is-near { background: #3B2F12; color: #FCD34D; }
+        body.power-saving-mode .editor-word-counter.is-full { background: #3F1D1D; color: #FCA5A5; }
+        @media screen and (max-width: 400px) { .editor-word-counter { font-size: 12px; padding: 4px 8px; } }
         
         /* 選擇要擴增的題庫 */
         #shopListPickerModal { overflow-y: auto; -webkit-overflow-scrolling: touch; }
@@ -1970,6 +1980,7 @@
                     </svg>
                 </button>
                 <div class="current-mode-indicator" id="editorDetailTitleIndicator">📁 unit 1-1 編輯</div>
+                                <div id="editorWordCounter" class="editor-word-counter"></div>
             </div>
 
             <div class="editor-top-section">
