@@ -59,7 +59,6 @@
     
     let examHistory = (JSON.parse(localStorage.getItem('dictation_exam_history')) || []);
     let cardExamHistory = (JSON.parse(localStorage.getItem('dictation_card_exam_history')) || []);
-    let speakExamHistory = (function () { try { return JSON.parse(localStorage.getItem('dictation_speak_exam_history')) || []; } catch (e) { return []; } })();
     
     let lastSelectedList = parseInt(localStorage.getItem('dictation_last_selected_list')) || 0;
 
@@ -175,6 +174,7 @@
 
     function walletErrorMessage(e) {
         let m = String((e && e.message) || '');
+        if (m.includes('login_required')) return '請先登入 Google 雲端再兌換';
         if (m.includes('insufficient')) return '雞塊不足';
         if (m.includes('max_reached')) return '已達購買上限';
         if (m.includes('invalid_day')) return '日期異常，請確認手機的日期時間是否正確';
@@ -276,6 +276,14 @@
         } finally {
             walletBusy = false;
         }
+    }
+
+    // 錢包尚未綁定 Google 帳號時不能花雞塊（避免兩台裝置各自花掉同一批雞塊）
+    function isWalletBound() { return isValidWalletKey(localStorage.getItem(WALLET_KEY_STORAGE)); }
+    function ensureLoginBeforeSpend() {
+        if (isWalletBound()) return true;
+        if (confirm('兌換雞塊前，需要先登入 Google 雲端。\n\n這樣不同裝置的雞塊才能合併，不會被重複花掉。現在要登入嗎？')) handleAuthClick();
+        return false;
     }
 
     async function loadShopCatalog() {
@@ -469,6 +477,7 @@
     async function buyShopItem(key) {
         let meta = SHOP_ITEM_META[key], cat = shopCatalog[key];
         if (!meta || !cat || walletBusy) return;
+        if (!ensureLoginBeforeSpend()) return;
 
         // 單字上限：先選要擴增哪一本題庫
         if (key === 'word_cap_50') {
@@ -542,6 +551,7 @@
         let cat = shopCatalog.word_cap_50;
         let idx = wordLists.findIndex(l => l.id === listId);
         if (idx < 0 || walletBusy) return;
+        if (!ensureLoginBeforeSpend()) return;
         let list = wordLists[idx];
         let extra = Number((wallet.listCaps || {})[listId]) || 0;
         if (extra >= cat.max) {
@@ -617,12 +627,18 @@
     let cardExamResults = [];
     let currentCardExamRanges = "";
 
-    // 朗讀測驗
-    const SPEAK_PASS_SCORE = 70;          // 70 分以上算通過
-    let speakExamActiveList = [];
-    let currentSpeakExamIndex = 0;
-    let speakExamResults = [];
-    let currentSpeakExamRanges = "";
+    // 朗讀練習
+    // 評分標準：可在進階設定調整，最低 60、最高 100，預設 70
+    function getSpeakPassScore() {
+        let el = document.getElementById('speakPracticePassScore');
+        let v = parseInt(el ? el.value : 70);
+        if (isNaN(v)) v = 70;
+        return Math.max(60, Math.min(100, v));
+    }
+    let speakPracticeActiveList = [];
+    let currentSpeakPracticeIndex = 0;
+    let speakPracticeResults = [];
+    let currentSpeakPracticeRanges = "";
     let speakStarting = false;
     let speakRec = null, speakListening = false, speakPressAt = 0, speakShortTap = false, speakIgnoreResult = false;
     let speakHeardAlts = [], speakLastError = '', speakWatchdog = null;
@@ -642,13 +658,13 @@
         applyLanguageUI();
         loadFlashcardAppSettings();
         loadCardExamAppSettings();
-        loadSpeakExamAppSettings();
+        loadSpeakPracticeAppSettings();
         initSpeakMicButton();
         initPracticeCardGrid();
         initExamCardGrid();
         initFlashcardGrid();
         initCardExamGrid();
-        initSpeakExamGrid();
+        initSpeakPracticeGrid();
         initEditorListCards();
         initExamCheckboxes();
         initFlashcardTouchListeners();
@@ -680,25 +696,35 @@
                 scope: SCOPES,
                 callback: async (resp) => {
                     authBusyUntil = 0;
+                    let wasAuto = autoReconnecting; autoReconnecting = false;
                     if (resp.error !== undefined || !resp.access_token) {
+                        if (wasAuto && accessToken) return;          // 換新失敗但舊權杖還能用：先不動
                         accessToken = null; isCloudSyncActive = false;
-                        updateCloudStatusText(`💻 未登入`);
+                        updateCloudStatusText(wasAuto ? `💻 未登入（請按「登入 Google 雲端」重新連線）` : `💻 未登入`);
                         return;
                     }
-                    cloudWalletKey = null; walletBoundThisLogin = false;
+                    localStorage.setItem(GOOGLE_LINKED_FLAG, '1');
+                    scheduleTokenRefresh(resp.expires_in);
+                    let renewing = wasAuto && accessToken;           // 只是換新權杖：不必重新同步與綁定
+                    if (!renewing) { cloudWalletKey = null; walletBoundThisLogin = false; }
                     accessToken = resp.access_token;
                     isCloudSyncActive = true;
                     updateCloudStatusText(`✅ 已連結 Google 雲端`);
                     let authBtn = document.getElementById('cloudAuthBtn');
                     authBtn.innerText = '🔒 登出'; authBtn.className = 'cloud-btn logout';
                     authBtn.setAttribute('data-on-click', '[["handleLogout",[]]]');
-                    loadDataFromGoogleDrive();
+                    if (!renewing) loadDataFromGoogleDrive();
                 },
                 // 登入視窗打不開、被關閉等錯誤（例如 iOS 擋彈出視窗）
                 error_callback: (err) => {
                     authBusyUntil = 0;
                     console.warn('Google 登入視窗錯誤:', err);
                     let t = err && err.type;
+                    if (autoReconnecting) {                         // 自動重連被瀏覽器擋下：等使用者點一下畫面
+                        autoReconnecting = false;
+                        if (!accessToken) armReconnectOnNextClick();
+                        return;
+                    }
                     if (t === 'popup_failed_to_open') {
                         alert('⚠️ 無法開啟 Google 登入視窗。\n\n請確認瀏覽器沒有封鎖彈出視窗，並且不是在 LINE / Facebook 等 App 內開啟（請改用 Safari 或 Chrome）。');
                     } else if (t !== 'popup_closed') {
@@ -707,6 +733,9 @@
                 }
             });
         }
+
+        // 上次登入過：重新整理後自動重新連線 Google 雲端
+        if (localStorage.getItem(GOOGLE_LINKED_FLAG) === '1') trySilentReconnect(false);
     };
 
     function loadCollapseStates() {
@@ -715,16 +744,13 @@
             flashcard: true,
             exam: true,
             cardExam: true,
-            speakExam: true,
+            speakPractice: true,
             listening_score_chart: false,
             listening_top_wrong: false,
             listening_history_list: false,
             card_score_chart: false,
             card_top_wrong: false,
-            card_history_list: false,
-            speak_score_chart: false,
-            speak_top_wrong: false,
-            speak_history_list: false
+            card_history_list: false
         };
 
         applyCollapseState('previewContainer', 'collapseBtn', collapseStates.practice);
@@ -738,10 +764,7 @@
         applySubCardCollapseState('cardScoreChartContent', 'cardScoreChartToggleBtn', collapseStates.card_score_chart);
         applySubCardCollapseState('cardTopWrongContent', 'cardTopWrongToggleBtn', collapseStates.card_top_wrong);
         applySubCardCollapseState('cardHistoryListContent', 'cardHistoryListToggleBtn', collapseStates.card_history_list);
-        applyCollapseState('speakExamPreviewContainer', 'speakExamCollapseBtn', collapseStates.speakExam !== false);
-        applySubCardCollapseState('speakScoreChartContent', 'speakScoreChartToggleBtn', collapseStates.speak_score_chart);
-        applySubCardCollapseState('speakTopWrongContent', 'speakTopWrongToggleBtn', collapseStates.speak_top_wrong);
-        applySubCardCollapseState('speakHistoryListContent', 'speakHistoryListToggleBtn', collapseStates.speak_history_list);
+        applyCollapseState('speakPracticePreviewContainer', 'speakPracticeCollapseBtn', collapseStates.speakPractice !== false);
     }
 
     function applyCollapseState(containerId, btnId, isCollapsed) {
@@ -778,16 +801,13 @@
             flashcard: true,
             exam: true,
             cardExam: true,
-            speakExam: true,
+            speakPractice: true,
             listening_score_chart: false,
             listening_top_wrong: false,
             listening_history_list: false,
             card_score_chart: false,
             card_top_wrong: false,
-            card_history_list: false,
-            speak_score_chart: false,
-            speak_top_wrong: false,
-            speak_history_list: false
+            card_history_list: false
         };
         collapseStates[key] = isCollapsed;
         localStorage.setItem('dictation_collapse_states', JSON.stringify(collapseStates));
@@ -802,11 +822,10 @@
             let isCollapsed = content.classList.contains('collapsed');
             saveCollapseState(stateKey, isCollapsed);
             
-            if (!isCollapsed && (stateKey === 'listening_score_chart' || stateKey === 'card_score_chart' || stateKey === 'speak_score_chart')) {
+            if (!isCollapsed && (stateKey === 'listening_score_chart' || stateKey === 'card_score_chart')) {
                 setTimeout(() => {
                     if (stateKey === 'listening_score_chart') renderScoreChart('listeningScoreCanvas', filterHistoryByLang(examHistory));
-                    else if (stateKey === 'card_score_chart') renderScoreChart('cardScoreCanvas', filterHistoryByLang(cardExamHistory));
-                    else renderScoreChart('speakScoreCanvas', filterHistoryByLang(speakExamHistory));
+                    else renderScoreChart('cardScoreCanvas', filterHistoryByLang(cardExamHistory));
                 }, 100);
             }
         }
@@ -1073,7 +1092,7 @@
         initExamCardGrid();
         initFlashcardGrid();
         initCardExamGrid();
-        initSpeakExamGrid();
+        initSpeakPracticeGrid();
         initEditorListCards();
     }
 
@@ -1109,6 +1128,53 @@
         return standardVoice || null;
     }
 
+    // ── 重新整理後自動重新連線 ──
+    // Google 給的存取權杖只存在記憶體，重新整理就消失（也會在約 1 小時後過期）。
+    // 所以登入成功後在本機記一個「已連結」旗標；之後開啟網頁時用「不跳同意畫面」的方式悄悄重新取得權杖。
+    // 瀏覽器可能因為「不是使用者點擊」而擋掉彈出視窗，這時改成：使用者點畫面任何地方就自動重新連線。
+    const GOOGLE_LINKED_FLAG = 'chicky_google_linked';
+    let tokenRefreshTimer = null, reconnectClickArmed = false, autoReconnecting = false;
+
+    function armReconnectOnNextClick() {
+        if (reconnectClickArmed) return;
+        reconnectClickArmed = true;
+        updateCloudStatusText('🔑 雲端連線已中斷，點一下畫面任何地方即可重新連線');
+        const h = () => {
+            document.removeEventListener('pointerdown', h, true);
+            reconnectClickArmed = false;
+            trySilentReconnect(true);
+        };
+        document.addEventListener('pointerdown', h, true);
+    }
+
+    function trySilentReconnect(force) {
+        if (!tokenClient || localStorage.getItem(GOOGLE_LINKED_FLAG) !== '1') return;
+        if (accessToken && !force) return;
+        if (getBrowserEnv().isInApp) return;
+        autoReconnecting = true;
+        updateCloudStatusText('☁️ 重新連線 Google 雲端中...');
+        try { tokenClient.requestAccessToken({ prompt: '' }); }
+        catch (e) { autoReconnecting = false; armReconnectOnNextClick(); }
+    }
+
+    function scheduleTokenRefresh(expiresInSec) {
+        clearTimeout(tokenRefreshTimer);
+        let ms = Math.max(60, (Number(expiresInSec) || 3600) - 120) * 1000;   // 到期前 2 分鐘換新
+        tokenRefreshTimer = setTimeout(() => trySilentReconnect(true), ms);
+    }
+
+    // Google Drive 回 401 = 權杖已失效
+    function handleDriveUnauthorized() {
+        accessToken = null; isCloudSyncActive = false;
+        let authBtn = document.getElementById('cloudAuthBtn');
+        if (authBtn) {
+            authBtn.innerText = '登入 Google 雲端'; authBtn.className = 'cloud-btn';
+            authBtn.setAttribute('data-on-click', '[["handleAuthClick",[]]]');
+        }
+        if (localStorage.getItem(GOOGLE_LINKED_FLAG) === '1') armReconnectOnNextClick();
+        else updateCloudStatusText('💻 未登入');
+    }
+
     let authBusyUntil = 0;
     function handleAuthClick() {
         const env = getBrowserEnv();
@@ -1125,7 +1191,15 @@
         tokenClient.requestAccessToken({ prompt: 'consent' });
     }
     function handleLogout() {
-        if (!accessToken) return;
+        localStorage.removeItem(GOOGLE_LINKED_FLAG);       // 不再自動重新連線
+        clearTimeout(tokenRefreshTimer);
+        if (!accessToken) {                                // 權杖已失效（等待重新連線）時，也要能登出
+            updateCloudStatusText(`💻 未登入`);
+            let btn = document.getElementById('cloudAuthBtn');
+            btn.innerText = '登入 Google 雲端'; btn.className = 'cloud-btn';
+            btn.setAttribute('data-on-click', '[["handleAuthClick",[]]]');
+            return;
+        }
         const tokenToRevoke = accessToken;
         // 登出只是「不再同步 Google 雲端」。錢包綁定不會解除，登出後的領取／購買仍進同一個錢包，不會回溯。
         cloudWalletKey = null; walletBoundThisLogin = false;
@@ -1147,6 +1221,7 @@
             let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             });
+            if (res.status === 401) { handleDriveUnauthorized(); return; }
             let data = await res.json();
             if (data.files && data.files.length > 0) {
                 let fileId = data.files[0].id;
@@ -1169,10 +1244,6 @@
                         cardExamHistory = trimHistoryPerLang(cloudData.cardExamHistory);
                         localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
                     }
-                    if (cloudData.speakExamHistory) {
-                        speakExamHistory = trimHistoryPerLang(cloudData.speakExamHistory);
-                        localStorage.setItem('dictation_speak_exam_history', JSON.stringify(speakExamHistory));
-                    }
                     if (cloudData.chickenData && cloudData.chickenData.tasks && cloudData.chickenData.lastDate === chickenData.lastDate) {
                         // 雞塊數量與領取紀錄在後端；這裡只合併「今天的任務完成進度」
                         CHICKEN_TASK_KEYS.forEach(k => {
@@ -1184,7 +1255,7 @@
                     initExamCardGrid();
                     initFlashcardGrid();
                     initCardExamGrid();
-                    initSpeakExamGrid();
+                    initSpeakPracticeGrid();
                     initEditorListCards();
                     initExamCheckboxes();
                 }
@@ -1217,6 +1288,7 @@
             let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             });
+            if (res.status === 401) { handleDriveUnauthorized(); return; }
             let data = await res.json();
             let fileId = (data.files && data.files.length > 0) ? data.files[0].id : null;
 
@@ -1225,7 +1297,6 @@
                 wordLists, 
                 examHistory: trimHistoryPerLang(examHistory), 
                 cardExamHistory: trimHistoryPerLang(cardExamHistory), 
-                speakExamHistory: trimHistoryPerLang(speakExamHistory),
                 walletKey: cloudWalletKey || undefined,
                 chickenData,
                 appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}') 
@@ -1259,7 +1330,7 @@
         document.getElementById(viewId).classList.add('active');
         
         let wrapper = document.getElementById('mainScaleWrapper');
-        if (viewId === 'practiceView' || viewId === 'examView' || viewId === 'flashcardPlayView' || viewId === 'flashcardSetupView' || viewId === 'cardExamSetupView' || viewId === 'cardExamPlayView' || viewId === 'speakExamSetupView' || viewId === 'speakExamPlayView') {
+        if (viewId === 'practiceView' || viewId === 'examView' || viewId === 'flashcardPlayView' || viewId === 'flashcardSetupView' || viewId === 'cardExamSetupView' || viewId === 'cardExamPlayView' || viewId === 'speakPracticeSetupView' || viewId === 'speakPracticePlayView') {
             wrapper.className = 'scale-wrapper-practice';
         } else {
             wrapper.className = 'scale-wrapper';
@@ -1278,7 +1349,7 @@
 
     function goToCardExamPage() {
         initCardExamGrid();
-        initSpeakExamGrid();
+        initSpeakPracticeGrid();
         switchView('cardExamSetupView');
     }
 
@@ -1302,7 +1373,7 @@
     function backToHome() {
         stopDictation();
         stopCardExamSession();
-        stopSpeakExamSession();
+        stopSpeakPracticeSession();
         releaseWakeLock();
         switchView('homeDashboardView');
     }
@@ -1476,7 +1547,7 @@
         initExamCardGrid();
         initFlashcardGrid();
         initCardExamGrid();
-        initSpeakExamGrid();
+        initSpeakPracticeGrid();
         alert(`✅ 已新增${getLangName(curLang)}題庫！`);
     }
 
@@ -1770,7 +1841,7 @@
         initPracticeCardGrid();
         initExamCardGrid();
         initCardExamGrid();
-        initSpeakExamGrid();
+        initSpeakPracticeGrid();
     }
 
     function initCardExamGrid() {
@@ -1881,19 +1952,19 @@
         }
     }
 
-    function initSpeakExamGrid() {
-        let grid = document.getElementById('speakExamGrid');
+    function initSpeakPracticeGrid() {
+        let grid = document.getElementById('speakPracticeGrid');
         if (!grid) return;
         grid.innerHTML = '';
         
         let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
-        let savedSelected = JSON.parse(localStorage.getItem('dictation_speak_exam_selected')) || [0];
+        let savedSelected = JSON.parse(localStorage.getItem('dictation_speak_practice_selected')) || [0];
         
         activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
             let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
             let cardHtml = `
-                <div class="select-card ${isSelected}" data-on-click='[["toggleSpeakExamCard",[${list.originalIdx},"$this"]]]'>
+                <div class="select-card ${isSelected}" data-on-click='[["toggleSpeakPracticeCard",[${list.originalIdx},"$this"]]]'>
                     <div class="select-card-info">
                         <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
                         <div class="select-card-count">(${count}/${getListWordCap(list)} 字)</div>
@@ -1903,35 +1974,35 @@
             `;
             grid.insertAdjacentHTML('beforeend', cardHtml);
         });
-        loadSpeakExamSelectedContent();
+        loadSpeakPracticeSelectedContent();
     }
 
-    function toggleSpeakExamCard(originalIdx, cardEl) {
+    function toggleSpeakPracticeCard(originalIdx, cardEl) {
         cardEl.classList.toggle('selected');
-        saveSpeakExamSelectionState();
-        loadSpeakExamSelectedContent();
+        saveSpeakPracticeSelectionState();
+        loadSpeakPracticeSelectedContent();
     }
 
-    function saveSpeakExamSelectionState() {
+    function saveSpeakPracticeSelectionState() {
         let selectedIndices = [];
-        document.querySelectorAll('#speakExamGrid .select-card').forEach((card) => {
+        document.querySelectorAll('#speakPracticeGrid .select-card').forEach((card) => {
             if (card.classList.contains('selected')) {
                 let onclickAttr = card.getAttribute('data-on-click');
-                let match = onclickAttr.match(/"toggleSpeakExamCard",\[(\d+),/);
+                let match = onclickAttr.match(/"toggleSpeakPracticeCard",\[(\d+),/);
                 if (match) selectedIndices.push(parseInt(match[1]));
             }
         });
-        localStorage.setItem('dictation_speak_exam_selected', JSON.stringify(selectedIndices));
+        localStorage.setItem('dictation_speak_practice_selected', JSON.stringify(selectedIndices));
     }
 
-    function loadSpeakExamSelectedContent() {
+    function loadSpeakPracticeSelectedContent() {
         let combinedText = '';
-        let selectedCards = document.querySelectorAll('#speakExamGrid .select-card.selected');
+        let selectedCards = document.querySelectorAll('#speakPracticeGrid .select-card.selected');
         let selectedTitles = [];
         
         selectedCards.forEach((card, displayIdx) => {
             let onclickAttr = card.getAttribute('data-on-click');
-            let match = onclickAttr.match(/"toggleSpeakExamCard",\[(\d+),/);
+            let match = onclickAttr.match(/"toggleSpeakPracticeCard",\[(\d+),/);
             if (match) {
                 let idx = parseInt(match[1]);
                 if (wordLists[idx] && wordLists[idx].content) {
@@ -1940,50 +2011,56 @@
                 }
             }
         });
-        currentSpeakExamRanges = selectedTitles.join(', ');
+        currentSpeakPracticeRanges = selectedTitles.join(', ');
 
-        document.getElementById('speakExamPreviewTextarea').value = combinedText.trim();
+        document.getElementById('speakPracticePreviewTextarea').value = combinedText.trim();
         let allWords = parseWordsRaw(combinedText);
         let starCount = allWords.filter(w => w.starred).length;
-        document.getElementById('speakExamStatsText').innerText = `📊 範圍統計：總單字數 ${allWords.length} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
+        document.getElementById('speakPracticeStatsText').innerText = `📊 範圍統計：總單字數 ${allWords.length} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
     }
 
-    function toggleSpeakExamPreview() {
-        let container = document.getElementById('speakExamPreviewContainer');
-        let btn = document.getElementById('speakExamCollapseBtn');
+    function toggleSpeakPracticePreview() {
+        let container = document.getElementById('speakPracticePreviewContainer');
+        let btn = document.getElementById('speakPracticeCollapseBtn');
         container.classList.toggle('collapsed');
         btn.classList.toggle('collapsed');
-        saveCollapseState('speakExam', container.classList.contains('collapsed'));
+        saveCollapseState('speakPractice', container.classList.contains('collapsed'));
     }
 
-    function sortSpeakExamPreview(sortType) {
+    function sortSpeakPracticePreview(sortType) {
         if (!sortType) return;
-        let textarea = document.getElementById('speakExamPreviewTextarea');
+        let textarea = document.getElementById('speakPracticePreviewTextarea');
         let words = parseWordsRaw(textarea.value);
         if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
         else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
         textarea.value = words.map(w => w.rawLine).join('\n');
-        setTimeout(() => document.getElementById('speakExamSortSelector').selectedIndex = 0, 200);
+        setTimeout(() => document.getElementById('speakPracticeSortSelector').selectedIndex = 0, 200);
     }
 
-    function openSpeakExamSettingsModal() { document.getElementById('speakExamSettingsModal').style.display = 'block'; }
-    function closeSpeakExamSettingsModal() { document.getElementById('speakExamSettingsModal').style.display = 'none'; }
+    function openSpeakPracticeSettingsModal() { document.getElementById('speakPracticeSettingsModal').style.display = 'block'; }
+    function closeSpeakPracticeSettingsModal() { document.getElementById('speakPracticeSettingsModal').style.display = 'none'; }
     
-    function saveSpeakExamSettings() {
+    function saveSpeakPracticeSettings() {
         let settings = {
-            speakExamOnlyStarred: document.getElementById('speakExamSettingStarred').checked,
-            speakExamQuestionCount: document.getElementById('speakExamQuestionCount').value
+            speakPracticeOnlyStarred: document.getElementById('speakPracticeSettingStarred').checked,
+            speakPracticeQuestionCount: document.getElementById('speakPracticeQuestionCount').value,
+            speakPracticePassScore: getSpeakPassScore()
         };
-        localStorage.setItem('dictation_speak_exam_app_settings', JSON.stringify(settings));
-        closeSpeakExamSettingsModal();
+        document.getElementById('speakPracticePassScore').value = settings.speakPracticePassScore;   // 超出範圍的數字會被修正回 60~100
+        localStorage.setItem('dictation_speak_practice_app_settings', JSON.stringify(settings));
+        closeSpeakPracticeSettingsModal();
     }
 
-    function loadSpeakExamAppSettings() {
-        let saved = localStorage.getItem('dictation_speak_exam_app_settings');
+    function loadSpeakPracticeAppSettings() {
+        let saved = localStorage.getItem('dictation_speak_practice_app_settings');
         if (saved) {
             let s = JSON.parse(saved);
-            if (s.speakExamOnlyStarred !== undefined) document.getElementById('speakExamSettingStarred').checked = s.speakExamOnlyStarred;
-            if (s.speakExamQuestionCount !== undefined) document.getElementById('speakExamQuestionCount').value = s.speakExamQuestionCount;
+            if (s.speakPracticeOnlyStarred !== undefined) document.getElementById('speakPracticeSettingStarred').checked = s.speakPracticeOnlyStarred;
+            if (s.speakPracticeQuestionCount !== undefined) document.getElementById('speakPracticeQuestionCount').value = s.speakPracticeQuestionCount;
+            if (s.speakPracticePassScore !== undefined) {
+                document.getElementById('speakPracticePassScore').value = s.speakPracticePassScore;
+                document.getElementById('speakPracticePassScore').value = getSpeakPassScore();
+            }
         }
     }
 
@@ -2175,16 +2252,16 @@
 
 
     // ═════════════════════════════════════════════════════════════
-    // 🎤 朗讀測驗：按住麥克風朗讀單字 → 瀏覽器語音辨識 → 和目標單字比對相似度 → 70 分以上通過
+    // 🎤 朗讀練習：按住麥克風朗讀單字 → 瀏覽器語音辨識 → 和目標單字比對相似度 → 70 分以上通過
     // 注意：這是「文字相似度」評分（辨識出來的字 vs 目標單字），不是專業的音素發音評測。
     // ═════════════════════════════════════════════════════════════
     function getSpeechRecognitionCtor() {
         return window.SpeechRecognition || window.webkitSpeechRecognition || null;
     }
 
-    function goToSpeakExamPage() {
-        initSpeakExamGrid();
-        switchView('speakExamSetupView');
+    function goToSpeakPracticePage() {
+        initSpeakPracticeGrid();
+        switchView('speakPracticeSetupView');
     }
 
     function levenshtein(a, b) {
@@ -2203,28 +2280,100 @@
         }
         return prev[b.length];
     }
-
-    // 轉成可比較的字串：英文只留 a-z0-9；韓文拆成字母 (jamo) 再比，讓「差一個母音」只扣一點分
-    function normalizeSpeakText(str, lang) {
-        let t = String(str || '').toLowerCase().replace(/\([^)]*\)|（[^）]*）/g, ' ');
-        if (lang === 'ko') return t.normalize('NFD').replace(/[^ᄀ-ᇿ㄰-㆏]/g, '');
-        return t.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+    function similarity(a, b) {
+        if (!a.length || !b.length) return 0;
+        return Math.max(0, 1 - levenshtein(a, b) / Math.max(a.length, b.length));
     }
 
-    // 回傳 { score: 0~100, heard: 最接近的辨識結果 }
-    // 分數 = 文字相似度 × (0.5 + 0.5 × 辨識信心度)；瀏覽器沒提供信心度時只看相似度
+    // ── 英文：同音字、數字、發音相近的拼法都視為同一個字 ──
+    // 語音辨識只會回傳「它猜的字」，唸得再標準也可能被寫成同音字（right/write、to/two…），所以先把這些統一。
+    const EN_HOMOPHONES = [
+        ['right','write','rite'],['2','to','too'],['their','there','theyre'],['buy','by','bye'],['see','sea'],['know','no'],
+        ['hear','here'],['1','won'],['flower','flour'],['blue','blew'],['son','sun'],['sale','sail'],['meet','meat'],['week','weak'],
+        ['road','rode'],['night','knight'],['wait','weight'],['pair','pear','pare'],['tail','tale'],['plane','plain'],['piece','peace'],
+        ['hour','our'],['whole','hole'],['4','for','fore'],['eye','i','aye'],['be','bee'],['you','ewe','u'],['are','r'],['8','ate'],
+        ['new','knew'],['red','read'],['would','wood'],['which','witch'],['where','wear','ware'],['weather','whether'],['bear','bare'],
+        ['dear','deer'],['die','dye'],['fair','fare'],['flew','flu'],['hair','hare'],['heal','heel'],['mail','male'],['main','mane'],
+        ['pain','pane'],['rain','reign','rein'],['steal','steel'],['sweet','suite'],['cell','sell'],['cent','scent','sent'],
+        ['great','grate'],['pray','prey'],['sight','site','cite'],['tide','tied'],['toe','tow'],['waist','waste'],['way','weigh'],
+        ['wine','whine'],['allowed','aloud'],['bored','board'],['break','brake'],['coarse','course'],['hi','high'],['lead','led'],
+        ['might','mite'],['not','knot'],['oh','owe'],['ok','okay'],['color','colour'],['favorite','favourite'],['center','centre'],
+        ['theater','theatre'],['gray','grey'],['organize','organise'],['realize','realise'],['program','programme'],['neighbor','neighbour']
+    ];
+    const EN_HOMO_MAP = (function () {
+        let m = {};
+        EN_HOMOPHONES.forEach(g => g.forEach(w => { m[w] = g[0]; }));
+        return m;
+    })();
+    const EN_NUMBERS = { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+        thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20 };
+
+    function enTokens(str) {
+        let t = String(str || '').toLowerCase().replace(/\([^)]*\)|（[^）]*）/g, ' ')
+            .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['’]/g, '');
+        return t.split(/[^a-z0-9]+/).filter(Boolean).map(w => {
+            if (Object.prototype.hasOwnProperty.call(EN_NUMBERS, w)) return String(EN_NUMBERS[w]);
+            return EN_HOMO_MAP[w] || w;
+        });
+    }
+    // 簡化的「拼字 → 發音」：處理不發音的字母與同音的拼法（ph=f、ck=k、kn=n、ght=t…），保留母音
+    function enPhoneticLite(w) {
+        return w.replace(/^kn/, 'n').replace(/^gn/, 'n').replace(/^wr/, 'r').replace(/^ps/, 's').replace(/^wh/, 'w')
+            .replace(/ph/g, 'f').replace(/ght/g, 't').replace(/ck/g, 'k').replace(/tch/g, 'ch').replace(/dge/g, 'j')
+            .replace(/mb$/, 'm').replace(/c(?=[eiy])/g, 's').replace(/c/g, 'k').replace(/q/g, 'k').replace(/x/g, 'ks')
+            .replace(/z/g, 's').replace(/(.)\1+/g, '$1');
+    }
+
+    // ── 韓文：拆成字母 (jamo) 比對，並把「發音相同」的字母視為一樣 ──
+    function koCanon(str) {
+        let t = String(str || '').toLowerCase().replace(/\([^)]*\)|（[^）]*）/g, ' ').normalize('NFD');
+        let out = '';
+        for (const ch of t) {
+            let c = ch.codePointAt(0);
+            if (c < 0x1100 || c > 0x11FF) continue;       // 只留韓文字母
+            if (c === 0x110B) continue;                   // 開頭的 ㅇ 不發音
+            if (c === 0x1166) c = 0x1162;                 // ㅔ ≈ ㅐ
+            else if (c === 0x1168) c = 0x1164;            // ㅖ ≈ ㅒ
+            else if (c === 0x116B || c === 0x116C) c = 0x116F;   // ㅙ ㅚ ≈ ㅞ
+            else if (c === 0x11A9 || c === 0x11BF) c = 0x11A8;   // 尾音 ㄲ ㅋ → ㄱ
+            else if (c === 0x11BA || c === 0x11BB || c === 0x11BD || c === 0x11BE || c === 0x11C0) c = 0x11AE; // 尾音 ㅅ ㅆ ㅈ ㅊ ㅌ → ㄷ
+            else if (c === 0x11C1) c = 0x11B8;            // 尾音 ㅍ → ㅂ
+            out += String.fromCodePoint(c);
+        }
+        return out;
+    }
+
+    // 單一辨識結果 vs 目標單字 → 0~100
+    function speakScoreOne(target, heard, lang) {
+        if (lang === 'ko') {
+            const t = koCanon(target), h = koCanon(heard);
+            if (!t || !h) return 0;
+            if (t === h) return 100;
+            if (h.indexOf(t) !== -1) return 90;           // 多說了其他字，但目標有說到
+            return Math.round(similarity(t, h) * 100);
+        }
+        const tt = enTokens(target), ht = enTokens(heard);
+        if (!tt.length || !ht.length) return 0;
+        const ts = tt.join(''), hs = ht.join('');
+        if (ts === hs) return 100;
+        let best = similarity(ts, hs) * 100;
+        const tp = tt.map(enPhoneticLite).join(''), hp = ht.map(enPhoneticLite).join('');
+        best = Math.max(best, tp === hp ? 92 : similarity(tp, hp) * 95);
+        if (ht.length > tt.length) {                      // 例如目標 apple、辨識成 "an apple"
+            const key = tt.join(' ');
+            for (let i = 0; i + tt.length <= ht.length; i++) {
+                if (ht.slice(i, i + tt.length).join(' ') === key) { best = Math.max(best, 90); break; }
+            }
+        }
+        return Math.round(best);
+    }
+
+    // 回傳 { score: 0~100, heard: 分數最高的那個辨識結果 }（瀏覽器會給好幾個候選，取最高分）
     function scoreSpeakAttempt(target, alts, lang) {
-        let t = normalizeSpeakText(target, lang);
         let best = { score: 0, heard: (alts[0] && alts[0].transcript || '').trim() };
         let found = false;
         alts.forEach(a => {
-            let h = normalizeSpeakText(a.transcript, lang);
-            if (!t || !h) return;
-            let dist = levenshtein(t, h);
-            let sim = Math.max(0, 1 - dist / Math.max(t.length, h.length));
-            let conf = Number(a.confidence);
-            let factor = (conf > 0 && conf < 1) ? (0.5 + 0.5 * conf) : 1;
-            let sc = Math.round(sim * factor * 100);
+            let sc = speakScoreOne(target, a.transcript, lang);
             if (!found || sc > best.score) { best = { score: sc, heard: String(a.transcript).trim() }; found = true; }
         });
         return best;
@@ -2259,7 +2408,7 @@
         } catch (e) {
             let name = (e && e.name) || '';
             if (name === 'NotAllowedError' || name === 'SecurityError') {
-                return { ok: false, message: '⚠️ 沒有取得麥克風權限，無法進行朗讀測驗。\n\n請到瀏覽器（或手機設定 → Safari / Chrome）允許本網站使用麥克風，然後重新整理頁面再試一次。' };
+                return { ok: false, message: '⚠️ 沒有取得麥克風權限，無法進行朗讀練習。\n\n請到瀏覽器（或手機設定 → Safari / Chrome）允許本網站使用麥克風，然後重新整理頁面再試一次。' };
             }
             if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
                 return { ok: false, message: '⚠️ 找不到麥克風，請確認裝置有麥克風。' };
@@ -2268,16 +2417,16 @@
         }
     }
 
-    async function startSpeakExamSession() {
+    async function startSpeakPracticeSession() {
         if (speakStarting) return;
-        let text = document.getElementById('speakExamPreviewTextarea').value.trim();
+        let text = document.getElementById('speakPracticePreviewTextarea').value.trim();
         let words = parseWordsRaw(text);
-        if (document.getElementById('speakExamSettingStarred').checked) words = words.filter(w => w.starred);
+        if (document.getElementById('speakPracticeSettingStarred').checked) words = words.filter(w => w.starred);
         for (let i = words.length - 1; i > 0; i--) {
             let j = Math.floor(Math.random() * (i + 1));
             [words[i], words[j]] = [words[j], words[i]];
         }
-        let qCount = parseInt(document.getElementById('speakExamQuestionCount').value) || 0;
+        let qCount = parseInt(document.getElementById('speakPracticeQuestionCount').value) || 0;
         if (qCount > 0 && words.length > qCount) words = words.slice(0, qCount);
         if (words.length === 0) {
             alert('⚠️ 範圍內沒有符合條件的單字，請重新勾選！');
@@ -2286,8 +2435,12 @@
 
         let env = getBrowserEnv();
         if (env.isInApp) { document.getElementById('inAppBrowserWarning').style.display = 'block'; return; }
+        if (location.protocol === 'file:' && !sessionStorage.getItem('speak_file_warned')) {
+            sessionStorage.setItem('speak_file_warned', '1');
+            alert('ℹ️ 你目前是用「檔案」方式（file://）開啟網頁，瀏覽器不會記住麥克風權限，每次按住說話都會再問一次。\n\n把網頁放到網站（https）上開啟，並在詢問時選「造訪這個網站時允許」，之後就只會問一次。');
+        }
         if (!getSpeechRecognitionCtor()) {
-            alert('⚠️ 這個瀏覽器不支援語音辨識，無法進行朗讀測驗。\n\n請改用 Safari（iPhone / iPad）或 Chrome / Edge（電腦、Android）開啟。');
+            alert('⚠️ 這個瀏覽器不支援語音辨識，無法進行朗讀練習。\n\n請改用 Safari（iPhone / iPad）或 Chrome / Edge（電腦、Android）開啟。');
             return;
         }
 
@@ -2300,48 +2453,48 @@
         }
 
         requestWakeLock();
-        speakExamActiveList = words;
-        currentSpeakExamIndex = 0;
-        speakExamResults = [];
-        switchView('speakExamPlayView');
-        showSpeakExamQuestion();
+        speakPracticeActiveList = words;
+        currentSpeakPracticeIndex = 0;
+        speakPracticeResults = [];
+        switchView('speakPracticePlayView');
+        showSpeakPracticeQuestion();
     }
 
-    function stopSpeakExamSession() {
+    function stopSpeakPracticeSession() {
         abortSpeakListening();
         releaseWakeLock();
     }
 
-    function backToSpeakExamSetup() {
-        stopSpeakExamSession();
-        switchView('speakExamSetupView');
+    function backToSpeakPracticeSetup() {
+        stopSpeakPracticeSession();
+        switchView('speakPracticeSetupView');
     }
 
     function updateSpeakNextBtn() {
-        let btn = document.getElementById('speakExamNextBtn');
+        let btn = document.getElementById('speakPracticeNextBtn');
         if (!btn) return;
-        let isLast = currentSpeakExamIndex >= speakExamActiveList.length - 1;
+        let isLast = currentSpeakPracticeIndex >= speakPracticeActiveList.length - 1;
         if (speakQuestion.attempts === 0) btn.innerText = isLast ? '略過並結束 🏁' : '略過此題 ⏭';
         else btn.innerText = isLast ? '完成 🏁' : '下一題 ▶';
     }
 
-    function showSpeakExamQuestion() {
-        if (currentSpeakExamIndex >= speakExamActiveList.length) {
-            finishSpeakExamSession();
+    function showSpeakPracticeQuestion() {
+        if (currentSpeakPracticeIndex >= speakPracticeActiveList.length) {
+            finishSpeakPracticeSession();
             return;
         }
-        let card = speakExamActiveList[currentSpeakExamIndex];
-        document.getElementById('speakExamCardEng').innerText = card.english;
-        document.getElementById('speakExamCardChi').innerText = card.chinese ? ((card.pos ? card.pos + ' ' : '') + card.chinese) : '';
-        document.getElementById('speakExamProgressText').innerText = `${currentSpeakExamIndex + 1} / ${speakExamActiveList.length} 題`;
-        document.getElementById('speakExamProgressBar').style.width = `${((currentSpeakExamIndex + 1) / speakExamActiveList.length) * 100}%`;
+        let card = speakPracticeActiveList[currentSpeakPracticeIndex];
+        document.getElementById('speakPracticeCardEng').innerText = card.english;
+        document.getElementById('speakPracticeCardChi').innerText = card.chinese ? ((card.pos ? card.pos + ' ' : '') + card.chinese) : '';
+        document.getElementById('speakPracticeProgressText').innerText = `${currentSpeakPracticeIndex + 1} / ${speakPracticeActiveList.length} 題`;
+        document.getElementById('speakPracticeProgressBar').style.width = `${((currentSpeakPracticeIndex + 1) / speakPracticeActiveList.length) * 100}%`;
 
         speakQuestion = { attempts: 0, best: null, last: null };
         let box = document.getElementById('speakResultBox');
         box.classList.remove('show');
         box.innerHTML = '';
         let env = getBrowserEnv();
-        let note = (currentSpeakExamIndex === 0 && env.isIOS && env.standalone) ? '（主畫面模式的語音辨識可能無法使用，沒反應請改用 Safari 開啟）' : '';
+        let note = (currentSpeakPracticeIndex === 0 && env.isIOS && env.standalone) ? '（主畫面模式的語音辨識可能無法使用，沒反應請改用 Safari 開啟）' : '';
         setSpeakHint('按住麥克風朗讀上面的單字，說完再放開 ' + note, !!note);
         updateSpeakNextBtn();
     }
@@ -2349,11 +2502,11 @@
     function renderSpeakResult() {
         let r = speakQuestion.last, best = speakQuestion.best;
         if (!r) return;
-        let pass = r.score >= SPEAK_PASS_SCORE;
+        let pass = r.score >= getSpeakPassScore();
         let box = document.getElementById('speakResultBox');
         box.innerHTML = `
             <div class="speak-score ${pass ? 'pass' : 'fail'}">${r.score}<small>分</small></div>
-            <div style="font-weight:700; margin-top:4px;">${pass ? '✅ 通過！' : `❌ 未通過（需 ${SPEAK_PASS_SCORE} 分以上）`}</div>
+            <div style="font-weight:700; margin-top:4px;">${pass ? '✅ 通過！' : `❌ 未通過（需 ${getSpeakPassScore()} 分以上）`}</div>
             <div class="speak-sub">辨識到：<b>${escapeHTML(r.heard || '(沒有內容)')}</b></div>
             <div class="speak-sub">已嘗試 ${speakQuestion.attempts} 次 ｜ 本題最高 ${best.score} 分</div>`;
         box.classList.add('show');
@@ -2370,7 +2523,7 @@
 
     function startSpeakListening() {
         if (speakListening || speakStarting) return;
-        let playView = document.getElementById('speakExamPlayView');
+        let playView = document.getElementById('speakPracticePlayView');
         if (!playView || !playView.classList.contains('active')) return;
         const SR = getSpeechRecognitionCtor();
         if (!SR) { setSpeakHint('這個瀏覽器不支援語音辨識', true); return; }
@@ -2381,7 +2534,7 @@
         rec.lang = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
         rec.interimResults = true;
         rec.continuous = false;
-        rec.maxAlternatives = 5;
+        rec.maxAlternatives = 10;
         speakHeardAlts = []; speakLastError = ''; speakShortTap = false; speakIgnoreResult = false;
         speakPressAt = Date.now();
 
@@ -2418,14 +2571,15 @@
             speakShortTap = true; speakIgnoreResult = true;
             try { rec.abort(); } catch (e) {}
         } else {
+            // 放開手指後再多收 0.4 秒，避免單字最後一個音被切掉（切掉會被辨識成別的字）
             setSpeakHint('辨識中…');
-            try { rec.stop(); } catch (e) {}
+            setTimeout(() => { if (speakRec === rec && speakListening) { try { rec.stop(); } catch (e) {} } }, 400);
         }
-        // 保險：有些瀏覽器偶爾不會觸發 onend，7 秒後強制收尾
+        // 保險：有些瀏覽器偶爾不會觸發 onend，8 秒後強制收尾
         clearTimeout(speakWatchdog);
         speakWatchdog = setTimeout(() => {
             if (speakListening && speakRec === rec) { try { rec.abort(); } catch (e) {} finishSpeakListening(rec, true); }
-        }, 7000);
+        }, 8000);
     }
 
     function finishSpeakListening(rec, forced) {
@@ -2441,7 +2595,7 @@
             setSpeakHint(forced ? '辨識逾時，請再按住說話一次' : speakErrorMessage(speakLastError), true);
             return;
         }
-        let card = speakExamActiveList[currentSpeakExamIndex];
+        let card = speakPracticeActiveList[currentSpeakPracticeIndex];
         if (!card) return;
         let res = scoreSpeakAttempt(card.english, alts, getLearningLanguage());
         speakQuestion.attempts++;
@@ -2467,72 +2621,50 @@
         btn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); stopSpeakListening(); } });
     }
 
-    function playSpeakExamSample() {
-        let card = speakExamActiveList[currentSpeakExamIndex];
-        if (!card) return;
-        abortSpeakListening();
-        let utterance = new SpeechSynthesisUtterance(card.english);
-        let langCode = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
-        let chosenVoice = getSelectedVoiceForLearning();
-        if (chosenVoice) utterance.voice = chosenVoice;
-        utterance.lang = langCode;
-        utterance.rate = 0.8;
-        let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
-        utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
-        try { window.speechSynthesis.cancel(); } catch (e) {}
-        window.speechSynthesis.speak(utterance);
-    }
-
     function pushCurrentSpeakResult() {
-        let card = speakExamActiveList[currentSpeakExamIndex];
+        let card = speakPracticeActiveList[currentSpeakPracticeIndex];
         if (!card) return;
         let best = speakQuestion.best;
-        speakExamResults.push({
+        speakPracticeResults.push({
             english: card.english,
             chinese: card.chinese,
             pos: card.pos,
             heard: best ? best.heard : '',
             score: best ? best.score : 0,
-            isCorrect: !!best && best.score >= SPEAK_PASS_SCORE,
+            isCorrect: !!best && best.score >= getSpeakPassScore(),
             attempts: speakQuestion.attempts,
             skipped: !best
         });
     }
 
-    function nextSpeakExamQuestion() {
+    function nextSpeakPracticeQuestion() {
         abortSpeakListening();
-        if (currentSpeakExamIndex >= speakExamActiveList.length) return;
+        if (currentSpeakPracticeIndex >= speakPracticeActiveList.length) return;
         pushCurrentSpeakResult();
-        currentSpeakExamIndex++;
-        showSpeakExamQuestion();
+        currentSpeakPracticeIndex++;
+        showSpeakPracticeQuestion();
     }
 
-    function finishSpeakExamSession() {
+    function finishSpeakPracticeSession() {
         abortSpeakListening();
         releaseWakeLock();
         // 已經說過、但還沒按「下一題」就結束：這一題也要算進成績
-        if (currentSpeakExamIndex < speakExamActiveList.length && speakQuestion.attempts > 0 && speakExamResults.length === currentSpeakExamIndex) {
+        if (currentSpeakPracticeIndex < speakPracticeActiveList.length && speakQuestion.attempts > 0 && speakPracticeResults.length === currentSpeakPracticeIndex) {
             pushCurrentSpeakResult();
         }
-        let total = speakExamResults.length;
+        let total = speakPracticeResults.length;
         if (total === 0) {
-            backToSpeakExamSetup();
+            backToSpeakPracticeSetup();
             return;
         }
-        let passed = speakExamResults.filter(r => r.isCorrect).length;
+        let passed = speakPracticeResults.filter(r => r.isCorrect).length;
         let score = Math.round((passed / total) * 100);
-        let avg = Math.round(speakExamResults.reduce((sum, r) => sum + r.score, 0) / total);
-
-        let newRecord = { date: new Date().toLocaleString(), range: currentSpeakExamRanges || '預設範圍', total, score, avg, results: speakExamResults, lang: getLearningLanguage() };
-        speakExamHistory.unshift(newRecord);
-        speakExamHistory = trimHistoryPerLang(speakExamHistory);
-        localStorage.setItem('dictation_speak_exam_history', JSON.stringify(speakExamHistory));
-        triggerAutoSaveToCloud();
+        let avg = Math.round(speakPracticeResults.reduce((sum, r) => sum + r.score, 0) / total);
 
         let html = `<div class="result-box">
-            <div style="font-weight:700; margin-bottom:12px; font-size:15px; color:var(--text-main);">※ 朗讀測驗結束！以下為您的測驗結果：</div>
-            <div style="font-weight:600; margin-bottom:14px; color:var(--primary);">📊 成績統計：得分 ${score} 分（通過 ${passed} / ${total} 題，平均發音 ${avg} 分，${SPEAK_PASS_SCORE} 分以上算通過）</div>`;
-        speakExamResults.forEach((r, i) => {
+            <div style="font-weight:700; margin-bottom:12px; font-size:15px; color:var(--text-main);">※ 朗讀練習結束！以下為您的練習結果：</div>
+            <div style="font-weight:600; margin-bottom:14px; color:var(--primary);">📊 練習統計：通過率 ${score}%（通過 ${passed} / ${total} 題，平均發音 ${avg} 分，${getSpeakPassScore()} 分以上算通過）</div>`;
+        speakPracticeResults.forEach((r, i) => {
             let titleColor = r.isCorrect ? '#10B981' : '#EF4444';
             let icon = r.isCorrect ? '✅' : '❌';
             html += `<div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
@@ -2545,7 +2677,7 @@
         document.getElementById('modalResultBody').innerHTML = html;
         document.getElementById('examResultModal').style.display = 'block';
 
-        backToSpeakExamSetup();
+        backToSpeakPracticeSetup();
     }
 
     function updateDatabaseWithStarredState(targetEng, isStarred) {
@@ -2829,7 +2961,7 @@
         initExamCardGrid();
         initFlashcardGrid();
         initCardExamGrid();
-        initSpeakExamGrid();
+        initSpeakPracticeGrid();
 
         if (duplicates.length > 0) {
             let msg = `發現重複單字，已自動過濾重複部分：\n` + duplicates.map((d, i) => `${i + 1}. ${d}`).join('\n');
@@ -3309,7 +3441,6 @@
         setTimeout(() => {
             renderScoreChart('listeningScoreCanvas', filterHistoryByLang(examHistory));
             renderScoreChart('cardScoreCanvas', filterHistoryByLang(cardExamHistory));
-            renderScoreChart('speakScoreCanvas', filterHistoryByLang(speakExamHistory));
         }, 80);
     }
     function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
@@ -3323,8 +3454,7 @@
     function switchHistoryTab(tabName) {
         const tabs = {
             listening: { tab: 'cardListeningTab', panel: 'panelListeningHistory', canvas: 'listeningScoreCanvas', data: () => examHistory },
-            word:      { tab: 'cardWordTab',      panel: 'panelWordHistory',      canvas: 'cardScoreCanvas',      data: () => cardExamHistory },
-            speak:     { tab: 'cardSpeakTab',     panel: 'panelSpeakHistory',     canvas: 'speakScoreCanvas',     data: () => speakExamHistory }
+            word:      { tab: 'cardWordTab',      panel: 'panelWordHistory',      canvas: 'cardScoreCanvas',      data: () => cardExamHistory }
         };
         if (!tabs[tabName]) tabName = 'listening';
         Object.keys(tabs).forEach(k => {
@@ -3349,10 +3479,8 @@
         });
         let targetSelLis = document.getElementById('targetListSelectorListening');
         let targetSelCard = document.getElementById('targetListSelectorCard');
-        let targetSelSpeak = document.getElementById('targetListSelectorSpeak');
         if (targetSelLis) targetSelLis.innerHTML = targetSelectOptions;
         if (targetSelCard) targetSelCard.innerHTML = targetSelectOptions;
-        if (targetSelSpeak) targetSelSpeak.innerHTML = targetSelectOptions;
 
         let listeningHistoryHtml = '';
         if (examHistoryView.length === 0) {
@@ -3479,75 +3607,6 @@
         let cardTopWrongWordsEl = document.getElementById('cardTopWrongWords');
         if (cardTopWrongWordsEl) cardTopWrongWordsEl.innerHTML = cardWrongHtml;
 
-        // ── 朗讀測驗紀錄 ──
-        const speakHistoryView = filterHistoryByLang(speakExamHistory);
-        let speakHistoryHtml = '';
-        if (speakHistoryView.length === 0) {
-            speakHistoryHtml = `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 13px;">尚無${getLangName(getLearningLanguage())}朗讀測驗紀錄</div>`;
-        } else {
-            speakHistoryView.forEach((h, hIdx) => {
-                let wrongCount = h.results ? h.results.filter(r => !r.isCorrect).length : 0;
-                speakHistoryHtml += `
-                    <div class="history-card">
-                        <div class="history-header" data-on-click='[["toggleSpeakHistoryDetail",[${hIdx}]]]'>
-                            <span>📅 ${escapeHTML(h.date)} ｜ 範圍: ${escapeHTML(h.range || '預設範圍')}</span>
-                            <span style="color:#10B981; font-weight:700;">🎯 ${escapeHTML(h.score)}分 (共${escapeHTML(h.total)}題/未通過${wrongCount}題${h.avg !== undefined ? ' ｜ 平均發音' + escapeHTML(h.avg) + '分' : ''}) <span id="speakArrow_${hIdx}">▼</span></span>
-                        </div>
-                        <div class="history-detail" id="speakDetail_${hIdx}">
-                `;
-                if (h.results) {
-                    h.results.forEach((r, rIdx) => {
-                        let icon = r.isCorrect ? '✅' : '❌';
-                        let color = r.isCorrect ? '#10B981' : '#EF4444';
-                        let heard = r.skipped ? '(略過)' : (r.heard || '(沒有內容)');
-                        speakHistoryHtml += `<div style="color:${color}; margin-bottom:4px;">${icon} 第${rIdx+1}題：${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')}) — ${escapeHTML(r.score)}分 ｜ 辨識: ${escapeHTML(heard)}</div>`;
-                    });
-                }
-                speakHistoryHtml += `</div></div>`;
-            });
-        }
-        let speakExamHistoryListEl = document.getElementById('speakExamHistoryList');
-        if (speakExamHistoryListEl) speakExamHistoryListEl.innerHTML = speakHistoryHtml;
-
-        let speakWrongMap = {};
-        speakHistoryView.forEach(h => {
-            if (h.results) {
-                h.results.forEach(r => {
-                    if (!r.isCorrect) {
-                        let key = r.english.toLowerCase();
-                        if (!speakWrongMap[key]) speakWrongMap[key] = { english: r.english, chinese: r.chinese, count: 0 };
-                        speakWrongMap[key].count++;
-                    }
-                });
-            }
-        });
-        let speakWrongArr = Object.values(speakWrongMap).sort((a, b) => b.count - a.count).slice(0, 20);
-        let speakWrongHtml = '';
-        if (speakWrongArr.length === 0) {
-            speakWrongHtml = `<div style="text-align: center; color: var(--text-muted); padding: 10px; font-size: 12.5px;">目前沒有朗讀測驗錯題紀錄</div>`;
-        } else {
-            speakWrongArr.forEach((w, idx) => {
-                speakWrongHtml += `<div class="error-word-item">
-                    <input type="checkbox" checked value="${escapeHTML(w.english)}"> 
-                    <span>${idx + 1}. <b>${escapeHTML(w.english)}</b> (${escapeHTML(w.chinese || '')}) — <span class="error-count">未通過 ${escapeHTML(w.count)} 次</span></span>
-                </div>`;
-            });
-        }
-        let speakTopWrongWordsEl = document.getElementById('speakTopWrongWords');
-        if (speakTopWrongWordsEl) speakTopWrongWordsEl.innerHTML = speakWrongHtml;
-    }
-
-    function toggleSpeakHistoryDetail(idx) {
-        let detail = document.getElementById(`speakDetail_${idx}`);
-        let arrow = document.getElementById(`speakArrow_${idx}`);
-        if (!detail || !arrow) return;
-        if (detail.style.display === 'block') {
-            detail.style.display = 'none';
-            arrow.innerText = '▼';
-        } else {
-            detail.style.display = 'block';
-            arrow.innerText = '▲';
-        }
     }
 
     function toggleHistoryDetail(idx) {
@@ -3652,8 +3711,8 @@
     }
 
     function saveSelectedWrongWords(type) {
-        let selectorId = type === 'listening' ? 'targetListSelectorListening' : (type === 'speak' ? 'targetListSelectorSpeak' : 'targetListSelectorCard');
-        let containerId = type === 'listening' ? 'listeningTopWrongWords' : (type === 'speak' ? 'speakTopWrongWords' : 'cardTopWrongWords');
+        let selectorId = type === 'listening' ? 'targetListSelectorListening' : 'targetListSelectorCard';
+        let containerId = type === 'listening' ? 'listeningTopWrongWords' : 'cardTopWrongWords';
         
         let targetListIdx = parseInt(document.getElementById(selectorId).value);
         if (isNaN(targetListIdx) || !wordLists[targetListIdx]) {
@@ -3806,8 +3865,6 @@
     function clearAllExamHistoryData() { 
         examHistory = []; 
         cardExamHistory = [];
-        speakExamHistory = [];
-        localStorage.removeItem('dictation_speak_exam_history');
         localStorage.removeItem('dictation_exam_history'); 
         localStorage.removeItem('dictation_card_exam_history');
         alert('所有考試紀錄已清空'); 
@@ -3824,17 +3881,15 @@
     const INLINE_ACTIONS = {
         copyAppUrl,
         goToAdventurePage,
-        goToSpeakExamPage,
-        toggleSpeakExamCard,
-        toggleSpeakExamPreview,
-        sortSpeakExamPreview,
-        openSpeakExamSettingsModal,
-        saveSpeakExamSettings,
-        startSpeakExamSession,
-        finishSpeakExamSession,
-        nextSpeakExamQuestion,
-        playSpeakExamSample,
-        toggleSpeakHistoryDetail,
+        goToSpeakPracticePage,
+        toggleSpeakPracticeCard,
+        toggleSpeakPracticePreview,
+        sortSpeakPracticePreview,
+        openSpeakPracticeSettingsModal,
+        saveSpeakPracticeSettings,
+        startSpeakPracticeSession,
+        finishSpeakPracticeSession,
+        nextSpeakPracticeQuestion,
         closeShopListPicker,
         buyWordCapForList,
         buyShopItem,
