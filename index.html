@@ -15,7 +15,7 @@
         base-uri 'self';
         form-action 'self'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chicky Vocab</title>
+    <link rel="icon" href="data:,">
     <!-- 引入 Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1320,6 +1320,25 @@
             .shop-icon { width: 56px; height: 56px; }
             .shop-name { font-size: 12.5px; }
         }
+        
+        /* 選擇要擴增的題庫 */
+        #shopListPickerModal { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .picker-list { display: flex; flex-direction: column; gap: 8px; max-height: 55vh; overflow-y: auto; }
+        .picker-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; box-sizing: border-box; text-align: left; font-family: inherit; color: var(--text-main); background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 14px; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
+        .picker-item:hover { border-color: #FACC15; transform: translateY(-1px); }
+        .picker-main { min-width: 0; }
+        .picker-title { font-size: 14.5px; font-weight: 700; overflow-wrap: anywhere; }
+        .picker-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .picker-plus { flex-shrink: 0; font-size: 15px; font-weight: 800; color: #B45309; background: #FEF3C7; border-radius: 10px; padding: 4px 10px; }
+        .picker-item.is-maxed { opacity: 0.55; cursor: not-allowed; }
+        .picker-item.is-maxed:hover { transform: none; border-color: var(--border-color); }
+        .picker-item.is-maxed .picker-plus { color: #64748B; background: #E2E8F0; }
+        .picker-back { background: #E2E8F0 !important; color: #334155 !important; }
+        body.power-saving-mode .picker-back { background: #2B303C !important; color: #E2E8F0 !important; }
+        body.power-saving-mode .picker-item { background: #1B1E27 !important; border-color: #2B303C !important; }
+        body.power-saving-mode .picker-title { color: #FFFFFF !important; }
+        body.power-saving-mode .picker-plus { background: #3B2F12 !important; color: #FCD34D !important; }
+        body.power-saving-mode .picker-item.is-maxed .picker-plus { background: #2B303C !important; color: #94A3B8 !important; }        
 
         @media screen and (max-width: 768px) {
             body { padding: 12px 8px; }
@@ -2032,7 +2051,7 @@
             <button type="button" id="shopItem_word_cap_50" class="shop-cell shop-item" data-on-click='[["buyShopItem",["word_cap_50"]]]'>
                 <img class="shop-icon" src="data:image/webp;base64,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" alt="單字上限 +50">
                 <div class="shop-name">單字上限 +50</div>
-                <div class="shop-sub" id="shopSub_word_cap_50">目前每本 100 字</div>
+                <div class="shop-sub" id="shopSub_word_cap_50">指定一本題庫</div>
                 <div class="shop-price" id="shopPrice_word_cap_50"><span class="chicken-mini"></span><b>30</b></div>
             </button>
             <button type="button" id="shopItem_list_slot_1" class="shop-cell shop-item" data-on-click='[["buyShopItem",["list_slot_1"]]]'>
@@ -2053,7 +2072,17 @@
         <button class="action-btn btn-start" style="margin-top: 16px; width: 100%;" data-on-click='[["closeChickenShopModal",[]]]'>關閉視窗</button>
     </div>
 </div>
-
+<!-- 選擇要擴增單字上限的題庫 -->
+<div id="shopListPickerModal" class="modal">
+    <div class="modal-content" style="max-width: 460px; position: relative;">
+        <div style="text-align: center; margin: 6px 0 14px;">
+            <div class="current-mode-indicator" style="position: static; transform: none; display: inline-flex; padding: 8px 20px; font-size: 16px;">選擇要擴增的題庫</div>
+        </div>
+        <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px;">只會增加你選的那一本題庫的單字上限 +50。</p>
+        <div id="shopListPickerContainer" class="picker-list"></div>
+        <button class="action-btn picker-back" style="margin-top: 14px; width: 100%;" data-on-click='[["closeShopListPicker",[]]]'>返回</button>
+    </div>
+</div>
 <div id="flashcardSettingsModal" class="modal">
     <div class="modal-content">
         <div style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 18px;">
