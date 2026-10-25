@@ -1175,7 +1175,7 @@
                 <div class="list-card-item" data-on-click='[["openEditorDetail",[${idx}]]]'>
                     <div class="list-card-info">
                         <div class="list-card-title">${shown}: ${escapeHTML(l.title)} <span class="lang-tag lang-tag-${lang}">${getLangName(lang)}</span></div>
-                        <div class="list-card-count">(${count}/${getListWordCap(1)} 字)</div>
+                        <div class="list-card-count">(${count}/${getListWordCap(wordLists[idx])} 字)</div>
                     </div>
                     <div style="position: relative;">
                         <button class="list-card-menu-btn" data-on-click='[["$stop",[]],["toggleDropdownMenu",[${idx},"$event"]]]'>⋮</button>
@@ -2071,7 +2071,24 @@
         }
     }
 
+    // 編輯頁右上角：目前單字數 / 這本題庫的上限（接近上限變橘色、達到上限變紅色）
+    function updateEditorWordCounter() {
+        let el = document.getElementById('editorWordCounter');
+        let list = wordLists[lastSelectedList];
+        let ta = document.getElementById('editorWordList');
+        if (!el || !list || !ta) return;
+        let count = getListWordCount(ta.value);
+        let cap = getListWordCap(list);
+        el.textContent = `(${count}/${cap})`;
+        el.classList.toggle('is-full', count >= cap);
+        el.classList.toggle('is-near', count < cap && count >= cap * 0.9);
+        el.title = count >= cap
+            ? '已達單字上限，可到「雞塊補給站」兌換單字上限 +50'
+            : `還可以再放 ${cap - count} 個單字`;
+    }
+
     function handleEditorSearch() {
+        updateEditorWordCounter();
         const textarea = document.getElementById('editorWordList');
         const searchInput = document.getElementById('wordSearchInput');
         const backdrop = document.getElementById('editorBackdrop');
@@ -2689,7 +2706,7 @@
         let targetSelectOptions = '';
         wordLists.forEach((l, idx) => {
             if (!isListInCurrentLang(l)) return;
-            targetSelectOptions += `<option value="${idx}">${getLangSeq(idx)}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/${getListWordCap(1)})</option>`;
+            targetSelectOptions += `<option value="${idx}">${getLangSeq(idx)}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/${getListWordCap(wordLists[idx])})</option>`;
         });
         let targetSelLis = document.getElementById('targetListSelectorListening');
         let targetSelCard = document.getElementById('targetListSelectorCard');
