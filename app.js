@@ -73,19 +73,22 @@
     }
 
     // ---------------------------------
-    // 🍗 雞塊獎勵系統邏輯
+    // 🍗 雞塊系統：雞塊數量、領取紀錄、購買紀錄一律以後端 (Supabase) 為準
     // ---------------------------------
-    let chickenData = JSON.parse(localStorage.getItem('chicky_chicken_data')) || {
-        count: 0,
-        lastDate: "",
-        tasks: {
-            dailyLogin: { done: false, claimed: false },
-            listeningPractice: { done: false, claimed: false },
-            cardPractice: { done: false, claimed: false },
-            listeningPerfect: { done: false, claimed: false },
-            cardPerfect: { done: false, claimed: false }
-        }
-    };
+    // 本機只保存「今天各任務有沒有完成」(chickenData)。
+    // 前端不能直接寫入雞塊數，只能呼叫後端函式 claim_reward / buy_item；
+    // 就算有人用 F12 改了畫面上的數字，下次連線也會被後端的數字蓋回來。
+    const CHICKEN_TASK_KEYS = ['dailyLogin', 'listeningPractice', 'cardPractice', 'listeningPerfect', 'cardPerfect'];
+
+    function loadLocalChickenProgress() {
+        let raw = {};
+        try { raw = JSON.parse(localStorage.getItem('chicky_chicken_data')) || {}; } catch (e) { raw = {}; }
+        let tasks = {};
+        // 舊版存的 count / claims / claimed 一律捨棄，只留任務完成進度
+        CHICKEN_TASK_KEYS.forEach(k => { tasks[k] = { done: !!(raw.tasks && raw.tasks[k] && raw.tasks[k].done) }; });
+        return { lastDate: typeof raw.lastDate === 'string' ? raw.lastDate : '', tasks };
+    }
+    let chickenData = loadLocalChickenProgress();
 
     // 取得「本地時區」的今天日期（YYYY-MM-DD），台灣時間 00:00 即換日
     function getLocalDateStr() {
@@ -93,145 +96,174 @@
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
-    // ── 雞塊「領取紀錄表」：解決多裝置重複領取 ──────────────────────────
-    // claims: { "2026-10-24": ["dailyLogin", "cardPractice"] }  每天每個任務最多記一筆
-    // legacyBase: 舊版累積的雞塊數（升級前的存量）
-    // 雞塊總數 = legacyBase + 領取紀錄筆數。兩台裝置各自領同一個任務，合併後只會算一次。
-    const CHICKEN_TASK_KEYS = ['dailyLogin', 'listeningPractice', 'cardPractice', 'listeningPerfect', 'cardPerfect'];
+    // ── 後端錢包的本機快取（只用來「沒網路時顯示上次的數字」，不具任何效力） ──
+    const WALLET_CACHE_KEY = 'chicky_wallet_cache';
+    let wallet = (function () {
+        try {
+            let w = JSON.parse(localStorage.getItem(WALLET_CACHE_KEY));
+            if (w && typeof w.balance === 'number') return w;
+        } catch (e) {}
+        return { balance: 0, day: '', claimedToday: [], purchases: {} };
+    })();
+    let walletBusy = false;      // 防止連點造成重複送出
+    let walletOnline = true;     // 最近一次和後端通訊是否成功
+    let editorOpenCount = 0;     // 開啟編輯頁時該題庫的單字數（舊題庫超過上限時不會被刪除）
 
-    function recalcChickenCount(d) {
-        let n = Number(d.legacyBase) || 0;
-        Object.values(d.claims).forEach(arr => { n += arr.length; });
-        d.count = n;
-        return d;
+    // ── 商品目錄：價格與上限以後端 shop_items 為準，這裡只是連不上時的預設值 ──
+    const BASE_WORD_CAP = 100, WORD_CAP_STEP = 50;
+    const SHOP_ITEM_META = {
+        word_cap_50: { name: '單字上限 +50',  desc: '每本題庫可放的單字數 +50' },
+        list_slot_1: { name: '題庫數量 +1',   desc: '增加 1 本空白題庫（可放單字數與其他題庫相同）' }
+    };
+    let shopCatalog = {
+        word_cap_50: { price: 30, max: 4 },
+        list_slot_1: { price: 60, max: 89 }
+    };
+
+    function walletQty(key) { return Number((wallet.purchases || {})[key]) || 0; }
+    function getListWordCap() { return BASE_WORD_CAP + WORD_CAP_STEP * walletQty('word_cap_50'); }
+    function getMaxLists() { return MAX_LISTS_DEFAULT + walletQty('list_slot_1'); }
+    function isTaskClaimed(key) {
+        return wallet.day === chickenData.lastDate && (wallet.claimedToday || []).indexOf(key) !== -1;
     }
 
-    // 把「今天哪些任務已領」從紀錄表同步回任務狀態
-    function syncClaimedFromLedger(d) {
-        const todayClaims = d.claims[d.lastDate] || [];
-        CHICKEN_TASK_KEYS.forEach(k => {
-            if (!d.tasks[k]) d.tasks[k] = { done: false, claimed: false };
-            d.tasks[k].claimed = todayClaims.includes(k);
-            if (d.tasks[k].claimed) d.tasks[k].done = true;
-        });
-        return d;
-    }
-
-    // 舊格式資料（沒有紀錄表）→ 自動升級，不會改變原本的雞塊數
-    function ensureChickenLedger(d) {
-        if (d.claims && typeof d.legacyBase === 'number') return d;
-        d.claims = {};
-        const claimedToday = [];
-        if (d.lastDate && d.tasks) {
-            CHICKEN_TASK_KEYS.forEach(k => { if (d.tasks[k] && d.tasks[k].claimed) claimedToday.push(k); });
-            if (claimedToday.length) d.claims[d.lastDate] = claimedToday;
+    // ── 與後端溝通 ──
+    // 沒登入 Google 也能用：自動建立「匿名帳號」取得身分（之後綁定 Google 登入時會沿用同一個帳號）。
+    // 需要在 Supabase 後台開啟 Authentication → Sign In / Providers → Allow anonymous sign-ins
+    let sessionPromise = null;
+    function ensureSupabaseSession() {
+        // 同一時間只允許一個登入流程；同時發出的請求共用結果，避免建立出多個匿名帳號
+        if (!sessionPromise) {
+            sessionPromise = (async () => {
+                try {
+                    let got = await supabaseClient.auth.getSession();
+                    if (got && got.data && got.data.session) return got.data.session;
+                    let res = await supabaseClient.auth.signInAnonymously();
+                    if (res.error) throw res.error;
+                    return res.data.session;
+                } catch (e) {
+                    console.error('⚠️ Supabase 登入失敗（請確認後台已開啟 Anonymous sign-ins）:', e && e.message || e);
+                    return null;
+                }
+            })().finally(() => { sessionPromise = null; });
         }
-        d.legacyBase = Math.max(0, (Number(d.count) || 0) - claimedToday.length);
-        return recalcChickenCount(d);
+        return sessionPromise;
     }
 
-    // 合併兩份雞塊資料（本機 + 雲端）：領取紀錄取聯集、任務完成進度取「任一邊完成」
-    // 合併是可重複執行的（跑幾次結果都一樣），所以登入、進題庫頁時重複載入也沒問題
-    function mergeChickenData(local, cloud) {
-        local = ensureChickenLedger(local);
-        if (!cloud || typeof cloud !== 'object' || !cloud.tasks) return local;
-        cloud = ensureChickenLedger(JSON.parse(JSON.stringify(cloud)));
+    async function walletRpc(fn, args) {
+        let session = await ensureSupabaseSession();
+        if (!session) throw new Error('no_session');
+        let res = await supabaseClient.rpc(fn, args);
+        if (res.error) throw res.error;
+        return res.data;
+    }
 
-        const today = getLocalDateStr();
-        let newest = (cloud.lastDate || '') > (local.lastDate || '') ? cloud.lastDate : local.lastDate;
-        if (newest > today) newest = local.lastDate; // 對方時鐘比我們快：不採用未來的日期，避免來回覆蓋
+    function walletErrorMessage(e) {
+        let m = String((e && e.message) || '');
+        if (m.includes('insufficient')) return '雞塊不足';
+        if (m.includes('max_reached')) return '已達購買上限';
+        if (m.includes('invalid_day')) return '日期異常，請確認手機的日期時間是否正確';
+        if (m.includes('invalid_item') || m.includes('invalid_task')) return '商品或任務不存在';
+        return '無法連線到雞塊伺服器，請稍後再試';
+    }
 
-        const merged = { count: 0, lastDate: newest, tasks: {}, claims: {},
-                         legacyBase: Math.max(local.legacyBase, cloud.legacyBase) };
-
-        new Set([...Object.keys(local.claims), ...Object.keys(cloud.claims)]).forEach(date => {
-            merged.claims[date] = [...new Set([...(local.claims[date] || []), ...(cloud.claims[date] || [])])];
+    function setWalletNote() {
+        ['walletNoteReward', 'walletNoteShop'].forEach(id => {
+            let el = document.getElementById(id);
+            if (el) el.textContent = walletOnline ? '' : '⚠️ 目前無法連線，顯示的是上次的雞塊數量，無法領取或兌換';
         });
-
-        CHICKEN_TASK_KEYS.forEach(k => {
-            const fromLocal = local.lastDate === newest && local.tasks[k] && local.tasks[k].done;
-            const fromCloud = cloud.lastDate === newest && cloud.tasks[k] && cloud.tasks[k].done;
-            merged.tasks[k] = { done: !!(fromLocal || fromCloud), claimed: false };
-        });
-
-        syncClaimedFromLedger(merged);
-        return recalcChickenCount(merged);
     }
 
-    // 用來判斷「合併後是否比雲端多了東西，需要回傳雲端」
-    function chickenSignature(d) {
-        d = ensureChickenLedger(JSON.parse(JSON.stringify(d)));
-        const keys = Object.keys(d.claims).sort();
-        return d.legacyBase + '|' + keys.map(k => k + ':' + [...d.claims[k]].sort().join(',')).join(';');
+    function applyWallet(w, day) {
+        wallet = {
+            balance: Number(w.balance) || 0,
+            day: day || getLocalDateStr(),
+            claimedToday: Array.isArray(w.claimed_today) ? w.claimed_today : [],
+            purchases: (w.purchases && typeof w.purchases === 'object') ? w.purchases : {}
+        };
+        try { localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify(wallet)); } catch (e) {}
+        walletOnline = true;
+        setWalletNote();
+        updateChickenBadgeUI();
+        updateChickenShopUI();
+        updateListQuotaBar();
     }
 
-    ensureChickenLedger(chickenData);
+    async function refreshWallet() {
+        try {
+            let day = getLocalDateStr();
+            let w = await walletRpc('get_wallet', { p_day: day });
+            applyWallet(w, day);
+            return true;
+        } catch (e) {
+            walletOnline = false;
+            setWalletNote();
+            console.warn('讀取雞塊餘額失敗（顯示上次快取）:', e && e.message || e);
+            return false;
+        }
+    }
 
+    async function loadShopCatalog() {
+        try {
+            let session = await ensureSupabaseSession();
+            if (!session) return;
+            let res = await supabaseClient.from('shop_items').select('item_key, price, max_qty, enabled');
+            if (res.error || !Array.isArray(res.data)) return;
+            res.data.forEach(r => {
+                if (shopCatalog[r.item_key]) {
+                    shopCatalog[r.item_key].price = Number(r.price) || shopCatalog[r.item_key].price;
+                    shopCatalog[r.item_key].max = Number(r.max_qty) || shopCatalog[r.item_key].max;
+                    shopCatalog[r.item_key].enabled = r.enabled !== false;
+                }
+            });
+            updateChickenShopUI();
+        } catch (e) { /* 連不上就沿用預設值 */ }
+    }
+
+    // 每日重置：只重置本機的「任務完成進度」；今天領過什麼由後端告訴我們
     function checkDailyReset() {
-        ensureChickenLedger(chickenData);
         let todayStr = getLocalDateStr();
         if (chickenData.lastDate !== todayStr) {
             chickenData.lastDate = todayStr;
-            chickenData.tasks.dailyLogin = { done: true, claimed: false }; // 每日登入自動完成
-            chickenData.tasks.listeningPractice = { done: false, claimed: false };
-            chickenData.tasks.cardPractice = { done: false, claimed: false };
-            chickenData.tasks.listeningPerfect = { done: false, claimed: false };
-            chickenData.tasks.cardPerfect = { done: false, claimed: false };
-            syncClaimedFromLedger(chickenData);
-            recalcChickenCount(chickenData);
-            saveChickenData();
-            triggerAutoSaveToCloud(); // 重置後同步到雲端（未登入時只存本機）
+            CHICKEN_TASK_KEYS.forEach(k => { chickenData.tasks[k] = { done: false }; });
+            chickenData.tasks.dailyLogin = { done: true };   // 每日登入自動完成
+            localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
+            setTimeout(refreshWallet, 0);                    // 新的一天：向後端確認今天已領取哪些
+            triggerAutoSaveToCloud();
         }
     }
 
-    // 🍗 儲存雞塊資料（同時寫入本機 LocalStorage 與 Supabase 雲端）
-    async function saveChickenData() {
-        // 1. 存入本機
+    // 🍗 儲存任務完成進度（只存本機；雞塊數量不在這裡）
+    function saveChickenData() {
         localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
         updateChickenBadgeUI();
-
-        // 2. 同步寫入 Supabase 雲端資料庫
-        try {
-            // 這裡我們用固定的測試 ID (或你的裝置ID)，確保雲端有對應的資料列
-            const profileId = '00000000-0000-0000-0000-000000000001'; 
-            
-            const { error } = await supabaseClient
-                .from('user_profiles')
-                .upsert({ 
-                    id: profileId, 
-                    chicken_count: chickenData.count,
-                    updated_at: new Date().toISOString()
-                });
-
-            if (error) {
-                console.error('⚠️ 雲端雞塊同步失敗:', error.message);
-            } else {
-                console.log('☁️ 雞塊數量已成功同步至 Supabase！當前數量:', chickenData.count);
-            }
-        } catch (err) {
-            console.error('⚠️ 寫入 Supabase 發生例外錯誤:', err);
-        }
     }
 
-    // ☁️ 從 Supabase 雲端讀取雞塊資料
-    async function loadChickenFromSupabase() {
-        try {
-            const profileId = '00000000-0000-0000-0000-000000000001';
-            let { data, error } = await supabaseClient
-                .from('user_profiles')
-                .select('chicken_count')
-                .eq('id', profileId)
-                .single();
-
-            if (data && typeof data.chicken_count === 'number') {
-                chickenData.count = data.chicken_count;
-                localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
-                updateChickenBadgeUI();
-                console.log('☁️ 已從 Supabase 成功載入雲端雞塊數:', chickenData.count);
-            }
-        } catch (err) {
-            console.log('ℹ️ 尚無雲端紀錄或初次使用，使用本機雞塊資料。');
-        }
+    // 在右上角的雞塊數量旁顯示浮動數字（+1 / -30），1 秒後消失
+    function showChickenFloat(countElId, text, color) {
+        let countEl = document.getElementById(countElId);
+        if (!countEl) return;
+        let badgeContainer = countEl.parentElement;
+        if (!badgeContainer) return;
+        let floatSpan = document.createElement('span');
+        floatSpan.innerText = text;
+        floatSpan.style.position = 'absolute';
+        floatSpan.style.left = '50%';
+        floatSpan.style.top = '-10px';
+        floatSpan.style.transform = 'translateX(-50%)';
+        floatSpan.style.color = color || '#EF4444';
+        floatSpan.style.fontWeight = '800';
+        floatSpan.style.fontSize = '14px';
+        floatSpan.style.pointerEvents = 'none';
+        floatSpan.style.transition = 'all 1s ease';
+        floatSpan.style.opacity = '1';
+        floatSpan.className = 'chicken-float';
+        badgeContainer.appendChild(floatSpan);
+        setTimeout(() => {
+            floatSpan.style.transform = 'translateX(-50%) translateY(-25px)';
+            floatSpan.style.opacity = '0';
+        }, 50);
+        setTimeout(() => { floatSpan.remove(); }, 1050);
     }
 
     function updateChickenBadgeUI() {
@@ -242,18 +274,15 @@
         if (!badge) return;
 
         // 檢查是否有「已達成但未領取」的任務
-        let hasUnclaimed = Object.values(chickenData.tasks).some(t => t.done && !t.claimed);
-        if (hasUnclaimed) {
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
-        }
+        let hasUnclaimed = CHICKEN_TASK_KEYS.some(k => chickenData.tasks[k].done && !isTaskClaimed(k));
+        badge.style.display = hasUnclaimed ? 'flex' : 'none';
     }
 
     function openChickenRewardModal() {
         checkDailyReset();
         updateChickenModalUI();
         document.getElementById('chickenRewardModal').style.display = 'block';
+        refreshWallet();
     }
 
     function closeChickenRewardModal() {
@@ -261,7 +290,7 @@
     }
 
     function updateChickenModalUI() {
-        document.getElementById('chickenCountDisplay').innerText = chickenData.count;
+        document.getElementById('chickenCountDisplay').innerText = wallet.balance;
         let container = document.getElementById('rewardTasksContainer');
         if (!container) return;
 
@@ -277,7 +306,7 @@
         taskDefs.forEach(def => {
             let t = chickenData.tasks[def.key];
             let statusHtml = '';
-            if (t.claimed) {
+            if (isTaskClaimed(def.key)) {
                 statusHtml = `<span class="task-status-text completed">已領取</span>`;
             } else if (t.done) {
                 statusHtml = `<button class="cloud-btn" data-on-click='[["claimChickenReward",["${def.key}"]]]'>領1個</button>`;
@@ -300,50 +329,92 @@
         container.innerHTML = html;
     }
 
-    function claimChickenReward(taskKey) {
+    // 領取：向後端登記（同一天同一任務只會算一次），成功後以後端回傳的餘額為準
+    async function claimChickenReward(taskKey) {
         checkDailyReset();
         let t = chickenData.tasks[taskKey];
-        if (t && t.done && !t.claimed) {
-            t.claimed = true;
-            // 寫進領取紀錄表（同一天同一任務只會有一筆），雞塊數由紀錄表算出
-            let day = chickenData.lastDate;
-            chickenData.claims[day] = chickenData.claims[day] || [];
-            if (!chickenData.claims[day].includes(taskKey)) chickenData.claims[day].push(taskKey);
-            recalcChickenCount(chickenData);
-            saveChickenData();
+        if (!t || !t.done || isTaskClaimed(taskKey) || walletBusy) return;
+        walletBusy = true;
+        try {
+            let before = wallet.balance;
+            let data = await walletRpc('claim_reward', { p_task: taskKey, p_day: chickenData.lastDate });
+            applyWallet(data, chickenData.lastDate);
+            let gained = wallet.balance - before;
+            if (gained > 0) showChickenFloat('chickenCountDisplay', '+' + gained, '#EF4444');
+        } catch (e) {
+            console.warn('領取失敗:', e && e.message || e);
+            walletOnline = !String((e && e.message) || '').includes('no_session') && walletOnline;
+            alert(`❌ 領取失敗：${walletErrorMessage(e)}`);
+            refreshWallet();
+        } finally {
+            walletBusy = false;
             updateChickenModalUI();
-            triggerAutoSaveToCloud();
+        }
+    }
 
-            // 🌟 動態 +1 浮動動畫效果（維持右上角定位不變）
-            let chickenCountEl = document.getElementById('chickenCountDisplay');
-            if (chickenCountEl) {
-                let badgeContainer = chickenCountEl.parentElement;
-                if (badgeContainer) {
-                    let floatSpan = document.createElement('span');
-                    floatSpan.innerText = '+1';
-                    floatSpan.style.position = 'absolute';
-                    floatSpan.style.left = '50%';
-                    floatSpan.style.top = '-10px';
-                    floatSpan.style.transform = 'translateX(-50%)';
-                    floatSpan.style.color = '#EF4444'; // 紅色
-                    floatSpan.style.fontWeight = '800';
-                    floatSpan.style.fontSize = '14px';
-                    floatSpan.style.pointerEvents = 'none';
-                    floatSpan.style.transition = 'all 1s ease';
-                    floatSpan.style.opacity = '1';
-                    
-                    badgeContainer.appendChild(floatSpan);
+    // ---------------------------------
+    // 🛒 雞塊補給站
+    // ---------------------------------
+    function openChickenShopModal() {
+        checkDailyReset();
+        updateChickenShopUI();
+        document.getElementById('chickenShopModal').style.display = 'block';
+        refreshWallet();
+        loadShopCatalog();
+    }
 
-                    setTimeout(() => {
-                        floatSpan.style.transform = 'translateX(-50%) translateY(-25px)';
-                        floatSpan.style.opacity = '0';
-                    }, 50);
+    function closeChickenShopModal() {
+        document.getElementById('chickenShopModal').style.display = 'none';
+    }
 
-                    setTimeout(() => {
-                        floatSpan.remove();
-                    }, 1050);
-                }
+    function updateChickenShopUI() {
+        let countEl = document.getElementById('chickenShopCountDisplay');
+        if (!countEl) return;
+        countEl.innerText = wallet.balance;
+        Object.keys(SHOP_ITEM_META).forEach(key => {
+            let cell = document.getElementById('shopItem_' + key);
+            if (!cell) return;
+            let cat = shopCatalog[key], qty = walletQty(key);
+            let maxed = qty >= cat.max || cat.enabled === false;
+            let poor = !maxed && wallet.balance < cat.price;
+            cell.classList.toggle('is-maxed', maxed);
+            cell.classList.toggle('is-poor', poor);
+            let sub = document.getElementById('shopSub_' + key);
+            if (sub) {
+                sub.textContent = key === 'word_cap_50'
+                    ? `目前每本 ${getListWordCap()} 字`
+                    : `目前上限 ${getMaxLists()} 本`;
             }
+            let price = document.getElementById('shopPrice_' + key);
+            if (price) price.innerHTML = maxed ? '已達上限' : `<span class="chicken-mini"></span><b>${cat.price}</b>`;
+        });
+    }
+
+    async function buyShopItem(key) {
+        let meta = SHOP_ITEM_META[key], cat = shopCatalog[key];
+        if (!meta || !cat || walletBusy) return;
+        if (cat.enabled === false || walletQty(key) >= cat.max) {
+            alert(`「${meta.name}」已達購買上限。`);
+            return;
+        }
+        if (wallet.balance < cat.price) {
+            alert(`🍗 雞塊不足！需要 ${cat.price} 個，目前有 ${wallet.balance} 個。`);
+            return;
+        }
+        if (!confirm(`要用 ${cat.price} 個雞塊兌換「${meta.name}」嗎？\n\n${meta.desc}`)) return;
+
+        walletBusy = true;
+        try {
+            let data = await walletRpc('buy_item', { p_item: key });
+            applyWallet(data, getLocalDateStr());
+            showChickenFloat('chickenShopCountDisplay', '-' + (data.spent || cat.price), '#EF4444');
+            refreshAllListViews();
+        } catch (e) {
+            console.warn('兌換失敗:', e && e.message || e);
+            alert(`❌ 兌換失敗：${walletErrorMessage(e)}`);
+            refreshWallet();
+        } finally {
+            walletBusy = false;
         }
     }
 
@@ -353,23 +424,23 @@
         let updated = false;
 
         if (taskType === 'listening_exam_done') {
-            if (!chickenData.tasks.listeningPractice.claimed) {
+            if (!isTaskClaimed('listeningPractice')) {
                 chickenData.tasks.listeningPractice.done = true;
                 updated = true;
             }
             if (data.total >= 10 && data.score >= 80) {
-                if (!chickenData.tasks.listeningPerfect.claimed) {
+                if (!isTaskClaimed('listeningPerfect')) {
                     chickenData.tasks.listeningPerfect.done = true;
                     updated = true;
                 }
             }
         } else if (taskType === 'card_exam_done') {
-            if (!chickenData.tasks.cardPractice.claimed) {
+            if (!isTaskClaimed('cardPractice')) {
                 chickenData.tasks.cardPractice.done = true;
                 updated = true;
             }
             if (data.total >= 10 && data.score >= 80) {
-                if (!chickenData.tasks.cardPerfect.claimed) {
+                if (!isTaskClaimed('cardPerfect')) {
                     chickenData.tasks.cardPerfect.done = true;
                     updated = true;
                 }
@@ -398,8 +469,6 @@
     let isSwipeAction = false;
 
     window.onload = async function() {
-        // 🌟 優先從 Supabase 雲端讀取最新的雞塊數量
-        await loadChickenFromSupabase();        
         checkAndRedirectInAppBrowser();
         loadVoices();
         if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
@@ -421,6 +490,7 @@
         // 初始化雞塊系統與每日登入任務
         checkDailyReset();
         updateChickenBadgeUI();
+        refreshWallet();   // 背景向後端讀取最新雞塊數與購買紀錄（連不上時先用上次的快取）
 
         // 切回 app 時檢查是否已跨日
         document.addEventListener('visibilitychange', () => {
@@ -675,7 +745,7 @@
         let bar = document.getElementById('listQuotaBar');
         if (!bar) return;
         let c = countListsByLang(), cur = getLearningLanguage();
-        let remain = Math.max(0, MAX_LISTS_DEFAULT - wordLists.length);
+        let remain = Math.max(0, getMaxLists() - wordLists.length);
         let part = (lang) => `<span style="${cur === lang ? 'color:var(--primary); font-weight:800;' : ''}">${getLangName(lang)} ${c[lang]}</span>`;
         bar.innerHTML = `${part('en')} ｜ ${part('ko')} ｜ <span>剩餘 ${remain}</span>`;
     }
@@ -726,7 +796,32 @@
 
     // 編輯框離開焦點時檢查（打字中不干擾）
     function enforceCurrentEditorLanguage() {
-        if (wordLists[lastSelectedList]) enforceListLanguage(lastSelectedList);
+        if (!wordLists[lastSelectedList]) return;
+        enforceListLanguage(lastSelectedList);   // 語言不符的單字
+        enforceListWordCap(lastSelectedList);    // 超過單字上限的部分
+    }
+
+    // 單字數超過上限時，移除超出的行（舊題庫本來就超過時，不會刪掉原有的，只是不能再增加）
+    function enforceListWordCap(idx) {
+        let list = wordLists[idx];
+        if (!list || !list.content) return 0;
+        let limit = Math.max(getListWordCap(), idx === lastSelectedList ? editorOpenCount : 0);
+        let kept = [], n = 0, removed = 0;
+        list.content.split('\n').forEach(line => {
+            if (!line.trim()) { kept.push(line); return; }
+            if (n < limit) { kept.push(line); n++; } else { removed++; }
+        });
+        if (removed === 0) return 0;
+        list.content = kept.join('\n');
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        triggerAutoSaveToCloud();
+        let ta = document.getElementById('editorWordList');
+        if (ta && lastSelectedList === idx && document.getElementById('editorDetailView').classList.contains('active')) {
+            ta.value = list.content;
+            handleEditorSearch();
+        }
+        alert(`⚠️ 「${list.title}」最多只能放 ${limit} 個單字，超出的 ${removed} 行已移除。\n可到「雞塊補給站」兌換單字上限 +50。`);
+        return removed;
     }
 
     // 題庫選單：更換語言（內容中語言不符的行會被刪除，先確認）
@@ -844,15 +939,12 @@
                         cardExamHistory = trimHistoryPerLang(cloudData.cardExamHistory);
                         localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
                     }
-                    if (cloudData.chickenData) {
-                        // 合併（不是直接覆蓋）：兩邊的領取紀錄取聯集，重複領取只算一次
-                        let cloudSig = chickenSignature(cloudData.chickenData);
-                        chickenData = mergeChickenData(chickenData, cloudData.chickenData);
-                        localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
-                        updateChickenBadgeUI();
-                        if (document.getElementById('chickenRewardModal').style.display === 'block') updateChickenModalUI();
-                        // 本機有雲端沒有的領取紀錄 → 傳回雲端
-                        if (chickenSignature(chickenData) !== cloudSig) setTimeout(triggerAutoSaveToCloud, 0);
+                    if (cloudData.chickenData && cloudData.chickenData.tasks && cloudData.chickenData.lastDate === chickenData.lastDate) {
+                        // 雞塊數量與領取紀錄在後端；這裡只合併「今天的任務完成進度」
+                        CHICKEN_TASK_KEYS.forEach(k => {
+                            if (cloudData.chickenData.tasks[k] && cloudData.chickenData.tasks[k].done) chickenData.tasks[k].done = true;
+                        });
+                        saveChickenData();
                     }
                     initPracticeCardGrid();
                     initExamCardGrid();
@@ -880,23 +972,7 @@
             });
             let data = await res.json();
             let fileId = (data.files && data.files.length > 0) ? data.files[0].id : null;
-                        // 上傳前先讀雲端最新的雞塊資料並合併，避免蓋掉另一台裝置剛領的獎勵
-            if (fileId) {
-                try {
-                    let latest = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    });
-                    if (latest.ok) {
-                        let remote = await latest.json();
-                        if (remote && remote.chickenData) {
-                            chickenData = mergeChickenData(chickenData, remote.chickenData);
-                            localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
-                            updateChickenBadgeUI();
-                        }
-                    }
-                } catch (e) { console.warn('上傳前合併雞塊資料失敗，仍會上傳本機資料', e); }
-            }
-            
+
             let cloudData = { 
                 activeDeviceId: myDeviceId, 
                 wordLists, 
@@ -1003,7 +1079,7 @@
                 <div class="list-card-item" data-on-click='[["openEditorDetail",[${idx}]]]'>
                     <div class="list-card-info">
                         <div class="list-card-title">${shown}: ${escapeHTML(l.title)} <span class="lang-tag lang-tag-${lang}">${getLangName(lang)}</span></div>
-                        <div class="list-card-count">(${count}/100 字)</div>
+                        <div class="list-card-count">(${count}/${getListWordCap()} 字)</div>
                     </div>
                     <div style="position: relative;">
                         <button class="list-card-menu-btn" data-on-click='[["$stop",[]],["toggleDropdownMenu",[${idx},"$event"]]]'>⋮</button>
@@ -1077,6 +1153,7 @@
         if (!list) return;
 
         document.getElementById('editorDetailTitleIndicator').innerText = `📁 ${getLangSeq(idx)}: ${list.title} 編輯（${getLangName(getListLang(list))}）`;
+        editorOpenCount = getListWordCount(list.content);
         document.getElementById('editorWordList').value = list.content || '';
         document.getElementById('wordSearchInput').value = '';
         document.getElementById('searchNotFoundTip').style.display = 'none';
@@ -1127,9 +1204,9 @@
 
     function addNewWordList() {
         let curLang = getLearningLanguage();
-        if (wordLists.length >= MAX_LISTS_DEFAULT) {
+        if (wordLists.length >= getMaxLists()) {
             let c = countListsByLang();
-            alert(`⚠️ 目前題庫數量已達上限 ${MAX_LISTS_DEFAULT} 組！（英文 ${c.en} ｜ 韓文 ${c.ko}）\n可刪除不用的題庫來釋出名額。`);
+            alert(`⚠️ 目前題庫數量已達上限 ${getMaxLists()} 組！（英文 ${c.en} ｜ 韓文 ${c.ko}）\n可刪除不用的題庫，或到「雞塊補給站」兌換題庫數量 +1。`);
             return;
         }
         let title = prompt(`請輸入新${getLangName(curLang)}題庫本標題：`, `unit ${countListsByLang()[curLang] + 1}`);
@@ -1173,7 +1250,7 @@
                 <div class="select-card ${isSelected}" data-on-click='[["togglePracticeCard",[${list.originalIdx},"$this"]]]'>
                     <div class="select-card-info">
                         <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/100 字)</div>
+                        <div class="select-card-count">(${count}/${getListWordCap()} 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -1239,7 +1316,7 @@
                 <div class="select-card ${isSelected}" data-on-click='[["toggleFlashcardCard",[${list.originalIdx},"$this"]]]'>
                     <div class="select-card-info">
                         <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/100 字)</div>
+                        <div class="select-card-count">(${count}/${getListWordCap()} 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -1452,7 +1529,7 @@
                 <div class="select-card ${isSelected}" data-on-click='[["toggleCardExamCard",[${list.originalIdx},"$this"]]]'>
                     <div class="select-card-info">
                         <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/100 字)</div>
+                        <div class="select-card-count">(${count}/${getListWordCap()} 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -1789,7 +1866,7 @@
                 <div class="select-card ${isSelected}" data-on-click='[["toggleExamCard",[${list.originalIdx},"$this"]]]'>
                     <div class="select-card-info">
                         <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/100 字)</div>
+                        <div class="select-card-count">(${count}/${getListWordCap()} 字)</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
                 </div>
@@ -2514,7 +2591,7 @@
         let targetSelectOptions = '';
         wordLists.forEach((l, idx) => {
             if (!isListInCurrentLang(l)) return;
-            targetSelectOptions += `<option value="${idx}">${getLangSeq(idx)}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/100)</option>`;
+            targetSelectOptions += `<option value="${idx}">${getLangSeq(idx)}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/${getListWordCap()})</option>`;
         });
         let targetSelLis = document.getElementById('targetListSelectorListening');
         let targetSelCard = document.getElementById('targetListSelectorCard');
@@ -2764,11 +2841,12 @@
             return;
         }
 
-        let addedCount = 0;
+        let addedCount = 0, skippedFull = 0;
         checkboxes.forEach(chk => {
             let wordText = chk.value;
             let currentContent = wordLists[targetListIdx].content || '';
             if (!currentContent.toLowerCase().includes(wordText.toLowerCase())) {
+                if (getListWordCount(currentContent) >= getListWordCap()) { skippedFull++; return; }
                 wordLists[targetListIdx].content = currentContent + (currentContent ? '\n' : '') + wordText;
                 addedCount++;
             }
@@ -2776,7 +2854,8 @@
 
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
         triggerAutoSaveToCloud();
-        alert(`✅ 成功將 ${addedCount} 個錯題單字儲存至「${wordLists[targetListIdx].title}」！`);
+        let fullNote = skippedFull > 0 ? `\n⚠️ 題庫已達 ${getListWordCap()} 字上限，有 ${skippedFull} 個單字沒有加入（可到「雞塊補給站」兌換單字上限 +50）。` : '';
+        alert(`✅ 成功將 ${addedCount} 個錯題單字儲存至「${wordLists[targetListIdx].title}」！${fullNote}`);
     }
 
     function updateVolumeDisplay() {
@@ -2915,6 +2994,9 @@
     // 只有登記在 INLINE_ACTIONS 的函式能被呼叫（白名單）
     // ═════════════════════════════════════════════════════════════
     const INLINE_ACTIONS = {
+        buyShopItem,
+        closeChickenShopModal,
+        openChickenShopModal,
         enforceCurrentEditorLanguage,
         changeListLanguageFromMenu,
         onLearningLanguageChange,
@@ -3052,17 +3134,3 @@
         const raw = el && el.getAttribute('data-on-scroll');
         if (raw) runInlineCalls(el, raw, ev);
     }, true);
-
-    async function testSupabaseConnection() {
-    let { data, error } = await supabaseClient.from('user_profiles').select('*');
-    if (error) {
-        console.error('❌ Supabase 連線失敗:', error);
-    } else {
-        console.log('✅ 成功連線 Supabase 資料庫！目前資料：', data);
-    }
-}
-
-// 網頁載入時自動執行測試
-document.addEventListener('DOMContentLoaded', () => {
-    testSupabaseConnection();
-});
