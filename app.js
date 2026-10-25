@@ -513,34 +513,6 @@
         }
     }
 
-    async function buyShopItem(key) {
-        let meta = SHOP_ITEM_META[key], cat = shopCatalog[key];
-        if (!meta || !cat || walletBusy) return;
-        if (cat.enabled === false || walletQty(key) >= cat.max) {
-            alert(`「${meta.name}」已達購買上限。`);
-            return;
-        }
-        if (wallet.balance < cat.price) {
-            alert(`🍗 雞塊不足！需要 ${cat.price} 個，目前有 ${wallet.balance} 個。`);
-            return;
-        }
-        if (!confirm(`要用 ${cat.price} 個雞塊兌換「${meta.name}」嗎？\n\n${meta.desc}`)) return;
-
-        walletBusy = true;
-        try {
-            let data = await walletRpc('buy_item', { p_item: key });
-            applyWallet(data, getLocalDateStr());
-            showChickenFloat('chickenShopCountDisplay', '-' + (data.spent || cat.price), '#EF4444');
-            refreshAllListViews();
-        } catch (e) {
-            console.warn('兌換失敗:', e && e.message || e);
-            alert(`❌ 兌換失敗：${walletErrorMessage(e)}`);
-            refreshWallet();
-        } finally {
-            walletBusy = false;
-        }
-    }
-
     // 觸發任務完成檢查 (供外部呼叫)
     function triggerTaskCheck(taskType, data = {}) {
         checkDailyReset();
