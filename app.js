@@ -1353,10 +1353,6 @@
         switchView('cardExamSetupView');
     }
 
-    function goToAdventurePage() {
-        switchView('adventureView');
-    }
-
     function goToExamPage() {
         initExamCardGrid();
         switchView('examView');
@@ -1374,6 +1370,7 @@
         stopDictation();
         stopCardExamSession();
         stopSpeakPracticeSession();
+        advAbort();
         releaseWakeLock();
         switchView('homeDashboardView');
     }
@@ -2399,7 +2396,7 @@
     }
 
     // 開始測驗前先確認麥克風權限（會跳出瀏覽器的「允許使用麥克風」詢問）
-    async function ensureMicPermission() {
+    async function ensureMicPermission(silent) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return { ok: true };   // 無法預先詢問，改由辨識器自己詢問
         try {
             let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -2408,12 +2405,52 @@
         } catch (e) {
             let name = (e && e.name) || '';
             if (name === 'NotAllowedError' || name === 'SecurityError') {
-                return { ok: false, message: '⚠️ 沒有取得麥克風權限，無法進行朗讀練習。\n\n請到瀏覽器（或手機設定 → Safari / Chrome）允許本網站使用麥克風，然後重新整理頁面再試一次。' };
+                return { ok: false, denied: true };
             }
             if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
                 return { ok: false, message: '⚠️ 找不到麥克風，請確認裝置有麥克風。' };
             }
             return { ok: true };   // 其他錯誤：讓辨識器自己再試一次
+        }
+    }
+
+    // 網頁沒辦法直接打開系統/瀏覽器的設定頁（瀏覽器的安全限制），所以改成依裝置顯示「照著點就到」的步驟
+    function micHelpHTML(status) {
+        const env = getBrowserEnv();
+        const blocks = {
+            ios: '<b>📱 iPhone / iPad（Safari）</b><ol><li>點網址列左邊的 <b>「AA」</b>（或拼圖圖示）→ <b>網站設定</b></li><li><b>麥克風</b> → 選 <b>「允許」</b></li><li>回到網頁，重新整理後再按住麥克風</li></ol>若找不到：<b>設定 → App → Safari → 麥克風</b>（舊版 iOS：設定 → Safari → 麥克風）改成「詢問」或「允許」。<br>語音辨識還需要開啟：<b>設定 → 一般 → 鍵盤 → 啟用聽寫</b>。',
+            android: '<b>🤖 Android（Chrome）</b><ol><li>點網址列左邊的 <b>鎖頭 / 設定圖示</b> → <b>權限</b></li><li><b>麥克風</b> → 選 <b>「允許」</b></li><li>回到網頁，重新整理後再按住麥克風</li></ol>若找不到：Chrome 右上角 <b>⋮ → 設定 → 網站設定 → 麥克風</b>；還是不行就到手機 <b>設定 → 應用程式 → Chrome → 權限 → 麥克風</b> 改成「允許」。',
+            desktop: '<b>💻 電腦（Chrome / Edge）</b><ol><li>點網址列左邊的 <b>鎖頭 / 調整圖示</b></li><li><b>麥克風</b> 切換成 <b>「允許」</b></li><li>重新整理頁面後再試</li></ol>'
+        };
+        const order = env.isIOS ? ['ios', 'android', 'desktop'] : env.isAndroid ? ['android', 'ios', 'desktop'] : ['desktop', 'android', 'ios'];
+        let stText = { denied: '❌ 目前狀態：已被封鎖', prompt: '❔ 目前狀態：尚未允許（按「重新檢查」會再詢問一次）', granted: '✅ 目前狀態：已允許' }[status] || '';
+        let html = '<div class="mic-help-note">網頁不能直接打開系統的設定頁（瀏覽器基於安全限制不允許），請照下面步驟開啟：</div>';
+        if (stText) html += '<div class="mic-help-status">' + stText + '</div>';
+        order.forEach((k, i) => { html += '<div class="mic-help-block' + (i === 0 ? ' main' : '') + '">' + blocks[k] + '</div>'; });
+        if (location.protocol === 'file:') html += '<div class="mic-help-block">ℹ️ 你現在是用「檔案」方式開啟網頁，瀏覽器不會記住權限。請放到 https 網站上使用。</div>';
+        return html;
+    }
+
+    async function openMicHelpModal() {
+        let status = '';
+        try {
+            if (navigator.permissions && navigator.permissions.query) {
+                let p = await navigator.permissions.query({ name: 'microphone' });
+                status = p.state;
+            }
+        } catch (e) {}
+        document.getElementById('micHelpBody').innerHTML = micHelpHTML(status);
+        document.getElementById('micHelpModal').style.display = 'block';
+    }
+    function closeMicHelpModal() { document.getElementById('micHelpModal').style.display = 'none'; }
+
+    async function recheckMicPermission() {
+        let mic = await ensureMicPermission(true);
+        if (mic.ok) {
+            closeMicHelpModal();
+            setSpeakHint('✅ 麥克風已可使用，請按住麥克風說話');
+        } else {
+            await openMicHelpModal();
         }
     }
 
@@ -2447,7 +2484,7 @@
         speakStarting = true;
         try {
             let mic = await ensureMicPermission();
-            if (!mic.ok) { alert(mic.message); return; }
+            if (!mic.ok) { if (mic.denied) openMicHelpModal(); else alert(mic.message); return; }
         } finally {
             speakStarting = false;
         }
@@ -2563,6 +2600,8 @@
         }
     }
 
+    const SPEAK_TAIL_MS = 1200;   // 放開後再多收音的時間
+
     function stopSpeakListening() {
         if (!speakListening || !speakRec) return;
         let rec = speakRec;
@@ -2571,9 +2610,9 @@
             speakShortTap = true; speakIgnoreResult = true;
             try { rec.abort(); } catch (e) {}
         } else {
-            // 放開手指後再多收 0.4 秒，避免單字最後一個音被切掉（切掉會被辨識成別的字）
-            setSpeakHint('辨識中…');
-            setTimeout(() => { if (speakRec === rec && speakListening) { try { rec.stop(); } catch (e) {} } }, 400);
+            // 放開手指後再多收一小段，避免單字最後一個音被切掉（切掉會被辨識成別的字）
+            setSpeakHint('🎙️ 收音中…');
+            setTimeout(() => { if (speakRec === rec && speakListening) { try { rec.stop(); } catch (e) {} } }, SPEAK_TAIL_MS);
         }
         // 保險：有些瀏覽器偶爾不會觸發 onend，8 秒後強制收尾
         clearTimeout(speakWatchdog);
@@ -2593,6 +2632,7 @@
         let alts = speakHeardAlts.filter(a => a.transcript && a.transcript.trim());
         if (alts.length === 0) {
             setSpeakHint(forced ? '辨識逾時，請再按住說話一次' : speakErrorMessage(speakLastError), true);
+            if (speakLastError === 'not-allowed' || speakLastError === 'service-not-allowed') openMicHelpModal();
             return;
         }
         let card = speakPracticeActiveList[currentSpeakPracticeIndex];
@@ -2604,6 +2644,22 @@
         renderSpeakResult();
         updateSpeakNextBtn();
         setSpeakHint('可以再按住麥克風重說一次，或按「下一題」');
+    }
+
+    function playSpeakPracticeSample() {
+        let card = speakPracticeActiveList[currentSpeakPracticeIndex];
+        if (!card) return;
+        abortSpeakListening();
+        let utterance = new SpeechSynthesisUtterance(card.english);
+        let langCode = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
+        let chosenVoice = getSelectedVoiceForLearning();
+        if (chosenVoice) utterance.voice = chosenVoice;
+        utterance.lang = langCode;
+        utterance.rate = 0.8;
+        let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+        utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+        window.speechSynthesis.speak(utterance);
     }
 
     function initSpeakMicButton() {
@@ -3876,10 +3932,693 @@
     // 事件委派：取代原本寫在 HTML 裡的 onclick / onchange 等 inline 事件
     // HTML 以 data-on-click='[["函式名稱",[參數...]]]' 描述要呼叫什麼
     // 特殊參數："$this" = 觸發的元素、"$event" = 事件物件、"$value" = 元素的 value
+    // ═════════════════════════════════════════════════════════════
+    //  🏰 雞塊大冒險（原型：第 1 關）
+    //  戰鬥流程：選招式 → 發動招式（答題）→ 成功就造成傷害 → 依敏捷決定連續行動次數 → 敵人攻擊
+    // ═════════════════════════════════════════════════════════════
+    const ADV_STORE = 'chicky_adv_data';
+    const ADV_SEL_KEY = 'chicky_adv_selected';
+    const ADV_BASE_STATS = { hp: 3, atk: 1, agi: 3, def: 0 };
+    const ADV_UP_MAX = 5;
+    const ADV_TOTAL_LEVELS = 10;
+
+    // 招式：type = card 字卡選擇題 / listen 聽力拼字 / speak 朗讀；威力越強越難發動
+    const ADV_MOVES = [
+        { key: 'tackle', name: '衝撞',     icon: '💥', type: 'card',   power: 1, streak: 1, tries: 1, desc: '字卡：選出正確的中文意思' },
+        { key: 'slash',  name: '斬擊',     icon: '⚔️', type: 'listen', power: 2, streak: 1, tries: 1, desc: '聽力：聽發音，拼出單字' },
+        { key: 'wave',   name: '衝擊波',   icon: '🌊', type: 'speak',  power: 3, streak: 1, tries: 2, desc: '朗讀：按住麥克風唸出單字' },
+        { key: 'combo',  name: '連續衝撞', icon: '🔥', type: 'card',   power: 3, streak: 3, tries: 1, desc: '字卡：連續答對 3 題' }
+    ];
+
+    const ADV_LEVELS = [
+        { id: 1, name: '貢丸', sprite: 'meatball', minWords: 10, hp: 3, atk: 1, agi: 1, def: 0, moveName: '彈跳撞擊', movePower: 0, rewardSauce: 1, rewardChicken: 1 }
+    ];
+
+    function advLoad() {
+        let d = {};
+        try { d = JSON.parse(localStorage.getItem(ADV_STORE)) || {}; } catch (e) { d = {}; }
+        let up = d.up || {};
+        let clampUp = v => Math.max(0, Math.min(ADV_UP_MAX, parseInt(v) || 0));
+        return {
+            sauce: Math.max(0, parseInt(d.sauce) || 0),
+            cleared: (d.cleared && typeof d.cleared === 'object') ? d.cleared : {},
+            up: { hp: clampUp(up.hp), atk: clampUp(up.atk), agi: clampUp(up.agi) }
+        };
+    }
+    let advData = advLoad();
+    function advSave() { try { localStorage.setItem(ADV_STORE, JSON.stringify(advData)); } catch (e) {} }
+    function advPlayerStats() {
+        return {
+            hp: ADV_BASE_STATS.hp + advData.up.hp,
+            atk: ADV_BASE_STATS.atk + advData.up.atk,
+            agi: ADV_BASE_STATS.agi + advData.up.agi,
+            def: ADV_BASE_STATS.def
+        };
+    }
+    // 連續行動次數：(我方敏捷 − 敵方敏捷) ÷ 2，無條件捨去後 +1，至少 1 次
+    function advActionCount(myAgi, foeAgi) { return Math.max(1, Math.floor((myAgi - foeAgi) / 2) + 1); }
+    // 傷害：攻擊力 + 招式威力 − 對方防禦，至少 1
+    function advDamage(atk, power, def) { return Math.max(1, atk + power - def); }
+
+    // ── 角色圖（雞塊就是首頁那隻）──
+    function advChickenSVG() {
+        return `<svg viewBox="4 22 128 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+            <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+            <circle cx="36" cy="80" r="4" fill="#E2861E"/><circle cx="66" cy="98" r="3.5" fill="#E2861E"/><circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+            <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/><ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+            <circle cx="54" cy="64" r="4.5" fill="#231F20"/><circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+            <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round"/>
+            <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+            <path d="M 108 68 C 118 68, 124 72, 122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+        </svg>`;
+    }
+    function advEnemySVG(kind) {
+        return `<svg viewBox="0 0 120 112" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <ellipse cx="60" cy="102" rx="32" ry="6" fill="rgba(0,0,0,0.15)"/>
+            <circle cx="60" cy="56" r="42" fill="#E9C7A0" stroke="#231F20" stroke-width="5.5"/>
+            <circle cx="36" cy="76" r="3" fill="#C99A6B"/><circle cx="82" cy="80" r="3" fill="#C99A6B"/><circle cx="66" cy="90" r="2.5" fill="#C99A6B"/><circle cx="90" cy="58" r="2.5" fill="#C99A6B"/>
+            <ellipse cx="42" cy="32" rx="9" ry="5" fill="#FFFFFF" opacity="0.5" transform="rotate(-25 42 32)"/>
+            <ellipse cx="38" cy="66" rx="6.5" ry="4.5" fill="#F87171" opacity="0.7"/><ellipse cx="82" cy="66" rx="6.5" ry="4.5" fill="#F87171" opacity="0.7"/>
+            <circle cx="46" cy="54" r="4.5" fill="#231F20"/><circle cx="74" cy="54" r="4.5" fill="#231F20"/>
+            <path d="M 36 43 L 53 49 M 84 43 L 67 49" stroke="#231F20" stroke-width="4.5" stroke-linecap="round"/>
+            <path d="M 51 72 Q 60 64 69 72" stroke="#231F20" stroke-width="4.5" stroke-linecap="round"/>
+        </svg>`;
+    }
+
+    // ── 選關畫面 ──
+    let advSelected = [];
+    function advLoadSelected() {
+        try { let s = JSON.parse(localStorage.getItem(ADV_SEL_KEY)); advSelected = Array.isArray(s) ? s.filter(n => Number.isInteger(n)) : [0]; }
+        catch (e) { advSelected = [0]; }
+    }
+    function advGetWords() {
+        let text = '';
+        advSelected.forEach(i => { if (wordLists[i] && wordLists[i].content && isListInCurrentLang(wordLists[i])) text += wordLists[i].content + '\n'; });
+        return parseWordsRaw(text);
+    }
+    function advInitGrid() {
+        let grid = document.getElementById('advGrid');
+        if (!grid) return;
+        advLoadSelected();
+        grid.innerHTML = '';
+        let lists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
+        lists.forEach((list, displayIdx) => {
+            let sel = advSelected.includes(list.originalIdx) ? 'selected' : '';
+            grid.insertAdjacentHTML('beforeend', `
+                <div class="select-card ${sel}" data-on-click='[["toggleAdvCard",[${list.originalIdx},"$this"]]]'>
+                    <div class="select-card-info">
+                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">(${getListWordCount(list.content)}/${getListWordCap(list)} 字)</div>
+                    </div>
+                    <div class="checkmark-badge">✓</div>
+                </div>`);
+        });
+    }
+    function toggleAdvCard(idx, cardEl) {
+        let i = advSelected.indexOf(idx);
+        if (i >= 0) advSelected.splice(i, 1); else advSelected.push(idx);
+        cardEl.classList.toggle('selected', advSelected.includes(idx));
+        try { localStorage.setItem(ADV_SEL_KEY, JSON.stringify(advSelected)); } catch (e) {}
+        advRenderLevels();
+    }
+    function advRenderStats() {
+        let s = advPlayerStats();
+        let box = document.getElementById('advStatsBox');
+        if (!box) return;
+        box.innerHTML = `
+            <div class="adv-stats">
+                <div class="adv-avatar">${advChickenSVG()}</div>
+                <div class="adv-stat-grid">
+                    <div>HP<b>${s.hp}</b></div><div>攻擊<b>${s.atk}</b></div><div>敏捷<b>${s.agi}</b></div><div>防禦<b>${s.def}</b></div>
+                </div>
+            </div>
+            <div class="adv-sauce-row"><span>🍯 糖醋醬 ×${advData.sauce}</span><button type="button" class="adv-btn-sm" data-on-click='[["openAdvUpgradeModal",[]]]'>強化能力</button></div>`;
+    }
+    function advRenderLevels() {
+        let words = advGetWords();
+        let n = words.length;
+        let stat = document.getElementById('advStatsText');
+        if (stat) stat.textContent = `📊 範圍統計：${n} 個單字`;
+        let html = '';
+        ADV_LEVELS.forEach(lv => {
+            let ok = n >= lv.minWords;
+            html += `
+            <div class="adv-card adv-level">
+                <div class="adv-lv-sprite">${advEnemySVG(lv.sprite)}</div>
+                <div class="adv-lv-info">
+                    <b>第 ${lv.id} 關：${lv.name} ${advData.cleared[lv.id] ? '✅' : ''}</b>
+                    HP ${lv.hp} ｜ 攻擊 ${lv.atk} ｜ 敏捷 ${lv.agi} ｜ 防禦 ${lv.def}<br>
+                    ${ok ? `範圍單字 ${n} 個，可以挑戰` : `⚠️ 範圍需要至少 ${lv.minWords} 個單字（目前 ${n} 個）`}<br>
+                    獎勵：🍯糖醋醬 ×${lv.rewardSauce}${advData.cleared[lv.id] ? '' : `　首次通關：🍗雞塊 ×${lv.rewardChicken}`}
+                </div>
+                <button type="button" class="adv-go" ${ok ? '' : 'disabled'} data-on-click='[["advStartBattle",[${lv.id}]]]'>出擊</button>
+            </div>`;
+        });
+        html += '<div class="adv-lock-grid">';
+        for (let i = ADV_LEVELS.length + 1; i <= ADV_TOTAL_LEVELS; i++) html += `<div class="adv-lock">🔒 第 ${i} 關<br>敬請期待</div>`;
+        html += '</div>';
+        let list = document.getElementById('advLevelList');
+        if (list) list.innerHTML = html;
+    }
+    function goToAdventurePage() {
+        advAbort();
+        advRenderStats();
+        advInitGrid();
+        advRenderLevels();
+        switchView('adventureView');
+    }
+
+    // ── 糖醋醬強化 ──
+    const ADV_UP_DEFS = [
+        { key: 'hp',  label: '❤️ HP +1',   base: 'hp' },
+        { key: 'atk', label: '⚔️ 攻擊力 +1', base: 'atk' },
+        { key: 'agi', label: '⚡ 敏捷 +1',  base: 'agi' }
+    ];
+    function advRenderUpgrade() {
+        let s = advPlayerStats();
+        let html = `<div style="font-weight:700; margin-bottom:4px;">🍯 糖醋醬：${advData.sauce} 瓶</div>`;
+        ADV_UP_DEFS.forEach(d => {
+            let lv = advData.up[d.key];
+            let maxed = lv >= ADV_UP_MAX;
+            let can = advData.sauce >= 1 && !maxed;
+            html += `<div class="adv-up-row"><div>${d.label}<small>目前 ${s[d.base]}（已強化 ${lv}/${ADV_UP_MAX}）</small></div>
+                <button type="button" class="adv-btn-sm" ${can ? '' : 'disabled style="opacity:.5;cursor:not-allowed"'} data-on-click='[["advUpgrade",["${d.key}"]]]'>${maxed ? '已滿' : '🍯×1 強化'}</button></div>`;
+        });
+        html += `<div style="margin-top:8px; font-size:12px; color:var(--text-muted);">（原型版：糖醋醬與強化先存在這台裝置上，之後會搬到雞塊補給站。）</div>`;
+        document.getElementById('advUpgradeBody').innerHTML = html;
+    }
+    function openAdvUpgradeModal() { advRenderUpgrade(); document.getElementById('advUpgradeModal').style.display = 'block'; }
+    function closeAdvUpgradeModal() { document.getElementById('advUpgradeModal').style.display = 'none'; }
+    function advUpgrade(key) {
+        if (!Object.prototype.hasOwnProperty.call(advData.up, key)) return;
+        if (advData.sauce < 1 || advData.up[key] >= ADV_UP_MAX) return;
+        advData.sauce -= 1;
+        advData.up[key] += 1;
+        advSave();
+        advRenderUpgrade();
+        advRenderStats();
+    }
+
+    // ── 戰鬥狀態 ──
+    let adv = { runId: 0, active: false, busy: false, level: null, words: [], cnWords: [], decks: { all: [], cn: [] }, player: null, enemy: null, round: 1, actionsLeft: 0, actionsTotal: 0, move: null, q: null, micOk: false };
+    let advRec = null, advListening = false, advAlts = [], advErr = '', advPressAt = 0, advIgnore = false, advShort = false, advWatch = null;
+
+    function advWait(ms) { return new Promise(r => setTimeout(r, ms)); }
+    function advAnimate(el, frames, opts) {
+        if (!el) return advWait((opts && opts.duration) || 300);
+        try { return el.animate(frames, opts).finished.catch(() => {}); } catch (e) { return advWait((opts && opts.duration) || 300); }
+    }
+    function advShuffle(a) {
+        for (let i = a.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+        return a;
+    }
+    function advNextWord(kind) {
+        let pool = kind === 'cn' ? adv.cnWords : adv.words;
+        if (!adv.decks[kind].length) adv.decks[kind] = advShuffle(pool.slice());
+        return adv.decks[kind].pop();
+    }
+    function advSetLog(text) {
+        let el = document.getElementById('advLog');
+        if (el) el.textContent = text;
+    }
+    function advSpeakWord(text) {
+        try {
+            let u = new SpeechSynthesisUtterance(text);
+            let v = getSelectedVoiceForLearning();
+            if (v) u.voice = v;
+            u.lang = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
+            u.rate = 0.85;
+            let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+            u.volume = Math.max(0, Math.min(1, (parseInt(sysVol) || 100) / 100));
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(u);
+        } catch (e) {}
+    }
+    function advActorCenter(el) {
+        let stage = document.getElementById('advStage');
+        return { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2, w: stage ? stage.clientWidth : 300 };
+    }
+    // 兩個角色中心的位移量（要除以畫面縮放比例，電腦版整個畫面有放大）
+    function advDelta(fromEl, toEl) {
+        let a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+        let k = (fromEl.offsetWidth ? a.width / fromEl.offsetWidth : 1) || 1;
+        return { dx: ((b.left + b.width / 2) - (a.left + a.width / 2)) / k, dy: ((b.top + b.height / 2) - (a.top + a.height / 2)) / k };
+    }
+    function advFloat(actorEl, text, color) {
+        let stage = document.getElementById('advStage');
+        if (!stage || !actorEl) return;
+        let c = advActorCenter(actorEl);
+        let d = document.createElement('div');
+        d.className = 'adv-float';
+        d.textContent = text;
+        if (color) d.style.color = color;
+        d.style.left = c.x + 'px';
+        d.style.top = (actorEl.offsetTop - 4) + 'px';
+        stage.appendChild(d);
+        advAnimate(d, [{ opacity: 1, transform: 'translate(-50%, 0)' }, { opacity: 1, transform: 'translate(-50%, -22px)', offset: 0.6 }, { opacity: 0, transform: 'translate(-50%, -34px)' }], { duration: 900, easing: 'ease-out' }).then(() => d.remove());
+    }
+    function advFx(html, x, y, size) {
+        let fx = document.getElementById('advFx');
+        if (!fx) return null;
+        let d = document.createElement('div');
+        d.innerHTML = html;
+        d.style.left = (x - size / 2) + 'px';
+        d.style.top = (y - size / 2) + 'px';
+        d.style.width = size + 'px';
+        d.style.height = size + 'px';
+        d.style.fontSize = (size * 0.8) + 'px';
+        d.style.lineHeight = size + 'px';
+        d.style.textAlign = 'center';
+        fx.appendChild(d);
+        return d;
+    }
+    function advUpdateHud() {
+        let p = adv.player, e = adv.enemy;
+        if (!p || !e) return;
+        let pf = document.getElementById('advPlayerFill'), ef = document.getElementById('advEnemyFill');
+        if (pf) { pf.style.width = (Math.max(0, p.hp) / p.max * 100) + '%'; pf.classList.toggle('low', p.hp / p.max <= 0.34); }
+        if (ef) { ef.style.width = (Math.max(0, e.hp) / e.max * 100) + '%'; ef.classList.toggle('low', e.hp / e.max <= 0.34); }
+        let pt = document.getElementById('advPlayerHpText'), et = document.getElementById('advEnemyHpText');
+        if (pt) pt.textContent = `${Math.max(0, p.hp)}/${p.max}`;
+        if (et) et.textContent = `${Math.max(0, e.hp)}/${e.max}`;
+        let info = document.getElementById('advTopInfo');
+        if (info) info.textContent = `第 ${adv.level.id} 關 ｜ 回合 ${adv.round} ｜ 行動 ${Math.min(adv.actionsTotal - adv.actionsLeft + 1, adv.actionsTotal)}/${adv.actionsTotal}`;
+    }
+    function advBuildStage() {
+        let st = document.getElementById('advStage');
+        st.innerHTML = `
+            <div class="adv-hud adv-hud-enemy"><div>${escapeHTML(adv.enemy.name)} <span id="advEnemyHpText"></span></div><div class="adv-hpbar"><div class="adv-hpfill" id="advEnemyFill"></div></div></div>
+            <div class="adv-actor adv-enemy" id="advEnemy">${advEnemySVG(adv.enemy.sprite)}</div>
+            <div class="adv-actor adv-player" id="advPlayer">${advChickenSVG()}</div>
+            <div class="adv-hud adv-hud-player"><div>雞塊 <span id="advPlayerHpText"></span></div><div class="adv-hpbar"><div class="adv-hpfill" id="advPlayerFill"></div></div></div>
+            <div class="adv-fx" id="advFx"></div>`;
+        advUpdateHud();
+    }
+
+    // ── 開始 / 結束 ──
+    function advAbort() {
+        adv.runId++;
+        adv.active = false;
+        adv.busy = false;
+        adv.q = null;
+        clearTimeout(advWatch);
+        advIgnore = true;
+        if (advRec && advListening) { try { advRec.abort(); } catch (e) {} }
+        advListening = false;
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+        releaseWakeLock();
+    }
+    function advStartBattle(levelId) {
+        let lv = ADV_LEVELS.find(l => l.id === levelId);
+        if (!lv) return;
+        let words = advGetWords();
+        if (words.length < lv.minWords) { alert(`⚠️ 這一關需要範圍內至少 ${lv.minWords} 個單字，請多勾選一些題庫。`); return; }
+        advAbort();
+        adv.words = words;
+        adv.cnWords = words.filter(w => w.chinese);
+        adv.decks = { all: [], cn: [] };
+        let s = advPlayerStats();
+        adv.level = lv;
+        adv.player = { hp: s.hp, max: s.hp, atk: s.atk, agi: s.agi, def: s.def };
+        adv.enemy = { name: lv.name, sprite: lv.sprite, hp: lv.hp, max: lv.hp, atk: lv.atk, agi: lv.agi, def: lv.def, moveName: lv.moveName, movePower: lv.movePower };
+        adv.round = 1;
+        adv.micOk = false;
+        adv.active = true;
+        adv.busy = false;
+        requestWakeLock();
+        switchView('adventureBattleView');
+        advBuildStage();
+        advBeginRound();
+    }
+    function advQuit() {
+        if (adv.active && !confirm('要離開戰鬥嗎？這場戰鬥不會有任何獎勵。')) return;
+        advAbort();
+        goToAdventurePage();
+    }
+    function advBackToMenu() { advAbort(); goToAdventurePage(); }
+    function advRetry() { if (adv.level) advStartBattle(adv.level.id); }
+
+    // ── 回合 ──
+    function advBeginRound() {
+        adv.actionsTotal = advActionCount(adv.player.agi, adv.enemy.agi);
+        adv.actionsLeft = adv.actionsTotal;
+        adv.busy = false;
+        advShowMenu();
+    }
+    function advShowMenu() {
+        adv.q = null;
+        advUpdateHud();
+        let cardOk = adv.cnWords.length >= 4;
+        let speakOk = !!getSpeechRecognitionCtor();
+        let moves = ADV_MOVES.map(m => {
+            let off = (m.type === 'card' && !cardOk) || (m.type === 'speak' && !speakOk);
+            let why = (m.type === 'card' && !cardOk) ? '（單字缺中文解釋，無法出題）' : (m.type === 'speak' && !speakOk) ? '（此瀏覽器不支援語音辨識）' : '';
+            return `<button type="button" class="adv-move" ${off ? 'disabled' : ''} data-on-click='[["advChooseMove",["${m.key}"]]]'>
+                <b>${m.icon} ${m.name}　傷害 ${advDamage(adv.player.atk, m.power, adv.enemy.def)}</b><small>${m.desc}${why}</small></button>`;
+        }).join('');
+        document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">選擇招式！（本回合還可行動 ${adv.actionsLeft} 次）</div><div class="adv-moves">${moves}</div>`;
+    }
+
+    async function advChooseMove(key) {
+        if (!adv.active || adv.busy || adv.q) return;
+        let m = ADV_MOVES.find(x => x.key === key);
+        if (!m) return;
+        const id = adv.runId;
+        adv.move = m;
+        adv.q = { type: 'pending' };
+        if (m.type === 'speak' && !adv.micOk) {
+            adv.busy = true;
+            let mic = await ensureMicPermission();
+            if (id !== adv.runId) return;
+            adv.busy = false;
+            if (!mic.ok) { adv.q = null; if (mic.denied) openMicHelpModal(); else alert(mic.message); return; }
+            adv.micOk = true;
+        }
+        adv.progress = 0;
+        adv.triesLeft = m.tries;
+        if (m.type === 'card') advAskCard();
+        else if (m.type === 'listen') advAskListen();
+        else advAskSpeak();
+    }
+
+    // 字卡（選擇題）
+    function advAskCard() {
+        let w = advNextWord('cn');
+        let wrong = advShuffle(adv.cnWords.filter(x => x.chinese !== w.chinese)).slice(0, 3).map(x => x.chinese);
+        let opts = advShuffle([w.chinese, ...wrong]);
+        adv.q = { type: 'card', word: w, opts, correct: opts.indexOf(w.chinese), done: false };
+        let m = adv.move;
+        let prog = m.streak > 1 ? `（第 ${adv.progress + 1}/${m.streak} 題）` : '';
+        document.getElementById('advPanel').innerHTML = `
+            <div class="adv-log" id="advLog">${m.icon} ${m.name}${prog}：選出正確的意思</div>
+            <div class="adv-qword">${escapeHTML(w.english)}</div>
+            <div class="adv-opts">${opts.map((o, i) => `<button type="button" class="adv-opt" data-on-click='[["advAnswerCard",[${i}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
+    }
+    async function advAnswerCard(i) {
+        let q = adv.q;
+        if (!adv.active || adv.busy || !q || q.type !== 'card' || q.done) return;
+        const id = adv.runId;
+        q.done = true;
+        let btns = document.querySelectorAll('#advPanel .adv-opt');
+        btns.forEach((b, idx) => { if (idx === q.correct) b.classList.add('ok'); else if (idx === i) b.classList.add('bad'); });
+        let ok = i === q.correct;
+        await advWait(ok ? 450 : 1000);
+        if (id !== adv.runId) return;
+        if (ok) {
+            adv.progress++;
+            if (adv.progress < adv.move.streak) { advAskCard(); return; }
+        }
+        advResolveMove(ok);
+    }
+
+    // 聽力（聽發音、拼單字）
+    function advNorm(s) { return String(s || '').normalize('NFC').toLowerCase().replace(/[\s'’\-.,!?]/g, ''); }
+    function advAskListen() {
+        let w = advNextWord('all');
+        adv.q = { type: 'listen', word: w, done: false };
+        let m = adv.move;
+        document.getElementById('advPanel').innerHTML = `
+            <div class="adv-log" id="advLog">${m.icon} ${m.name}：聽發音，拼出單字</div>
+            <button type="button" class="adv-speak-btn" data-on-click='[["advReplayListen",[]]]'>🔊 再聽一次</button>
+            <div class="adv-input-row">
+                <input type="text" id="advListenInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入聽到的單字">
+                <button type="button" data-on-click='[["advSubmitListen",[]]]'>送出</button>
+            </div>
+            <div class="adv-qsub" id="advListenSub"></div>`;
+        let inp = document.getElementById('advListenInput');
+        inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); advSubmitListen(); } });
+        advSpeakWord(w.english);
+        setTimeout(() => { try { inp.focus(); } catch (e) {} }, 50);
+    }
+    function advReplayListen() { if (adv.q && adv.q.type === 'listen') advSpeakWord(adv.q.word.english); }
+    async function advSubmitListen() {
+        let q = adv.q;
+        if (!adv.active || adv.busy || !q || q.type !== 'listen' || q.done) return;
+        let inp = document.getElementById('advListenInput');
+        let val = inp ? inp.value : '';
+        if (!val.trim()) return;
+        const id = adv.runId;
+        q.done = true;
+        let ok = advNorm(val) === advNorm(q.word.english);
+        if (inp) inp.blur();
+        document.getElementById('advListenSub').innerHTML = ok ? '✅ 正確！' : `❌ 正確答案：<b>${escapeHTML(q.word.english)}</b>`;
+        await advWait(ok ? 500 : 1200);
+        if (id !== adv.runId) return;
+        advResolveMove(ok);
+    }
+
+    // 朗讀（按住麥克風）
+    function advAskSpeak() {
+        let w = advNextWord('all');
+        adv.q = { type: 'speak', word: w, done: false };
+        let m = adv.move;
+        document.getElementById('advPanel').innerHTML = `
+            <div class="adv-log" id="advLog">${m.icon} ${m.name}：按住麥克風唸出單字</div>
+            <div class="adv-qword">${escapeHTML(w.english)}</div>
+            <div class="adv-qsub">${escapeHTML(w.chinese || '')}</div>
+            <button type="button" class="adv-mic" id="advMicBtn" aria-label="按住麥克風說話"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg></button>
+            <div class="adv-qsub" id="advSpeakHint">剩 ${adv.triesLeft} 次機會 ｜ 說完再多按住約 2 秒</div>
+            <button type="button" class="adv-speak-btn" data-on-click='[["advGiveUpSpeak",[]]]'>放棄這招</button>`;
+        let btn = document.getElementById('advMicBtn');
+        btn.addEventListener('pointerdown', (e) => { e.preventDefault(); try { if (btn.setPointerCapture && e.pointerId !== undefined) btn.setPointerCapture(e.pointerId); } catch (err) {} advSpeakStart(); });
+        ['pointerup', 'pointercancel'].forEach(t => btn.addEventListener(t, (e) => { e.preventDefault(); advSpeakStop(); }));
+        btn.addEventListener('contextmenu', (e) => e.preventDefault());
+        btn.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); advSpeakStart(); } });
+        btn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); advSpeakStop(); } });
+    }
+    function advSpeakHint(t) { let el = document.getElementById('advSpeakHint'); if (el) el.textContent = t; }
+    function advSpeakStart() {
+        let q = adv.q;
+        if (advListening || adv.busy || !adv.active || !q || q.type !== 'speak' || q.done) return;
+        const SR = getSpeechRecognitionCtor();
+        if (!SR) { advSpeakHint('這個瀏覽器不支援語音辨識'); return; }
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+        let rec = new SR();
+        rec.lang = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
+        rec.interimResults = true;
+        rec.continuous = false;
+        rec.maxAlternatives = 10;
+        advAlts = []; advErr = ''; advShort = false; advIgnore = false; advPressAt = Date.now();
+        rec.onresult = (ev) => {
+            let alts = [];
+            for (let i = 0; i < ev.results.length; i++) for (let j = 0; j < ev.results[i].length; j++) alts.push({ transcript: ev.results[i][j].transcript, confidence: ev.results[i][j].confidence });
+            advAlts = alts;
+            if (advListening && alts.length && !advIgnore) advSpeakHint('🎙️ ' + alts[0].transcript);
+        };
+        rec.onerror = (ev) => { advErr = (ev && ev.error) || 'error'; };
+        rec.onend = () => advSpeakFinish(rec, false);
+        advRec = rec;
+        advListening = true;
+        let btn = document.getElementById('advMicBtn');
+        if (btn) btn.classList.add('recording');
+        advSpeakHint('🎙️ 聆聽中…說完請再多按住一下');
+        try { rec.start(); } catch (e) {
+            advListening = false;
+            if (btn) btn.classList.remove('recording');
+            advSpeakHint('無法啟動語音辨識，請再按一次');
+        }
+    }
+    function advSpeakStop() {
+        if (!advListening || !advRec) return;
+        let rec = advRec;
+        let btn = document.getElementById('advMicBtn');
+        if (btn) btn.classList.remove('recording');
+        if (Date.now() - advPressAt < 350) {
+            advShort = true; advIgnore = true;
+            try { rec.abort(); } catch (e) {}
+        } else {
+            advSpeakHint('🎙️ 收音中…');
+            setTimeout(() => { if (advRec === rec && advListening) { try { rec.stop(); } catch (e) {} } }, SPEAK_TAIL_MS);
+        }
+        clearTimeout(advWatch);
+        advWatch = setTimeout(() => { if (advListening && advRec === rec) { try { rec.abort(); } catch (e) {} advSpeakFinish(rec, true); } }, 8000);
+    }
+    async function advSpeakFinish(rec, forced) {
+        if (advRec !== rec || !advListening) return;
+        advListening = false;
+        clearTimeout(advWatch);
+        let btn = document.getElementById('advMicBtn');
+        if (btn) btn.classList.remove('recording');
+        let q = adv.q;
+        if (!adv.active || !q || q.type !== 'speak' || q.done) return;
+        if (advShort) { advSpeakHint('請「按住」麥克風說話，說完再放開'); return; }
+        if (advIgnore) return;
+        let alts = advAlts.filter(a => a.transcript && a.transcript.trim());
+        if (!alts.length) {
+            advSpeakHint(forced ? '辨識逾時，請再按住說一次' : speakErrorMessage(advErr));
+            if (advErr === 'not-allowed' || advErr === 'service-not-allowed') openMicHelpModal();
+            return;
+        }
+        const id = adv.runId;
+        let res = scoreSpeakAttempt(q.word.english, alts, getLearningLanguage());
+        let pass = res.score >= getSpeakPassScore();
+        adv.triesLeft--;
+        if (pass) {
+            q.done = true;
+            advSpeakHint(`✅ ${res.score} 分（辨識到：${res.heard || ''}）`);
+            await advWait(600);
+            if (id !== adv.runId) return;
+            advResolveMove(true);
+        } else if (adv.triesLeft <= 0) {
+            q.done = true;
+            advSpeakHint(`❌ ${res.score} 分（需 ${getSpeakPassScore()} 分），沒有機會了`);
+            await advWait(1100);
+            if (id !== adv.runId) return;
+            advResolveMove(false);
+        } else {
+            advSpeakHint(`❌ ${res.score} 分（需 ${getSpeakPassScore()} 分）｜ 辨識到：${res.heard || '(沒有內容)'} ｜ 剩 ${adv.triesLeft} 次機會`);
+        }
+    }
+    async function advGiveUpSpeak() {
+        let q = adv.q;
+        if (!adv.active || adv.busy || !q || q.type !== 'speak' || q.done) return;
+        const id = adv.runId;
+        q.done = true;
+        advIgnore = true;
+        if (advRec && advListening) { try { advRec.abort(); } catch (e) {} advListening = false; }
+        await advWait(200);
+        if (id !== adv.runId) return;
+        advResolveMove(false);
+    }
+
+    // ── 招式結算與動畫 ──
+    async function advPlayAttack(m) {
+        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
+        if (!P || !E) return;
+        const d = advDelta(P, E);
+        const ec = advActorCenter(E), pc = advActorCenter(P);
+        const dash = (f) => advAnimate(P, [
+            { transform: 'translate(0,0) scale(1)' },
+            { transform: `translate(${d.dx * f}px, ${d.dy * f}px) scale(1.12)`, offset: 0.5 },
+            { transform: 'translate(0,0) scale(1)' }], { duration: 420, easing: 'ease-in-out' });
+        const burst = (txt) => { let b = advFx(txt || '💥', ec.x + (Math.random() * 12 - 6), ec.y + (Math.random() * 12 - 6), 40); if (b) advAnimate(b, [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1.1)', offset: 0.4 }, { opacity: 0, transform: 'scale(1.4)' }], { duration: 380 }).then(() => b.remove()); };
+        if (m.key === 'tackle') {
+            let p = dash(0.78); await advWait(190); burst(); await p;
+        } else if (m.key === 'combo') {
+            for (let i = 0; i < 3; i++) { let p = dash(0.78); await advWait(190); burst('🔥'); await p; }
+        } else if (m.key === 'slash') {
+            let p = advAnimate(P, [{ transform: 'translate(0,0)' }, { transform: `translate(${d.dx * 0.5}px, ${d.dy * 0.5}px)`, offset: 0.5 }, { transform: 'translate(0,0)' }], { duration: 380, easing: 'ease-in-out' });
+            await advWait(170);
+            let s = advFx(`<svg viewBox="0 0 60 60" width="100%" height="100%"><path d="M8 8 Q 42 18 52 54" stroke="#FFFFFF" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M8 8 Q 42 18 52 54" stroke="#FACC15" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>`, ec.x, ec.y, 64);
+            if (s) await advAnimate(s, [{ opacity: 0, transform: 'scale(.4) rotate(-25deg)' }, { opacity: 1, transform: 'scale(1.1) rotate(0deg)', offset: 0.45 }, { opacity: 0, transform: 'scale(1.25) rotate(12deg)' }], { duration: 380 }).then(() => s.remove());
+            await p;
+        } else if (m.key === 'wave') {
+            await advAnimate(P, [{ transform: 'translateX(0) scale(1)' }, { transform: 'translateX(-8px) scale(0.92)', offset: 0.5 }, { transform: 'translateX(0) scale(1)' }], { duration: 300 });
+            let rings = [];
+            for (let i = 0; i < 3; i++) {
+                let r = advFx('<div style="width:100%;height:100%;box-sizing:border-box;border-radius:50%;border:4px solid #38BDF8;background:rgba(56,189,248,.25)"></div>', pc.x, pc.y, 30);
+                if (r) rings.push(advAnimate(r, [{ opacity: 0.9, transform: 'translate(0,0) scale(.6)' }, { opacity: 0.9, transform: `translate(${d.dx}px, ${d.dy}px) scale(1.5)`, offset: 0.85 }, { opacity: 0, transform: `translate(${d.dx}px, ${d.dy}px) scale(1.9)` }], { duration: 560, delay: i * 110, easing: 'ease-in', fill: 'backwards' }).then(() => r.remove()));
+            }
+            await advWait(560 + 110); burst('🌊'); await Promise.all(rings);
+        }
+    }
+    async function advHurt(actorEl, dmg, isEnemy) {
+        advFloat(actorEl, '-' + dmg);
+        let dir = isEnemy ? 1 : -1;
+        await advAnimate(actorEl, [
+            { transform: 'translateX(0)', filter: 'brightness(1)' },
+            { transform: `translateX(${8 * dir}px)`, filter: 'brightness(2) saturate(.4)', offset: 0.2 },
+            { transform: `translateX(${-7 * dir}px)`, filter: 'brightness(1.6)', offset: 0.5 },
+            { transform: `translateX(${4 * dir}px)`, offset: 0.75 },
+            { transform: 'translateX(0)', filter: 'brightness(1)' }], { duration: 420 });
+    }
+
+    async function advResolveMove(ok) {
+        if (!adv.active) return;
+        const id = adv.runId;
+        adv.busy = true;
+        const m = adv.move;
+        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
+        adv.q = null;
+        if (ok) {
+            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">✨ 「${m.name}」發動成功！</div>`;
+            await advPlayAttack(m);
+            if (id !== adv.runId) return;
+            let dmg = advDamage(adv.player.atk, m.power, adv.enemy.def);
+            adv.enemy.hp = Math.max(0, adv.enemy.hp - dmg);
+            advUpdateHud();
+            await advHurt(E, dmg, true);
+            if (id !== adv.runId) return;
+            if (adv.enemy.hp <= 0) { await advWin(id); return; }
+        } else {
+            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">💨 「${m.name}」發動失敗…</div>`;
+            advFloat(P, 'MISS', '#64748B');
+            await advAnimate(P, [{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration: 320 });
+            await advWait(300);
+            if (id !== adv.runId) return;
+        }
+        adv.actionsLeft--;
+        if (adv.actionsLeft > 0) { adv.busy = false; advShowMenu(); }
+        else await advEnemyPhase(id);
+    }
+
+    async function advEnemyPhase(id) {
+        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
+        let n = advActionCount(adv.enemy.agi, adv.player.agi);
+        for (let i = 0; i < n; i++) {
+            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">${escapeHTML(adv.enemy.name)}的「${escapeHTML(adv.enemy.moveName)}」攻擊！</div>`;
+            await advWait(350);
+            if (id !== adv.runId) return;
+            const d = advDelta(E, P);
+            await advAnimate(E, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${d.dx * 0.8}px, ${d.dy * 0.8}px) scale(1.12)`, offset: 0.5 }, { transform: 'translate(0,0) scale(1)' }], { duration: 480, easing: 'ease-in-out' });
+            if (id !== adv.runId) return;
+            let dmg = advDamage(adv.enemy.atk, adv.enemy.movePower, adv.player.def);
+            adv.player.hp = Math.max(0, adv.player.hp - dmg);
+            advUpdateHud();
+            await advHurt(P, dmg, false);
+            if (id !== adv.runId) return;
+            if (adv.player.hp <= 0) { await advLose(id); return; }
+        }
+        adv.round++;
+        advBeginRound();
+    }
+
+    async function advWin(id) {
+        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
+        adv.active = false;
+        releaseWakeLock();
+        let lv = adv.level;
+        let first = !advData.cleared[lv.id];
+        advData.cleared[lv.id] = true;
+        advData.sauce += lv.rewardSauce;
+        advSave();
+        document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">🎉 打敗了${escapeHTML(lv.name)}！</div>`;
+        advAnimate(E, [{ transform: 'scale(1) rotate(0deg)', opacity: 1 }, { transform: 'scale(.15) rotate(540deg)', opacity: 0 }], { duration: 750, fill: 'forwards', easing: 'ease-in' });
+        await advAnimate(P, [{ transform: 'translateY(0)' }, { transform: 'translateY(-16px)', offset: 0.3 }, { transform: 'translateY(0)', offset: 0.6 }, { transform: 'translateY(-10px)', offset: 0.8 }, { transform: 'translateY(0)' }], { duration: 800 });
+        if (id !== adv.runId) return;
+        document.getElementById('advPanel').innerHTML = `
+            <div class="adv-result">
+                <div class="big">🎉 勝利！</div>
+                <div class="line">🍯 糖醋醬 +${lv.rewardSauce}（目前 ${advData.sauce} 瓶）</div>
+                ${first ? `<div class="line">🍗 首次通關獎勵：雞塊 ×${lv.rewardChicken}<br><span style="color:var(--text-muted);font-size:12px;">（原型版還沒連上雞塊錢包，這次先不發放）</span></div>` : ''}
+            </div>
+            <button type="button" class="adv-plain-btn main" data-on-click='[["advRetry",[]]]'>再戰一次</button>
+            <button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回大冒險</button>`;
+    }
+    async function advLose(id) {
+        const P = document.getElementById('advPlayer');
+        adv.active = false;
+        releaseWakeLock();
+        document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">雞塊倒下了…</div>`;
+        await advAnimate(P, [{ transform: 'rotate(0deg)', opacity: 1 }, { transform: 'rotate(80deg) translateY(10px)', opacity: 0.55 }], { duration: 600, fill: 'forwards' });
+        if (id !== adv.runId) return;
+        document.getElementById('advPanel').innerHTML = `
+            <div class="adv-result"><div class="big">😵 挑戰失敗</div><div class="line">別灰心，多練習幾次單字再來！</div></div>
+            <button type="button" class="adv-plain-btn main" data-on-click='[["advRetry",[]]]'>再挑戰</button>
+            <button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回大冒險</button>`;
+    }
+
     // 只有登記在 INLINE_ACTIONS 的函式能被呼叫（白名單）
     // ═════════════════════════════════════════════════════════════
     const INLINE_ACTIONS = {
         copyAppUrl,
+        playSpeakPracticeSample,
+        toggleAdvCard, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advReplayListen, advGiveUpSpeak,
+        advQuit, advRetry, advBackToMenu, openAdvUpgradeModal, closeAdvUpgradeModal, advUpgrade,
+        openMicHelpModal,
+        closeMicHelpModal,
+        recheckMicPermission,
         goToAdventurePage,
         goToSpeakPracticePage,
         toggleSpeakPracticeCard,
