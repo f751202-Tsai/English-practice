@@ -721,7 +721,7 @@
                     localStorage.setItem(GOOGLE_LINKED_FLAG, '1');
                     scheduleTokenRefresh(resp.expires_in);
                     let renewing = wasAuto && accessToken;           // 只是換新權杖：不必重新同步與綁定
-                    if (!renewing) { cloudWalletKey = null; walletBoundThisLogin = false; }
+                    if (!renewing) { cloudWalletKey = null; walletBoundThisLogin = false; advSwitchStore(); }   // 換成 Google 進度
                     accessToken = resp.access_token;
                     isCloudSyncActive = true;
                     updateCloudStatusText(`✅ 已連結 Google 雲端`);
@@ -1205,8 +1205,12 @@
         if (env.isIOS && env.standalone) updateCloudStatusText('⚠️ 主畫面模式的 Google 登入可能失敗，建議改用 Safari 開啟');
         tokenClient.requestAccessToken({ prompt: 'consent' });
     }
-    function handleLogout() {
+    async function handleLogout() {
+        // 登出前先把還沒上傳的大冒險進度送上雲端
+        if (accessToken && advCloudReady && advDirty) { clearTimeout(advCloudTimer); try { await triggerAutoSaveToCloud(); } catch (e) {} }
         localStorage.removeItem(GOOGLE_LINKED_FLAG);       // 不再自動重新連線
+        if (!advDirty) { try { localStorage.removeItem(ADV_STORE_G); } catch (e) {} }   // 已經上傳完：清掉本機暫存（下次登入從雲端載入，也避免換帳號時混在一起）
+        advSwitchStore();                                  // 換回離線進度（Google 進度留在雲端，不會被刪）
         clearTimeout(tokenRefreshTimer);
         if (!accessToken) {                                // 權杖已失效（等待重新連線）時，也要能登出
             updateCloudStatusText(`💻 未登入`);
@@ -1231,6 +1235,7 @@
     async function loadDataFromGoogleDrive() {
         if (!accessToken) return;
         updateCloudStatusText(`☁️ 雲端資料同步中...`);
+        let advNeedUpload = false;
         try {
             let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
             let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
@@ -1273,8 +1278,11 @@
                     initSpeakPracticeGrid();
                     initEditorListCards();
                     initExamCheckboxes();
-                }
-            }
+                    // 大冒險進度：Google 進度和離線進度分開，這裡只處理 Google 進度
+                    advNeedUpload = advMergeFromCloud(cloudData.advData, isValidWalletKey(cloudData.walletKey) ? cloudData.walletKey : '');
+                } else advNeedUpload = advMergeFromCloud(null, '');
+            } else advNeedUpload = advMergeFromCloud(null, '');
+            advCloudReady = true;
             // 登入後第一次同步：把這台裝置的錢包和 Google 雲端的錢包綁在一起
             if (!walletBoundThisLogin) {
                 walletBoundThisLogin = true;
@@ -1282,11 +1290,13 @@
                 if (usedKey) {
                     let needUpload = usedKey !== cloudWalletKey;
                     cloudWalletKey = usedKey;
-                    if (needUpload) await triggerAutoSaveToCloud();
+                    if (!advData.owner) { advData.owner = usedKey; advSave(); }
+                    if (needUpload) { advNeedUpload = false; await triggerAutoSaveToCloud(); }
                 } else {
                     walletBoundThisLogin = false;   // 連線失敗：下次同步時再試
                 }
             }
+            if (advNeedUpload) await triggerAutoSaveToCloud();
             updateCloudStatusText(`✅ 已連結 Google 雲端`);
         } catch (err) { 
             console.error("雲端載入失敗", err); 
@@ -1297,16 +1307,25 @@
     async function triggerAutoSaveToCloud() {
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
         if (!accessToken || !isCloudSyncActive) return;
+        if (!advCloudReady) return;      // 雲端資料還沒載入完就上傳，會蓋掉雲端的大冒險進度
         updateCloudStatusText(`☁️ 上傳備份中...`);
+        const tok = accessToken, sentTs = advData.ts;
         try {
             let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
             let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
+                headers: { 'Authorization': `Bearer ${tok}` }
             });
             if (res.status === 401) { handleDriveUnauthorized(); return; }
             let data = await res.json();
             let fileId = (data.files && data.files.length > 0) ? data.files[0].id : null;
-
+            // 另一台裝置如果存了比較新的大冒險進度，先採用它，避免用舊進度蓋掉
+            if (fileId && advIsGoogleMode()) {
+                try {
+                    let cr = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { 'Authorization': `Bearer ${tok}` } });
+                    let cj = await cr.json();
+                    if (cj && cj.advData && (parseInt(cj.advData.ts) || 0) > advData.ts) advMergeFromCloud(cj.advData, '');
+                } catch (e) { /* 讀不到就照原本流程上傳 */ }
+            }
             let cloudData = { 
                 activeDeviceId: myDeviceId, 
                 wordLists, 
@@ -1314,14 +1333,16 @@
                 cardExamHistory: trimHistoryPerLang(cardExamHistory), 
                 walletKey: cloudWalletKey || undefined,
                 chickenData,
+                advData: advIsGoogleMode() ? advData : undefined,     // 只上傳 Google 進度；離線進度不會上傳
                 appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}') 
             };
             let fileContent = JSON.stringify(cloudData);
 
+            let wr;
             if (fileId) {
-                await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                wr = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
                     method: 'PATCH',
-                    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                    headers: { 'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json' },
                     body: fileContent
                 });
             } else {
@@ -1329,10 +1350,12 @@
                 let form = new FormData();
                 form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
                 form.append('file', new Blob([fileContent], { type: 'application/json' }));
-                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}` }, body: form
+                wr = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${tok}` }, body: form
                 });
             }
+            if (wr && wr.ok === false) throw new Error('上傳失敗 ' + wr.status);
+            if (advIsGoogleMode() && advData.ts === sentTs) advDirty = false;
             updateCloudStatusText(`✅ 已連結 Google 雲端`);
         } catch(e) { 
             console.error("雲端存檔失敗", e); 
@@ -3988,9 +4011,15 @@
     //  🏰 雞塊大冒險（原型：第 1 關）
     //  戰鬥流程：選招式 → 發動招式（答題）→ 成功就造成傷害 → 依敏捷決定連續行動次數 → 敵人攻擊
     // ═════════════════════════════════════════════════════════════
-    const ADV_STORE = 'chicky_adv_data';
+    const ADV_STORE = 'chicky_adv_data';          // 沒登入 Google：離線進度
+    const ADV_STORE_G = 'chicky_adv_data_g';      // 登入 Google：雲端進度（本機暫存，會同步到 Google 雲端）
+    function advIsGoogleMode() { try { return localStorage.getItem('chicky_google_linked') === '1'; } catch (e) { return false; } }
+    function advStoreKey() { return advIsGoogleMode() ? ADV_STORE_G : ADV_STORE; }
     const ADV_SEL_KEY = 'chicky_adv_selected';
-    const ADV_BASE_STATS = { hp: 3, atk: 0, agi: 3, def: 0, int: 0, luck: 0 };
+    const ADV_BASE_STATS = { hp: 3, atk: 0, agi: 3, def: 0, int: 1, luck: 0 };
+    const ADV_MOVES_SHOWN = 4;               // 招式選擇一開始只顯示幾張，其餘收在「更多招式」
+    let advMovesOpen = false;
+    const ADV_REPLAY_PER_DAY = 3;           // 每天最多重複挑戰「已通關的關卡」幾次（沒通關的關卡不限次數）
     const ADV_UP_MAX = 10;
     const ADV_SHARDS_PER_SAUCE = 30;        // 30 個碎片 → 1 瓶糖醋醬
     const ADV_TOTAL_LEVELS = 10;
@@ -4045,7 +4074,7 @@
 
     function advLoad() {
         let d = {};
-        try { d = JSON.parse(localStorage.getItem(ADV_STORE)) || {}; } catch (e) { d = {}; }
+        try { d = JSON.parse(localStorage.getItem(advStoreKey())) || {}; } catch (e) { d = {}; }
         let up = d.up || {};
         let clampUp = v => Math.max(0, Math.min(ADV_UP_MAX, parseInt(v) || 0));
         let n0 = v => Math.max(0, parseInt(v) || 0);
@@ -4066,11 +4095,72 @@
             own: own,                     // 用碎片買到的招式
             eq: eq,                       // 目前裝備的招式（最多 4 招）
             potions: n0(d.potions),
-            weekDone: typeof d.weekDone === 'string' ? d.weekDone : ''     // 最近一次「碎片換雞塊」是哪一週
+            weekDone: typeof d.weekDone === 'string' ? d.weekDone : '',    // 最近一次「碎片換雞塊」是哪一週
+            replayDay: typeof d.replayDay === 'string' ? d.replayDay : '', // 重複挑戰次數是哪一天的
+            replays: n0(d.replays),
+            ts: n0(d.ts),                                                  // 最後存檔時間（雲端同步用）
+            owner: typeof d.owner === 'string' ? d.owner : ''              // 這份進度屬於哪個 Google 帳號（錢包代號）
         };
     }
+    // 更新前就已登入 Google 的人：第一次把原本的進度複製成「Google 進度」，不會憑空消失
+    try {
+        if (advIsGoogleMode() && localStorage.getItem(ADV_STORE_G) === null && localStorage.getItem(ADV_STORE) !== null)
+            localStorage.setItem(ADV_STORE_G, localStorage.getItem(ADV_STORE));
+    } catch (e) {}
     let advData = advLoad();
-    function advSave() { try { localStorage.setItem(ADV_STORE, JSON.stringify(advData)); } catch (e) {} }
+    let advCloudReady = false, advCloudTimer = null, advDirty = false;   // advDirty：Google 進度有還沒上傳的變更
+    function advSave(keepTs) {      // keepTs：只是每天體力重置這類自動整理，不算「新的進度」，不改存檔時間、也不上傳
+        if (!keepTs) advData.ts = Date.now();
+        if (advIsGoogleMode() && !advData.owner && typeof cloudWalletKey === 'string' && cloudWalletKey) advData.owner = cloudWalletKey;
+        try { localStorage.setItem(advStoreKey(), JSON.stringify(advData)); } catch (e) {}
+        if (keepTs) return;
+        if (advIsGoogleMode()) advDirty = true;
+        advQueueCloud();
+    }
+    // 登入 Google 時，進度存檔後稍等一下再上傳（連續存檔只上傳一次）
+    function advQueueCloud() {
+        if (!advIsGoogleMode() || !accessToken || !isCloudSyncActive || !advCloudReady) return;
+        clearTimeout(advCloudTimer);
+        advCloudTimer = setTimeout(() => { triggerAutoSaveToCloud(); }, 2500);
+    }
+    // 登入／登出時切換進度：離線一份、Google 一份，互不影響
+    function advSwitchStore() {
+        try { advAbort(); } catch (e) {}
+        advCloudReady = false; advDirty = false;
+        advData = advLoad();
+        advSyncDaily();
+        try { advRefreshViews(); } catch (e) {}
+    }
+    function advRefreshViews() {
+        if (document.getElementById('advStatsBox')) advRenderStatsPage();
+        if (document.getElementById('advLevelCard')) advRenderLevelPage();
+        advRenderShopBox();
+    }
+    // 從 Google 雲端載入進度：以「最後存檔時間」較新的為準；不同 Google 帳號的進度不會混在一起
+    function advMergeFromCloud(c, cloudOwner) {
+        let local = advData;
+        let mismatch = !!(cloudOwner && local.owner && local.owner !== cloudOwner);
+        if (c && typeof c === 'object') {
+            let cts = parseInt(c.ts) || 0;
+            if (mismatch || cts > local.ts) {
+                try { localStorage.setItem(ADV_STORE_G, JSON.stringify(c)); } catch (e) {}
+                advData = advLoad();
+                if (cloudOwner && !advData.owner) advData.owner = cloudOwner;
+                advSyncDaily();
+                advRefreshViews();
+                return false;                    // 不用再上傳
+            }
+            return cts < local.ts;               // 本機比較新 → 要上傳
+        }
+        if (mismatch) {                          // 雲端是另一個帳號、沒有進度：本機暫存不能沿用
+            try { localStorage.removeItem(ADV_STORE_G); } catch (e) {}
+            advData = advLoad(); advSyncDaily(); advRefreshViews();
+            return false;
+        }
+        return true;                             // 雲端還沒有進度：把本機的上傳
+    }
+    // 每天最多重複挑戰已通關關卡 3 次
+    function advReplaysLeft() { return advData.replayDay === getLocalDateStr() ? Math.max(0, ADV_REPLAY_PER_DAY - advData.replays) : ADV_REPLAY_PER_DAY; }
     // 這招有沒有擁有：一開始就有的、用碎片買的、用雞塊買的（雞塊的購買紀錄在後端錢包）
     function advOwns(key) {
         let m = advMoveByKey(key);
@@ -4101,9 +4191,9 @@
     // 體力會繼承到下一場戰鬥；每天 00:00（本機時間）補滿
     function advSyncDaily() {
         let today = getLocalDateStr(), max = advMaxHp();
-        if (advData.hp === null || advData.hpDay !== today) { advData.hpDay = today; advData.hp = max; advSave(); }
-        else if (advData.hp > max) { advData.hp = max; advSave(); }
-        else if (advData.hp < 0) { advData.hp = 0; advSave(); }
+        if (advData.hp === null || advData.hpDay !== today) { advData.hpDay = today; advData.hp = max; advSave(true); }
+        else if (advData.hp > max) { advData.hp = max; advSave(true); }
+        else if (advData.hp < 0) { advData.hp = 0; advSave(true); }
     }
     // 幸運（兩種用途）：骰子數 = (自己的幸運 − 對方的幸運) ÷ 2 無條件捨去（最少 0）
     //   每顆骰子擲到 5 或 6 算一次加成，加成最多 +3
@@ -4388,7 +4478,8 @@
         let ok = n >= lv.minWords;
         let tired = advData.hp <= 0;
         let max = advMaxHp();
-        let canGo = ok && !tired;
+        let isCleared = !!advData.cleared[lv.id], left = advReplaysLeft();
+        let canGo = ok && !tired && !(isCleared && left <= 0);
         let hearts = `♥ ${advData.hp}/${max}`;
         let shardIcon = advShardIcon(14);
         let first = lv.firstSauce ? `<span style="color:${ADV_SAUCE_COLOR};font-weight:800;">🍯 糖醋醬 ×${lv.firstSauce}</span>` : `${shardIcon} ×${lv.firstShards}`;
@@ -4399,6 +4490,7 @@
                     <b>第 ${lv.id} 關：${lv.name} ${advData.cleared[lv.id] ? '✅' : ''}</b>
                     <span class="${ok ? 'adv-ok' : 'adv-bad'}">攻略條件：選取至少 ${lv.minWords} 題以上的單字${ok ? ' ✓' : `（目前 ${n} 題）`}</span><br>
                     <span class="${tired ? 'adv-bad' : ''}">體力：${hearts}${tired ? '　沒體力了，明天 00:00 恢復' : ''}</span><br>
+                    ${isCleared ? `<span class="${left <= 0 ? 'adv-bad' : ''}">🔁 今天還能重複挑戰已通關關卡 ${left}/${ADV_REPLAY_PER_DAY} 次${left <= 0 ? '（明天再來；沒通關的關卡不限次數）' : ''}</span><br>` : ''}
                     ${advData.cleared[lv.id] ? '' : `首次通關：${first}${lv.firstMaxHp ? '、❤️ 生命上限 +' + lv.firstMaxHp : ''}${lv.firstPotions ? '、🧪 恢復藥水 ×' + lv.firstPotions : ''}<br>`}重複通關：${shardIcon} ×${lv.repeatShards}
                     ${lv.id === 3 && !advOwns('combo') ? `<br><span style="color:var(--primary);font-weight:700;">🎁 首次通關額外獎勵：學會「連續衝撞」</span>` : ''}
                     ${lv.special ? `<br><span class="adv-special">⚠️ ${ADV_SPECIAL_TEXT[lv.special]}</span>` : ''}
@@ -4479,9 +4571,10 @@
             </div>`;
         }).join('');
         let eqKeys = advEquipped().map(m => m.key);
-        let cards = ADV_MOVES.filter(m => advOwns(m.key)).map(m => {
+        let ownedMoves = ADV_MOVES.filter(m => advOwns(m.key));
+        let cards = ownedMoves.map((m, idx) => {
             let on = eqKeys.includes(m.key);
-            return `<div class="select-card ${on ? 'selected' : ''}" data-move="${m.key}" data-on-click='[["advToggleMove",["${m.key}"]]]'>
+            return `<div class="select-card ${on ? 'selected' : ''}${idx >= ADV_MOVES_SHOWN ? ' adv-extra' : ''}" data-move="${m.key}" data-on-click='[["advToggleMove",["${m.key}"]]]'>
                 <div class="select-card-info">
                     <div class="select-card-title">${m.icon} ${m.name}</div>
                     <div class="select-card-count">威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題 ｜ ${ADV_TYPE_LABEL[m.type]}</div>
@@ -4501,7 +4594,8 @@
             ${rows}
             <div class="adv-note" style="margin:6px 0 0;">⏱️ 每題作答 ${advAnswerSecs(s.int, 0)} 秒${advShieldMax(s.int) ? `　🛡️ 護盾 ${advShieldMax(s.int)}（每場戰鬥補滿）` : '　🛡️ 智慧 3 起有護盾'}</div>
             <div class="adv-sec-title">招式選擇　<span id="advEquipCount">已裝備 ${eqKeys.length}/${ADV_MAX_EQUIP}</span></div>
-            <div class="select-card-grid adv-move-grid" id="advMoveGrid">${cards}</div>
+            <div class="select-card-grid adv-move-grid${advMovesOpen ? '' : ' adv-more-closed'}" id="advMoveGrid">${cards}</div>
+            ${ownedMoves.length > ADV_MOVES_SHOWN ? `<button type="button" class="adv-more-btn" id="advMoreBtn" data-on-click='[["advToggleMoreMoves",[]]]'>${advMoreLabel(ownedMoves, eqKeys)}</button>` : ''}
             <div class="adv-note">勾選要帶上戰場的招式（最多 ${ADV_MAX_EQUIP} 招）。更多招式到「雞塊補給站 → 雞塊大冒險」購買。<br>打開「背包」可以使用糖醋醬（任何一項能力 +1，每項最多強化 ${ADV_UP_MAX} 次）和恢復藥水。<br>碎片請到補給站兌換成糖醋醬、購買藥水。體力每天 00:00 恢復。</div>`;
     }
     // ── 背包：點物品才使用 ──
@@ -4544,6 +4638,16 @@
         advSave();
         advCloseBag();
         advRenderStatsPage();
+    }
+    function advMoreLabel(owned, eqKeys) {
+        let rest = owned.slice(ADV_MOVES_SHOWN), eqIn = rest.filter(m => eqKeys.includes(m.key)).length;
+        return advMovesOpen ? '▲ 收起' : `▼ 更多招式（還有 ${rest.length} 招${eqIn ? `，其中 ${eqIn} 招已裝備` : ''}）`;
+    }
+    function advToggleMoreMoves() {
+        advMovesOpen = !advMovesOpen;
+        let g = document.getElementById('advMoveGrid'), b = document.getElementById('advMoreBtn');
+        if (g) g.classList.toggle('adv-more-closed', !advMovesOpen);
+        if (b) { let eq = advEquipped().map(m => m.key); b.textContent = advMoreLabel(ADV_MOVES.filter(m => advOwns(m.key)), eq); }
     }
     function advToggleMove(key) {
         let m = advMoveByKey(key);
@@ -4772,44 +4876,31 @@
         let info = document.getElementById('advTopInfo');
         if (info) info.textContent = `第 ${adv.level.id} 關 ｜ 回合 ${adv.round} ｜ 行動 ${Math.min(adv.actionsTotal - adv.actionsLeft + 1, adv.actionsTotal)}/${adv.actionsTotal}`;
     }
-    // 戰鬥場景：滷味攤（不鏽鋼檯面 + 一盤盤滷味）
+    // 戰鬥場景：夜市小吃攤街景（藍紅帆布攤 + 紅燈籠 + 木檯）
     function advStageBG() {
-        const steel = (x, w) => {
-            // 一個不鏽鋼盤：外框、高光、盤內的食材由呼叫端傳進來
-            return `<rect x="${x}" y="60" width="${w}" height="28" rx="4" fill="#CBD5E1" stroke="#64748B" stroke-width="1.6"/>
-                <rect x="${x + 3}" y="63" width="${w - 6}" height="22" rx="3" fill="#94A3B8" opacity="0.55"/>
-                <path d="M ${x + 6} 64.5 L ${x + w - 10} 64.5" stroke="#FFFFFF" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>`;
-        };
-        const sausages = (x) => [0, 1, 2, 3].map(i => `<g transform="rotate(${-14 + i * 9} ${x + 14 + i * 14} 62)"><rect x="${x + 4 + i * 14}" y="51" width="23" height="9" rx="4.5" fill="#92400E" stroke="#451A03" stroke-width="1.2"/><path d="M ${x + 8 + i * 14} 54 h 13" stroke="#D97706" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/></g>`).join('');
-        const tofu = (x) => [0, 1, 2].map(i => `<rect x="${x + 4 + i * 20}" y="${50 - (i % 2) * 3}" width="17" height="13" rx="2.5" fill="#B45309" stroke="#451A03" stroke-width="1.2"/><circle cx="${x + 9 + i * 20}" cy="${54 - (i % 2) * 3}" r="1.3" fill="#78350F"/><circle cx="${x + 14 + i * 20}" cy="${58 - (i % 2) * 3}" r="1.3" fill="#78350F"/>`).join('');
-        const veg = (x) => [0, 1, 2, 3, 4].map(i => `<circle cx="${x + 10 + i * 13}" cy="${57 - (i % 2) * 3}" r="${6.5 - (i % 2)}" fill="${i % 2 ? '#16A34A' : '#22C55E'}" stroke="#14532D" stroke-width="1.2"/><path d="M ${x + 8 + i * 13} ${57 - (i % 2) * 3} q 2 -3 4 0" stroke="#14532D" stroke-width="1" fill="none"/>`).join('');
-        const chicken = (x) => [0, 1, 2].map(i => `<g transform="rotate(${i % 2 ? 24 : -18} ${x + 16 + i * 22} 56)"><ellipse cx="${x + 14 + i * 22}" cy="54" rx="10" ry="7.5" fill="#D97706" stroke="#78350F" stroke-width="1.2"/><rect x="${x + 22 + i * 22}" y="52" width="9" height="4" rx="2" fill="#FEF3C7" stroke="#78350F" stroke-width="1"/></g>`).join('');
-        let tiles = '';
-        for (let y = 106; y < 150; y += 14) tiles += `<line x1="0" y1="${y}" x2="340" y2="${y}" stroke="#4B2E1E" stroke-width="1.2"/>`;
-        for (let x = -20; x < 360; x += 34) tiles += `<line x1="${x}" y1="96" x2="${x + (x - 170) * 0.5}" y2="150" stroke="#4B2E1E" stroke-width="1.2"/>`;
-        return `<svg class="adv-stage-bg" viewBox="0 0 340 150" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <defs>
-                <linearGradient id="sgWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A1A12"/><stop offset="1" stop-color="#5A3A24"/></linearGradient>
-                <linearGradient id="sgSteel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F1F5F9"/><stop offset="0.5" stop-color="#CBD5E1"/><stop offset="1" stop-color="#94A3B8"/></linearGradient>
-                <radialGradient id="sgGlow" cx="0.5" cy="0" r="0.8"><stop offset="0" stop-color="#FDE68A" stop-opacity="0.55"/><stop offset="1" stop-color="#FDE68A" stop-opacity="0"/></radialGradient>
-            </defs>
-            <rect width="340" height="150" fill="url(#sgWall)"/>
-            <rect width="340" height="150" fill="url(#sgGlow)"/>
-            <path d="M 0 0 H 340 V 20 Q 320 30 300 20 Q 280 30 260 20 Q 240 30 220 20 Q 200 30 180 20 Q 160 30 140 20 Q 120 30 100 20 Q 80 30 60 20 Q 40 30 20 20 Q 10 25 0 20 Z" fill="#B91C1C"/>
-            <path d="M 0 0 H 340 V 8 H 0 Z" fill="#991B1B"/>
-            <rect x="124" y="31" width="92" height="20" rx="6" fill="#FEF3C7" stroke="#92400E" stroke-width="2"/>
-            <text x="170" y="46" text-anchor="middle" font-size="16" font-weight="800" fill="#B91C1C" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">滷味</text>
-            ${advLantern(26, 36)}${advLantern(314, 36)}
-            ${steel(8, 78)}${sausages(8)}
-            ${steel(92, 78)}${tofu(92)}
-            ${steel(176, 78)}${veg(176)}
-            ${steel(260, 72)}${chicken(260)}
-            <rect x="0" y="86" width="340" height="14" fill="url(#sgSteel)"/>
-            <path d="M 0 89 H 340" stroke="#FFFFFF" stroke-width="1.6" opacity="0.8"/>
-            <rect x="0" y="100" width="340" height="50" fill="#3A2415"/>
-            ${tiles}
-            <rect x="0" y="100" width="340" height="3" fill="#1F120A" opacity="0.6"/>
-        </svg>`;
+        const FONT = `font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif"`;
+        let seed = 17;
+        const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+        const glow = (x, y, r, c, o) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity="${o}"/>`;
+        const lan = (x, y, r) => `<g><line x1="${x}" y1="${y - r * 1.4}" x2="${x}" y2="${y}" stroke="#1E1B4B" stroke-width="1"/><ellipse cx="${x}" cy="${y + r * 1.1}" rx="${r}" ry="${r * 1.25}" fill="#EF4444" stroke="#7F1D1D" stroke-width="0.8"/><rect x="${x - r * 0.45}" y="${y - 1}" width="${r * 0.9}" height="2.2" fill="#FCD34D"/><rect x="${x - r * 0.45}" y="${y + r * 2.2}" width="${r * 0.9}" height="2" fill="#FCD34D"/><ellipse cx="${x - r * 0.3}" cy="${y + r * 0.8}" rx="${r * 0.25}" ry="${r * 0.5}" fill="#FFFFFF" opacity="0.3"/></g>`;
+        const sign = (x, y, w, h, txt, bg, fg, fs) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${bg}" stroke="#00000055" stroke-width="0.8"/><text x="${x + w / 2}" y="${y + h / 2 + fs * 0.36}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${fg}" ${FONT}>${txt}</text>`;
+        const people = (xs, y) => xs.map((x, i) => `<g opacity="0.9"><circle cx="${x}" cy="${y}" r="3" fill="#1F2937"/><path d="M ${x - 4} ${y + 12} q 0 -9 4 -9 q 4 0 4 9 z" fill="${['#334155', '#475569', '#1E293B', '#3F3F46'][i % 4]}"/></g>`).join('');
+        let s = `<rect width="340" height="150" fill="url(#sgE1)"/><rect width="340" height="26" fill="#1B1740"/>`;
+        s += sign(130, 4, 80, 18, '好吃小吃', '#B91C1C', '#FEF3C7', 12) + sign(10, 6, 56, 14, '排骨麵', '#E0F2FE', '#1D4ED8', 10) + sign(274, 6, 56, 14, '腳底按摩', '#FEF9C3', '#92400E', 9);
+        for (let i = 0; i < 10; i++) s += lan(14 + i * 34, 22 + (i % 2) * 3, 4.8);
+        s += `<path d="M 6 58 L 150 58 L 160 78 L -4 78 Z" fill="#2563EB"/><path d="M 6 58 L 40 58 L 30 78 L -4 78 Z" fill="#DC2626"/><path d="M 78 58 L 112 58 L 106 78 L 66 78 Z" fill="#DC2626"/>`;
+        s += `<path d="M 190 58 L 334 58 L 344 78 L 180 78 Z" fill="#DC2626"/><path d="M 224 58 L 258 58 L 252 78 L 212 78 Z" fill="#2563EB"/><path d="M 300 58 L 334 58 L 344 78 L 290 78 Z" fill="#2563EB"/>`;
+        s += `<rect x="14" y="78" width="136" height="30" fill="#3A2A55"/><rect x="190" y="78" width="136" height="30" fill="#3A2A55"/>`;
+        s += glow(82, 88, 40, '#FDE68A', 0.28) + glow(258, 88, 40, '#FDE68A', 0.28);
+        for (let i = 0; i < 6; i++) s += `<ellipse cx="${24 + i * 20}" cy="${86 + (i % 2) * 2}" rx="4" ry="7" fill="#B45309" stroke="#451A03" stroke-width="0.8"/>`;
+        for (let i = 0; i < 6; i++) s += `<ellipse cx="${200 + i * 20}" cy="${86 + (i % 2) * 2}" rx="4" ry="7" fill="#92400E" stroke="#451A03" stroke-width="0.8"/>`;
+        s += `<rect x="160" y="60" width="30" height="48" fill="#241A3D"/>` + glow(175, 70, 16, '#FCD34D', 0.3) + people([164, 172, 180, 187], 84);
+        s += `<rect x="0" y="108" width="340" height="42" fill="url(#sgE2)"/><rect x="0" y="104" width="340" height="6" fill="#8B5E34"/><path d="M 0 106 H 340" stroke="#C08A52" stroke-width="1"/>`;
+        const cols = ['#FCD34D', '#F87171', '#60A5FA'];
+        for (let i = 0; i < 8; i++) s += glow(rnd() * 340, 100 + rnd() * 40, 2 + rnd() * 4, cols[i % 3], 0.35);
+        return `<svg class="adv-stage-bg" viewBox="0 0 340 150" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+            <linearGradient id="sgE1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#120E30"/><stop offset="1" stop-color="#3A2342"/></linearGradient>
+            <linearGradient id="sgE2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A2E22"/><stop offset="1" stop-color="#1F110C"/></linearGradient></defs>${s}</svg>`;
     }
     function advBuildStage() {
         let st = document.getElementById('advStage');
@@ -4845,6 +4936,13 @@
         advAbort();
         advSyncDaily();
         if (advData.hp <= 0) { alert('雞塊沒有體力了，明天 00:00 會恢復。'); advRenderLevelPage(); return; }
+        if (advData.cleared[lv.id]) {      // 已通關的關卡：每天只能重複挑戰 3 次（沒通關的關卡不限次數）
+            if (advReplaysLeft() <= 0) { alert(`今天重複挑戰已通關關卡的次數用完了（每天 ${ADV_REPLAY_PER_DAY} 次）。\n\n還沒通關的關卡可以一直挑戰，已通關的關卡明天再來吧！`); advRenderLevelPage(); return; }
+            let used = ADV_REPLAY_PER_DAY - advReplaysLeft();
+            advData.replayDay = getLocalDateStr();
+            advData.replays = used + 1;
+            advSave();
+        }
         adv.words = words;
         adv.cnWords = words.filter(w => w.chinese);
         adv.decks = { all: [], cn: [] };
@@ -5468,10 +5566,10 @@
         await advAnimate(P, [{ transform: 'translateY(0)' }, { transform: 'translateY(-16px)', offset: 0.3 }, { transform: 'translateY(0)', offset: 0.6 }, { transform: 'translateY(-10px)', offset: 0.8 }, { transform: 'translateY(0)' }], { duration: 800 });
         if (id !== adv.runId && adv.runId !== id) return;
         let lines = [], pop = [];
-        if (gainShards > 0) { lines.push(`<div class="line">${advShardIcon(16)} 糖醋醬碎片 +${gainShards}（目前 ${advData.shards} 個）</div>`); pop.push(`${advShardIcon(22)} 碎片 ×${gainShards}`); }
+        if (gainShards > 0) { lines.push(`<div class="line">${advShardIcon(16)} 糖醋醬碎片 +${gainShards}（目前 ${advData.shards} 個）</div>`); pop.push(`${advShardIcon(22)} 糖醋醬碎片 ×${gainShards}`); }
         if (loot.rolls.length) {
             lines.push(`<div class="line" style="color:#7C3AED;font-weight:700;">🎲 幸運骰 ${loot.rolls.join('、')}　${loot.bonus ? `擲出 5/6，碎片多 +${loot.bonus}` : '沒有額外碎片'}</div>`);
-            if (loot.bonus) pop.push(`🎲 幸運加成：碎片 +${loot.bonus}`);
+            if (loot.bonus) pop.push(`🎲 幸運加成：糖醋醬碎片 +${loot.bonus}`);
         }
         if (gainSauce > 0) pop.push(`${advSauceIcon(22)} 糖醋醬 ×${gainSauce}`);
         if (gotMaxHp) pop.push(`❤️ 生命上限 +${gotMaxHp}`);
@@ -5522,7 +5620,7 @@
     const INLINE_ACTIONS = {
         copyAppUrl,
         playSpeakPracticeSample,
-        toggleAdvCard, advToggleMove, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
+        toggleAdvCard, advToggleMove, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
         advQuit, advRetry, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advUpgrade, advExchangeShards,
         openMicHelpModal,
         closeMicHelpModal,
