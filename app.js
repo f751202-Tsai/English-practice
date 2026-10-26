@@ -4339,13 +4339,24 @@
                 ${advFace(60, 72, true)}`);
         }
         if (kind === 'darts') {
-            return wrap(`${shadow}
-                <circle cx="58" cy="54" r="44" fill="#16A34A" stroke="#231F20" stroke-width="5"/>
-                <circle cx="58" cy="54" r="38" fill="#DC2626"/>
-                <circle cx="58" cy="54" r="32" fill="#FEF3C7"/>
-                <path d="M 90 20 L 104 6" stroke="#475569" stroke-width="3" stroke-linecap="round"/><path d="M 101 3 l 8 -1 l -1 8 z" fill="#3B82F6"/>
-                <path d="M 24 22 L 12 8" stroke="#475569" stroke-width="3" stroke-linecap="round"/><path d="M 15 5 l -8 -1 l 1 8 z" fill="#F59E0B"/>
-                ${advFace(58, 50, true)}`);
+            // 夜市射飛鏢：一顆生氣的大氣球（身體）＋後面幾顆小氣球＋插在氣球上的飛鏢
+            const bal = (x, y, r, c, hi) => `<path d="M ${x} ${y + r + 1} q -3 6 1 12 q 3 6 -1 12" stroke="#94A3B8" stroke-width="1.6" fill="none"/>
+                <ellipse cx="${x}" cy="${y}" rx="${r * 0.86}" ry="${r}" fill="${c}" stroke="#231F20" stroke-width="3"/>
+                <path d="M ${x - 3} ${y + r - 1} L ${x + 3} ${y + r - 1} L ${x} ${y + r + 4} Z" fill="${c}" stroke="#231F20" stroke-width="2" stroke-linejoin="round"/>
+                <ellipse cx="${x - r * 0.35}" cy="${y - r * 0.45}" rx="${r * 0.18}" ry="${r * 0.3}" fill="${hi}" opacity="0.8" transform="rotate(-25 ${x - r * 0.35} ${y - r * 0.45})"/>`;
+            const dart = (x1, y1, x2, y2, c) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#334155" stroke-width="3.2" stroke-linecap="round"/>
+                <line x1="${x1}" y1="${y1}" x2="${x1 + (x1 - x2) * 0.18}" y2="${y1 + (y1 - y2) * 0.18}" stroke="#CBD5E1" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M ${x2} ${y2} l 6 -9 l 3 7 Z M ${x2} ${y2} l 9 -4 l -2 8 Z" fill="${c}" stroke="#231F20" stroke-width="1.4" stroke-linejoin="round"/>`;
+            return wrap(`<ellipse cx="60" cy="108" rx="26" ry="4" fill="rgba(0,0,0,0.15)"/>
+                ${bal(20, 26, 13, '#FACC15', '#FEF9C3')}${bal(101, 30, 12, '#3B82F6', '#DBEAFE')}${bal(16, 70, 11, '#22C55E', '#DCFCE7')}${bal(104, 72, 11, '#A855F7', '#F3E8FF')}
+                <path d="M 60 92 q -5 6 0 12 q 4 5 -1 8" stroke="#94A3B8" stroke-width="2" fill="none"/>
+                <ellipse cx="60" cy="52" rx="34" ry="39" fill="#EF4444" stroke="#231F20" stroke-width="5"/>
+                <path d="M 55 90 L 65 90 L 60 97 Z" fill="#EF4444" stroke="#231F20" stroke-width="3" stroke-linejoin="round"/>
+                <ellipse cx="44" cy="28" rx="6" ry="10" fill="#FECACA" opacity="0.85" transform="rotate(-28 44 28)"/>
+                ${advFace(60, 54, true)}
+                ${dart(86, 26, 108, 6, '#10B981')}
+                ${dart(23, 64, 4, 50, '#F59E0B')}
+                <path d="M 26 58 l -4 -5 M 30 56 l 1 -6 M 21 62 l -6 0" stroke="#FDE047" stroke-width="2" stroke-linecap="round"/>`);
         }
         if (kind === 'mahjong') {
             return wrap(`${shadow}
@@ -5634,19 +5645,19 @@
             if (id !== adv.runId) return;
             if (adv.enemy.special === 'pinball') {
                 let r = 1 + Math.floor(Math.random() * 6);
-                advFloat(E, '🎰 ' + r, '#0EA5E9');
+                advFloat(E, '🎰技能骰 ' + r, '#0284C7');
                 if (r <= 2) {
                     adv.enemy.hp = Math.min(adv.enemy.max, adv.enemy.hp + 2);
-                    advSetLog(`🎰 技能擲骰：${r}　彈珠台回復 2 點體力`);
+                    advSetLog(`🎰【打彈珠】技能骰 ${r}（不是幸運骰）　彈珠台回復 2 點體力`);
                     await advWait(500);
                     advUpdateHud();
                     advFloat(E, '+2', '#10B981');
                     await advWait(700);
                 } else if (r <= 4) {
-                    advSetLog(`🎰 技能擲骰：${r}　沒有效果`);
+                    advSetLog(`🎰【打彈珠】技能骰 ${r}（不是幸運骰）　沒有效果`);
                     await advWait(1000);
                 } else {
-                    advSetLog(`🎰 技能擲骰：${r}　彈珠直擊！無視防禦扣 1 點體力`);
+                    advSetLog(`🎰【打彈珠】技能骰 ${r}（不是幸運骰）　彈珠直擊！無視防禦扣 1 點體力`);
                     await advWait(500);
                     let pr = advTakeDamage(adv.player, 1);
                     advData.hp = adv.player.hp;
@@ -5744,7 +5755,7 @@
                 <div class="line" style="color:var(--text-muted);font-size:12px;">體力剩 ${advData.hp}/${advMaxHp()}（每天 00:00 恢復）</div>
             </div>
             ${advData.hp > 0 ? `<button type="button" class="adv-plain-btn main" data-on-click='[["advRetry",[]]]'>再戰一次</button>` : ''}
-            ${nextLv ? `<button type="button" class="adv-plain-btn sub" data-on-click='[["advNextLevel",[]]]'>挑戰下一關</button>` : `<button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`}`;
+            ${nextLv ? `<button type="button" class="adv-plain-btn next" data-on-click='[["advNextLevel",[]]]'>挑戰下一關</button>` : `<button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`}`;
         advShowReward(pop);
     }
     // 勝利後跳出的獎勵視窗：簡短列出拿到什麼
