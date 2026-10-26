@@ -1423,7 +1423,22 @@
         .adv-bar { position: relative; }
         .adv-bar .adv-bar-max { position: absolute; left: 0; top: 0; opacity: 0.28; }
         .adv-bar .adv-bar-cur { position: absolute; left: 0; top: 0; }
-        .adv-sec-title { margin: 16px 0 8px; font-size: 14px; font-weight: 800; color: var(--text-main); }
+        .adv-sec-title { margin: 16px 0 8px; font-size: 14px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        select.adv-move-filter { width: auto !important; margin-left: auto; padding: 4px 26px 4px 10px; font-size: 13px; font-weight: 700; border-radius: 10px; }
+        .adv-equip-slot { flex: 0 0 72px; width: 72px; height: 72px; padding: 4px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 2px dashed #C7D2FE; border-radius: 16px; background: #F8FAFF; cursor: pointer; font-family: inherit; color: var(--text-muted); }
+        .adv-equip-slot.on { border-style: solid; border-color: #8B5CF6; background: #F5F3FF; color: var(--text-main); }
+        .adv-equip-slot small { font-size: 10px; font-weight: 700; line-height: 1.15; text-align: center; }
+        .adv-equip-plus { font-size: 22px; font-weight: 800; color: #A5B4FC; line-height: 1; }
+        body.power-saving-mode .adv-equip-slot { background: #1B1E27; border-color: #3B3F63; }
+        body.power-saving-mode .adv-equip-slot.on { background: #2B2550; border-color: #8B5CF6; color: #FFFFFF; }
+        .adv-bag-sub { margin: 12px 0 8px; font-size: 13px; font-weight: 800; color: var(--text-muted); }
+        .adv-bag-item.is-on { border-color: #8B5CF6; background: #F5F3FF; }
+        body.power-saving-mode .adv-bag-item.is-on { background: #2B2550; }
+        .adv-item-btn { display: block; width: 100%; padding: 8px 10px; border: 1.5px dashed #10B981; border-radius: 12px; background: #ECFDF5; color: #065F46; font-size: 13.5px; font-weight: 800; font-family: inherit; cursor: pointer; text-align: left; }
+        .adv-item-btn small { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+        .adv-item-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .adv-item-tip { font-size: 12px; color: var(--text-muted); text-align: center; }
+        body.power-saving-mode .adv-item-btn { background: #0F2A22; color: #A7F3D0; }
         .adv-sec-title span { font-size: 12px; font-weight: 700; color: var(--text-muted); }
         body.power-saving-mode .adv-sec-title { color: #FFFFFF; }
         .adv-move-grid { margin-top: 0; max-height: none; overflow: visible; }
