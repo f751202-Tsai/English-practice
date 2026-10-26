@@ -1458,15 +1458,15 @@
         .adv-topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex: 0 0 auto; }
         .adv-topbar .back-home-btn { position: static; flex: 0 0 auto; }
         .adv-topinfo { font-size: 12.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
-        .adv-stage { position: relative; flex: 0 0 37%; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); background: linear-gradient(#BFE3FF 0%, #E6F6FF 58%, #9AD66B 58%, #7BC24F 100%); }
-        body.power-saving-mode .adv-stage { background: linear-gradient(#2A3350 0%, #2A3350 58%, #27502F 58%, #27502F 100%) !important; }
+        .adv-stage { position: relative; flex: 0 0 37%; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); background: #1E1B4B; }
         .adv-actor { position: absolute; will-change: transform; }
         .adv-actor svg { width: 100%; height: auto; display: block; overflow: visible; }
         .adv-player { left: 8%; bottom: 7%; width: 27%; max-width: 100px; }
         .adv-enemy { right: 10%; top: 22%; width: 24%; max-width: 92px; }
         .adv-hud { position: absolute; z-index: 3; font-size: 11.5px; font-weight: 700; background: rgba(255,255,255,0.9); color: #1E293B; border-radius: 10px; padding: 3px 8px; min-width: 96px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-        .adv-hud-enemy { left: 6px; top: 6px; }
-        .adv-hud-player { right: 6px; bottom: 6px; }
+        .adv-hud-enemy { right: 6px; bottom: 6px; }
+        .adv-hud-player { left: 6px; top: 6px; }
+        .adv-stage-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
         .adv-hpbar { height: 7px; border-radius: 5px; background: #E2E8F0; overflow: hidden; margin-top: 2px; }
         .adv-hpfill { height: 100%; width: 100%; background: linear-gradient(90deg, #34D399, #10B981); transition: width 0.35s; }
         .adv-hpfill.low { background: linear-gradient(90deg, #FB7185, #F43F5E); }
@@ -1621,7 +1621,7 @@
                                 </svg>
                             </div>
                             <div class="section-title-group">
-                                <div class="section-title" data-t-en="練習（英文）" data-t-ko="練習（韓文）">練習（英文）</div>
+                                <div class="section-title" data-t-en="英文練習" data-t-ko="韓文練習">英文練習</div>
                             </div>
                             <div class="item-arrow">⌄</div>
                         </div>
@@ -1690,7 +1690,7 @@
                                 </svg>
                             </div>
                             <div class="section-title-group">
-                                <div class="section-title" data-t-en="測驗（英文）" data-t-ko="測驗（韓文）">測驗（英文）</div>
+                                <div class="section-title" data-t-en="英文測驗" data-t-ko="韓文測驗">英文測驗</div>
                             </div>
                             <div class="item-arrow">⌄</div>
                         </div>
@@ -1758,7 +1758,7 @@
                             </svg>
                         </div>
                         <div class="section-title-group">
-                            <div class="section-title" data-t-en="題庫（英文）" data-t-ko="題庫（韓文）">題庫（英文）</div>
+                            <div class="section-title" data-t-en="英文題庫" data-t-ko="韓文題庫">英文題庫</div>
                             <div class="section-desc">自訂題庫標題、管理題庫單字！</div>
                         </div>
                         <div class="item-arrow">›</div>
@@ -2525,7 +2525,7 @@
         <span class="close-modal" data-on-click='[["closeMicHelpModal",[]]]'>&times;</span>
         <div style="font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 12px;">🎤 如何開啟麥克風權限</div>
         <div id="micHelpBody"></div>
-        <button class="action-btn-primary" data-on-click='[["recheckMicPermission",[]]]' style="margin-top: 14px;">我設定好了，重新檢查</button>
+        <button class="action-btn-primary" data-on-click='[["recheckMicPermission",[]]]' style="margin-top: 14px;">再詢問一次 / 我設定好了，重新檢查</button>
     </div>
 </div>
 
