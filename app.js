@@ -641,7 +641,7 @@
     let speakPracticeResults = [];
     let currentSpeakPracticeRanges = "";
     let speakStarting = false;
-    let speakRec = null, speakListening = false, speakPressAt = 0, speakShortTap = false, speakIgnoreResult = false;
+    let speakRec = null, speakListening = false, speakPressAt = 0, speakShortTap = false, speakIgnoreResult = false, speakStarted = false, speakLatched = false, speakSkipUp = false;
     let speakHeardAlts = [], speakLastError = '', speakWatchdog = null;
     let speakQuestion = { attempts: 0, best: null, last: null };
 
@@ -2398,7 +2398,8 @@
 
     // 開始測驗前先確認麥克風權限（會跳出瀏覽器的「允許使用麥克風」詢問）
     async function ensureMicPermission(silent) {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return { ok: true };   // 無法預先詢問，改由辨識器自己詢問
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return { ok: true };
+        if (location.protocol === 'file:' && !silent) return { ok: true };   // 檔案模式瀏覽器不會記住權限，預先詢問只會多問一次   // 無法預先詢問，改由辨識器自己詢問
         try {
             let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             stream.getTracks().forEach(tr => tr.stop());   // 立刻釋放，避免和語音辨識搶麥克風
@@ -2418,17 +2419,27 @@
     // 網頁沒辦法直接打開系統/瀏覽器的設定頁（瀏覽器的安全限制），所以改成依裝置顯示「照著點就到」的步驟
     function micHelpHTML(status) {
         const env = getBrowserEnv();
-        const blocks = {
-            ios: '<b>📱 iPhone / iPad（Safari）</b><ol><li>點網址列左邊的 <b>「AA」</b>（或拼圖圖示）→ <b>網站設定</b></li><li><b>麥克風</b> → 選 <b>「允許」</b></li><li>回到網頁，重新整理後再按住麥克風</li></ol>若找不到：<b>設定 → App → Safari → 麥克風</b>（舊版 iOS：設定 → Safari → 麥克風）改成「詢問」或「允許」。<br>語音辨識還需要開啟：<b>設定 → 一般 → 鍵盤 → 啟用聽寫</b>。',
-            android: '<b>🤖 Android（Chrome）</b><ol><li>點網址列左邊的 <b>鎖頭 / 設定圖示</b> → <b>權限</b></li><li><b>麥克風</b> → 選 <b>「允許」</b></li><li>回到網頁，重新整理後再按住麥克風</li></ol>若找不到：Chrome 右上角 <b>⋮ → 設定 → 網站設定 → 麥克風</b>；還是不行就到手機 <b>設定 → 應用程式 → Chrome → 權限 → 麥克風</b> 改成「允許」。',
-            desktop: '<b>💻 電腦（Chrome / Edge）</b><ol><li>點網址列左邊的 <b>鎖頭 / 調整圖示</b></li><li><b>麥克風</b> 切換成 <b>「允許」</b></li><li>重新整理頁面後再試</li></ol>'
+        const host = escapeHTML(location.protocol === 'file:' ? '（本機檔案）' : location.host);
+        const steps = {
+            android: '<b>🤖 Android（Chrome）</b><ol><li>Chrome 右上角 <b>⋮ → 設定 → 網站設定 → 麥克風</b></li><li>最上面的開關要是開的（顯示「詢問」）；往下找到 <b>' + host + '</b>，如果在「已封鎖」裡就點進去改成 <b>「允許」</b></li><li>回到網頁，<b>重新整理</b>後再按麥克風</li></ol>另一個常見原因：手機本身沒讓 Chrome 用麥克風 → <b>手機「設定」→ 應用程式 → Chrome → 權限 → 麥克風 → 允許</b>。<br>也可以點網址列左邊的圖示 → 權限（<b>麥克風只有在被詢問過之後才會出現在這裡</b>，沒看到是正常的）。',
+            ios: '<b>📱 iPhone / iPad（Safari）</b><ol><li>點網址列左邊的 <b>「AA」</b> → <b>網站設定</b> → <b>麥克風</b> → <b>允許</b></li><li>回到網頁，重新整理後再按麥克風</li></ol>若找不到：<b>設定 → App → Safari → 麥克風</b>（舊版 iOS：設定 → Safari → 麥克風）改成「詢問」或「允許」。<br>語音辨識還需要開啟：<b>設定 → 一般 → 鍵盤 → 啟用聽寫</b>。',
+            desktop: '<b>💻 電腦（Chrome / Edge）</b><ol><li>點網址列左邊的 <b>鎖頭 / 調整圖示</b></li><li><b>麥克風</b> 切換成 <b>「允許」</b>（或按「重設權限」）</li><li>重新整理頁面後再試</li></ol>'
         };
         const order = env.isIOS ? ['ios', 'android', 'desktop'] : env.isAndroid ? ['android', 'ios', 'desktop'] : ['desktop', 'android', 'ios'];
-        let stText = { denied: '❌ 目前狀態：已被封鎖', prompt: '❔ 目前狀態：尚未允許（按「重新檢查」會再詢問一次）', granted: '✅ 目前狀態：已允許' }[status] || '';
-        let html = '<div class="mic-help-note">網頁不能直接打開系統的設定頁（瀏覽器基於安全限制不允許），請照下面步驟開啟：</div>';
-        if (stText) html += '<div class="mic-help-status">' + stText + '</div>';
-        order.forEach((k, i) => { html += '<div class="mic-help-block' + (i === 0 ? ' main' : '') + '">' + blocks[k] + '</div>'; });
-        if (location.protocol === 'file:') html += '<div class="mic-help-block">ℹ️ 你現在是用「檔案」方式開啟網頁，瀏覽器不會記住權限。請放到 https 網站上使用。</div>';
+        let html = '<div class="mic-help-note">網頁不能直接打開系統的設定頁（瀏覽器基於安全限制不允許），請照下面的步驟操作：</div>';
+        if (location.protocol === 'file:') {
+            html += '<div class="mic-help-block main">ℹ️ 你現在是用「檔案」方式開啟網頁。這種方式瀏覽器<b>不會記住</b>麥克風權限，每次都會再問。<br>請改用網站網址（https）開啟；真的要用檔案開啟時，按麥克風後<b>點一下就好、不用按住</b>，按瀏覽器的「允許」後直接說話。</div>';
+        }
+        if (status === 'denied') {
+            html += '<div class="mic-help-status">❌ 目前狀態：本網站的麥克風被封鎖了，要手動改回「允許」：</div>';
+            order.forEach((k, i) => { html += '<div class="mic-help-block' + (i === 0 ? ' main' : '') + '">' + steps[k] + '</div>'; });
+        } else {
+            html += '<div class="mic-help-status">❔ 目前狀態：瀏覽器還沒有得到你的回答</div>' +
+                '<div class="mic-help-block main"><b>先按下面的「再詢問一次」</b>，瀏覽器會跳出詢問視窗，請選 <b>「允許」</b>（或「造訪這個網站時允許」）。<br>' +
+                '<b>這個時候在網址列的權限清單裡看不到麥克風是正常的</b>——要被詢問並回答過，才會出現在清單裡。</div>' +
+                '<div class="mic-help-note">如果按了沒有跳出詢問視窗，或之前選過「不允許」，才需要照下面的步驟手動開啟：</div>';
+            order.forEach((k) => { html += '<div class="mic-help-block">' + steps[k] + '</div>'; });
+        }
         return html;
     }
 
@@ -2575,6 +2586,8 @@
         rec.maxAlternatives = 10;
         speakHeardAlts = []; speakLastError = ''; speakShortTap = false; speakIgnoreResult = false;
         speakPressAt = Date.now();
+        speakStarted = false; speakLatched = false; speakSkipUp = false;
+        rec.onaudiostart = () => { speakStarted = true; if (speakRec === rec && speakListening && speakLatched) setSpeakHint(SPEAK_LATCH_HINT); };
 
         rec.onresult = (ev) => {
             let alts = [];
@@ -2603,23 +2616,38 @@
 
     const SPEAK_TAIL_MS = 1200;   // 放開後再多收音的時間
 
+    const SPEAK_LATCH_HINT = '🎙️ 聆聽中…說完會自動結束，或再點一下麥克風結束';
+
+    // 放開手指時：
+    //  ‧ 還沒真正開始收音（通常是瀏覽器正在跳出「允許麥克風」的詢問，使用者得放開手去按「允許」），或只是輕點一下
+    //    → 改成「點一下模式」：不中斷，等授權後直接說話，說完會自動結束（也可以再點一下結束）
+    //  ‧ 否則照原本「按住說話、放開評分」
     function stopSpeakListening() {
         if (!speakListening || !speakRec) return;
         let rec = speakRec;
-        document.getElementById('speakMicBtn').classList.remove('recording');
-        if (Date.now() - speakPressAt < 350) {          // 按太短：當作誤觸，不評分
-            speakShortTap = true; speakIgnoreResult = true;
-            try { rec.abort(); } catch (e) {}
-        } else {
-            // 放開手指後再多收一小段，避免單字最後一個音被切掉（切掉會被辨識成別的字）
-            setSpeakHint('🎙️ 收音中…');
-            setTimeout(() => { if (speakRec === rec && speakListening) { try { rec.stop(); } catch (e) {} } }, SPEAK_TAIL_MS);
+        if (!speakStarted || Date.now() - speakPressAt < 350) {
+            speakLatched = true;
+            setSpeakHint(speakStarted ? SPEAK_LATCH_HINT : '⏳ 等待麥克風授權…請按瀏覽器的「允許」，然後直接說話');
+            clearTimeout(speakWatchdog);
+            speakWatchdog = setTimeout(() => {
+                if (speakListening && speakRec === rec) { try { rec.abort(); } catch (e) {} finishSpeakListening(rec, true); }
+            }, 25000);
+            return;
         }
+        speakFinishHold(rec, SPEAK_TAIL_MS);
+    }
+
+    function speakFinishHold(rec, tailMs) {
+        let btn = document.getElementById('speakMicBtn');
+        if (btn) btn.classList.remove('recording');
+        // 再多收一小段，避免單字最後一個音被切掉（切掉會被辨識成別的字）
+        setSpeakHint('🎙️ 收音中…');
+        setTimeout(() => { if (speakRec === rec && speakListening) { try { rec.stop(); } catch (e) {} } }, tailMs);
         // 保險：有些瀏覽器偶爾不會觸發 onend，8 秒後強制收尾
         clearTimeout(speakWatchdog);
         speakWatchdog = setTimeout(() => {
             if (speakListening && speakRec === rec) { try { rec.abort(); } catch (e) {} finishSpeakListening(rec, true); }
-        }, 8000);
+        }, 8000 + tailMs);
     }
 
     function finishSpeakListening(rec, forced) {
@@ -2666,16 +2694,25 @@
     function initSpeakMicButton() {
         const btn = document.getElementById('speakMicBtn');
         if (!btn) return;
+        const down = () => {
+            if (speakListening && speakLatched) {          // 點一下模式中再點 = 結束
+                speakLatched = false; speakSkipUp = true;
+                speakFinishHold(speakRec, 500);
+                return;
+            }
+            startSpeakListening();
+        };
+        const up = () => { if (speakSkipUp) { speakSkipUp = false; return; } stopSpeakListening(); };
         btn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             try { if (btn.setPointerCapture && e.pointerId !== undefined) btn.setPointerCapture(e.pointerId); } catch (err) {}
-            startSpeakListening();
+            down();
         });
-        ['pointerup', 'pointercancel'].forEach(t => btn.addEventListener(t, (e) => { e.preventDefault(); stopSpeakListening(); }));
+        ['pointerup', 'pointercancel'].forEach(t => btn.addEventListener(t, (e) => { e.preventDefault(); up(); }));
         btn.addEventListener('contextmenu', (e) => e.preventDefault());
         // 鍵盤：按住空白鍵說話（電腦測試用）
-        btn.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); startSpeakListening(); } });
-        btn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); stopSpeakListening(); } });
+        btn.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); down(); } });
+        btn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); up(); } });
     }
 
     function pushCurrentSpeakResult() {
@@ -4318,7 +4355,7 @@
 
     // ── 戰鬥狀態 ──
     let adv = { pickLevel: 1, runId: 0, active: false, busy: false, level: null, words: [], cnWords: [], decks: { all: [], cn: [] }, player: null, enemy: null, round: 1, actionsLeft: 0, actionsTotal: 0, move: null, q: null, micOk: false };
-    let advRec = null, advListening = false, advAlts = [], advErr = '', advPressAt = 0, advIgnore = false, advShort = false, advWatch = null;
+    let advRec = null, advListening = false, advAlts = [], advErr = '', advPressAt = 0, advIgnore = false, advShort = false, advWatch = null, advStarted = false, advLatched = false, advSkipUp = false;
 
     function advWait(ms) { return new Promise(r => setTimeout(r, ms)); }
     function advAnimate(el, frames, opts) {
@@ -4401,9 +4438,27 @@
         let info = document.getElementById('advTopInfo');
         if (info) info.textContent = `第 ${adv.level.id} 關 ｜ 回合 ${adv.round} ｜ 行動 ${Math.min(adv.actionsTotal - adv.actionsLeft + 1, adv.actionsTotal)}/${adv.actionsTotal}`;
     }
+    // 戰鬥場景：夜市（和地圖第 1~4 關同一個風格）
+    function advStageBG() {
+        const stall = (x, y, label, emoji) => `<g transform="translate(${x} ${y}) scale(0.82)" opacity="0.95">${advStall(0, 0, 56, label, emoji)}</g>`;
+        let tiles = '';
+        for (let y = 104; y < 150; y += 15) tiles += `<line x1="0" y1="${y}" x2="340" y2="${y}" stroke="#3A3478" stroke-width="1.2"/>`;
+        for (let x = -20; x < 360; x += 34) tiles += `<line x1="${x}" y1="92" x2="${x + (x - 170) * 0.5}" y2="150" stroke="#3A3478" stroke-width="1.2"/>`;
+        return `<svg class="adv-stage-bg" viewBox="0 0 340 150" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs><linearGradient id="sgSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1E1B4B"/><stop offset="1" stop-color="#4338CA"/></linearGradient></defs>
+            <rect width="340" height="150" fill="url(#sgSky)"/>
+            ${[[40, 14], [96, 30], [150, 12], [210, 28], [262, 10]].map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="1.3" fill="#E0E7FF" opacity="0.85"/>`).join('')}
+            <circle cx="304" cy="22" r="9" fill="#FEF9C3"/><circle cx="308" cy="19" r="8" fill="#2A2570"/>
+            ${stall(34, 50, '雞排', '🍗')}${stall(150, 44, '滷味', '🍢')}${stall(250, 50, '珍奶', '🧋')}
+            <rect y="90" width="340" height="60" fill="#2A2560"/>
+            ${tiles}
+            ${advStringLights(24, 12)}
+            ${advLantern(24, 28)}${advLantern(316, 30)}
+        </svg>`;
+    }
     function advBuildStage() {
         let st = document.getElementById('advStage');
-        st.innerHTML = `
+        st.innerHTML = advStageBG() + `
             <div class="adv-hud adv-hud-enemy"><div>${escapeHTML(adv.enemy.name)} <span id="advEnemyHpText"></span></div><div class="adv-hpbar"><div class="adv-hpfill" id="advEnemyFill"></div></div></div>
             <div class="adv-actor adv-enemy" id="advEnemy">${advEnemySVG(adv.enemy.sprite)}</div>
             <div class="adv-actor adv-player" id="advPlayer">${advChickenSVG()}</div>
@@ -4579,11 +4634,16 @@
             <div class="adv-qsub" id="advSpeakHint">剩 ${adv.triesLeft} 次機會 ｜ 說完再多按住約 2 秒</div>
             <button type="button" class="adv-speak-btn" data-on-click='[["advGiveUpSpeak",[]]]'>放棄這招</button>`;
         let btn = document.getElementById('advMicBtn');
-        btn.addEventListener('pointerdown', (e) => { e.preventDefault(); try { if (btn.setPointerCapture && e.pointerId !== undefined) btn.setPointerCapture(e.pointerId); } catch (err) {} advSpeakStart(); });
-        ['pointerup', 'pointercancel'].forEach(t => btn.addEventListener(t, (e) => { e.preventDefault(); advSpeakStop(); }));
+        const down = () => {
+            if (advListening && advLatched) { advLatched = false; advSkipUp = true; advFinishHold(advRec, 500); return; }
+            advSpeakStart();
+        };
+        const up = () => { if (advSkipUp) { advSkipUp = false; return; } advSpeakStop(); };
+        btn.addEventListener('pointerdown', (e) => { e.preventDefault(); try { if (btn.setPointerCapture && e.pointerId !== undefined) btn.setPointerCapture(e.pointerId); } catch (err) {} down(); });
+        ['pointerup', 'pointercancel'].forEach(t => btn.addEventListener(t, (e) => { e.preventDefault(); up(); }));
         btn.addEventListener('contextmenu', (e) => e.preventDefault());
-        btn.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); advSpeakStart(); } });
-        btn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); advSpeakStop(); } });
+        btn.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); down(); } });
+        btn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); up(); } });
     }
     function advSpeakHint(t) { let el = document.getElementById('advSpeakHint'); if (el) el.textContent = t; }
     function advSpeakStart() {
@@ -4598,6 +4658,8 @@
         rec.continuous = false;
         rec.maxAlternatives = 10;
         advAlts = []; advErr = ''; advShort = false; advIgnore = false; advPressAt = Date.now();
+        advStarted = false; advLatched = false; advSkipUp = false;
+        rec.onaudiostart = () => { advStarted = true; if (advRec === rec && advListening && advLatched) advSpeakHint(SPEAK_LATCH_HINT); };
         rec.onresult = (ev) => {
             let alts = [];
             for (let i = 0; i < ev.results.length; i++) for (let j = 0; j < ev.results[i].length; j++) alts.push({ transcript: ev.results[i][j].transcript, confidence: ev.results[i][j].confidence });
@@ -4620,17 +4682,22 @@
     function advSpeakStop() {
         if (!advListening || !advRec) return;
         let rec = advRec;
+        if (!advStarted || Date.now() - advPressAt < 350) {        // 還在等授權、或只是輕點：改成「點一下模式」
+            advLatched = true;
+            advSpeakHint(advStarted ? SPEAK_LATCH_HINT : '⏳ 等待麥克風授權…請按瀏覽器的「允許」，然後直接說話');
+            clearTimeout(advWatch);
+            advWatch = setTimeout(() => { if (advListening && advRec === rec) { try { rec.abort(); } catch (e) {} advSpeakFinish(rec, true); } }, 25000);
+            return;
+        }
+        advFinishHold(rec, SPEAK_TAIL_MS);
+    }
+    function advFinishHold(rec, tailMs) {
         let btn = document.getElementById('advMicBtn');
         if (btn) btn.classList.remove('recording');
-        if (Date.now() - advPressAt < 350) {
-            advShort = true; advIgnore = true;
-            try { rec.abort(); } catch (e) {}
-        } else {
-            advSpeakHint('🎙️ 收音中…');
-            setTimeout(() => { if (advRec === rec && advListening) { try { rec.stop(); } catch (e) {} } }, SPEAK_TAIL_MS);
-        }
+        advSpeakHint('🎙️ 收音中…');
+        setTimeout(() => { if (advRec === rec && advListening) { try { rec.stop(); } catch (e) {} } }, tailMs);
         clearTimeout(advWatch);
-        advWatch = setTimeout(() => { if (advListening && advRec === rec) { try { rec.abort(); } catch (e) {} advSpeakFinish(rec, true); } }, 8000);
+        advWatch = setTimeout(() => { if (advListening && advRec === rec) { try { rec.abort(); } catch (e) {} advSpeakFinish(rec, true); } }, 8000 + tailMs);
     }
     async function advSpeakFinish(rec, forced) {
         if (advRec !== rec || !advListening) return;
