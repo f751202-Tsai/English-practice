@@ -3990,14 +3990,16 @@
     // ═════════════════════════════════════════════════════════════
     const ADV_STORE = 'chicky_adv_data';
     const ADV_SEL_KEY = 'chicky_adv_selected';
-    const ADV_BASE_STATS = { hp: 3, atk: 0, agi: 3, def: 0, luck: 0 };
+    const ADV_BASE_STATS = { hp: 3, atk: 0, agi: 3, def: 0, int: 0, luck: 0 };
     const ADV_UP_MAX = 10;
     const ADV_SHARDS_PER_SAUCE = 30;        // 30 個碎片 → 1 瓶糖醋醬
     const ADV_TOTAL_LEVELS = 10;
     const ADV_SAUCE_COLOR = '#EE8F78';      // 糖醋醬的顏色（碎片圖示也用這個顏色）
-    const ADV_POTION_HEAL = 5, ADV_POTION_COST = 1;     // 恢復藥水：1 個碎片 → HP +5
+    const ADV_POTION_HEAL = 5, ADV_POTION_COST = 5;     // 恢復藥水：1 個碎片 → HP +5
     const ADV_WEEKLY_SHARDS = 100, ADV_WEEKLY_CHICKENS = 2;   // 每週一次：100 碎片 → 2 雞塊
-    const ADV_MAX_EQUIP = 4;                // 最多同時裝備 4 招
+    const ADV_MAX_EQUIP = 4;
+    const ADV_BASE_SECS = 15;               // 每題作答時間（秒）
+    const ADV_LUCK_CAP = 3;                 // 幸運骰子的加成最多 +3                // 最多同時裝備 4 招
 
     // 招式
     //   type：card 字卡 / listen 聽力 / speak 朗讀（用來決定這招需要什麼條件）
@@ -4023,16 +4025,17 @@
         { key: 'wave2',   name: '連續小衝擊波', icon: ADV_ICONS.wave2(), type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 3, tries: 2, buy: { kind: 'chicken', price: 3, item: 'mv_wave2' }, desc: '朗讀：連續唸對 3 個單字，射 2 發' },
         { key: 'wave3',   name: '黃色衝擊波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'speak',        fx: 'yellow', power: 3, hits: 1, q: 3, tries: 2, buy: { kind: 'chicken', price: 5, item: 'mv_wave3' }, desc: '朗讀：連續唸對 3 個單字，威力更強' }
     ];
+    const ADV_TYPE_LABEL = { card: '字卡', listen: '聽力', speak: '朗讀' };
     const ADV_DEFAULT_EQUIP = ['tackle', 'slash', 'wave'];
     function advMoveByKey(k) { return ADV_MOVES.find(m => m.key === k); }
 
     // 關卡：firstShards/firstSauce = 第一次通關的獎勵；repeatShards = 之後每次通關的獎勵
     //   special：stink 發臭（玩家的招式失敗時，無視防禦反擊 1 點）／heal 治癒（敵人攻擊結束時回 1 點體力）
     const ADV_LEVELS = [
-        { id: 1, name: '貢丸',     sprite: 'meatball', minWords: 10, hp: 3,  atk: 1, agi: 1, def: 0, luck: 0, moveName: '彈跳撞擊', movePower: 0, firstShards: 1, firstSauce: 0, repeatShards: 1, special: '' },
-        { id: 2, name: '烤玉米',   sprite: 'corn',     minWords: 15, hp: 4,  atk: 1, agi: 0, def: 1, luck: 0, moveName: '玉米粒連射', movePower: 0, firstShards: 1, firstSauce: 0, repeatShards: 1, special: '' },
-        { id: 3, name: '蚵仔煎',   sprite: 'oyster',   minWords: 20, hp: 5,  atk: 2, agi: 1, def: 0, luck: 0, moveName: '黏稠甩擊', movePower: 0, firstShards: 2, firstSauce: 0, repeatShards: 1, special: '' },
-        { id: 4, name: '臭豆腐',   sprite: 'tofu',     minWords: 20, hp: 7,  atk: 1, agi: 0, def: 1, luck: 0, moveName: '酸臭衝撞', movePower: 0, firstShards: 3, firstSauce: 0, repeatShards: 2, special: 'stink' },
+        { id: 1, name: '貢丸',     sprite: 'meatball', minWords: 10, hp: 3,  atk: 1, agi: 1, def: 0, luck: 0, moveName: '彈跳撞擊', movePower: 0, firstShards: 1, firstSauce: 0, repeatShards: 1, firstMaxHp: 1, special: '' },
+        { id: 2, name: '烤玉米',   sprite: 'corn',     minWords: 15, hp: 4,  atk: 1, agi: 0, def: 1, luck: 0, moveName: '玉米粒連射', movePower: 0, firstShards: 1, firstSauce: 0, repeatShards: 1, firstMaxHp: 1, special: '' },
+        { id: 3, name: '蚵仔煎',   sprite: 'oyster',   minWords: 20, hp: 5,  atk: 2, agi: 1, def: 0, luck: 0, moveName: '黏稠甩擊', movePower: 0, firstShards: 2, firstSauce: 0, repeatShards: 1, firstMaxHp: 1, special: '' },
+        { id: 4, name: '臭豆腐',   sprite: 'tofu',     minWords: 20, hp: 7,  atk: 1, agi: 0, def: 1, luck: 0, moveName: '酸臭衝撞', movePower: 0, firstShards: 3, firstSauce: 0, repeatShards: 2, firstPotions: 2, special: 'stink' },
         { id: 5, name: '珍珠奶茶', sprite: 'boba',     minWords: 30, hp: 10, atk: 3, agi: 0, def: 1, luck: 0, moveName: '珍珠連射', movePower: 0, firstShards: 0, firstSauce: 1, repeatShards: 3, special: 'heal' }
     ];
     const ADV_SPECIAL_TEXT = {
@@ -4057,7 +4060,7 @@
             shards: hasShards ? n0(d.shards) : n0(d.sauce),     // 舊版把碎片叫「糖醋醬」，改名後數量轉成碎片
             sauce: hasShards ? n0(d.sauce) : 0,
             cleared: (d.cleared && typeof d.cleared === 'object') ? d.cleared : {},
-            up: { hp: clampUp(up.hp), atk: clampUp(up.atk), agi: clampUp(up.agi), def: clampUp(up.def), luck: clampUp(up.luck) },
+            up: { hp: clampUp(up.hp), atk: clampUp(up.atk), agi: clampUp(up.agi), def: clampUp(up.def), int: clampUp(up.int), luck: clampUp(up.luck) },
             hp: Number.isFinite(hp) ? hp : null,
             hpDay: typeof d.hpDay === 'string' ? d.hpDay : '',
             own: own,                     // 用碎片買到的招式
@@ -4090,6 +4093,7 @@
             atk: ADV_BASE_STATS.atk + advData.up.atk,
             agi: ADV_BASE_STATS.agi + advData.up.agi,
             def: ADV_BASE_STATS.def + advData.up.def,
+            int: ADV_BASE_STATS.int + advData.up.int,
             luck: ADV_BASE_STATS.luck + advData.up.luck
         };
     }
@@ -4101,13 +4105,27 @@
         else if (advData.hp > max) { advData.hp = max; advSave(); }
         else if (advData.hp < 0) { advData.hp = 0; advSave(); }
     }
-    // 幸運：骰子數 = (自己的幸運 − 對方的幸運) ÷ 2 無條件捨去（最少 0）；每顆骰子擲到 6，這次攻擊傷害 +1
+    // 幸運（兩種用途）：骰子數 = (自己的幸運 − 對方的幸運) ÷ 2 無條件捨去（最少 0）
+    //   每顆骰子擲到 5 或 6 算一次加成，加成最多 +3
+    //   ① 攻擊時：這次傷害 +加成　② 打贏之後：糖醋醬碎片 +加成
     function advLuckDice(myLuck, foeLuck) { return Math.max(0, Math.floor((myLuck - foeLuck) / 2)); }
     function advRollLuck(myLuck, foeLuck) {
         let rolls = [];
         for (let i = 0; i < advLuckDice(myLuck, foeLuck); i++) rolls.push(1 + Math.floor(Math.random() * 6));
-        return { rolls, bonus: rolls.filter(r => r === 6).length };
+        return { rolls, bonus: Math.min(ADV_LUCK_CAP, rolls.filter(r => r >= 5).length) };
     }
+    // 護盾：智慧 ÷ 3 無條件捨去，最多 3；每場戰鬥開始時補滿，擋掉等量的傷害
+    function advShieldMax(int) { return Math.min(3, Math.floor((int || 0) / 3)); }
+    // 每題作答秒數：15 秒 + 我方智慧；敵人智慧比我方高時，再扣掉差額（至少 5 秒）
+    function advAnswerSecs(myInt, foeInt) { return Math.max(5, ADV_BASE_SECS + myInt - Math.max(0, foeInt - myInt)); }
+    // 受到傷害：先扣護盾，剩下的才扣體力
+    function advTakeDamage(t, dmg) {
+        let absorbed = Math.min(t.shield || 0, dmg);
+        t.shield = (t.shield || 0) - absorbed;
+        t.hp = Math.max(0, t.hp - (dmg - absorbed));
+        return { absorbed, loss: dmg - absorbed };
+    }
+    function advHurtLabel(r) { return r.absorbed ? (r.loss ? `🛡️-${r.absorbed} -${r.loss}` : `🛡️-${r.absorbed}`) : '-' + r.loss; }
     // 連續行動次數：(我方敏捷 − 敵方敏捷) ÷ 2，無條件捨去後 +1，至少 1 次
     function advActionCount(myAgi, foeAgi) { return Math.max(1, Math.floor((myAgi - foeAgi) / 2) + 1); }
     // 傷害：攻擊力 + 招式威力 − 對方防禦，至少 1
@@ -4381,7 +4399,7 @@
                     <b>第 ${lv.id} 關：${lv.name} ${advData.cleared[lv.id] ? '✅' : ''}</b>
                     <span class="${ok ? 'adv-ok' : 'adv-bad'}">攻略條件：選取至少 ${lv.minWords} 題以上的單字${ok ? ' ✓' : `（目前 ${n} 題）`}</span><br>
                     <span class="${tired ? 'adv-bad' : ''}">體力：${hearts}${tired ? '　沒體力了，明天 00:00 恢復' : ''}</span><br>
-                    ${advData.cleared[lv.id] ? '' : `首次通關：${first}<br>`}重複通關：${shardIcon} ×${lv.repeatShards}
+                    ${advData.cleared[lv.id] ? '' : `首次通關：${first}${lv.firstMaxHp ? '、❤️ 生命上限 +' + lv.firstMaxHp : ''}${lv.firstPotions ? '、🧪 恢復藥水 ×' + lv.firstPotions : ''}<br>`}重複通關：${shardIcon} ×${lv.repeatShards}
                     ${lv.id === 3 && !advOwns('combo') ? `<br><span style="color:var(--primary);font-weight:700;">🎁 首次通關額外獎勵：學會「連續衝撞」</span>` : ''}
                     ${lv.special ? `<br><span class="adv-special">⚠️ ${ADV_SPECIAL_TEXT[lv.special]}</span>` : ''}
                 </div>
@@ -4414,6 +4432,7 @@
         { key: 'atk',  label: '攻擊', color: '#F43F5E' },
         { key: 'agi',  label: '敏捷', color: '#3B82F6' },
         { key: 'def',  label: '防禦', color: '#F59E0B' },
+        { key: 'int',  label: '智慧', color: '#14B8A6' },
         { key: 'luck', label: '幸運', color: '#A855F7' }
     ];
     const ADV_BAR_MAX = 12;
@@ -4436,7 +4455,7 @@
     // 背包圖示（紅色包包）
     function advBagIcon(size) {
         size = size || 20;
-        return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-4px;"><path d="M8.5 7 V5.5 A3.5 3.5 0 0 1 15.5 5.5 V7" stroke="#7F1D1D" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M4.5 7.5 H19.5 L20.7 20 Q20.8 21.4 19.4 21.4 H4.6 Q3.2 21.4 3.3 20 Z" fill="#EF4444" stroke="#7F1D1D" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 11.5 Q12 14.5 15 11.5" stroke="#FEE2E2" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`;
+        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-5px;overflow:visible"><path d="M10.5 9 V7.5 A5.5 5.5 0 0 1 21.5 7.5 V9" stroke="#92400E" stroke-width="2.4" fill="none" stroke-linecap="round"/><rect x="3" y="9" width="26" height="19" rx="5" fill="#8B5CF6" stroke="#3B1D8F" stroke-width="2"/><path d="M3 15.5 H29" stroke="#3B1D8F" stroke-width="2"/><rect x="3" y="9" width="26" height="6.5" rx="5" fill="#6D28D9"/><path d="M3 15.5 H29" stroke="#3B1D8F" stroke-width="2"/><rect x="13" y="13.5" width="6" height="4.5" rx="1.2" fill="#FBBF24" stroke="#92400E" stroke-width="1.2"/><path d="M3.8 24.5 V27 Q3.8 28 5 28 H8 M28.2 24.5 V27 Q28.2 28 27 28 H24" stroke="#FBBF24" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="16" cy="22.2" r="4.6" fill="#F4A236" stroke="#231F20" stroke-width="1.4"/><circle cx="14.3" cy="21.5" r="0.9" fill="#231F20"/><circle cx="17.7" cy="21.5" r="0.9" fill="#231F20"/><path d="M14.8 23.6 Q16 24.6 17.2 23.6" stroke="#231F20" stroke-width="1" fill="none" stroke-linecap="round"/></svg>`;
     }
 
     function advRenderStatsPage() {
@@ -4465,23 +4484,22 @@
             return `<div class="select-card ${on ? 'selected' : ''}" data-move="${m.key}" data-on-click='[["advToggleMove",["${m.key}"]]]'>
                 <div class="select-card-info">
                     <div class="select-card-title">${m.icon} ${m.name}</div>
-                    <div class="select-card-count">威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題</div>
+                    <div class="select-card-count">威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題 ｜ ${ADV_TYPE_LABEL[m.type]}</div>
                 </div>
                 <div class="checkmark-badge">✓</div>
             </div>`;
         }).join('');
+        let nav = document.getElementById('advNavCounts');
+        if (nav) nav.innerHTML = `<div class="adv-count">${advSauceIcon(15)} <b id="advSauceCount">${advData.sauce}</b></div><div class="adv-count">${advShardIcon(15)} <b id="advShardCount2">${advData.shards}</b></div>`;
         let box = document.getElementById('advStatsBox');
         if (!box) return;
         box.innerHTML = `
             <div class="adv-hero">
                 <div class="adv-avatar">${advChickenSVG()}</div>
-                <div class="adv-hero-info">
-                    <div class="adv-count">${advSauceIcon(18)} <b id="advSauceCount">${advData.sauce}</b></div>
-                    <div class="adv-count">${advShardIcon(18)} <b id="advShardCount2">${advData.shards}</b></div>
-                </div>
+                <button type="button" class="adv-bag-btn" data-on-click='[["advOpenBag",[]]]'>${advBagIcon(36)}<span class="adv-bag-n">${advData.sauce + advData.potions}</span></button>
             </div>
-            <button type="button" class="adv-bag-btn" data-on-click='[["advOpenBag",[]]]'>${advBagIcon(22)} 背包<span class="adv-bag-n">${advData.sauce + advData.potions}</span></button>
             ${rows}
+            <div class="adv-note" style="margin:6px 0 0;">⏱️ 每題作答 ${advAnswerSecs(s.int, 0)} 秒${advShieldMax(s.int) ? `　🛡️ 護盾 ${advShieldMax(s.int)}（每場戰鬥補滿）` : '　🛡️ 智慧 3 起有護盾'}</div>
             <div class="adv-sec-title">招式選擇　<span id="advEquipCount">已裝備 ${eqKeys.length}/${ADV_MAX_EQUIP}</span></div>
             <div class="select-card-grid adv-move-grid" id="advMoveGrid">${cards}</div>
             <div class="adv-note">勾選要帶上戰場的招式（最多 ${ADV_MAX_EQUIP} 招）。更多招式到「雞塊補給站 → 雞塊大冒險」購買。<br>打開「背包」可以使用糖醋醬（任何一項能力 +1，每項最多強化 ${ADV_UP_MAX} 次）和恢復藥水。<br>碎片請到補給站兌換成糖醋醬、購買藥水。體力每天 00:00 恢復。</div>`;
@@ -4591,7 +4609,7 @@
             let own = advOwns(m.key);
             let price = own ? '已擁有' : (m.buy.kind === 'shards' ? advShardPrice(m.buy.price) : advChickenPrice(m.buy.price));
             let poor = !own && (m.buy.kind === 'shards' ? advData.shards < m.buy.price : wallet.balance < m.buy.price);
-            cells.push(advShopCell({ id: 'shopItem_' + (m.buy.item || 'mv_' + m.key), icon: m.icon, name: m.name, sub: `威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題`, price: price, off: own, poor: poor, action: `[["advBuyMove",["${m.key}"]]]` }));
+            cells.push(advShopCell({ id: 'shopItem_' + (m.buy.item || 'mv_' + m.key), icon: m.icon, name: m.name, sub: `威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題 ｜ ${ADV_TYPE_LABEL[m.type]}`, price: price, off: own, poor: poor, action: `[["advBuyMove",["${m.key}"]]]` }));
         });
         while (cells.length < 9) cells.push('<div class="shop-cell shop-empty"></div>');
         let p1 = document.getElementById('shopPane1');
@@ -4749,8 +4767,8 @@
         if (pf) { pf.style.width = (Math.max(0, p.hp) / p.max * 100) + '%'; pf.classList.toggle('low', p.hp / p.max <= 0.34); }
         if (ef) { ef.style.width = (Math.max(0, e.hp) / e.max * 100) + '%'; ef.classList.toggle('low', e.hp / e.max <= 0.34); }
         let pt = document.getElementById('advPlayerHpText'), et = document.getElementById('advEnemyHpText');
-        if (pt) pt.textContent = `${Math.max(0, p.hp)}/${p.max}`;
-        if (et) et.textContent = `${Math.max(0, e.hp)}/${e.max}`;
+        if (pt) pt.textContent = `${Math.max(0, p.hp)}/${p.max}` + (p.shieldMax ? ` 🛡️${p.shield}` : '');
+        if (et) et.textContent = `${Math.max(0, e.hp)}/${e.max}` + (e.shield ? ` 🛡️${e.shield}` : '');
         let info = document.getElementById('advTopInfo');
         if (info) info.textContent = `第 ${adv.level.id} 關 ｜ 回合 ${adv.round} ｜ 行動 ${Math.min(adv.actionsTotal - adv.actionsLeft + 1, adv.actionsTotal)}/${adv.actionsTotal}`;
     }
@@ -4806,6 +4824,8 @@
 
     // ── 開始 / 結束 ──
     function advAbort() {
+        advStopTimer();
+        try { advCloseReward(); } catch (e) {}
         adv.runId++;
         adv.active = false;
         adv.busy = false;
@@ -4831,8 +4851,8 @@
         let s = advPlayerStats();
         adv.level = lv;
         adv.moves = advEquipped();
-        adv.player = { hp: Math.min(advData.hp, s.hp), max: s.hp, atk: s.atk, agi: s.agi, def: s.def, luck: s.luck };
-        adv.enemy = { name: lv.name, sprite: lv.sprite, special: lv.special || '', hp: lv.hp, max: lv.hp, atk: lv.atk, agi: lv.agi, def: lv.def, luck: lv.luck || 0, moveName: lv.moveName, movePower: lv.movePower };
+        adv.player = { hp: Math.min(advData.hp, s.hp), max: s.hp, atk: s.atk, agi: s.agi, def: s.def, int: s.int, luck: s.luck, shield: advShieldMax(s.int), shieldMax: advShieldMax(s.int) };
+        adv.enemy = { name: lv.name, sprite: lv.sprite, special: lv.special || '', hp: lv.hp, max: lv.hp, atk: lv.atk, agi: lv.agi, def: lv.def, int: lv.int || 0, shield: advShieldMax(lv.int), luck: lv.luck || 0, moveName: lv.moveName, movePower: lv.movePower };
         adv.round = 1;
         adv.micOk = false;
         adv.active = true;
@@ -4900,6 +4920,7 @@
         else if (m.mode === 'listenChoice') advAskListenChoice();
         else if (m.mode === 'listenSpell') advAskListen();
         else advAskSpeak();
+        advMountTimer();
     }
     function advProgText() { let m = adv.move; return m.q > 1 ? `（第 ${adv.progress + 1}/${m.q} 題）` : ''; }
     // 這一題答對了：還有下一題就繼續，題目答完就發動招式
@@ -4907,6 +4928,48 @@
         adv.progress++;
         if (adv.progress < adv.move.q) { advNextQuestion(); return; }
         advResolveMove(true);
+    }
+
+    // ── 作答倒數：每題 15 秒（智慧可增減），時間到 = 招式失敗 ──
+    function advStopTimer() { clearInterval(adv.timer); adv.timer = null; }
+    function advMountTimer() {
+        advStopTimer();
+        let q = adv.q, log = document.getElementById('advLog');
+        if (!adv.active || !q || q.done || !log) return;
+        let total = advAnswerSecs(adv.player.int, adv.enemy.int);
+        adv.timerEnd = Date.now() + total * 1000;
+        adv.timerTotal = total;
+        log.classList.add('has-timer');
+        log.insertAdjacentHTML('beforeend', `<span class="adv-timer" id="advTimer"><svg viewBox="0 0 36 36" width="34" height="34"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(100,116,139,.25)" stroke-width="4"/><circle id="advTimerArc" cx="18" cy="18" r="15" fill="none" stroke="#10B981" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="0" transform="rotate(-90 18 18)"/></svg><b id="advTimerNum">${total}</b></span>`);
+        const tick = () => {
+            let q2 = adv.q;
+            if (!adv.active || !q2 || q2.done || q2 !== q) { advStopTimer(); return; }
+            let left = Math.max(0, adv.timerEnd - Date.now());
+            let arc = document.getElementById('advTimerArc'), num = document.getElementById('advTimerNum');
+            if (arc) { arc.style.strokeDashoffset = String(94.25 * (1 - left / (adv.timerTotal * 1000))); arc.style.stroke = left <= 5000 ? '#EF4444' : '#10B981'; }
+            if (num) { num.textContent = String(Math.ceil(left / 1000)); num.style.color = left <= 5000 ? '#EF4444' : ''; }
+            if (left <= 0) { advStopTimer(); advTimeUp(); }
+        };
+        adv.timer = setInterval(tick, 100);
+    }
+    async function advTimeUp() {
+        let q = adv.q;
+        if (!adv.active || !q || q.done) return;
+        const id = adv.runId;
+        q.done = true;
+        advIgnore = true;
+        if (advRec && advListening) { try { advRec.abort(); } catch (e) {} advListening = false; }
+        clearTimeout(advWatch);
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+        let btns = document.querySelectorAll('#advPanel .adv-opt');
+        if (q.type === 'card' || q.type === 'listenChoice') btns.forEach((b, i) => { if (i === q.correct) b.classList.add('ok'); });
+        let sub = document.getElementById(q.type === 'typeCn' ? 'advCnSub' : q.type === 'listen' ? 'advListenSub' : 'advSpeakHint');
+        if (sub && (q.type === 'typeCn' || q.type === 'listen')) sub.innerHTML = `⏰ 時間到！正確答案：<b>${escapeHTML(q.type === 'typeCn' ? q.word.chinese : q.word.english)}</b>`;
+        else if (sub) sub.textContent = '⏰ 時間到！';
+        let t = document.getElementById('advTimerNum'); if (t) t.textContent = '0';
+        await advWait(1200);
+        if (id !== adv.runId) return;
+        advResolveMove(false);
     }
 
     // 字卡（選擇題）
@@ -4988,7 +5051,6 @@
         let m = adv.move;
         document.getElementById('advPanel').innerHTML = `
             <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：聽發音，選出正確的單字</div>
-            <button type="button" class="adv-speak-btn" data-on-click='[["advReplayListen",[]]]'>🔊 再聽一次</button>
             <div class="adv-opts">${opts.map((o, i) => `<button type="button" class="adv-opt" data-on-click='[["advAnswerListen",[${i}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
         advSpeakWord(w.english);
     }
@@ -5011,7 +5073,6 @@
         let m = adv.move;
         document.getElementById('advPanel').innerHTML = `
             <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：聽發音，拼出單字</div>
-            <button type="button" class="adv-speak-btn" data-on-click='[["advReplayListen",[]]]'>🔊 再聽一次</button>
             <div class="adv-input-row">
                 <input type="text" id="advListenInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入聽到的單字">
                 <button type="button" data-on-click='[["advSubmitListen",[]]]'>送出</button>
@@ -5210,7 +5271,7 @@
             { transform: 'translate(0,0) scale(1)' }], { duration: dur || 420, easing: 'ease-in-out' });
         const burst = (txt, size) => { let b = advFx(txt || '💥', ec.x + (Math.random() * 12 - 6), ec.y + (Math.random() * 12 - 6), size || 40); if (b) advAnimate(b, [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1.1)', offset: 0.4 }, { opacity: 0, transform: 'scale(1.4)' }], { duration: 380 }).then(() => b.remove()); };
         if (m.fx === 'dash') {
-            let p = dash(0.78); await advWait(190); burst(m.hits > 1 ? '🔥' : '💥'); await p;
+            let p = dash(0.78); await advWait(190); burst(m.icon); await p;
         } else if (m.fx === 'charge') {
             // 衝鋒撞擊：先往後蓄力，再一口氣衝過去
             await advAnimate(P, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${-d.dx * 0.12}px, ${-d.dy * 0.12}px) scale(0.9)` }], { duration: 220, fill: 'forwards', easing: 'ease-out' });
@@ -5218,7 +5279,7 @@
                 { transform: `translate(${-d.dx * 0.12}px, ${-d.dy * 0.12}px) scale(0.9)` },
                 { transform: `translate(${d.dx * 0.84}px, ${d.dy * 0.84}px) scale(1.25)`, offset: 0.6 },
                 { transform: 'translate(0,0) scale(1)' }], { duration: 460, easing: 'cubic-bezier(.5,0,.3,1)' });
-            await advWait(260); burst('💥', 64);
+            await advWait(260); burst(m.icon, 64);
             advAnimate(document.getElementById('advStage'), [{ transform: 'translate(0,0)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(3px,-2px)' }, { transform: 'translate(0,0)' }], { duration: 240 });
             await p;
         } else if (m.fx === 'slash') {
@@ -5227,6 +5288,7 @@
             let flip = hitNo % 2 === 1;      // 第二下換個方向斬
             let s = advFx(`<svg viewBox="0 0 60 60" width="100%" height="100%"><path d="M8 8 Q 42 18 52 54" stroke="#FFFFFF" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M8 8 Q 42 18 52 54" stroke="#FACC15" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>`, ec.x, ec.y, 64);
             if (s) await advAnimate(s, [{ opacity: 0, transform: `scale(${flip ? -.4 : .4}, .4) rotate(${flip ? 25 : -25}deg)` }, { opacity: 1, transform: `scale(${flip ? -1.1 : 1.1}, 1.1) rotate(0deg)`, offset: 0.45 }, { opacity: 0, transform: `scale(${flip ? -1.25 : 1.25}, 1.25) rotate(${flip ? -12 : 12}deg)` }], { duration: 380 }).then(() => s.remove());
+            burst(m.icon, 40);
             await p;
         } else if (m.fx === 'thrust') {
             // 突刺：快速直線刺過去，留下一道光
@@ -5234,7 +5296,7 @@
             let p = advAnimate(P, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${d.dx * 0.82}px, ${d.dy * 0.82}px) scale(1.1)`, offset: 0.4 }, { transform: `translate(${d.dx * 0.82}px, ${d.dy * 0.82}px) scale(1.1)`, offset: 0.55 }, { transform: 'translate(0,0) scale(1)' }], { duration: 480, easing: 'ease-out' });
             let ln = advFxBox(`<svg viewBox="0 0 100 16" width="100%" height="100%" style="overflow:visible"><path d="M0 8 L 86 8" stroke="#E0F2FE" stroke-width="7" stroke-linecap="round"/><path d="M 8 8 L 92 8" stroke="#38BDF8" stroke-width="3" stroke-linecap="round"/><path d="M 90 1 L 100 8 L 90 15 Z" fill="#FFFFFF"/></svg>`, (pc.x + ec.x) / 2, (pc.y + ec.y) / 2, Math.max(50, Math.hypot(d.dx, d.dy) * 0.9), 16);
             if (ln) { ln.style.transformOrigin = '50% 50%'; advAnimate(ln, [{ opacity: 0, transform: `rotate(${ang}deg) scaleX(.3)` }, { opacity: 1, transform: `rotate(${ang}deg) scaleX(1)`, offset: 0.4 }, { opacity: 0, transform: `rotate(${ang}deg) scaleX(1)` }], { duration: 420 }).then(() => ln.remove()); }
-            await advWait(200); burst('✨', 46); await p;
+            await advWait(200); burst(m.icon, 46); await p;
         } else if (m.fx === 'yellow') {
             // 黃色衝擊波：龜派氣功！先在雙手之間聚氣，再射出一道粗粗的光束
             let ang = Math.atan2(d.dy, d.dx) * 180 / Math.PI;
@@ -5249,7 +5311,7 @@
                     { opacity: 1, transform: `rotate(${ang}deg) scaleX(1)`, transformOrigin: '0% 50%', offset: 0.35 },
                     { opacity: 1, transform: `rotate(${ang}deg) scaleX(1) scaleY(1.15)`, transformOrigin: '0% 50%', offset: 0.75 },
                     { opacity: 0, transform: `rotate(${ang}deg) scaleX(1) scaleY(.4)`, transformOrigin: '0% 50%' }], { duration: 760, easing: 'ease-out' }).then(() => bm.remove());
-                await advWait(240); burst('💥', 72); advAnimate(document.getElementById('advStage'), [{ transform: 'translate(0,0)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(3px,-2px)' }, { transform: 'translate(0,0)' }], { duration: 300 });
+                await advWait(240); burst(m.icon, 72); advAnimate(document.getElementById('advStage'), [{ transform: 'translate(0,0)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(3px,-2px)' }, { transform: 'translate(0,0)' }], { duration: 300 });
                 await hold;
             }
             if (orb) { advAnimate(orb, [{ opacity: 1 }, { opacity: 0 }], { duration: 150 }).then(() => orb.remove()); }
@@ -5269,7 +5331,7 @@
             }
             let ring = advFx('<div style="width:100%;height:100%;box-sizing:border-box;border-radius:50%;border:4px solid ' + (big ? '#FACC15' : '#38BDF8') + ';background:' + (big ? 'rgba(250,204,21,.3)' : 'rgba(56,189,248,.3)') + '"></div>', ec.x, ec.y, 40);
             if (ring) advAnimate(ring, [{ opacity: 0.9, transform: 'scale(.4)' }, { opacity: 0 , transform: 'scale(2)' }], { duration: 420 }).then(() => ring.remove());
-            burst(big ? '⚡' : '🌊', 46);
+            burst(m.icon, 46);
             await advWait(260);
         }
     }
@@ -5286,7 +5348,7 @@
 
     // 幸運骰：骰子飄在攻擊者上方，擲到 6 傷害 +1
     async function advShowDice(actorEl, luck) {
-        advSetLog(`🎲 幸運骰：${luck.rolls.join('、')}${luck.bonus ? `　擲出 6！傷害 +${luck.bonus}` : '　沒有擲出 6'}`);
+        advSetLog(`🎲 幸運骰：${luck.rolls.join('、')}${luck.bonus ? `　擲出 5/6！傷害 +${luck.bonus}` : '　沒有擲出 5 或 6'}`);
         advFloat(actorEl, '🎲' + luck.rolls.join(' '), luck.bonus ? '#7C3AED' : '#64748B');
         await advWait(1000);
     }
@@ -5297,9 +5359,10 @@
         adv.busy = true;
         const m = adv.move;
         const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
+        advStopTimer();
         adv.q = null;
         if (ok) {
-            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">✨ 「${m.name}」發動成功！</div>`;
+            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">${m.icon} 「${m.name}」發動成功！</div>`;
             // 每一下各自計算：攻擊力 + 招式威力 − 對方防禦（至少 1）；幸運骰的加成算在最後一下
             let luck = advRollLuck(adv.player.luck, adv.enemy.luck), total = 0;
             for (let h = 0; h < m.hits; h++) {
@@ -5312,10 +5375,10 @@
                     dmg += luck.bonus;
                 }
                 total += dmg;
-                adv.enemy.hp = Math.max(0, adv.enemy.hp - dmg);
-                advSetLog(`✨「${m.name}」${m.hits > 1 ? `第 ${h + 1} 下` : ''}命中！${adv.enemy.name}受到 ${dmg} 點傷害`);
+                let er = advTakeDamage(adv.enemy, dmg);
+                advSetLog(`✨「${m.name}」${m.hits > 1 ? `第 ${h + 1} 下` : ''}命中！${adv.enemy.name}${er.absorbed ? `護盾擋下 ${er.absorbed} 點，` : ''}受到 ${er.loss} 點傷害`);
                 advUpdateHud();
-                await advHurt(E, dmg, true);
+                await advHurt(E, dmg, true, advHurtLabel(er));
                 if (id !== adv.runId) return;
                 if (adv.enemy.hp <= 0) { await advWin(id); return; }
             }
@@ -5327,12 +5390,12 @@
             if (id !== adv.runId) return;
             // 臭豆腐的「發臭」：招式失敗就被臭味反擊，無視防禦，固定 1 點
             if (adv.enemy.special === 'stink') {
-                advSetLog(`🤢 ${adv.enemy.name}散發臭味！無視防禦，雞塊受到 1 點傷害`);
-                adv.player.hp = Math.max(0, adv.player.hp - 1);
+                let dr = advTakeDamage(adv.player, 1);
+                advSetLog(`🤢 ${adv.enemy.name}散發臭味！無視防禦，${dr.absorbed ? '護盾擋下 1 點' : '雞塊受到 1 點傷害'}`);
                 advData.hp = adv.player.hp;
                 advSave();
                 advUpdateHud();
-                await advHurt(P, 1, false);
+                await advHurt(P, 1, false, advHurtLabel(dr));
                 if (id !== adv.runId) return;
                 if (adv.player.hp <= 0) { await advLose(id); return; }
             }
@@ -5359,12 +5422,12 @@
                 if (id !== adv.runId) return;
                 dmg += luck.bonus;
             }
-            adv.player.hp = Math.max(0, adv.player.hp - dmg);
+            let dr = advTakeDamage(adv.player, dmg);
             advData.hp = adv.player.hp;          // 體力會繼承到之後的戰鬥
             advSave();
-            advSetLog(`${adv.enemy.name}的攻擊！雞塊受到 ${dmg} 點傷害`);
+            advSetLog(`${adv.enemy.name}的攻擊！${dr.absorbed ? `護盾擋下 ${dr.absorbed} 點，` : ''}雞塊受到 ${dr.loss} 點傷害`);
             advUpdateHud();
-            await advHurt(P, dmg, false);
+            await advHurt(P, dmg, false, advHurtLabel(dr));
             if (id !== adv.runId) return;
             if (adv.player.hp <= 0) { await advLose(id); return; }
         }
@@ -5390,18 +5453,33 @@
         advData.cleared[lv.id] = true;
         let gainShards = first ? lv.firstShards : lv.repeatShards;
         let gainSauce = first ? lv.firstSauce : 0;
+        // 幸運的第二個用途：打贏後擲骰，擲到 5/6 碎片 +1（最多 +3）
+        let loot = advRollLuck(adv.player.luck, adv.enemy.luck);
+        gainShards += loot.bonus;
         advData.shards += gainShards;
         advData.sauce += gainSauce;
-        let gotCombo = false;
+        let gotCombo = false, gotMaxHp = 0, gotPotions = 0;
+        if (first && lv.firstMaxHp && advData.up.hp < ADV_UP_MAX) { gotMaxHp = lv.firstMaxHp; advData.up.hp += gotMaxHp; advData.hp += gotMaxHp; }
+        if (first && lv.firstPotions) { gotPotions = lv.firstPotions; advData.potions += gotPotions; }
         if (first && lv.id === 3 && !advData.own.combo) { advData.own.combo = true; advAutoEquip('combo'); gotCombo = true; }
         advSave();
         document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">🎉 打敗了${escapeHTML(lv.name)}！</div>`;
         advAnimate(E, [{ transform: 'scale(1) rotate(0deg)', opacity: 1 }, { transform: 'scale(.15) rotate(540deg)', opacity: 0 }], { duration: 750, fill: 'forwards', easing: 'ease-in' });
         await advAnimate(P, [{ transform: 'translateY(0)' }, { transform: 'translateY(-16px)', offset: 0.3 }, { transform: 'translateY(0)', offset: 0.6 }, { transform: 'translateY(-10px)', offset: 0.8 }, { transform: 'translateY(0)' }], { duration: 800 });
         if (id !== adv.runId && adv.runId !== id) return;
-        let lines = [];
-        if (gainShards > 0) lines.push(`<div class="line">${advShardIcon(16)} 糖醋醬碎片 +${gainShards}（目前 ${advData.shards} 個）</div>`);
+        let lines = [], pop = [];
+        if (gainShards > 0) { lines.push(`<div class="line">${advShardIcon(16)} 糖醋醬碎片 +${gainShards}（目前 ${advData.shards} 個）</div>`); pop.push(`${advShardIcon(22)} 碎片 ×${gainShards}`); }
+        if (loot.rolls.length) {
+            lines.push(`<div class="line" style="color:#7C3AED;font-weight:700;">🎲 幸運骰 ${loot.rolls.join('、')}　${loot.bonus ? `擲出 5/6，碎片多 +${loot.bonus}` : '沒有額外碎片'}</div>`);
+            if (loot.bonus) pop.push(`🎲 幸運加成：碎片 +${loot.bonus}`);
+        }
+        if (gainSauce > 0) pop.push(`${advSauceIcon(22)} 糖醋醬 ×${gainSauce}`);
+        if (gotMaxHp) pop.push(`❤️ 生命上限 +${gotMaxHp}`);
+        if (gotPotions) pop.push(`🧪 恢復藥水 ×${gotPotions}`);
+        if (gotCombo) pop.push(`${advMoveByKey('combo').icon} 學會連續衝撞`);
         if (gainSauce > 0) lines.push(`<div class="line" style="color:${ADV_SAUCE_COLOR};font-weight:800;">${advSauceIcon(16)} ${first ? '首次通關獎勵：' : ''}糖醋醬 +${gainSauce}（目前 ${advData.sauce} 瓶）</div>`);
+        if (gotMaxHp) lines.push(`<div class="line" style="font-weight:800;">❤️ 首次通關獎勵：生命上限 +${gotMaxHp}（現在 ${advMaxHp()}）</div>`);
+        if (gotPotions) lines.push(`<div class="line" style="font-weight:800;">🧪 首次通關獎勵：恢復藥水 ×${gotPotions}（到背包使用）</div>`);
         if (gotCombo) lines.push(`<div class="line" style="font-weight:800;">🎁 學會新招式：${advMoveByKey('combo').icon} 連續衝撞！</div>`);
         let nextLv = ADV_LEVELS.find(l => l.id === lv.id + 1);
         document.getElementById('advPanel').innerHTML = `
@@ -5412,7 +5490,16 @@
             </div>
             ${advData.hp > 0 ? `<button type="button" class="adv-plain-btn main" data-on-click='[["advRetry",[]]]'>再戰一次</button>` : ''}
             ${nextLv ? `<button type="button" class="adv-plain-btn sub" data-on-click='[["advNextLevel",[]]]'>挑戰下一關</button>` : `<button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`}`;
+        advShowReward(pop);
     }
+    // 勝利後跳出的獎勵視窗：簡短列出拿到什麼
+    function advShowReward(items) {
+        let body = document.getElementById('advRewardBody');
+        if (!body || !items.length) return;
+        body.innerHTML = `<div class="adv-reward-title">🎉 獲得獎勵</div>${items.map(t => `<div class="adv-reward-item">${t}</div>`).join('')}`;
+        document.getElementById('advRewardModal').style.display = 'block';
+    }
+    function advCloseReward() { document.getElementById('advRewardModal').style.display = 'none'; }
     function advNextLevel() {
         let id = adv.level ? adv.level.id + 1 : 1;
         advAbort();
@@ -5435,7 +5522,7 @@
     const INLINE_ACTIONS = {
         copyAppUrl,
         playSpeakPracticeSample,
-        toggleAdvCard, advToggleMove, advNextLevel, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
+        toggleAdvCard, advToggleMove, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
         advQuit, advRetry, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advUpgrade, advExchangeShards,
         openMicHelpModal,
         closeMicHelpModal,
