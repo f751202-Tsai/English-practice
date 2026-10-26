@@ -1468,13 +1468,16 @@
         .adv-bad { color: #DC2626; font-weight: 700; }
         .adv-hero { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
         .adv-hero { align-items: flex-start; }
+        .adv-nav-counts { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; justify-self: end; }
+        .adv-nav-counts .adv-count { font-size: 13px; padding: 1px 9px; gap: 4px; }
         .adv-hero-info { margin-left: auto; font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
         .adv-count { display: flex; align-items: center; gap: 6px; font-size: 17px; font-weight: 800; background: #FFF1EE; color: #B8553F; padding: 3px 12px; border-radius: 16px; }
         body.power-saving-mode .adv-count { background: #3A211C; color: #F5ADA3; }
         .adv-maxed { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: #B45309; }
-        .adv-bag-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 4px 0 8px; padding: 10px; border: none; border-radius: 14px; background: linear-gradient(145deg, #8B5CF6, #6D28D9); color: #FFFFFF; font-size: 15px; font-weight: 800; font-family: inherit; cursor: pointer; box-shadow: 0 2px 6px rgba(109,40,217,0.35); }
+        .adv-bag-btn { position: relative; margin-left: auto; align-self: center; display: flex; align-items: center; justify-content: center; width: 64px; height: 56px; padding: 0; border: 1.5px solid #C4B5FD; border-radius: 16px; background: #EDE9FE; cursor: pointer; font-family: inherit; box-shadow: 0 2px 6px rgba(109,40,217,0.25); }
+        body.power-saving-mode .adv-bag-btn { background: #2B2550; border-color: #5B4BC4; }
         .adv-bag-btn:active { transform: scale(0.98); }
-        .adv-bag-n { background: #EF4444; color: #FFFFFF; border-radius: 10px; padding: 0 8px; font-size: 12px; line-height: 20px; }
+        .adv-bag-n { position: absolute; top: -7px; right: -7px; min-width: 20px; text-align: center; box-sizing: border-box; background: #EF4444; color: #FFFFFF; border-radius: 10px; padding: 0 8px; font-size: 12px; line-height: 20px; }
         .adv-bag-title { text-align: center; font-size: 16px; font-weight: 800; color: var(--primary); margin: 6px 0 12px; }
         .adv-bag-item { display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 8px; padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 14px; background: var(--card-bg); color: var(--text-main); font-family: inherit; cursor: pointer; text-align: left; }
         .adv-bag-item:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -1516,6 +1519,17 @@
         .adv-fx { position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
         .adv-fx > * { position: absolute; }
         .adv-panel { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .adv-log.has-timer { position: relative; padding-right: 46px; }
+        .adv-timer { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; }
+        .adv-timer svg { display: block; }
+        .adv-timer b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #475569; }
+        body.power-saving-mode .adv-timer b { color: #E2E8F0; }
+        .adv-reward-title { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 12px; }
+        .adv-reward-item { font-size: 16px; font-weight: 700; padding: 8px 12px; margin-bottom: 6px; border-radius: 12px; background: #F1F5F9; color: var(--text-main); }
+        body.power-saving-mode .adv-reward-item { background: #232733; color: #FFFFFF; }
+        body.power-saving-mode .adv-opt.ok { background: #14532D !important; border-color: #22C55E !important; color: #DCFCE7 !important; box-shadow: 0 0 0 2px #22C55E; }
+        body.power-saving-mode .adv-opt.bad { background: #7F1D1D !important; border-color: #EF4444 !important; color: #FEE2E2 !important; }
+        .adv-opt.ok { box-shadow: 0 0 0 2px #22C55E; }
         .adv-log { font-size: 13.5px; font-weight: 700; text-align: center; background: #EEF2FF; color: var(--primary); border-radius: 10px; padding: 5px 8px; flex: 0 0 auto; line-height: 1.4; }
         body.power-saving-mode .adv-log { background: #232842 !important; color: #C7D2FE !important; }
         .adv-moves { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -1560,9 +1574,9 @@
             .modal-content { width: 95% !important; padding: 16px !important; margin: 2vh auto !important; }
             .modal-inner-padding { padding: 16px 12px !important; }
             .tab-cards-container { gap: 6px; }
-            .tab-card-item { flex-direction: column; justify-content: center; gap: 4px; padding: 8px 4px; min-width: 0; }
-            .history-item-icon-box { width: 30px; height: 30px; margin-right: 0; }
-            .history-item-content { flex: 0 1 auto; width: 100%; }
+            .tab-card-item { flex-direction: row; justify-content: center; align-items: center; gap: 6px; padding: 6px 8px; min-width: 0; }
+            .history-item-icon-box { width: 26px; height: 26px; margin-right: 0; flex: 0 0 auto; }
+            .history-item-content { flex: 0 1 auto; width: auto; }
             .history-item-title { font-size: 13px; text-align: center; }
             #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea, #speakPracticePreviewTextarea { height: clamp(140px, 22vh, 220px) !important; }
             .editor-wrapper { height: clamp(180px, 26vh, 240px) !important; }
@@ -2196,7 +2210,7 @@
                     </svg>
                 </button>
                 <div class="current-mode-indicator">💪 雞塊能力值</div>
-                <span></span>
+                <span id="advNavCounts" class="adv-nav-counts"></span>
             </div>
             <div class="adv-card" id="advStatsBox"></div>
         </div>
@@ -2577,6 +2591,12 @@
     </div>
 </div>
 
+<div id="advRewardModal" class="modal" style="z-index: 12000;">
+    <div class="modal-content" style="max-width: 320px; text-align: center;">
+        <div id="advRewardBody"></div>
+        <button class="action-btn btn-start" style="margin-top: 14px; width: 100%;" data-on-click='[["advCloseReward",[]]]'>太好了</button>
+    </div>
+</div>
 <div id="advBagModal" class="modal">
     <div class="modal-content" style="max-width: 420px;">
         <span class="close-modal" data-on-click='[["advCloseBag",[]]]'>&times;</span>
