@@ -4865,12 +4865,14 @@
         s += `<rect x="40" y="646" width="78" height="20" fill="#CBD5E1"/>`;                               // 自動門（開著）
         s += `<rect x="40" y="646" width="10" height="20" fill="#BAE6FD" stroke="#64748B" stroke-width="1"/><rect x="108" y="646" width="10" height="20" fill="#BAE6FD" stroke="#64748B" stroke-width="1"/>`;
         // 茶葉蛋鍋（門口旁邊）
-        s += `<g><ellipse cx="160" cy="688" rx="24" ry="8" fill="rgba(0,0,0,0.25)"/>
-            <path d="M 136 672 H 184 V 686 Q 184 694 176 694 H 144 Q 136 694 136 686 Z" fill="#7C2D12" stroke="#431407" stroke-width="2"/>
-            <ellipse cx="160" cy="672" rx="24" ry="6" fill="#451A03" stroke="#431407" stroke-width="2"/>
-            <ellipse cx="150" cy="671" rx="5" ry="3.6" fill="#A16207"/><ellipse cx="161" cy="670" rx="5" ry="3.6" fill="#92400E"/><ellipse cx="171" cy="672" rx="5" ry="3.6" fill="#A16207"/>
-            <path d="M 150 662 q -3 -4 0 -8 M 160 660 q -3 -4 0 -8 M 170 662 q -3 -4 0 -8" stroke="#F8FAFC" stroke-width="1.6" fill="none" opacity="0.8"/></g>`;
-        s += tag(190, 676, 44, '茶葉蛋');
+        // 茶葉蛋鍋：店內、一進門的左手邊
+        s += `<g><rect x="6" y="606" width="54" height="36" rx="4" fill="#CBD5E1" stroke="#64748B" stroke-width="1.5"/>
+            <ellipse cx="33" cy="636" rx="22" ry="5" fill="rgba(0,0,0,0.18)"/>
+            <path d="M 12 616 H 54 V 629 Q 54 636 47 636 H 19 Q 12 636 12 629 Z" fill="#7C2D12" stroke="#431407" stroke-width="2"/>
+            <ellipse cx="33" cy="616" rx="21" ry="5.5" fill="#451A03" stroke="#431407" stroke-width="2"/>
+            <ellipse cx="24" cy="615" rx="4.6" ry="3.3" fill="#A16207"/><ellipse cx="34" cy="614" rx="4.6" ry="3.3" fill="#92400E"/><ellipse cx="43" cy="616" rx="4.6" ry="3.3" fill="#A16207"/>
+            <path d="M 24 607 q -3 -4 0 -8 M 34 605 q -3 -4 0 -8 M 43 607 q -3 -4 0 -8" stroke="#94A3B8" stroke-width="1.6" fill="none" opacity="0.9"/></g>`;
+        s += tag(11, 582, 44, '茶葉蛋');
         // ── 第 12 關：熱食櫃（大亨堡）──
         s += `<g><rect x="268" y="556" width="68" height="58" rx="5" fill="#E2E8F0" stroke="#64748B" stroke-width="2"/>
             <rect x="273" y="562" width="58" height="36" rx="3" fill="#FDE68A" opacity="0.6"/>
@@ -5086,19 +5088,20 @@
         let oldGrid = document.getElementById('advMoveGrid'), keepScroll = oldGrid ? oldGrid.scrollTop : 0;
         let shield = advShieldMax(s.int);
         let statsBody = `${rows}
-            <div class="adv-note" style="margin:6px 0 0;">⏱️ 每題作答 ${advAnswerSecs(s.int, 0)} 秒${shield ? `　🛡️ 護盾 ${shield}（每場戰鬥補滿，最多 ${ADV_SHIELD_CAP}）` : '　🛡️ 智慧 2 起有護盾'}</div>
-            <div class="adv-note">打開「背包」可以使用糖醋醬（任何一項能力 +1，每項最多強化 ${ADV_UP_MAX} 次）、恢復藥水、冒險卷和濕紙巾；也可以把道具放進「裝備欄」。<br>碎片請到補給站兌換成糖醋醬、購買藥水。體力每天 00:00 恢復。</div>`;
+            <div class="adv-note" style="margin:6px 0 0;">⏱️ 每題作答 ${advAnswerSecs(s.int, 0)} 秒${shield ? `　🛡️ 護盾 ${shield}（每場戰鬥補滿，最多 ${ADV_SHIELD_CAP}）` : '　🛡️ 智慧 2 起有護盾'}　❤️ 體力每天 00:00 恢復</div>`;
         box.innerHTML = `
             <div class="adv-hero">
                 <div class="adv-avatar">${advChickenSVG()}</div>
                 ${advEquipSlotHTML()}
                 <button type="button" class="adv-bag-btn" data-on-click='[["advOpenBag",[]]]'>${advBagIcon(36)}<span class="adv-bag-n">${advBagCount()}</span></button>
             </div>
-            <div class="adv-tabs" role="tablist">
-                <button type="button" role="tab" class="adv-tab${advStatsTab === 'stats' ? ' on' : ''}" data-on-click='[["advSetStatsTab",["stats"]]]'>基本素質</button>
-                <button type="button" role="tab" class="adv-tab${advStatsTab === 'moves' ? ' on' : ''}" data-on-click='[["advSetStatsTab",["moves"]]]'>招式</button>
-            </div>
-            ${advStatsTab === 'moves' ? advMovesTabHTML() : statsBody}`;
+            <div class="adv-card adv-stats-panel">
+                <div class="adv-tabs" role="tablist">
+                    <button type="button" role="tab" class="adv-tab${advStatsTab === 'stats' ? ' on' : ''}" data-on-click='[["advSetStatsTab",["stats"]]]'>基本素質</button>
+                    <button type="button" role="tab" class="adv-tab${advStatsTab === 'moves' ? ' on' : ''}" data-on-click='[["advSetStatsTab",["moves"]]]'>招式</button>
+                </div>
+                ${advStatsTab === 'moves' ? advMovesTabHTML() : statsBody}
+            </div>`;
         let g = document.getElementById('advMoveGrid');
         if (g) g.scrollTop = keepScroll;
         advFitMoveGrid();
@@ -5115,8 +5118,7 @@
                     ${[['all', '全部'], ['card', '字卡'], ['listen', '聽力'], ['speak', '朗讀']].map(o => `<option value="${o[0]}"${advMoveFilter === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}
                 </select></div>
             <div class="select-card-grid adv-move-grid" id="advMoveGrid">${cards || `<div class="adv-note" style="grid-column:1/-1;margin:4px 0;">還沒有${ADV_TYPE_LABEL[advMoveFilter]}類的招式</div>`}</div>
-            <div class="adv-move-detail" id="advMoveDetail">${advMoveDetailHTML(advMoveFocus)}</div>
-            <div class="adv-note">點招式看詳細資料，再按「裝備這招／卸下這招」（最多 ${ADV_MAX_EQUIP} 招）。<br>邊框顏色：<b style="color:${ADV_RARITY.common.color}">灰＝普通</b>、<b style="color:${ADV_RARITY.rare.color}">深金＝稀有</b>、<b style="color:${ADV_RARITY.legend.color}">亮紫＝傳說</b>。更多招式到「雞塊補給站 → 雞塊大冒險」購買。</div>`;
+            <div class="adv-move-detail" id="advMoveDetail">${advMoveDetailHTML(advMoveFocus)}</div>`;
     }
     function advMoveCardHTML(m, eqKeys) {
         let on = eqKeys.includes(m.key), mi = advMasteryInfo(m.key);
@@ -5151,7 +5153,6 @@
             <div class="adv-md-mastery">
                 <div class="adv-md-mrow"><span>熟練度 <b>${mi.lvl}</b> <small>／ 上限 ${mi.cap}</small></span><span>熟練度${mi.lvl} ${prog}</span></div>
                 <div class="adv-bar adv-md-bar"><i style="width:${pct.toFixed(1)}%;background:${r.color}"></i></div>
-                <small>累積使用 20 次 → 熟練度 1、100 次 → 2、300 次 → 3（${r.label}招式最多 ${mi.cap} 級）。每升 1 級，這招攻擊 +1。</small>
             </div>
             <button type="button" class="adv-md-btn${on ? ' off' : ''}" data-on-click='[["advToggleMove",["${key}"]]]'>${on ? '卸下這招' : '裝備這招'}</button>`;
     }
@@ -5181,7 +5182,7 @@
     // ── 裝備欄：放 1 個道具；沒裝備的道具放在背包 ──
     function advEquipSlotHTML() {
         let it = advData.equip ? ADV_ITEMS[advData.equip] : null;
-        return `<button type="button" class="adv-equip-slot${it ? ' on' : ''}" title="${it ? it.name + '：' + it.desc : '裝備欄（點一下選擇道具）'}" data-on-click='[["advOpenBag",[]]]'>
+        return `<button type="button" class="adv-equip-slot${it ? ' on' : ''}" title="${it ? it.name + '：' + it.desc : '裝備欄（點一下選擇裝備）'}" data-on-click='[["advOpenBag",["gear"]]]'>
             ${it ? it.icon(32) + `<small>${it.name}</small>` : '<span class="adv-equip-plus">＋</span><small>裝備欄</small>'}</button>`;
     }
     function advToggleEquip(key) {
@@ -5215,30 +5216,38 @@
         Object.keys(ADV_ITEMS).forEach(k => {
             if (!advData.items[k]) return;
             let it = ADV_ITEMS[k], on = advData.equip === k;
-            defs.push({ key: k, kind: 'gear', name: it.name, icon: s => it.icon(s), n: 1, on: on, desc: it.desc, act: on ? '從裝備欄卸下' : '放進裝備欄', fn: 'advToggleEquip' });
+            defs.push({ key: k, kind: 'gear', name: it.name, icon: s => it.icon(s), n: 1, on: on, desc: it.desc, act: on ? '卸下' : '裝備', fn: 'advToggleEquip' });
         });
         return defs;
     }
     function advBagCount() { return advData.sauce + advData.potions + advData.tickets + advData.wipes + Object.keys(advData.items).filter(k => advData.items[k]).length; }
+    let advBagGearOnly = false;     // 從「裝備欄」打開：只顯示裝備
     function advSetBagFilter(v) { advBagFilter = ['all', 'gear', 'item'].indexOf(v) !== -1 ? v : 'all'; advBagBack(); }
-    function advOpenBag() { advBagBack(); document.getElementById('advBagModal').style.display = 'block'; }
+    function advOpenBag(mode) {
+        advBagGearOnly = mode === 'gear';
+        advBagFilter = advBagGearOnly ? 'gear' : 'all';
+        advBagBack();
+        document.getElementById('advBagModal').style.display = 'block';
+    }
     function advCloseBag() { document.getElementById('advBagModal').style.display = 'none'; }
     function advBagBack() {
         let body = document.getElementById('advBagBody');
         if (!body) return;
+        if (advBagGearOnly) advBagFilter = 'gear';
         let defs = advBagDefs().filter(d => d.kind === 'gear' || d.n > 0).filter(d => advBagFilter === 'all' || d.kind === advBagFilter);
         let cells = defs.map(d => `<button type="button" class="adv-bag-cell${d.on ? ' is-on' : ''}" data-on-click='[["advBagTap",["${d.key}"]]]'>
-                <span class="adv-bag-cico">${d.icon(34)}</span><b>${d.name}</b><small>${d.kind === 'gear' ? (d.on ? '裝備中' : '道具') : '×' + d.n}</small></button>`);
+                <span class="adv-bag-cico">${d.icon(34)}</span><b>${d.name}</b><small>${d.kind === 'gear' ? (d.on ? '裝備中' : '裝備') : '×' + d.n}</small></button>`);
         let total = Math.max(9, Math.ceil(cells.length / 3) * 3);
         while (cells.length < total) cells.push('<div class="adv-bag-cell empty"></div>');
+        if (!defs.length && advBagGearOnly) cells = [];
         body.innerHTML = `<div class="adv-bag-head">
-                <div class="adv-bag-title">${advBagIcon(22)} 背包</div>
-                <select class="adv-bag-filter" aria-label="篩選背包" data-on-change='[["advSetBagFilter",["$value"]]]'>
-                    ${[['all', '全部'], ['gear', '道具'], ['item', '物品']].map(o => `<option value="${o[0]}"${advBagFilter === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}
-                </select>
+                <div class="adv-bag-title">${advBagGearOnly ? `${advSkewerIcon(20)} 裝備欄` : `${advBagIcon(22)} 背包`}</div>
+                ${advBagGearOnly ? '' : `<select class="adv-bag-filter" aria-label="篩選背包" data-on-change='[["advSetBagFilter",["$value"]]]'>
+                    ${[['all', '全部'], ['gear', '裝備'], ['item', '道具']].map(o => `<option value="${o[0]}"${advBagFilter === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}
+                </select>`}
             </div>
             <div class="adv-bag-grid">${cells.join('')}</div>
-            <div class="adv-note" style="margin-top:10px;">道具：可以放進裝備欄（同時只能裝 1 個）。物品：用掉就沒了。<br>糖醋醬、藥水、濕紙巾可以到「雞塊補給站 → 雞塊大冒險」用碎片購買。</div>`;
+            <div class="adv-note" style="margin-top:10px;">${advBagGearOnly ? (defs.length ? '點一下裝備，同時只能裝 1 個。' : '還沒有裝備（打贏第 4、5、12 關可以拿到）。') : '裝備：放進裝備欄（同時只能裝 1 個）。道具：用掉就沒了。'}</div>`;
     }
     function advBagTap(key) {
         let d = advBagDefs().find(x => x.key === key);
@@ -5247,10 +5256,10 @@
         body.innerHTML = `<div class="adv-bag-title">${d.name}</div>
             <div class="adv-bag-detail">
                 <div class="adv-bag-dico">${d.icon(56)}</div>
-                <div class="adv-bag-dtxt"><div class="adv-bag-dkind">${d.kind === 'gear' ? (d.on ? '🎒 道具（裝備中）' : '🎒 道具') : `📦 物品　持有 ×${d.n}`}</div><p>${d.desc}</p></div>
+                <div class="adv-bag-dtxt"><div class="adv-bag-dkind">${d.kind === 'gear' ? (d.on ? '🛡️ 裝備（裝備中）' : '🛡️ 裝備') : `📦 道具　持有 ×${d.n}`}</div><p>${d.desc}</p></div>
             </div>
-            <button type="button" class="adv-plain-btn main" ${d.kind === 'item' && d.n < 1 ? 'disabled' : ''} data-on-click='[["${d.fn}",["${d.key}"]]]'>${d.act}</button>
-            <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagBack",[]]]'>返回背包</button>`;
+            <button type="button" class="adv-plain-btn ${d.kind === 'gear' && d.on ? 'danger' : 'main'}" ${d.kind === 'item' && d.n < 1 ? 'disabled' : ''} data-on-click='[["${d.fn}",["${d.key}"]]]'>${d.act}</button>
+            <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagBack",[]]]'>返回</button>`;
     }
     // 冒險卷：今天的重複挑戰次數 +1
     function advBagUseTicket() {
@@ -5278,7 +5287,7 @@
                 <span class="adv-bag-txt"><b>${d.label}</b><small>目前 ${s[d.key]}（已強化 ${advData.up[d.key]} 次）</small></span><span class="adv-bag-count">${can ? '選這項' : '—'}</span></button>`;
         }).join('');
         body.innerHTML = `<div class="adv-bag-title">${advWipeIcon(24)} 要從哪一項拿出 1 點？</div>${rows}
-            <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagBack",[]]]'>返回背包</button>`;
+            <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagBack",[]]]'>返回</button>`;
     }
     function advWipeFrom(from) {
         let body = document.getElementById('advBagBody');
@@ -5316,7 +5325,7 @@
                 <span class="adv-bag-txt"><b>${d.label}</b><small>${s[d.key]} → ${s[d.key] + 1}</small></span><span class="adv-bag-count">${maxed ? '已滿' : '+1'}</span></button>`;
         }).join('');
         body.innerHTML = `<div class="adv-bag-title">${advSauceIcon(24)} 要強化哪一項？</div>${rows}
-            <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagBack",[]]]'>返回背包</button>`;
+            <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagBack",[]]]'>返回</button>`;
     }
     function advBagUseSauce(key) {
         if (advData.sauce < 1) return;
@@ -5421,12 +5430,15 @@
         let p2 = document.getElementById('shopPane2');
         if (p2) p2.innerHTML = c3.join('');
     }
+    // 補給站右上角的碎片數字旁，跳出「-15」之類的紅色數字（跟雞塊一樣）
+    function advShardFloat(n) { if (n) showChickenFloat('advShopShardCount', (n > 0 ? '+' : '-') + Math.abs(n), n > 0 ? '#10B981' : '#EF4444'); }
     function advExchangeShards() {
         if (advData.shards < ADV_SHARDS_PER_SAUCE) { alert(`碎片不足！需要 ${ADV_SHARDS_PER_SAUCE} 個，目前有 ${advData.shards} 個。`); return; }
         advData.shards -= ADV_SHARDS_PER_SAUCE;
         advData.sauce += 1;
         advSave();
         advRenderShopBox();
+        advShardFloat(-ADV_SHARDS_PER_SAUCE);
     }
     function advBuyPotion() {
         if (advData.shards < ADV_POTION_COST) { alert(`碎片不足！需要 ${ADV_POTION_COST} 個，目前有 ${advData.shards} 個。`); return; }
@@ -5434,6 +5446,7 @@
         advData.potions += 1;
         advSave();
         advRenderShopBox();
+        advShardFloat(-ADV_POTION_COST);
     }
     function advBuyWipe() {
         if (advData.shards < ADV_WIPE_COST) { alert(`碎片不足！需要 ${ADV_WIPE_COST} 個，目前有 ${advData.shards} 個。`); return; }
@@ -5441,6 +5454,7 @@
         advData.wipes += 1;
         advSave();
         advRenderShopBox();
+        advShardFloat(-ADV_WIPE_COST);
     }
     function advBuyMove(key) {
         let m = advMoveByKey(key);
@@ -5454,6 +5468,7 @@
         advAutoEquip(key);
         advSave();
         advRenderShopBox();
+        advShardFloat(-m.buy.price);
     }
     // 新學會的招式：如果還有空位就自動裝備
     function advAutoEquip(key) {
@@ -5479,6 +5494,8 @@
             advData.shards -= ADV_WEEKLY_SHARDS;
             advData.weekDone = week;
             advSave();
+            let sc = document.getElementById('advShopShardCount'); if (sc) sc.textContent = advData.shards;
+            advShardFloat(-ADV_WEEKLY_SHARDS);
             applyWallet(data, getLocalDateStr());
             showChickenFloat('chickenShopCountDisplay', '+' + ADV_WEEKLY_CHICKENS, '#10B981');
             updateChickenShopUI();
@@ -5507,10 +5524,34 @@
         for (let i = a.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
         return a;
     }
+    function advWordKey(w) { return String(w.english || '').toLowerCase(); }
     function advNextWord(kind) {
-        let pool = kind === 'cn' ? adv.cnWords : adv.words;
-        if (!adv.decks[kind].length) adv.decks[kind] = advShuffle(pool.slice());
-        return adv.decks[kind].pop();
+        let filt = kind === 'cn' ? (w => !!w.chinese) : (() => true);
+        let pool = adv.words.filter(filt);
+        if (!adv.seen) adv.seen = new Set();
+        let fresh = pool.filter(w => !adv.seen.has(advWordKey(w)));
+        if (!fresh.length) {                       // 全部出現過一輪了：重新開始一輪
+            pool.forEach(w => adv.seen.delete(advWordKey(w)));
+            fresh = pool.slice();
+        }
+        let w = fresh[Math.floor(Math.random() * fresh.length)];
+        adv.seen.add(advWordKey(w));
+        return w;
+    }
+    // 選項（干擾答案）：先從這場還沒出現過的單字挑，不夠才用出現過的；值不能重複、不能等於正確答案
+    function advPickDistractors(answer, n, filt, valueOf) {
+        let ans = valueOf(answer), vals = new Set([ans]), out = [];
+        let pool = adv.words.filter(x => x !== answer && filt(x));
+        let fresh = advShuffle(pool.filter(x => !adv.seen.has(advWordKey(x))));
+        let used = advShuffle(pool.filter(x => adv.seen.has(advWordKey(x))));
+        for (let x of fresh.concat(used)) {
+            if (out.length >= n) break;
+            let v = valueOf(x);
+            if (!v || vals.has(v)) continue;
+            vals.add(v); out.push(x);
+        }
+        out.forEach(x => adv.seen.add(advWordKey(x)));
+        return out;
     }
     function advSetLog(text) {
         let el = document.getElementById('advLog');
@@ -5680,6 +5721,7 @@
         adv.words = words;
         adv.cnWords = words.filter(w => w.chinese);
         adv.decks = { all: [], cn: [] };
+        adv.seen = new Set();          // 這場戰鬥已經出現過的單字
         let s = advPlayerStats();
         adv.level = lv;
         adv.moves = advEquipped();
@@ -5881,7 +5923,7 @@
     // 字卡（選擇題）
     function advAskCard() {
         let w = advNextWord('cn');
-        let wrong = advShuffle(adv.cnWords.filter(x => x.chinese !== w.chinese)).slice(0, 3).map(x => x.chinese);
+        let wrong = advPickDistractors(w, 3, x => !!x.chinese, x => x.chinese).map(x => x.chinese);
         let opts = advShuffle([w.chinese, ...wrong]);
         adv.q = { type: 'card', word: w, opts, correct: opts.indexOf(w.chinese), done: false };
         let m = adv.move;
@@ -5950,8 +5992,7 @@
     function advNorm(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC').toLowerCase().replace(/[\s'’\-.,!?]/g, ''); }
     function advAskListenChoice() {
         let w = advNextWord('all');
-        let seen = new Set([advNorm(w.english)]), wrong = [];
-        advShuffle(adv.words.slice()).forEach(x => { let k = advNorm(x.english); if (wrong.length < 3 && k && !seen.has(k)) { seen.add(k); wrong.push(x.english); } });
+        let wrong = advPickDistractors(w, 3, x => !!advNorm(x.english), x => advNorm(x.english)).map(x => x.english);
         let opts = advShuffle([w.english, ...wrong]);
         adv.q = { type: 'listenChoice', word: w, opts, correct: opts.indexOf(w.english), done: false };
         let m = adv.move;
@@ -6254,9 +6295,32 @@
 
     // 幸運擲幣：硬幣飄在攻擊者上方，每個「正面」傷害 +1（最多 +3）
     async function advShowCoins(actorEl, luck, who) {
+        advSetLog(`🪙 ${who || ''}幸運擲幣中…`);
+        let fx = document.getElementById('advFx');
+        let row = null;
+        if (fx && actorEl) {
+            let c = advActorCenter(actorEl);
+            row = document.createElement('div');
+            row.className = 'adv-coin-row';
+            row.style.left = c.x + 'px';
+            row.style.top = Math.max(4, actorEl.offsetTop - 30) + 'px';
+            row.innerHTML = luck.flips.map(f => `<div class="adv-coin"><div class="adv-coin-in${f ? ' heads' : ' tails'}"><span class="adv-coin-f">正</span><span class="adv-coin-b">反</span></div></div>`).join('');
+            fx.appendChild(row);
+            // 先往上拋、一邊翻轉，最後停在正面或反面
+            row.querySelectorAll('.adv-coin').forEach((coin, i) => {
+                advAnimate(coin, [{ transform: 'translateY(16px)', opacity: 0 }, { transform: 'translateY(-26px)', opacity: 1, offset: 0.45 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 760, delay: i * 90, easing: 'ease-out', fill: 'both' });
+                let inner = coin.firstChild, heads = inner.classList.contains('heads');
+                advAnimate(inner, [{ transform: 'rotateY(0deg)' }, { transform: `rotateY(${heads ? 1440 : 1620}deg)` }], { duration: 760, delay: i * 90, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' });
+            });
+            await advWait(780 + luck.flips.length * 90);
+            row.querySelectorAll('.adv-coin-in').forEach(el => el.classList.add('done'));
+        } else {
+            await advWait(600);
+        }
         advSetLog(`🪙 ${who || ''}幸運擲幣：${advCoinText(luck.flips)}${luck.bonus ? `　正面 ${luck.bonus} 次！傷害 +${luck.bonus}` : '　沒有正面'}`);
-        advFloat(actorEl, '🪙' + luck.flips.map(f => f ? '正' : '反').join(''), luck.bonus ? '#B45309' : '#64748B');
-        await advWait(1000);
+        await advWait(550);
+        if (row) await advAnimate(row, [{ opacity: 1 }, { opacity: 0 }], { duration: 220 }).then(() => row.remove());
+        if (luck.bonus) { advFloat(actorEl, `+${luck.bonus}`, '#B45309'); await advWait(250); }
     }
 
     async function advResolveMove(ok) {
@@ -6446,7 +6510,7 @@
         }
         if (gotTicket) { pop.push(`${advTicketIcon(22)} 冒險卷 ×1`); lines.push(`<div class="line" style="font-weight:800;">${advTicketIcon(16)} 掉落冒險卷 ×1（到背包使用：今天重複挑戰次數 +1）</div>`); }
         if (clawBonus) pop.push(`🧸 送你娃娃！糖醋醬碎片 +1`);
-        if (gotItem) pop.push(`${ADV_ITEMS[gotItem].icon(22)} 獲得道具：${ADV_ITEMS[gotItem].name}`);
+        if (gotItem) pop.push(`${ADV_ITEMS[gotItem].icon(22)} 獲得裝備：${ADV_ITEMS[gotItem].name}`);
         if (gainSauce > 0) pop.push(`${advSauceIcon(22)} 糖醋醬 ×${gainSauce}`);
         if (gotMaxHp) pop.push(`❤️ 生命上限 +${gotMaxHp}`);
         if (gotPotions) pop.push(`🧪 恢復藥水 ×${gotPotions}`);
