@@ -1336,6 +1336,22 @@
         #editorDetailTitleIndicator { max-width: 52%; overflow: hidden; text-overflow: ellipsis; }
         .editor-word-counter { flex-shrink: 0; margin-left: auto; font-size: 13.5px; font-weight: 700; color: var(--text-muted); background: #F1F5F9; border-radius: 12px; padding: 5px 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
         .editor-word-counter:empty { display: none; }
+        .pack-tag { display: inline-block; font-size: 11px; font-weight: 800; color: #92400E; background: #FEF3C7; border-radius: 8px; padding: 1px 7px; vertical-align: 1px; }
+        body.power-saving-mode .pack-tag { background: #3B2F12; color: #FCD34D; }
+        .dropdown-note { font-size: 11.5px; color: var(--text-muted); padding: 6px 12px 8px; max-width: 180px; line-height: 1.4; }
+        .word-format-btn { position: absolute; right: 0; top: calc(100% + 4px); width: 30px; height: 26px; padding: 0; border: 1.5px solid #C7D2FE; border-radius: 8px; background: #EEF2FF; color: var(--primary); font-size: 14px; font-weight: 900; font-family: inherit; cursor: pointer; line-height: 1; }
+        .word-format-btn:active { transform: scale(0.95); }
+        body.power-saving-mode .word-format-btn { background: #23264A; border-color: #3B3F63; color: #A5B4FC; }
+        .word-format-list { display: flex; flex-direction: column; gap: 8px; }
+        .word-format-list div { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 10px; background: #F8FAFC; }
+        .word-format-list code { font-size: 15px; font-weight: 700; color: var(--text-main); font-family: inherit; }
+        .word-format-list small { font-size: 12px; color: var(--text-muted); }
+        body.power-saving-mode .word-format-list div { background: #1B1E27; border-color: #2B303C; }
+        body.power-saving-mode .word-format-list code { color: #FFFFFF; }
+        .chi-input-row { display: flex; gap: 8px; }
+        .chi-input-row input { flex: 1; min-width: 0; }
+        .chi-input-tip { font-size: 12px; color: #B45309; font-weight: 700; margin-top: 4px; }
+        .chi-input-tip:empty { display: none; }
         .editor-word-counter.is-near { color: #B45309; background: #FEF3C7; }
         .editor-word-counter.is-full { color: #B91C1C; background: #FEE2E2; }
         body.power-saving-mode .editor-word-counter { background: #2B303C; color: #CBD5E1; }
@@ -1405,8 +1421,8 @@
         .adv-card { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; margin-bottom: 12px; }
         body.power-saving-mode .adv-card { background: #1B1E27 !important; border-color: #2B303C !important; color: #E2E8F0; }
         .adv-stats { display: flex; align-items: center; gap: 10px; }
-        .adv-avatar { width: 72px; flex: 0 0 72px; padding: 6px 4px 4px; border-radius: 18px; background: linear-gradient(145deg, #8B5CF6, #6D28D9); box-shadow: 0 2px 6px rgba(109,40,217,0.35); box-sizing: border-box; }
-        .adv-avatar svg { width: 100%; height: auto; display: block; }
+        .adv-avatar { width: 72px; height: 72px; flex: 0 0 72px; padding: 6px; border-radius: 16px; background: linear-gradient(145deg, #8B5CF6, #6D28D9); box-shadow: 0 2px 6px rgba(109,40,217,0.35); box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+        .adv-avatar svg { width: 100%; height: 100%; display: block; }
         .adv-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; flex: 1; text-align: center; }
         .adv-stat-grid div { background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 10px; padding: 4px 0; font-size: 12px; color: var(--text-muted); }
         .adv-stat-grid b { display: block; font-size: 16px; color: var(--text-main); }
@@ -1438,10 +1454,74 @@
         .adv-item-btn small { font-size: 11px; font-weight: 600; color: var(--text-muted); }
         .adv-item-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .adv-item-tip { font-size: 12px; color: var(--text-muted); text-align: center; }
+        .adv-move.sealed { filter: grayscale(1); opacity: 0.45 !important; }
         body.power-saving-mode .adv-item-btn { background: #0F2A22; color: #A7F3D0; }
         .adv-sec-title span { font-size: 12px; font-weight: 700; color: var(--text-muted); }
         body.power-saving-mode .adv-sec-title { color: #FFFFFF; }
-        .adv-move-grid { margin-top: 0; max-height: none; overflow: visible; }
+        .adv-move-grid { margin-top: 0; margin-bottom: 10px; position: relative; overflow-y: auto; max-height: 300px; }
+        /* 招式稀有度：整個 App 的招式欄位邊框（灰＝普通、深金＝稀有、亮紫＝傳說） */
+        .rar-common { border-color: #94A3B8 !important; }
+        .rar-rare { border-color: #B8860B !important; }
+        .rar-legend { border-color: #C026D3 !important; }
+        .select-card.adv-move-card { border-width: 2px; }
+        .select-card.adv-move-card.selected { box-shadow: none; background: #EEF2FF; }
+        .select-card.adv-move-card.focus { box-shadow: 0 0 0 3px rgba(99,102,241,0.35); }
+        .shop-item.rar-common, .shop-item.rar-rare, .shop-item.rar-legend { border-width: 2px; }
+        .adv-move.rar-common, .adv-move.rar-rare, .adv-move.rar-legend { border-width: 2px; border-style: solid; }
+        .adv-lv-chip { display: inline-block; font-size: 10px; font-weight: 800; color: #FFFFFF; background: #6366F1; border-radius: 6px; padding: 0 5px; vertical-align: 1px; }
+        .adv-tabs { display: flex; gap: 12px; margin: -2px 0 12px; }
+        .adv-tab { width: 72px; flex: 0 0 72px; padding: 5px 0; border: 1.5px solid var(--border-color); border-radius: 10px; background: #FFFFFF; color: var(--text-muted); font-size: 12.5px; font-weight: 800; font-family: inherit; cursor: pointer; }
+        .adv-tab.on { background: var(--primary); border-color: var(--primary); color: #FFFFFF; box-shadow: 0 2px 6px rgba(79,70,229,0.3); }
+        body.power-saving-mode .adv-tab { background: #232733; border-color: #2B303C; color: #94A3B8; }
+        body.power-saving-mode .adv-tab.on { background: var(--primary); border-color: var(--primary); color: #FFFFFF; }
+        .adv-move-detail { border: 1.5px solid var(--border-color); border-radius: 14px; padding: 12px; background: #FFFFFF; }
+        body.power-saving-mode .adv-move-detail { background: #232733; border-color: #2B303C; color: #E2E8F0; }
+        .adv-md-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .adv-md-head b { font-size: 16px; color: var(--text-main); }
+        body.power-saving-mode .adv-md-head b { color: #FFFFFF; }
+        .adv-md-icon { font-size: 20px; line-height: 1; }
+        .adv-rar-badge { font-size: 11.5px; font-weight: 800; border: 2px solid; border-radius: 8px; padding: 0 7px; line-height: 18px; }
+        .adv-rar-badge.rar-common { color: #64748B; background: #F1F5F9; }
+        .adv-rar-badge.rar-rare { color: #8B6508; background: #FEF3C7; }
+        .adv-rar-badge.rar-legend { color: #A21CAF; background: #FAE8FF; }
+        .adv-md-eq { font-size: 11.5px; font-weight: 800; color: #FFFFFF; background: var(--primary); border-radius: 8px; padding: 1px 7px; margin-left: auto; }
+        .adv-md-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0 8px; }
+        .adv-md-stats div { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 10px; padding: 4px 0; text-align: center; font-size: 11.5px; color: var(--text-muted); }
+        .adv-md-stats b { display: block; font-size: 15px; color: var(--text-main); }
+        .adv-md-stats em { font-style: normal; font-size: 12px; color: #16A34A; margin-left: 2px; }
+        body.power-saving-mode .adv-md-stats div { background: #1B1E27; border-color: #2B303C; }
+        body.power-saving-mode .adv-md-stats b { color: #FFFFFF; }
+        .adv-md-desc { font-size: 13px; color: var(--text-main); margin-bottom: 8px; }
+        body.power-saving-mode .adv-md-desc { color: #E2E8F0; }
+        .adv-md-mrow { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+        body.power-saving-mode .adv-md-mrow { color: #FFFFFF; }
+        .adv-md-mrow b { font-size: 16px; color: var(--primary); }
+        .adv-md-mrow small { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+        .adv-md-bar { height: 10px; margin-bottom: 4px; }
+        .adv-md-mastery > small { display: block; font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+        .adv-md-btn { display: block; width: 100%; margin-top: 10px; padding: 10px; border: none; border-radius: 12px; background: var(--primary); color: #FFFFFF; font-size: 14.5px; font-weight: 800; font-family: inherit; cursor: pointer; }
+        .adv-md-btn.off { background: #E2E8F0; color: #334155; }
+        body.power-saving-mode .adv-md-btn.off { background: #2B303C; color: #E2E8F0; }
+        .adv-bag-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 26px 12px 0; }
+        .adv-bag-head .adv-bag-title { margin: 0; }
+        select.adv-bag-filter { width: auto !important; padding: 4px 26px 4px 10px; font-size: 13px; font-weight: 700; border-radius: 10px; }
+        .adv-bag-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .adv-bag-cell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 96px; padding: 8px 4px; border: 1.5px solid var(--border-color); border-radius: 14px; background: #F8FAFC; color: var(--text-main); font-family: inherit; cursor: pointer; box-sizing: border-box; }
+        .adv-bag-cell b { font-size: 12.5px; line-height: 1.2; text-align: center; }
+        .adv-bag-cell small { font-size: 11.5px; color: var(--primary); font-weight: 800; }
+        .adv-bag-cell.is-on { border-color: #8B5CF6; background: #F5F3FF; box-shadow: 0 0 0 1px #8B5CF6; }
+        .adv-bag-cell.empty { border-style: dashed; background: transparent; opacity: 0.55; cursor: default; }
+        .adv-bag-cell:not(.empty):active { transform: scale(0.97); }
+        .adv-bag-cico { height: 38px; display: flex; align-items: center; justify-content: center; }
+        body.power-saving-mode .adv-bag-cell { background: #1B1E27; border-color: #2B303C; color: #FFFFFF; }
+        body.power-saving-mode .adv-bag-cell.is-on { background: #2B2550; border-color: #8B5CF6; }
+        body.power-saving-mode .adv-bag-cell.empty { background: transparent; }
+        .adv-bag-detail { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1.5px solid var(--border-color); border-radius: 14px; margin-bottom: 12px; }
+        .adv-bag-dico { width: 64px; flex: 0 0 64px; display: flex; align-items: center; justify-content: center; }
+        .adv-bag-dkind { font-size: 12.5px; font-weight: 800; color: var(--text-muted); }
+        .adv-bag-dtxt p { margin: 4px 0 0; font-size: 14px; color: var(--text-main); line-height: 1.5; }
+        body.power-saving-mode .adv-bag-dtxt p { color: #E2E8F0; }
+        .adv-plain-btn:disabled { opacity: 0.45; cursor: not-allowed; }
         .adv-more-closed .adv-extra { display: none; }
         .adv-more-btn { display: block; width: 100%; margin: 8px 0 4px; padding: 9px 12px; border: 1.5px dashed #C7D2FE; border-radius: 12px; background: #F8FAFF; color: var(--primary); font-size: 14px; font-weight: 800; font-family: inherit; cursor: pointer; }
         body.power-saving-mode .adv-more-btn { background: #1B1E27; border-color: #3B3F63; color: #A5B4FC; }
@@ -1472,7 +1552,12 @@
         .adv-nav .current-mode-indicator { position: static !important; transform: none !important; max-width: none !important; white-space: nowrap; }
         .adv-nav > :first-child { justify-self: start; }
         .adv-nav > :last-child { justify-self: end; }
-        .adv-map-title { text-align: center; font-size: 17px; font-weight: 800; margin: 2px 0 10px; color: var(--text-main); }
+        .adv-map-title { text-align: center; font-size: 17px; font-weight: 800; margin: 2px 0 2px; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 18px; }
+        .adv-map-arrow { width: 40px; height: 34px; padding: 0; border: none; background: transparent; color: #0EA5E9; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+        .adv-map-arrow:not(:disabled):hover { background: rgba(14,165,233,0.1); }
+        .adv-map-arrow:disabled { color: #CBD5E1; cursor: default; }
+        body.power-saving-mode .adv-map-arrow:disabled { color: #3B3F4C; }
+        .adv-map-sub { text-align: center; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; }
         body.power-saving-mode .adv-map-title { color: #FFFFFF !important; }
         .adv-map { position: relative; width: 100%; aspect-ratio: 340 / 700; border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); background: #1E1B4B; }
         .adv-map-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -1533,7 +1618,7 @@
         .adv-hpbar { height: 7px; border-radius: 5px; background: #E2E8F0; overflow: hidden; margin-top: 2px; }
         .adv-hpfill { height: 100%; width: 100%; background: linear-gradient(90deg, #34D399, #10B981); transition: width 0.35s; }
         .adv-hpfill.low { background: linear-gradient(90deg, #FB7185, #F43F5E); }
-        .adv-float { position: absolute; z-index: 6; font-weight: 900; font-size: 24px; color: #EF4444; text-shadow: 0 2px 0 #FFFFFF, 0 0 6px #FFFFFF; pointer-events: none; transform: translateX(-50%); }
+        .adv-float { position: absolute; z-index: 6; white-space: nowrap; font-weight: 900; font-size: 24px; color: #EF4444; text-shadow: 0 2px 0 #FFFFFF, 0 0 6px #FFFFFF; pointer-events: none; transform: translateX(-50%); }
         .adv-fx { position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
         .adv-fx > * { position: absolute; }
         .adv-panel { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
@@ -2066,7 +2151,12 @@
                 <div id="cardExamTimer">作答剩餘時間：<span id="cardExamTimeLeft">17</span> 秒</div>
             </div>
             
-            <input type="text" id="cardExamInputChi" placeholder="輸入中文..." autocomplete="off" data-on-keydown='[["handleCardExamKeyDown",["$event"]]]' style="padding: 8px 12px;">
+            <div class="chi-input-row">
+                <input type="text" id="cardExamInputChi" placeholder="輸入中文..." autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",0]]]' style="padding: 8px 12px;">
+                <input type="text" id="cardExamInputChi2" placeholder="意思 2" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",1]]]' style="padding: 8px 12px; display: none;">
+                <input type="text" id="cardExamInputChi3" placeholder="意思 3" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",2]]]' style="padding: 8px 12px; display: none;">
+            </div>
+            <div class="chi-input-tip" id="cardExamInputChiTip"></div>
 
             <label style="margin-top: 6px; margin-bottom: 4px;" id="cardExamPosLabel">詞性選擇（此單字無詞性，略過）：</label>
             <div class="pos-checkbox-group" id="cardExamPosCheckboxGroup" style="padding: 6px 12px;">
@@ -2077,6 +2167,8 @@
                 <label><input type="checkbox" value="連接詞" class="card-exam-pos-chk"> 連接詞</label>
                 <label><input type="checkbox" value="介係詞" class="card-exam-pos-chk"> 介係詞</label>
                 <label><input type="checkbox" value="片語" class="card-exam-pos-chk"> 片語</label>
+                <label><input type="checkbox" value="代名詞" class="card-exam-pos-chk"> 代名詞</label>
+                <label><input type="checkbox" value="感嘆詞" class="card-exam-pos-chk"> 感嘆詞</label>
             </div>
 
             <button class="action-btn-primary" id="cardExamSubmitBtn" data-on-click='[["submitCardExamAnswer",[]]]' style="margin-top: 10px; padding: 11px;">
@@ -2189,14 +2281,19 @@
                 <div class="current-mode-indicator">🏰 雞塊大冒險</div>
                 <span></span>
             </div>
-            <div class="adv-map-title">關卡選擇</div>
+            <div class="adv-map-title">
+                <button type="button" class="adv-map-arrow" id="advMapPrev" aria-label="上一張地圖" data-on-click='[["advMapStep",[-1]]]'><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M17 3 L5 12 L17 21 Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg></button>
+                <span>關卡選擇</span>
+                <button type="button" class="adv-map-arrow" id="advMapNext" aria-label="下一張地圖" data-on-click='[["advMapStep",[1]]]'><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M7 3 L19 12 L7 21 Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg></button>
+            </div>
+            <div class="adv-map-sub" id="advMapSub"></div>
             <div class="adv-map" id="advMap"></div>
         </div>
 
         <!-- ================= 🏰 雞塊大冒險 第 2 頁：關卡內容 ================= -->
         <div id="advLevelView" class="app-view">
             <div class="top-nav-bar adv-nav">
-                <button class="back-home-btn" data-on-click='[["goToAdventurePage",[]]]' title="回關卡地圖">
+                <button class="back-home-btn" data-on-click='[["goToAdventurePage",[true]]]' title="回關卡地圖">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
@@ -2374,7 +2471,12 @@
                 <input type="text" id="examInputEng" placeholder="輸入英文..." data-p-en="輸入英文..." data-p-ko="輸入韓文..." autocomplete="off" data-on-keydown='[["handleInputKeyDown",["$event","eng"]]]' disabled>
                 
                 <label style="margin-top: 10px;">請輸入中文意思：</label>
-                <input type="text" id="examInputChi" placeholder="輸入中文..." autocomplete="off" data-on-keydown='[["handleInputKeyDown",["$event","chi"]]]' disabled>
+                <div class="chi-input-row">
+                    <input type="text" id="examInputChi" placeholder="輸入中文..." autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",0]]]' disabled>
+                    <input type="text" id="examInputChi2" placeholder="意思 2" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",1]]]' style="display: none;" disabled>
+                    <input type="text" id="examInputChi3" placeholder="意思 3" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",2]]]' style="display: none;" disabled>
+                </div>
+                <div class="chi-input-tip" id="examInputChiTip"></div>
 
                 <button id="examSubmitBtn" class="action-btn btn-start" style="margin-top: 20px; width: 100%;" data-on-click='[["submitExamAnswer",[]]]' disabled>送出答案 (Enter)</button>
                 <button class="action-btn btn-stop" style="margin-top: 10px; width: 100%;" data-on-click='[["finishExam",[]]]'>⏹ 結束並停止考試</button>
@@ -2418,6 +2520,7 @@
                 </button>
                 <div class="current-mode-indicator" id="editorDetailTitleIndicator">📁 unit 1-1 編輯</div>
                                 <div id="editorWordCounter" class="editor-word-counter"></div>
+                <button type="button" class="word-format-btn" title="單字格式說明" aria-label="單字格式說明" data-on-click='[["openWordFormatModal",[]]]'>F</button>
             </div>
 
             <div class="editor-top-section">
@@ -2519,7 +2622,13 @@
                 <div class="shop-sub" id="shopSub_list_slot_1">目前上限 10 本</div>
                 <div class="shop-price" id="shopPrice_list_slot_1"><span class="chicken-mini"></span><b>60</b></div>
             </button>
-            <div class="shop-cell shop-empty"></div>
+            <button type="button" id="shopItem_pack_toeic_job" class="shop-cell shop-item" data-on-click='[["buyShopItem",["pack_toeic_job"]]]'>
+                <div class="shop-emoji"><svg viewBox="0 0 48 48" width="46" height="46" aria-hidden="true"><path d="M8 7 Q8 4 11 4 H38 Q40 4 40 6 V40 Q40 42 38 42 H11 Q8 42 8 39 Z" fill="#2563EB" stroke="#1E3A8A" stroke-width="2"/><path d="M8 37 Q8 34 11 34 H40" fill="none" stroke="#1E3A8A" stroke-width="2"/><path d="M11 36 H39 V40 H11 Q9.5 40 9.5 38 Q9.5 36 11 36 Z" fill="#F8FAFC"/><rect x="16" y="15" width="18" height="12" rx="2.2" fill="#FBBF24" stroke="#92400E" stroke-width="1.6"/><path d="M21 15 V12.5 Q21 11 22.5 11 H27.5 Q29 11 29 12.5 V15" fill="none" stroke="#92400E" stroke-width="1.6"/><path d="M16 20.5 H34" stroke="#92400E" stroke-width="1.4"/><text x="25" y="10" font-size="0">pack</text></svg></div>
+                <div class="shop-name">多益-職場</div>
+                <div class="shop-sub" id="shopSub_pack_toeic_job">300 個職場單字</div>
+                <div class="shop-price" id="shopPrice_pack_toeic_job"><span class="chicken-mini"></span><b>700</b></div>
+            </button>
+            <div class="shop-cell shop-empty" id="shopPackFiller" style="display:none;"></div>
             <div class="shop-cell shop-empty"></div>
             <div class="shop-cell shop-empty"></div>
             <div class="shop-cell shop-empty"></div>
@@ -2614,6 +2723,20 @@
     <div class="modal-content" style="max-width: 320px; text-align: center;">
         <div id="advRewardBody"></div>
         <button class="action-btn btn-start" style="margin-top: 14px; width: 100%;" data-on-click='[["advCloseReward",[]]]'>太好了</button>
+    </div>
+</div>
+<div id="wordFormatModal" class="modal">
+    <div class="modal-content" style="max-width: 440px;">
+        <span class="close-modal" data-on-click='[["closeWordFormatModal",[]]]'>&times;</span>
+        <div style="font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 10px;">📝 單字格式範例</div>
+        <div class="word-format-list">
+            <div><code>apple 蘋果 名詞</code><small>1 個意思、1 個詞性</small></div>
+            <div><code>mature 成熟 動詞 形容詞</code><small>1 個意思、2 個詞性</small></div>
+            <div><code>Perform 執行 表現 動詞</code><small>2 個意思、1 個詞性</small></div>
+            <div><code>Star 星星 名詞 出演 動詞</code><small>2 組「意思＋詞性」</small></div>
+        </div>
+        <div class="adv-note" style="margin-top:10px;">・每行一個單字，用空白分開<br>・不熟的單字前面可加 <b>*</b>，例如 <code>*apple 蘋果 名詞</code><br>・有 2 個以上意思時，聽力／字卡測驗會出現對應數量的中文作答欄</div>
+        <button class="action-btn btn-start" style="margin-top: 14px; width: 100%;" data-on-click='[["closeWordFormatModal",[]]]'>知道了</button>
     </div>
 </div>
 <div id="advBagModal" class="modal">
