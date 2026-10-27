@@ -1463,9 +1463,30 @@
         .rar-common { border-color: #94A3B8 !important; }
         .rar-rare { border-color: #B8860B !important; }
         .rar-legend { border-color: #C026D3 !important; }
-        .select-card.adv-move-card { border-width: 2px; }
-        .select-card.adv-move-card.selected { box-shadow: none; background: #EEF2FF; }
-        .select-card.adv-move-card.focus { box-shadow: 0 0 0 3px rgba(99,102,241,0.35); }
+        /* 能力值頁的招式卡：一般是普通邊框；「選到的那一張」亮框（依稀有度上色）；要帶上戰場的打勾 */
+        .select-card.adv-move-card, body.power-saving-mode .select-card.adv-move-card { border: 2px solid var(--border-color) !important; box-shadow: none !important; background: #F8FAFC; }
+        body.power-saving-mode .select-card.adv-move-card { border-color: #2B303C !important; background: #1B1E27 !important; }
+        .select-card.adv-move-card.selected { background: #F8FAFC; }
+        .select-card.adv-move-card .select-card-title, .select-card.adv-move-card.selected .select-card-title { color: var(--text-main); font-weight: 700; }
+        body.power-saving-mode .select-card.adv-move-card .select-card-title { color: #FFFFFF !important; }
+        .select-card.adv-move-card.focus.rar-common, body.power-saving-mode .select-card.adv-move-card.focus.rar-common { border-color: #94A3B8 !important; box-shadow: 0 0 0 3px rgba(148,163,184,0.35), 0 0 12px rgba(148,163,184,0.45) !important; }
+        .select-card.adv-move-card.focus.rar-rare, body.power-saving-mode .select-card.adv-move-card.focus.rar-rare { border-color: #B8860B !important; box-shadow: 0 0 0 3px rgba(184,134,11,0.3), 0 0 12px rgba(234,179,8,0.45) !important; }
+        .select-card.adv-move-card.focus.rar-legend, body.power-saving-mode .select-card.adv-move-card.focus.rar-legend { border-color: #C026D3 !important; box-shadow: 0 0 0 3px rgba(192,38,211,0.3), 0 0 12px rgba(217,70,239,0.5) !important; }
+        /* 戰鬥畫面、補給站的招式：邊框依稀有度（夜間模式也一樣） */
+        body.power-saving-mode .adv-move.rar-common, body.power-saving-mode .shop-item.rar-common { border-color: #94A3B8 !important; }
+        body.power-saving-mode .adv-move.rar-rare, body.power-saving-mode .shop-item.rar-rare { border-color: #B8860B !important; }
+        body.power-saving-mode .adv-move.rar-legend, body.power-saving-mode .shop-item.rar-legend { border-color: #C026D3 !important; }
+        .adv-stats-wrap { margin-bottom: 12px; }
+        .adv-stats-wrap > .adv-hero { padding: 0 13px; }    /* 跟框框裡的分頁按鈕對齊（框線 1px + 內距 12px） */
+        .adv-stats-panel { padding: 12px; }
+        .adv-plain-btn.danger, .adv-md-btn.off, body.power-saving-mode .adv-md-btn.off { background: #EF4444; color: #FFFFFF; }
+        .adv-coin-row { position: absolute; transform: translateX(-50%); display: flex; gap: 4px; z-index: 7; perspective: 300px; }
+        .adv-coin { width: 26px; height: 26px; }
+        .adv-coin-in { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
+        .adv-coin-in span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 13px; font-weight: 900; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: inset 0 0 0 2px rgba(0,0,0,0.18), 0 2px 4px rgba(0,0,0,0.3); }
+        .adv-coin-f { background: radial-gradient(circle at 35% 30%, #FEF3C7, #F59E0B 70%); color: #78350F; }
+        .adv-coin-b { background: radial-gradient(circle at 35% 30%, #F1F5F9, #94A3B8 70%); color: #334155; transform: rotateY(180deg); }
+        .adv-coin-in.done.heads .adv-coin-f { box-shadow: 0 0 0 2px #FDE047, 0 0 10px #FACC15; }
         .shop-item.rar-common, .shop-item.rar-rare, .shop-item.rar-legend { border-width: 2px; }
         .adv-move.rar-common, .adv-move.rar-rare, .adv-move.rar-legend { border-width: 2px; border-style: solid; }
         .adv-lv-chip { display: inline-block; font-size: 10px; font-weight: 800; color: #FFFFFF; background: #6366F1; border-radius: 6px; padding: 0 5px; vertical-align: 1px; }
@@ -1500,8 +1521,7 @@
         .adv-md-bar { height: 10px; margin-bottom: 4px; }
         .adv-md-mastery > small { display: block; font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
         .adv-md-btn { display: block; width: 100%; margin-top: 10px; padding: 10px; border: none; border-radius: 12px; background: var(--primary); color: #FFFFFF; font-size: 14.5px; font-weight: 800; font-family: inherit; cursor: pointer; }
-        .adv-md-btn.off { background: #E2E8F0; color: #334155; }
-        body.power-saving-mode .adv-md-btn.off { background: #2B303C; color: #E2E8F0; }
+
         .adv-bag-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 26px 12px 0; }
         .adv-bag-head .adv-bag-title { margin: 0; }
         select.adv-bag-filter { width: auto !important; padding: 4px 26px 4px 10px; font-size: 13px; font-weight: 700; border-radius: 10px; }
@@ -1526,7 +1546,7 @@
         .adv-more-btn { display: block; width: 100%; margin: 8px 0 4px; padding: 9px 12px; border: 1.5px dashed #C7D2FE; border-radius: 12px; background: #F8FAFF; color: var(--primary); font-size: 14px; font-weight: 800; font-family: inherit; cursor: pointer; }
         body.power-saving-mode .adv-more-btn { background: #1B1E27; border-color: #3B3F63; color: #A5B4FC; }
         .shop-pills { position: absolute; right: 0; top: -6px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-        .shop-pill { display: flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; }
+        .shop-pill { position: relative; display: flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; }
         .shop-pill-chicken { background: #EEF2FF; color: var(--primary); }
         .shop-pill-shard { background: #FFEDE5; color: #C2410C; }
         body.power-saving-mode .shop-pill-shard { background: #3A1E12; color: #FDBA74; }
@@ -2328,7 +2348,7 @@
                 <div class="current-mode-indicator">💪 雞塊能力值</div>
                 <span id="advNavCounts" class="adv-nav-counts"></span>
             </div>
-            <div class="adv-card" id="advStatsBox"></div>
+            <div class="adv-stats-wrap" id="advStatsBox"></div>
         </div>
 
         <!-- ================= ⚔️ 雞塊大冒險：戰鬥畫面（整體高度只用手機上方 60%，下方留給鍵盤） ================= -->
