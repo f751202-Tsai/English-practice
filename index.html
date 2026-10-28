@@ -1477,6 +1477,7 @@
         .chi-input-row { align-items: stretch; }
         .shop-hint-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
         .shop-hint-row p { font-size: 12.5px; color: var(--text-muted); margin: 0; }
+        .shop-filter-row { display: flex; justify-content: flex-end; margin: -4px 0 10px; }
         select.shop-filter { width: auto !important; margin: 0 !important; padding: 4px 26px 4px 10px; font-size: 13px; font-weight: 700; border-radius: 10px; }
         .adv-alert { position: absolute; top: -7px; right: -7px; width: 18px; height: 18px; border-radius: 50%; background: #EF4444; color: #FFFFFF; font-size: 12px; font-weight: 900; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px #FFFFFF; pointer-events: none; z-index: 2; }
         body.power-saving-mode .adv-alert { box-shadow: 0 0 0 2px #1B1E27; }
@@ -2726,13 +2727,14 @@
             </div>
         </div>
 
-        <div class="shop-hint-row"><p>點選商品，使用雞塊兌換！</p><select id="shopFilter" class="shop-filter" aria-label="篩選商品" data-on-change='[["advSetShopFilter",["$value"]]]'><option value="all">全部</option></select></div>
+        <div class="shop-hint-row"><p>點選商品，使用雞塊兌換！</p></div>
         <div id="walletNoteShop" class="wallet-note"></div>
         <div class="shop-tabs" id="shopTabs" role="tablist">
             <button type="button" id="shopTab0" class="shop-tab active" role="tab" data-on-click='[["setShopTab",[0]]]'>單字庫</button>
             <button type="button" id="shopTab1" class="shop-tab" role="tab" data-on-click='[["setShopTab",[1]]]'>雞塊大冒險</button>
             <button type="button" id="shopTab2" class="shop-tab" role="tab" data-on-click='[["setShopTab",[2]]]'>其他</button>
         </div>
+        <div class="shop-filter-row"><select id="shopFilter" class="shop-filter" aria-label="篩選商品" data-on-change='[["advSetShopFilter",["$value"]]]'><option value="all">全部</option></select></div>
 
         <div class="shop-grid" id="shopPane0">
             <button type="button" id="shopItem_word_cap_50" class="shop-cell shop-item" data-on-click='[["buyShopItem",["word_cap_50"]]]'>
