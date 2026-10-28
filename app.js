@@ -1060,6 +1060,8 @@
     // ── Google 雲端狀態：首頁雲朵 + 系統設定區塊 ──
     //   ok：已登入同步中　bad：登入過但權杖失效（點一下重新連線）　off：這台裝置從沒登入過
     let cloudLastText = '', cloudHighlight = false;
+    const CLOUD_SEEN_KEY = 'chicky_cloud_seen';     // 看過「未登入」提醒後，紅色驚嘆號就不再出現
+    function cloudSeen() { try { return localStorage.getItem(CLOUD_SEEN_KEY) === '1'; } catch (e) { return false; } }
     const GOOGLE_EMAIL_KEY = 'chicky_google_email';
     function cloudState() {
         if (accessToken) return 'ok';
@@ -1070,12 +1072,13 @@
     }
     function cloudRender() {
         let st = cloudState();
-        let btn = document.getElementById('cloudStateBtn'), dot = document.getElementById('cloudStateDot'), tip = document.getElementById('cloudTip');
-        if (btn) {
-            btn.className = 'cloud-st-btn st-' + st;
+        let tip = document.getElementById('cloudTip'), seen = cloudSeen();
+        document.querySelectorAll('.cloud-st-btn').forEach(btn => {
+            btn.className = 'cloud-st-btn st-' + st + (st === 'off' && seen ? ' seen' : '') + (btn.classList.contains('in-nav') ? ' in-nav' : '');
             btn.setAttribute('aria-label', 'Google 雲端：' + ({ ok: '已連線', bad: '連線中斷', off: '未登入', busy: '連線中' })[st]);
-        }
-        if (dot) dot.textContent = st === 'ok' ? '✓' : '!';
+            let dot = btn.querySelector('.cloud-st-dot');
+            if (dot) dot.textContent = st === 'ok' ? '✓' : '!';
+        });
         if (tip) tip.style.display = st === 'bad' ? '' : 'none';
         let box = document.getElementById('cloudSettingsBox');
         if (!box) return;
@@ -1087,7 +1090,7 @@
             html = `<div class="row"><div><b>☁️ Google 雲端</b><small>${email ? '已連結：' + escapeHTML(email) : '已連結 Google 帳號'}</small></div><span class="st">${syncing ? '🔄 同步中…' : '✅ 同步中'}</span></div>
                 <div class="row" style="margin-top:10px"><small>題庫、測驗紀錄、大冒險進度會自動備份</small><button type="button" id="cloudAuthBtn" class="gbtn out" data-on-click='[["handleLogout",[]]]'>登出</button></div>`;
         } else if (st === 'off') {
-            html = `<div class="row"><div><b>☁️ Google 雲端</b><small>💻 未登入（資料只存在這台裝置）</small></div><button type="button" id="cloudAuthBtn" class="gbtn" data-on-click='[["handleAuthClick",[]]]'>登入 Google 雲端</button></div>
+            html = `<div class="row"><div><b>☁️ Google 雲端</b><small>💻 未登入（資料只存在這台裝置）</small></div><button type="button" id="cloudAuthBtn" class="gbtn" data-on-click='[["handleAuthClick",[]]]'>登入 Google 雲端${seen ? '' : '<span class="adv-alert" aria-label="尚未登入">!</span>'}</button></div>
                 <div class="note">💡 登入後，題庫、測驗紀錄和大冒險進度會自動同步到雲端，換手機也不會不見。</div>`;
         } else {
             html = `<div class="row"><div><b>☁️ Google 雲端</b><small>${email ? escapeHTML(email) + '｜' : ''}${st === 'busy' ? '重新連線中…' : '雲端連線已中斷'}</small></div><span class="st bad">${st === 'busy' ? '🔄 連線中' : '⚠️ 已中斷'}</span></div>
@@ -1121,8 +1124,6 @@
     function updateCloudStatusText(text) {
         cloudLastText = String(text || '');
         cloudRender();
-        let elEditorList = document.getElementById('editorListModeStatusText');
-        if (elEditorList) elEditorList.innerText = text;
     }
 
     function updateSliderProgress(slider) {
@@ -3915,7 +3916,11 @@
         let volSlider = document.getElementById('systemVolume');
         if (volSlider) updateSliderProgress(volSlider);
     }
-    function closeSystemSettingsModal() { document.getElementById('systemSettingsModal').style.display = 'none'; cloudHighlight = false; cloudRender(); }
+    function closeSystemSettingsModal() {
+        document.getElementById('systemSettingsModal').style.display = 'none'; cloudHighlight = false;
+        if (cloudState() === 'off') { try { localStorage.setItem(CLOUD_SEEN_KEY, '1'); } catch (e) {} }   // 看過了 → 紅色驚嘆號消失
+        cloudRender();
+    }
     function openAboutModal() { document.getElementById('aboutModal').style.display = 'block'; }
     function closeAboutModal() { document.getElementById('aboutModal').style.display = 'none'; }
     function openExportModal() { 
@@ -5346,7 +5351,8 @@
         { key: 'luck', label: '幸運', color: '#A855F7' }
     ];
     const ADV_BAR_MAX = 12;
-    function goToAdvStats() {
+    function goToAdvStats(tab) {
+        advStatsTab = ['moves', 'gear'].indexOf(tab) !== -1 ? tab : 'stats';   // 每次進來預設「基本素質」
         advAbort();
         advSyncDaily();
         advRenderStatsPage();
@@ -5389,9 +5395,9 @@
                 tile = `<div class="adv-stat-tile">${d.label}<b>${s[d.key]}</b></div>`;
                 bar = `<div class="adv-bar" title="已強化 ${lvl}/${ADV_UP_MAX}"><i style="width:${Math.max(0, pct).toFixed(1)}%;background:${GREEN}"></i></div>`;
             }
-            return `<div class="adv-stat-row" data-stat="${d.key}">
+            return `<div class="adv-stat-row adv-stat-click" data-stat="${d.key}" role="button" title="點一下看能力介紹" data-on-click='[["advOpenStatInfo",["${d.key}"]]]'>
                 ${tile}${bar}
-                ${maxed ? '<span class="adv-maxed">滿</span>' : ''}
+                ${maxed ? '<span class="adv-maxed">滿</span>' : ''}<span class="adv-hit-chev">›</span>
             </div>`;
         }).join('');
         let nav = document.getElementById('advNavCounts');
@@ -5399,9 +5405,7 @@
         let box = document.getElementById('advStatsBox');
         if (!box) return;
         let oldGrid = document.getElementById('advMoveGrid'), keepScroll = oldGrid ? oldGrid.scrollTop : 0;
-        let shield = advShieldMax(s.int);
-        let statsBody = `${advHitRowHTML()}<hr class="adv-hit-divider">${rows}
-            <div class="adv-note" style="margin:6px 0 0;">⏱️ 每題作答 ${advAnswerSecs(s.int, 0)} 秒${shield ? `　🛡️ 護盾 ${shield}（每場戰鬥補滿，最多 ${ADV_SHIELD_CAP}）` : '　🛡️ 智慧 2 起有護盾'}　❤️ 體力每天 00:00 恢復</div>`;
+        let statsBody = `${advHitRowHTML()}<hr class="adv-hit-divider">${rows}`;
         box.innerHTML = `
             <div class="adv-hero">
                 <div class="adv-avatar">${advChickenSVG()}</div>
@@ -5419,21 +5423,82 @@
         let g = document.getElementById('advMoveGrid');
         if (g) g.scrollTop = keepScroll;
         advFitMoveGrid();
+        advBindMoveSwipe();
+        advCarDir = 0;
         advUpdateGearAlerts();
     }
+    // ── 招式分頁：上面用下拉選單篩選，中間左右輪播（一次看一招），下面是詳細資料 ──
+    const ADV_MOVE_FILTERS = [['all', '全部'], ['eq', '已裝備'], ['card', '字卡'], ['listen', '聽力'], ['speak', '朗讀']];
+    let advCarDir = 0;              // 剛剛往哪邊切換（做滑入動畫用）
+    function advMoveShown() {
+        let owned = ADV_MOVES.filter(m => advOwns(m.key));
+        if (advMoveFilter === 'all') return owned;
+        if (advMoveFilter === 'eq') { let eq = advEquipped().map(m => m.key); return owned.filter(m => eq.includes(m.key)); }
+        return owned.filter(m => m.type === advMoveFilter);
+    }
+    function advCarTri(rot) { return `<svg viewBox="0 0 24 24" width="24" height="24" style="transform:rotate(${rot}deg)" aria-hidden="true"><path d="M7 3 L19 12 L7 21 Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg>`; }
     function advMovesTabHTML() {
         let eqKeys = advEquipped().map(m => m.key);
         let ownedMoves = ADV_MOVES.filter(m => advOwns(m.key));
-        let shown = advMoveFilter === 'all' ? ownedMoves : ownedMoves.filter(m => m.type === advMoveFilter);
-        if (!advMoveFocus || !ownedMoves.some(m => m.key === advMoveFocus)) advMoveFocus = eqKeys[0] || (ownedMoves[0] ? ownedMoves[0].key : '');
-        let cards = shown.map(m => advMoveCardHTML(m, eqKeys)).join('');
+        let shown = advMoveShown(), n = shown.length;
+        if (!advMoveFocus || !shown.some(m => m.key === advMoveFocus)) advMoveFocus = n ? (shown.find(m => eqKeys.includes(m.key)) || shown[0]).key : (eqKeys[0] || (ownedMoves[0] ? ownedMoves[0].key : ''));
+        let idx = shown.findIndex(m => m.key === advMoveFocus);
+        let car;
+        if (!n) {
+            car = `<div class="adv-car adv-car-empty" id="advMoveGrid"><div class="adv-note" style="margin:0;">${advMoveFilter === 'eq' ? '還沒有裝備招式' : `還沒有${ADV_TYPE_LABEL[advMoveFilter]}類的招式`}</div></div>`;
+        } else {
+            let m = shown[idx], mi = advMasteryInfo(m.key), on = eqKeys.includes(m.key);
+            let L = n >= 3 ? shown[(idx - 1 + n) % n] : null, R = n >= 2 ? shown[(idx + 1) % n] : null;
+            let side = (x, d) => x ? `<button type="button" class="adv-car-side rar-${advRarityKey(x.key)}" title="${x.name}" aria-label="${x.name}" data-on-click='[["advMoveStep",[${d}]]]'>${x.icon}</button>` : '<span class="adv-car-side ghost"></span>';
+            car = `<div class="adv-car" id="advMoveGrid">
+                <button type="button" class="adv-car-arr${n < 2 ? ' off' : ''}" aria-label="上一招" data-on-click='[["advMoveStep",[-1]]]'>${advCarTri(180)}</button>
+                ${side(L, -1)}
+                <div class="adv-move-card adv-car-center focus rar-${advRarityKey(m.key)}${on ? ' selected' : ''}${advCarDir ? (advCarDir > 0 ? ' go-r' : ' go-l') : ''}" data-move="${m.key}">
+                    ${on ? '<span class="adv-eq-tag">已裝備</span>' : ''}
+                    <span class="ic">${m.icon}</span>
+                    <b>${m.name}${mi.lvl ? ` <span class="adv-lv-chip">Lv.${mi.lvl}</span>` : ''}</b>
+                </div>
+                ${side(R, 1)}
+                <button type="button" class="adv-car-arr${n < 2 ? ' off' : ''}" aria-label="下一招" data-on-click='[["advMoveStep",[1]]]'>${advCarTri(0)}</button>
+                <div class="adv-car-dots">${shown.map((x, i) => `<i class="${i === idx ? 'on' : ''}"></i>`).join('')}</div>
+            </div>
+            <div class="adv-car-hint">${n >= 2 ? `◀ 左右滑動選擇招式 ▶（${idx + 1} / ${n}）` : '（1 / 1）'}</div>`;
+        }
         return `
             <div class="adv-sec-title">招式選擇　<span id="advEquipCount">已裝備 ${eqKeys.length}/${ADV_MAX_EQUIP}</span>
-                <select class="adv-move-filter" aria-label="篩選招式類型" data-on-change='[["advSetMoveFilter",["$value"]]]'>
-                    ${[['all', '全部'], ['card', '字卡'], ['listen', '聽力'], ['speak', '朗讀']].map(o => `<option value="${o[0]}"${advMoveFilter === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}
+                <select class="adv-move-filter" aria-label="篩選招式" data-on-change='[["advSetMoveFilter",["$value"]]]'>
+                    ${ADV_MOVE_FILTERS.map(o => `<option value="${o[0]}"${advMoveFilter === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}
                 </select></div>
-            <div class="select-card-grid adv-move-grid" id="advMoveGrid">${cards || `<div class="adv-note" style="grid-column:1/-1;margin:4px 0;">還沒有${ADV_TYPE_LABEL[advMoveFilter]}類的招式</div>`}</div>
+            ${car}
             <div class="adv-move-detail" id="advMoveDetail">${advMoveDetailHTML(advMoveFocus)}</div>`;
+    }
+    let advCarSwipeAt = 0;
+    function advMoveStep(d) {
+        if (Date.now() - advCarSwipeAt < 350) return;     // 剛用滑的切換過，忽略接著觸發的點擊
+        advMoveStepGo(d);
+    }
+    function advMoveStepGo(d) {
+        let shown = advMoveShown(), n = shown.length;
+        if (n < 2) return;
+        let idx = Math.max(0, shown.findIndex(m => m.key === advMoveFocus));
+        d = parseInt(d) < 0 ? -1 : 1;
+        advMoveFocus = shown[(idx + d + n) % n].key;
+        advCarDir = d;
+        advRenderStatsPage();
+    }
+    // 手機左右滑動（滑鼠拖曳也可以）
+    function advBindMoveSwipe() {
+        let el = document.getElementById('advMoveGrid');
+        if (!el || !el.classList.contains('adv-car') || el._swipe) return;
+        el._swipe = true;
+        let x0 = null, y0 = 0;
+        el.addEventListener('pointerdown', e => { x0 = e.clientX; y0 = e.clientY; });
+        el.addEventListener('pointerup', e => {
+            if (x0 === null) return;
+            let dx = e.clientX - x0, dy = e.clientY - y0; x0 = null;
+            if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) { advMoveStepGo(dx < 0 ? 1 : -1); advCarSwipeAt = Date.now(); }
+        });
+        el.addEventListener('pointercancel', () => { x0 = null; });
     }
     function advMoveCardHTML(m, eqKeys) {
         let on = eqKeys.includes(m.key), mi = advMasteryInfo(m.key);
@@ -5449,14 +5514,8 @@
         if (!m || !advOwns(key)) return '<div class="adv-note" style="margin:0;">點上面的招式，就會在這裡顯示詳細資料。</div>';
         let r = advRarity(key), rk = advRarityKey(key), mi = advMasteryInfo(key), on = advEquipped().some(x => x.key === key);
         let pct = mi.maxed ? 100 : Math.max(0, Math.min(100, (mi.uses - mi.prev) / (mi.next - mi.prev) * 100));
-        let prog = mi.maxed ? `已達上限（共使用 ${mi.uses} 次）` : `(${mi.uses}/${mi.next})`;
+        let prog = mi.maxed ? `已達上限（共 ${mi.uses} 次）` : `${mi.uses} / ${mi.next}`;
         return `
-            <div class="adv-md-head">
-                <span class="adv-md-icon">${m.icon}</span>
-                <b>${m.name}</b>
-                <span class="adv-rar-badge rar-${rk}">${r.label}</span>
-                ${on ? '<span class="adv-md-eq">已裝備</span>' : ''}
-            </div>
             <div class="adv-md-stats">
                 <div>類型<b>${ADV_TYPE_LABEL[m.type]}</b></div>
                 <div>威力<b>${m.power}${mi.lvl ? `<em>+${mi.lvl}</em>` : ''}</b></div>
@@ -5465,17 +5524,16 @@
             </div>
             <div class="adv-md-desc">${m.desc}</div>
             <div class="adv-md-mastery">
-                <div class="adv-md-mrow"><span>熟練度 <b>${mi.lvl}</b> <small>／ 上限 ${mi.cap}</small></span><span>熟練度${mi.lvl} ${prog}</span></div>
+                <div class="adv-md-mrow"><span>熟練度 <b>${mi.lvl}</b><small>／${mi.cap}</small></span><small class="prog">${prog}</small></div>
                 <div class="adv-bar adv-md-bar"><i style="width:${pct.toFixed(1)}%;background:${r.color}"></i></div>
             </div>
             <button type="button" class="adv-md-btn${on ? ' off' : ''}" data-on-click='[["advToggleMove",["${key}"]]]'>${on ? '卸下這招' : '裝備這招'}</button>`;
     }
     function advFocusMove(key) {
         if (!advOwns(key)) return;
+        if (!advMoveShown().some(m => m.key === key)) advMoveFilter = 'all';
         advMoveFocus = key;
-        document.querySelectorAll('#advMoveGrid .adv-move-card').forEach(c => c.classList.toggle('focus', c.getAttribute('data-move') === key));
-        let d = document.getElementById('advMoveDetail');
-        if (d) d.innerHTML = advMoveDetailHTML(key);
+        advRenderStatsPage();
     }
     // 招式格子一次只看得到 4 張（手機 1 欄 × 4、寬螢幕 2 欄 × 2），其他用右邊的捲軸
     function advFitMoveGrid() {
@@ -5489,7 +5547,7 @@
     // ── 招式篩選（全部／字卡／聽力／朗讀）──
     let advMoveFilter = 'all';
     function advSetMoveFilter(v) {
-        advMoveFilter = ['all', 'card', 'listen', 'speak'].indexOf(v) !== -1 ? v : 'all';
+        advMoveFilter = ADV_MOVE_FILTERS.some(o => o[0] === v) ? v : 'all';
         let g = document.getElementById('advMoveGrid'); if (g) g.scrollTop = 0;
         advRenderStatsPage();
     }
@@ -5552,6 +5610,31 @@
             : `<div class="adv-bar"><i style="width:${t}%;background:#EAB308"></i></div>`;
         return `<div class="adv-stat-row adv-hit-row" data-stat="hit" role="button" title="點一下看字卡、聽力、朗讀的命中" data-on-click='[["advOpenHit",[]]]'>${tile}${bar}<span class="adv-hit-chev">›</span></div>`;
     }
+    // ── 能力介紹：全部能力放同一頁，順序跟能力值頁一樣（只說用途，不寫公式）──
+    const ADV_STAT_INFO = {
+        hp:   '每點一次，HP 上限 +1。',
+        atk:  '每點一次，攻擊力 +1。',
+        agi:  '比對手快，一回合就能多出幾招。',
+        def:  '減少每次被打到的傷害。',
+        int:  '智慧越高護盾越高，護盾扣完才扣 HP；能增加作答時間。',
+        luck: '攻擊時會擲幣，擲到正面就多打 1 點；打贏後也有機會多拿碎片。'
+    };
+    function advOpenStatInfo(key) {
+        let body = document.getElementById('advHitBody');
+        if (!body) return;
+        body.innerHTML = `<div class="adv-hit-title">📖 能力介紹</div>
+            <div class="adv-si-list">${ADV_STAT_DEFS.map(d => `<div class="adv-si-row${d.key === key ? ' on' : ''}" data-stat="${d.key}"><span class="adv-si-lab" style="background:${d.color}">${d.label}</span><p>${ADV_STAT_INFO[d.key]}</p></div>`).join('')}</div>`;
+        document.getElementById('advHitModal').style.display = 'block';
+    }
+    // 命中率的評價（黃色框）
+    function advHitComment(p) {
+        if (p >= 100) return '👑 傳奇人物！每一題都答對，完美無缺！';
+        if (p >= 90) return '🌟 根本是神！單字幾乎都難不倒你！';
+        if (p >= 80) return '🔥 超強！敵人快要擋不住你了！';
+        if (p >= 70) return '💪 很穩喔！大部分的單字你都記住了，繼續保持！';
+        if (p >= 60) return '🙂 還不錯！再多練習一點，命中會越來越高。';
+        return '📚 命中還不到 60%，先去多背幾個單字，再回來打會輕鬆很多！';
+    }
     const ADV_HIT_TIPS = { card: '「字卡練習」或「字卡測驗」', listen: '「聽力練習」或「聽力測驗」', speak: '「朗讀練習」' };
     function advOpenHit() {
         let body = document.getElementById('advHitBody');
@@ -5575,9 +5658,7 @@
         });
         let weakKey = weakest && weakest.p < 70 ? weakest.k : '';
         let html = lines.map(l => typeof l === 'string' ? l : l.html(l.k === weakKey)).join('');
-        let tip = weakKey ? `💡 ${ADV_TYPE_LABEL[weakKey]}比較弱，可以多用${ADV_HIT_TIPS[weakKey]}加強。<br>` : '';
-        tip += lines.some(l => typeof l === 'string') ? '每一類答滿 20 題才會顯示百分比。<br>' : '';
-        tip += '命中只看你答對多少，不能用糖醋醬強化。';
+        let tip = t !== null ? advHitComment(t) : a.length ? advHitComment(cur) : '🗡️ 去大冒險打一場，就會開始累積命中！';
         body.innerHTML = `<div class="adv-hit-title">🎯 命中</div>
             <div class="adv-hit-sub">最近 ${ADV_HIT_N} 題的答對率（每一題算一次，時間到算錯）</div>
             <div class="adv-hit-total">${big}<small>${sub}</small></div>
@@ -7061,7 +7142,7 @@
         copyAppUrl,
         playSpeakPracticeSample,
         toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
-        advQuit, advRetry, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advUpgrade, advExchangeShards,
+        advQuit, advRetry, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
         openMicHelpModal,
         closeMicHelpModal,
         recheckMicPermission,
