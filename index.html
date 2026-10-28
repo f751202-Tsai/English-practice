@@ -272,6 +272,35 @@
             margin-bottom: 22px; font-size: 13.5px; font-weight: 500; color: var(--text-muted); 
             border: 1px solid var(--border-color); 
         }
+        /* 首頁雲朵狀態按鈕（在 ⚙️ 左邊） */
+        .cloud-st-btn { position: absolute; top: 0; right: 52px; width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--border-color); background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: all 0.2s; }
+        .cloud-st-btn:hover { border-color: #C7D2FE; }
+        .cloud-st-btn .cl { fill: #E2E8F0; stroke: #94A3B8; }
+        .cloud-st-btn.st-ok .cl { fill: #BFDBFE; stroke: #2563EB; }
+        .cloud-st-btn.st-bad .cl { fill: #FED7AA; stroke: #EA580C; }
+        .cloud-st-dot { position: absolute; right: -5px; bottom: -5px; width: 18px; height: 18px; border-radius: 50%; color: #FFFFFF; font-size: 11px; font-weight: 900; line-height: 14px; text-align: center; border: 2px solid #FFFFFF; background: #EF4444; box-sizing: border-box; }
+        .cloud-st-btn.st-ok .cloud-st-dot { background: #10B981; }
+        .cloud-st-btn.st-bad .cloud-st-dot { background: #F97316; }
+        .cloud-st-btn.st-busy .cl { fill: #DBEAFE; stroke: #60A5FA; }
+        .cloud-st-btn.st-busy .cloud-st-dot { display: none; }
+        .cloud-tip { position: absolute; top: 52px; right: 0; z-index: 5; background: #FFF7ED; color: #9A3412; border: 1.5px solid #FDBA74; border-radius: 10px; padding: 5px 10px; font-size: 12.5px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .cloud-tip::before { content: ''; position: absolute; top: -7px; right: 66px; border: 6px solid transparent; border-bottom-color: #FDBA74; border-top: 0; }
+        body.power-saving-mode .cloud-tip { background: #431407; color: #FED7AA; border-color: #C2410C; }
+        /* 系統設定：Google 雲端區塊 */
+        .gsec { border: 1.5px solid #C7D2FE; background: #EEF2FF; border-radius: 14px; padding: 12px; margin: 12px 0 4px; transition: box-shadow 0.3s; }
+        .gsec.hl { border-color: #6366F1; box-shadow: 0 0 0 4px rgba(99,102,241,0.25); }
+        .gsec .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .gsec b { font-size: 14.5px; color: var(--text-main); }
+        .gsec small { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; word-break: break-all; }
+        .gsec .st { font-size: 13px; font-weight: 800; color: #16A34A; white-space: nowrap; }
+        .gsec .st.bad { color: #EA580C; }
+        .gsec .note { margin-top: 10px; padding-top: 9px; border-top: 1px dashed #C7D2FE; font-size: 12.5px; color: #4338CA; font-weight: 700; line-height: 1.5; }
+        .gbtn { border: none; border-radius: 10px; padding: 8px 14px; font-weight: 800; font-size: 13.5px; font-family: inherit; color: #FFFFFF; background: var(--primary); white-space: nowrap; cursor: pointer; width: auto; margin: 0; }
+        .gbtn.out { background: #E2E8F0; color: #334155; }
+        body.power-saving-mode .gsec { background: #232842; border-color: #3B3F63; }
+        body.power-saving-mode .gsec b { color: #FFFFFF; }
+        body.power-saving-mode .gsec .note { color: #C7D2FE; border-top-color: #3B3F63; }
+        body.power-saving-mode .gbtn.out { background: #2B303C; color: #E2E8F0; }
         .cloud-btn { 
             background: var(--primary-gradient); color: white; border: none; 
             padding: 7px 15px; border-radius: 8px; cursor: pointer; 
@@ -1440,6 +1469,18 @@
         .adv-bar .adv-bar-max { position: absolute; left: 0; top: 0; opacity: 0.28; }
         .adv-bar .adv-bar-cur { position: absolute; left: 0; top: 0; }
         .adv-sec-title { margin: 16px 0 8px; font-size: 14px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        .voice-chi-btn { flex: 0 0 40px; width: 40px; min-height: 40px; border: none; border-radius: 10px; background: #EEF2FF; color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; margin-top: 0; }
+        .voice-chi-btn.recording { background: #F43F5E; color: #FFFFFF; animation: speakPulse 1.2s infinite; }
+        .voice-chi-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        body.power-saving-mode .voice-chi-btn { background: #232842; color: #C7D2FE; }
+        .voice-chi-note { display: block; font-size: 11.5px; font-weight: 500; color: var(--text-muted); }
+        .chi-input-row { align-items: stretch; }
+        .shop-hint-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+        .shop-hint-row p { font-size: 12.5px; color: var(--text-muted); margin: 0; }
+        select.shop-filter { width: auto !important; margin: 0 !important; padding: 4px 26px 4px 10px; font-size: 13px; font-weight: 700; border-radius: 10px; }
+        .adv-alert { position: absolute; top: -7px; right: -7px; width: 18px; height: 18px; border-radius: 50%; background: #EF4444; color: #FFFFFF; font-size: 12px; font-weight: 900; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px #FFFFFF; pointer-events: none; z-index: 2; }
+        body.power-saving-mode .adv-alert { box-shadow: 0 0 0 2px #1B1E27; }
+        .adv-tab, .adv-mini-slot, .adv-gear-slot, .adv-btn-sm { position: relative; }
         select.adv-move-filter { width: auto !important; margin-left: auto; padding: 4px 26px 4px 10px; font-size: 13px; font-weight: 700; border-radius: 10px; }
         .adv-equip-slot { flex: 0 0 72px; width: 72px; height: 72px; padding: 4px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 2px dashed #C7D2FE; border-radius: 16px; background: #F8FAFF; cursor: pointer; font-family: inherit; color: var(--text-muted); }
         .adv-equip-slot.on { border-style: solid; border-color: #8B5CF6; background: #F5F3FF; color: var(--text-main); }
@@ -1678,12 +1719,11 @@
         .adv-plus { flex: 0 0 40px; width: 40px; height: 32px; border: none; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; background: #FEF3C7; color: #B45309; font-family: inherit; }
         .adv-plus:disabled { opacity: 0.4; cursor: not-allowed; }
         .adv-note { margin-top: 12px; font-size: 12.5px; color: var(--text-muted); line-height: 1.7; }
-        .adv-battle { display: flex; flex-direction: column; height: 440px; }
-        @media screen and (max-width: 768px) { .adv-battle { height: calc(60vh - 44px); height: calc(60dvh - 44px); min-height: 330px; } }
+        .adv-battle { display: flex; flex-direction: column; min-height: var(--adv-h, 440px); }
         .adv-topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex: 0 0 auto; }
         .adv-topbar .back-home-btn { position: static; flex: 0 0 auto; }
         .adv-topinfo { font-size: 12.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
-        .adv-stage { position: relative; flex: 0 0 37%; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); background: #1E1B4B; }
+        .adv-stage { position: relative; flex: 0 0 auto; height: calc(var(--adv-h, 440px) * 0.37); border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); background: #1E1B4B; }
         .adv-actor { position: absolute; will-change: transform; }
         .adv-actor svg { width: 100%; height: auto; display: block; overflow: visible; }
         .adv-player { left: 8%; bottom: 7%; width: 27%; max-width: 100px; }
@@ -1698,7 +1738,7 @@
         .adv-float { position: absolute; z-index: 6; white-space: nowrap; font-weight: 900; font-size: 24px; color: #EF4444; text-shadow: 0 2px 0 #FFFFFF, 0 0 6px #FFFFFF; pointer-events: none; transform: translateX(-50%); }
         .adv-fx { position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
         .adv-fx > * { position: absolute; }
-        .adv-panel { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .adv-panel { flex: 1 0 auto; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; padding-bottom: 4px; }
         .adv-log.has-timer { position: relative; padding-right: 46px; }
         .adv-timer { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; }
         .adv-timer svg { display: block; }
@@ -1716,8 +1756,12 @@
         .adv-move { border: 1.5px solid var(--border-color); background: #FFFFFF; border-radius: 12px; padding: 7px 8px; text-align: left; cursor: pointer; font-family: inherit; color: var(--text-main); width: 100%; }
         .adv-move:active { transform: scale(0.97); }
         .adv-move:disabled { opacity: 0.45; cursor: not-allowed; }
-        .adv-move b { font-size: 14.5px; display: block; }
-        .adv-move small { display: block; font-size: 11px; color: var(--text-muted); line-height: 1.35; }
+        .adv-move b { font-size: 14px; display: block; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .adv-move .dmg { display: block; font-size: 13px; font-weight: 800; color: var(--primary); line-height: 1.35; }
+        .adv-move small { display: block; font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+        body.power-saving-mode .adv-move .dmg { color: #A5B4FC; }
+        .adv-move-grid { background: #FFFFFF; border: 1.5px solid var(--border-color); border-radius: 14px; padding: 8px; }
+        body.power-saving-mode .adv-move-grid { background: #232733; border-color: #2B303C; }
         body.power-saving-mode .adv-move, body.power-saving-mode .adv-opt { background: #1B1E27 !important; border-color: #2B303C !important; color: #FFFFFF !important; }
         .adv-qhead { font-size: 12px; color: var(--text-muted); text-align: center; }
         .adv-qword { font-size: 26px; font-weight: 800; text-align: center; word-break: break-word; line-height: 1.25; }
@@ -1793,6 +1837,8 @@
             </button>
 
             <div class="app-header">
+                <button type="button" class="cloud-st-btn st-off" id="cloudStateBtn" data-on-click='[["openCloudSettings",[]]]' title="Google 雲端" aria-label="Google 雲端：未登入"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path class="cl" d="M9 25 H24 a6 6 0 0 0 0.8 -11.9 A8 8 0 0 0 9.6 11.6 A6.7 6.7 0 0 0 9 25 Z" stroke-width="2" stroke-linejoin="round"/></svg><span class="cloud-st-dot" id="cloudStateDot">!</span></button>
+                <div class="cloud-tip" id="cloudTip" style="display: none;">雲端已中斷，點一下重新連線</div>
                 <button class="settings-gear-btn" data-on-click='[["openSystemSettingsModal",[]]]' title="系統設定">⚙️</button>
                 <div class="app-logo-icon">
                     <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1821,12 +1867,6 @@
                 <div class="app-subtitle">Professional Learning System</div>
             </div>
             
-            <div class="cloud-sync-bar">
-                <span id="cloudStatusText">💻 未登入</span>
-                <div>
-                    <button id="cloudAuthBtn" class="cloud-btn" data-on-click='[["handleAuthClick",[]]]'>登入 Google 雲端</button>
-                </div>
-            </div>
 
             <div id="homeContentWrapper">
                 
@@ -2232,6 +2272,7 @@
                 <input type="text" id="cardExamInputChi" placeholder="輸入中文..." autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",0]]]' style="padding: 8px 12px;">
                 <input type="text" id="cardExamInputChi2" placeholder="意思 2" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",1]]]' style="padding: 8px 12px; display: none;">
                 <input type="text" id="cardExamInputChi3" placeholder="意思 3" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",2]]]' style="padding: 8px 12px; display: none;">
+                <button type="button" class="voice-chi-btn" id="cardExamVoiceBtn" title="語音輸入中文" aria-label="語音輸入中文" style="display: none;" data-on-click='[["voiceChiToggle",["cardExamInputChi"]]]'><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
             </div>
             <div class="chi-input-tip" id="cardExamInputChiTip"></div>
 
@@ -2551,6 +2592,7 @@
                     <input type="text" id="examInputChi" placeholder="輸入中文..." autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",0]]]' disabled>
                     <input type="text" id="examInputChi2" placeholder="意思 2" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",1]]]' style="display: none;" disabled>
                     <input type="text" id="examInputChi3" placeholder="意思 3" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",2]]]' style="display: none;" disabled>
+                    <button type="button" class="voice-chi-btn" id="examVoiceBtn" title="語音輸入中文" aria-label="語音輸入中文" style="display: none;" data-on-click='[["voiceChiToggle",["examInputChi"]]]'><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
                 </div>
                 <div class="chi-input-tip" id="examInputChiTip"></div>
 
@@ -2684,7 +2726,7 @@
             </div>
         </div>
 
-        <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px;">點選商品，使用雞塊兌換！</p>
+        <div class="shop-hint-row"><p>點選商品，使用雞塊兌換！</p><select id="shopFilter" class="shop-filter" aria-label="篩選商品" data-on-change='[["advSetShopFilter",["$value"]]]'><option value="all">全部</option></select></div>
         <div id="walletNoteShop" class="wallet-note"></div>
         <div class="shop-tabs" id="shopTabs" role="tablist">
             <button type="button" id="shopTab0" class="shop-tab active" role="tab" data-on-click='[["setShopTab",[0]]]'>單字庫</button>
@@ -2788,6 +2830,13 @@
                     <span class="slider-toggle"></span>
                 </label>
             </div>
+            <div class="setting-item">
+                <div class="setting-label"><span>🎙️</span> 語音輸入中文<small class="voice-chi-note">中文欄位旁會有麥克風按鈕</small></div>
+                <label class="switch">
+                    <input type="checkbox" id="cardExamVoiceChi" data-on-change='[["applyVoiceChiButtons",[]]]'>
+                    <span class="slider-toggle"></span>
+                </label>
+            </div>
         </div>
 
         <label for="cardExamQuestionCount" style="margin-top: 14px;">題目數量 (0為全部)：</label>
@@ -2888,6 +2937,7 @@
     <div class="modal-content">
         <span class="close-modal" data-on-click='[["closeSystemSettingsModal",[]]]'>&times;</span>
         <h3 style="margin-top:0; color:var(--primary); font-size:18px; font-weight:700;">⚙️ 系統設定</h3>
+        <div class="gsec" id="cloudSettingsBox"><button id="cloudAuthBtn" class="gbtn" data-on-click='[["handleAuthClick",[]]]'>登入 Google 雲端</button></div>
         
         <div class="config-group" style="margin-top: 12px;">
             <label for="systemVolume" style="margin-top:0;">🔊 音量調整：</label>
@@ -2973,6 +3023,10 @@
                 <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 13.5px; padding: 10px;" data-on-click='[["runStressTest",[]]]'>🚀 壓力測試</button>
                 <button class="action-btn" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); width: 100%; font-size: 13.5px; padding: 10px;" data-on-click='[["clearAllWordListsData",[]]]'>🧹 清空所有題庫</button>
                 <button class="action-btn" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); width: 100%; font-size: 13.5px; padding: 10px;" data-on-click='[["clearAllExamHistoryData",[]]]'>🗑️ 清空考試紀錄</button>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="devTestCodeInput" placeholder="測試密碼（testreset / testmoney）" style="margin-top:0; flex:1;" autocomplete="off">
+                    <button class="action-btn" style="width: auto; font-size: 13.5px; padding: 8px 14px;" data-on-click='[["advRunTestCodeInput",[]]]'>執行</button>
+                </div>
             </div>
         </div>
         <button class="action-btn btn-start" style="width: 100%; margin-top: 12px;" data-on-click='[["closeAboutModal",[]]]'>確定</button>
@@ -3140,6 +3194,10 @@
             <div class="config-row-item">
                 <span>☀️ 只考有加星號（*）的單字</span>
                 <label class="switch"><input type="checkbox" id="examOnlyStarred" data-on-change='[["saveExamAppSettings",[]]]'><span class="slider-toggle"></span></label>
+            </div>
+            <div class="config-row-item">
+                <span>🎙️ 語音輸入中文<small class="voice-chi-note">中文欄位旁會有麥克風按鈕</small></span>
+                <label class="switch"><input type="checkbox" id="examVoiceChi" data-on-change='[["saveExamAppSettings",[]],["applyVoiceChiButtons",[]]]'><span class="slider-toggle"></span></label>
             </div>
         </div>
         
