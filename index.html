@@ -282,7 +282,10 @@
         .cloud-st-btn.st-ok .cloud-st-dot { background: #10B981; }
         .cloud-st-btn.st-bad .cloud-st-dot { background: #F97316; }
         .cloud-st-btn.st-busy .cl { fill: #DBEAFE; stroke: #60A5FA; }
-        .cloud-st-btn.st-busy .cloud-st-dot { display: none; }
+        .cloud-st-btn.st-busy .cloud-st-dot, .cloud-st-btn.seen .cloud-st-dot { display: none; }
+        .cloud-st-btn.in-nav { top: 50%; right: 0; transform: translateY(-50%); width: 38px; height: 38px; }
+        body.power-saving-mode .cloud-st-btn.in-nav { background: #232733; border-color: #2B303C; }
+        #cloudSettingsBox .gbtn { position: relative; }
         .cloud-tip { position: absolute; top: 52px; right: 0; z-index: 5; background: #FFF7ED; color: #9A3412; border: 1.5px solid #FDBA74; border-radius: 10px; padding: 5px 10px; font-size: 12.5px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
         .cloud-tip::before { content: ''; position: absolute; top: -7px; right: 66px; border: 6px solid transparent; border-bottom-color: #FDBA74; border-top: 0; }
         body.power-saving-mode .cloud-tip { background: #431407; color: #FED7AA; border-color: #C2410C; }
@@ -1644,6 +1647,7 @@
         .adv-more-btn { display: block; width: 100%; margin: 8px 0 4px; padding: 9px 12px; border: 1.5px dashed #C7D2FE; border-radius: 12px; background: #F8FAFF; color: var(--primary); font-size: 14px; font-weight: 800; font-family: inherit; cursor: pointer; }
         body.power-saving-mode .adv-more-btn { background: #1B1E27; border-color: #3B3F63; color: #A5B4FC; }
         .modal-back-btn { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
+        .modal-back-btn:hover { transform: translateY(-50%) translateX(-2px); }
         .shop-pills { position: absolute; right: 0; top: -6px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
         .shop-pill { position: relative; display: flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; }
         .shop-pill-chicken { background: #EEF2FF; color: var(--primary); }
@@ -1814,6 +1818,46 @@
             .card-english { font-size: 26px; }
             .card-chinese { font-size: 20px; }
         }
+        /* ── 招式輪播 ── */
+        .adv-car { position: relative; display: flex; align-items: center; gap: 6px; background: #FFFFFF; border: 1.5px solid var(--border-color); border-radius: 14px; padding: 10px 6px 16px; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+        .adv-car-empty { justify-content: center; padding: 18px 10px; }
+        body.power-saving-mode .adv-car { background: #232733; border-color: #2B303C; }
+        .adv-car-arr { flex: 0 0 26px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--primary); padding: 0; cursor: pointer; }
+        .adv-car-arr.off { color: #CBD5E1; cursor: default; }
+        .adv-car-side { flex: 0 0 52px; height: 66px; border-radius: 12px; border: 2px solid var(--border-color); background: #F8FAFC; display: flex; align-items: center; justify-content: center; font-size: 22px; opacity: .55; cursor: pointer; padding: 0; font-family: inherit; transition: opacity .15s; }
+        .adv-car-side:hover { opacity: .85; }
+        .adv-car-side.ghost { visibility: hidden; }
+        .adv-car-side.rar-rare { border-color: #E9C46A; } .adv-car-side.rar-legend { border-color: #E9A8F2; }
+        body.power-saving-mode .adv-car-side { background: #1B1E27; border-color: #2B303C; }
+        .adv-move-card.adv-car-center { flex: 1; min-width: 0; height: 82px; border-radius: 14px; border: 2.5px solid #94A3B8; box-shadow: 0 0 0 3px rgba(148,163,184,.3); background: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 4px 6px; box-sizing: border-box; }
+        .adv-car-center.rar-rare { border-color: #B8860B; box-shadow: 0 0 0 3px rgba(184,134,11,.3), 0 0 12px rgba(234,179,8,.35); }
+        .adv-car-center.rar-legend { border-color: #C026D3; box-shadow: 0 0 0 3px rgba(192,38,211,.25), 0 0 12px rgba(217,70,239,.4); }
+        body.power-saving-mode .adv-car-center { background: #1B1E27; }
+        .adv-car-center .ic { font-size: 28px; line-height: 1; }
+        .adv-car-center b { font-size: 15.5px; margin-top: 4px; color: var(--text-main); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        body.power-saving-mode .adv-car-center b { color: #FFFFFF; }
+        .adv-car-center .adv-eq-tag { position: absolute; top: 5px; right: 6px; }
+        .adv-car-center.go-r { animation: advCarR .22s ease-out; }
+        .adv-car-center.go-l { animation: advCarL .22s ease-out; }
+        @keyframes advCarR { from { transform: translateX(28px); opacity: .3; } to { transform: none; opacity: 1; } }
+        @keyframes advCarL { from { transform: translateX(-28px); opacity: .3; } to { transform: none; opacity: 1; } }
+        .adv-car-dots { position: absolute; bottom: 5px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; pointer-events: none; }
+        .adv-car-dots i { width: 6px; height: 6px; border-radius: 50%; background: #CBD5E1; }
+        .adv-car-dots i.on { background: var(--primary); }
+        .adv-car-hint { text-align: center; font-size: 12px; color: var(--text-muted); margin: 5px 0 8px; }
+        .adv-md-mrow .prog { font-size: 13px; font-weight: 700; color: var(--text-muted); }
+        .adv-md-btn { width: auto !important; min-width: 150px; margin: 14px auto 0 !important; padding: 9px 28px !important; }
+        .adv-move-detail .adv-md-stats { margin-top: 0 !important; }
+        /* ── 能力介紹 ── */
+        .adv-stat-click { cursor: pointer; }
+        .adv-si-list { margin-top: 8px; }
+        .adv-si-row { display: flex; align-items: flex-start; gap: 12px; padding: 9px 8px; border-radius: 10px; }
+        .adv-si-row + .adv-si-row { border-top: 1px dashed var(--border-color); }
+        .adv-si-row.on { background: #EEF2FF; }
+        body.power-saving-mode .adv-si-row.on { background: #2A2F45; }
+        .adv-si-lab { flex: 0 0 48px; text-align: center; color: #FFFFFF; font-size: 13px; font-weight: 800; border-radius: 8px; padding: 3px 0; }
+        .adv-si-row p { margin: 1px 0 0; font-size: 14px; line-height: 1.55; color: var(--text-main); }
+        body.power-saving-mode .adv-si-row p { color: #E2E8F0; }
     </style>
 </head>
 <body>
@@ -2613,10 +2657,7 @@
                     </svg>
                 </button>
                 <div class="current-mode-indicator" style="background:#EEF2FF; color:var(--primary);">📁 題庫清單</div>
-            </div>
-
-            <div class="mode-status-card">
-                <span id="editorListModeStatusText">💻 未登入</span>
+                <button type="button" class="cloud-st-btn st-off in-nav" data-on-click='[["openCloudSettings",[]]]' title="Google 雲端" aria-label="Google 雲端：未登入"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path class="cl" d="M9 25 H24 a6 6 0 0 0 0.8 -11.9 A8 8 0 0 0 9.6 11.6 A6.7 6.7 0 0 0 9 25 Z" stroke-width="2" stroke-linejoin="round"/></svg><span class="cloud-st-dot">!</span></button>
             </div>
 
             <div id="listQuotaBar" style="text-align:center; font-size:14px; font-weight:600; color:var(--text-muted); margin-bottom:10px;"></div>
