@@ -6274,6 +6274,7 @@
         if (!m || (adv.sealed || []).includes(key)) return;
         const id = adv.runId;
         adv.move = m;
+        adv.moveSeq = (adv.moveSeq || 0) + 1;     // 這一次出招的編號：同一招只會結算一次
         adv.q = { type: 'pending' };
         if (m.type === 'speak' && !adv.micOk) {
             adv.busy = true;
@@ -6761,6 +6762,9 @@
 
     async function advResolveMove(ok) {
         if (!adv.active) return;
+        // 防呆：同一次出招只結算一次（避免多題招式在最後一題被重複結算，一次扣掉兩次行動）
+        if (adv.resolvedSeq === adv.moveSeq) { console.warn('同一招重複結算，已忽略'); return; }
+        adv.resolvedSeq = adv.moveSeq;
         if (!ok) advRecordHit(false);
         const id = adv.runId;
         adv.busy = true;
