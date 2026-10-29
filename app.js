@@ -153,10 +153,18 @@
 
     // ── 官方單字庫（用雞塊購買，從後端下載；不占用題庫數量，不能清空／刪除／更換語言）──
     const WORD_PACKS = {
-        basic_noun: { free: true, title: '基礎單字-名詞', lang: 'en', words: 300, icon: '🏫' },
-        basic_verb: { free: true, title: '基礎單字-動詞形容詞', lang: 'en', words: 300, icon: '🏃' },
-        toeic_job: { item: 'pack_toeic_job', title: '多益-職場', lang: 'en', words: 300, icon: '💼' }
+        basic_noun: { free: true, title: '基礎單字-名詞', lang: 'en', words: 300, kind: 'basic' },
+        basic_verb: { free: true, title: '基礎單字-動詞形容詞', lang: 'en', words: 300, kind: 'basic' },
+        toeic_job: { item: 'pack_toeic_job', title: '多益-職場', lang: 'en', words: 300, kind: 'toeic' }
     };
+    // 精選單字庫的圖示：同一類共用一張（多益：TOEIC 字樣／基礎：ABC 字樣），紫色實心
+    function packIconHTML(packKey, size) {
+        size = size || 30;
+        let kind = (WORD_PACKS[packKey] || {}).kind || 'basic';
+        let txt = kind === 'toeic' ? '<text x="20" y="24.2" text-anchor="middle" font-size="11" font-weight="900" fill="#FFFFFF" textLength="30" lengthAdjust="spacingAndGlyphs" font-family="Inter,Arial,sans-serif">TOEIC</text>'
+                                   : '<text x="20" y="25.4" text-anchor="middle" font-size="14" font-weight="900" fill="#FFFFFF" textLength="27" lengthAdjust="spacingAndGlyphs" font-family="Inter,Arial,sans-serif">ABC</text>';
+        return `<svg class="pk-ic" width="${size}" height="${size}" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#5B54EA"/>${txt}</svg>`;
+    }
     // 免費附贈的精選單字庫：直接放在 App 裡，不用下載
     const FREE_PACK_CONTENT = {
         basic_noun: "activity 活動 名詞\nafternoon 下午 名詞\nage 年齡 名詞\napplication form 申請表 名詞\narea 區域 名詞\nart 藝術 美術 名詞\nauditorium 禮堂 名詞\nback 後面 名詞\nbackpack 背包 名詞\nbag 包包 名詞\nbank 銀行 名詞\nbe late for 遲到 動詞\nbeginner 初學者 名詞\nbike 腳踏車 名詞\nbirthday 生日 名詞\nbook 書籍 名詞 預訂 動詞\nbookshelf 書架 名詞\nbookstore 書店 名詞\nboss 老闆 名詞\nbottle 瓶子 名詞\nbottom 底部 名詞\nbox 箱子 名詞\nbreakfast 早餐 名詞\nbuilding 建築物 名詞\nbus 公車 名詞\nbusiness card 名片 名詞\ncafeteria 自助餐廳 名詞\ncalendar 日曆 名詞\ncampus 校園 名詞\ncar 汽車 名詞\ncard 卡片 名詞\ncenter 中心 名詞\nchair 椅子 名詞\nchance 機會 名詞\nchapter 章節 名詞\nchild 小孩 名詞\ncity 城市 名詞\nclass 班級 課堂 名詞\nclassmate 同學 名詞\nclassroom 教室 名詞\nclock 時鐘 名詞\nclosing time 打烊時間 名詞\nclothes 衣服 名詞\nclub 社團 俱樂部 名詞\ncoffee 咖啡 名詞\ncoffee break 休息時間 名詞\ncoin 硬幣 名詞\ncollege 大學 學院 名詞\ncolor 顏色 名詞\ncompany 公司 名詞\ncomputer 電腦 名詞\ncontest 比賽 名詞\ncorner 角落 轉角 名詞\ncountry 國家 名詞\ncourse 課程 名詞\ncup 杯子 名詞\ndaily 每日的 形容詞 每天 副詞\ndate 日期 名詞\nday 天 名詞\nday shift 日班 名詞\ndebate 辯論 名詞 動詞\ndesk 書桌 名詞\ndictionary 字典 名詞\ndinner 晚餐 名詞\ndiscussion 討論 名詞\ndoctor 醫生 名詞\ndoor 門 名詞\ndormitory 宿舍 名詞\ndrawing 圖畫 名詞\ndream 夢想 名詞 做夢 動詞\ndriver 司機 名詞\neducation 教育 名詞\nelevator 電梯 名詞\nemail 電子郵件 名詞 寄電子郵件 動詞\nemail address 電子郵件地址 名詞\nenrollment 註冊 名詞\nentrance 入口 名詞\neraser 橡皮擦 名詞\nessay 短文 論文 名詞\nevening 傍晚 名詞\nevent 活動 事件 名詞\nexam 考試 名詞\nexample 例子 名詞\nexcited 興奮的 形容詞\nexit 出口 名詞 離開 動詞\nexperience 經驗 名詞\nextracurricular 課外的 形容詞\nfaculty 全體教職員 名詞\nfamily 家庭 名詞\nfirst day 第一天 名詞\nfirst job 第一份工作 名詞\nfirst name 名字 名詞\nfloor 地板 樓層 名詞\nfood 食物 名詞\nfriend 朋友 名詞\nfront 前面 名詞\nfull-time 全職的 形容詞\ngame 遊戲 比賽 名詞\ngift 禮物 名詞\ngoal 目標 名詞\ngrade 成績 年級 名詞\ngraduate 畢業 動詞 畢業生 名詞\ngraduation 畢業 畢業典禮 名詞\ngroup 群體 小組 名詞\ngroup project 小組作業 名詞\nguest 客人 來賓 名詞\nguidance 輔導 指導 名詞\ngym 體育館 健身房 名詞\nhabit 習慣 名詞\nhall 大廳 走廊 名詞\nhallway 走廊 名詞\nhand in 繳交 動詞\nhardworking 努力的 形容詞\nhat 帽子 名詞\nheadphones 耳機 名詞\nhealth 健康 名詞\nhelper 幫手 名詞\nhistory 歷史 名詞\nhobby 嗜好 名詞\nholiday 假日 名詞\nhometown 家鄉 名詞\nhomework 家庭作業 名詞\nhospital 醫院 名詞\nhour 小時 名詞\nidea 主意 想法 名詞\ninstructor 講師 名詞\ninternet 網際網路 名詞\nintroduction 介紹 名詞\njob 工作 名詞\njob hunting 找工作 名詞\njob title 職稱 名詞\nkey 鑰匙 關鍵 名詞\nkeyboard 鍵盤 名詞\nknowledge 知識 名詞\nlaboratory 實驗室 名詞\nlanguage 語言 名詞\nlaptop 筆記型電腦 名詞\nlast name 姓氏 名詞\nleader 領導者 名詞\nlecture 講課 名詞 演講 動詞\nlesson 課程 教訓 名詞\nletter 信件 字母 名詞\nlevel 程度 等級 名詞\nlibrarian 圖書館員 名詞\nlibrary 圖書館 名詞\nline 線 隊伍 名詞\nlist 清單 名詞 列出 動詞\nlocation 地點 位置 名詞\nlunch 午餐 名詞\nlunch break 午休 名詞\nlunchroom 員工餐廳 名詞\nlunchtime 午餐時間 名詞\nmagazine 雜誌 名詞\nmajor 主修 名詞 動詞\nmap 地圖 名詞\nmark 分數 名詞 打分數 動詞\nmarket 市場 名詞\nmath 數學 名詞\nmeal 餐點 名詞\nmeasure 測量 動詞 措施 名詞\nmember 成員 名詞\nmessage 訊息 名詞\nmiddle 中間 名詞\nminute 分鐘 名詞\nmistake 錯誤 名詞\nmoney 金錢 名詞\nmonth 月份 名詞\nmorning 早晨 名詞\nmusic 音樂 名詞\nnameplate 名牌 名詞\nnationality 國籍 名詞\nnervous 緊張的 形容詞\nnewcomer 新人 名詞\nnews 新聞 消息 名詞\nnewspaper 報紙 名詞\nnight 夜晚 名詞\nnight shift 夜班 名詞\nnote 筆記 名詞 記下 動詞\nnotebook 筆記本 名詞\nnumber 數字 號碼 名詞\nnurse 護士 名詞\noffice 辦公室 名詞\noffice worker 上班族 名詞\nowner 擁有者 老闆 名詞\npage 頁 名詞\npaper 紙張 報告 名詞\nparent 父母 名詞\npark 公園 名詞 停車 動詞\nparking lot 停車場 名詞\npart-time 兼職的 形容詞\npart-time job 打工 名詞\npartner 夥伴 名詞\nparty 派對 名詞\npassword 密碼 名詞\npay attention to 注意 動詞\npen 原子筆 名詞\npencil 鉛筆 名詞\npeople 人們 名詞\nperson 個人 名詞\nphone 電話 名詞\nphone number 電話號碼 名詞\nphoto 照片 名詞\nphysics 物理 名詞\npicture 圖片 照片 名詞\npiece 一片 一件 名詞\npost 郵件 名詞 張貼 動詞\npractice 練習 名詞 動詞\npresentation 簡報 名詞\nprice 價格 名詞\nprincipal 校長 名詞 主要的 形容詞\nprize 獎品 名詞\nproblem 問題 名詞\nprofessor 教授 名詞\nproject 專案 計畫 名詞\nquestion 問題 名詞 質問 動詞\nquiz 小考 名詞\nreason 原因 理由 名詞\nresearch 研究 名詞 動詞\nrestaurant 餐廳 名詞\nrestroom 洗手間 名詞\nresult 結果 名詞\nroad 道路 名詞\nroom 房間 空間 名詞\nroommate 室友 名詞\nrule 規則 名詞\nsalesclerk 店員 名詞\nsalesperson 售貨員 名詞\nscholarship 獎學金 名詞\nschool 學校 名詞\nscience 科學 名詞\nscore 分數 名詞 得分 動詞\nseat 座位 名詞\nsemester 學期 名詞\nseminar 研討會 名詞\nsentence 句子 名詞\nshape 形狀 名詞\nshirt 襯衫 名詞\nshoe 鞋子 名詞\nshop 商店 名詞 購物 動詞\nside 旁邊 一側 名詞\nsign 招牌 標誌 名詞 簽名 動詞\nsize 尺寸 名詞\nskill 技能 名詞\nsmart 聰明的 形容詞\nsnack 點心 名詞\nspace 空間 名詞\nspeaker 演講者 喇叭 名詞\nspeech 演講 名詞\nsport 運動 名詞\nstairs 樓梯 名詞\nstation 車站 名詞\nstep 步驟 名詞\nstore 商店 名詞 儲存 動詞\nstory 故事 樓層 名詞\nstreet 街道 名詞\nstudent 學生 名詞\nstudy group 讀書會 名詞\nsubject 科目 主題 名詞\nsubway 地鐵 名詞\ntable 桌子 表格 名詞\ntake notes 做筆記 動詞\ntaxi 計程車 名詞\ntea 茶 名詞\nteacher 老師 名詞\nteam 團隊 名詞\nteam member 團隊成員 名詞\nteammate 隊友 名詞\ntelephone 電話 名詞\nterm 學期 期限 名詞\ntest 測驗 名詞 測試 動詞\nticket 票 名詞\ntime 時間 次數 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\ntop 頂端 名詞\ntopic 主題 名詞\ntown 城鎮 名詞\ntrain 火車 名詞 訓練 動詞\ntranslate 翻譯 動詞\ntranslation 翻譯 名詞\ntype 類型 名詞 打字 動詞\numbrella 雨傘 名詞\nuniform 制服 名詞 一致的 形容詞\nvocabulary 字彙 名詞\nvolunteer 志工 名詞 自願 動詞\nwaiter 服務生 名詞\nwall 牆壁 名詞\nwater 水 名詞\nweather 天氣 名詞\nwebsite 網站 名詞\nweek 星期 名詞\nweekday 平日 名詞\nweekend 週末 名詞\nwindow 窗戶 名詞\nword 單字 名詞\nwork hours 工作時數 名詞\nworker 工人 員工 名詞\nyear 年 名詞\nyearly 每年的 形容詞\nyesterday 昨天 名詞 副詞",
@@ -218,6 +226,7 @@
         Object.keys(WORD_PACKS).forEach(k => { if (packOwned(k) && !packInstalled(k)) installWordPack(k, true); });
     }
     setTimeout(() => { try { ensureWordPacks(); } catch (e) {} }, 0);
+    setTimeout(() => { let el = document.getElementById('shopPackIcon_toeic_job'); if (el) el.innerHTML = packIconHTML('toeic_job', 46); }, 0);
     // 每日登入：雞塊 +1（後端錢包）＋ 糖醋醬碎片 +3（存在大冒險進度裡）；其他任務照舊送雞塊
     const LOGIN_SHARDS = 3;
     function isLoginShardClaimed() { try { return advData.loginShardDay === chickenData.lastDate; } catch (e) { return false; } }
@@ -458,6 +467,13 @@
         refreshWallet();
     }
 
+    // 今日任務的「去做 ›」：直接跳到那個功能
+    function goDoTask(key) {
+        closeChickenRewardModal();
+        if (key === 'listeningPractice' || key === 'listeningPerfect') { homeTab = 'exam'; goToExamPage(); }
+        else if (key === 'cardPractice' || key === 'cardPerfect') { homeTab = 'exam'; goToCardExamPage(); }
+        else if (key === 'advWin') { homeTab = 'fun'; goToAdventurePage(); }
+    }
     function closeChickenRewardModal() {
         document.getElementById('chickenRewardModal').style.display = 'none';
     }
@@ -478,31 +494,18 @@
             { key: 'advWin', title: '6. 在大冒險中打贏一場敵人', desc: '雞塊 ×1' }
         ];
 
-        let html = '';
+        let html = '', done = 0;
         taskDefs.forEach(def => {
             let t = chickenData.tasks[def.key];
-            let statusHtml = '';
-            if (isTaskClaimed(def.key)) {
-                statusHtml = `<span class="task-status-text completed">已領取</span>`;
-            } else if (t.done) {
-                statusHtml = `<button class="cloud-btn" data-on-click='[["claimChickenReward",["${def.key}"]]]'>${def.key === 'dailyLogin' ? '領取' : '領1個'}</button>`;
-            } else {
-                statusHtml = `<span class="task-status-text">未完成</span>`;
-            }
-
-            html += `
-                <div class="reward-task-item">
-                    <div class="reward-task-info">
-                        <div class="reward-task-title">${def.title} ${t.done ? '<span style="color:#10B981;">✓</span>' : ''}</div>
-                        <div class="reward-task-desc">${def.desc}</div>
-                    </div>
-                    <div class="reward-action-area">
-                        ${statusHtml}
-                    </div>
-                </div>
-            `;
+            if (t.done) done++;
+            let right;
+            if (isTaskClaimed(def.key)) right = `<span class="tk-done">✓ 已領取</span>`;
+            else if (t.done) right = `<button type="button" class="tk-claim" data-on-click='[["claimChickenReward",["${def.key}"]]]'>領取</button>`;
+            else right = `<button type="button" class="tk-todo" data-on-click='[["goDoTask",["${def.key}"]]]'>去做 ›</button>`;
+            html += `<div class="tk-row"><span class="t">${def.title.replace(/^\d+\.\s*/, '')}<small>${def.desc || '雞塊 ×1'}</small></span>${right}</div>`;
         });
-        container.innerHTML = html;
+        container.innerHTML = `<div class="tk-head"><span>${done} / ${taskDefs.length} 完成</span></div><div class="tk-list">${html}</div>`;
+        try { renderHomeToday(); } catch (e) {}
     }
 
     // 領取：向後端登記（同一天同一任務只會算一次），成功後以後端回傳的餘額為準
@@ -1088,6 +1091,8 @@
     function cloudRender() {
         let st = cloudState();
         let tip = document.getElementById('cloudTip'), seen = cloudSeen();
+        let gd = document.getElementById('gearDot');
+        if (gd) gd.style.display = ((st === 'off' && !seen) || st === 'bad') ? '' : 'none';
         document.querySelectorAll('.cloud-st-btn').forEach(btn => {
             btn.className = 'cloud-st-btn st-' + st + (st === 'off' && seen ? ' seen' : '') + (btn.classList.contains('in-nav') ? ' in-nav' : '');
             btn.setAttribute('aria-label', 'Google 雲端：' + ({ ok: '已連線', bad: '連線中斷', off: '未登入', busy: '連線中' })[st]);
@@ -1190,10 +1195,19 @@
     }
 
     // 單字行的「外語部分」：第一個中文字之前的內容（與 parseWordsRaw 的切法一致）
+    // 中文意思從哪裡開始：第一個中文字；如果前面緊貼著數字（例如「5號」「10元」），數字也算中文意思的一部分
+    function meaningStart(s) {
+        let i = s.search(/[一-龥]/);
+        if (i <= 0) return i;
+        let j = i;
+        while (j > 0 && /[0-9０-９.,％%~～\-]/.test(s[j - 1])) j--;
+        if (j < i && (j === 0 || /\s/.test(s[j - 1]))) return j;   // 數字前面要是空白，才不會把英文單字裡的數字拆走
+        return i;
+    }
     function getForeignPart(line) {
         let t = line.trim();
         if (t.startsWith('*')) t = t.substring(1).trim();
-        let i = t.search(/[\u4e00-\u9fa5]/);
+        let i = meaningStart(t);
         return (i !== -1 ? t.substring(0, i) : t).trim();
     }
 
@@ -1282,15 +1296,21 @@
     }
 
     // 歷史紀錄：舊紀錄沒有 lang 欄位時視為英文
+    function historyLang(h) {
+        if (!h) return 'en';
+        if ((h.results || []).some(r => RE_HANGUL.test(String(r.english || '')))) return 'ko';
+        if ((h.results || []).length && (h.results || []).every(r => !RE_HANGUL.test(String(r.english || '')))) return 'en';
+        return h.lang === 'ko' ? 'ko' : 'en';
+    }
     function filterHistoryByLang(arr) {
         let cur = getLearningLanguage();
-        return (arr || []).filter(h => (h && h.lang === 'ko' ? 'ko' : 'en') === cur);
+        return (arr || []).filter(h => historyLang(h) === cur);
     }
     // 每種語言各保留最近 10 筆
     function trimHistoryPerLang(arr) {
         let cnt = { en: 0, ko: 0 };
         return (arr || []).filter(h => {
-            let l = (h && h.lang === 'ko') ? 'ko' : 'en';
+            let l = historyLang(h);
             return ++cnt[l] <= 10;
         });
     }
@@ -1588,12 +1608,27 @@
         switchView('examView');
     }
 
-    async function goToEditorPage() {
-        if (accessToken && isCloudSyncActive) {
-            await loadDataFromGoogleDrive();
+    // 先用手機裡的資料馬上顯示，雲端在背景同步，同步完再更新畫面（30 秒內不重複同步）
+    let lastDriveSync = 0;
+    function syncDriveInBackground(after) {
+        if (!(accessToken && isCloudSyncActive) || Date.now() - lastDriveSync < 30000) return;
+        lastDriveSync = Date.now();
+        showSyncChick(true);
+        Promise.resolve().then(() => loadDataFromGoogleDrive()).catch(() => {}).finally(() => { showSyncChick(false); try { after && after(); } catch (e) {} });
+    }
+    function showSyncChick(on) {
+        let el = document.getElementById('syncChick');
+        if (!el) {
+            if (!on) return;
+            document.body.insertAdjacentHTML('beforeend', `<div id="syncChick" class="sync-chick" role="status"><span class="ck">${advChickenSVG()}</span>雲端同步中…</div>`);
+            el = document.getElementById('syncChick');
         }
+        el.classList.toggle('show', !!on);
+    }
+    function goToEditorPage() {
         initEditorListCards();
         switchView('editorListView');
+        syncDriveInBackground(() => { if (document.getElementById('editorListView').classList.contains('active')) initEditorListCards(); });
     }
 
     // ── 首頁分頁：練習／測驗／題庫／樂園（手機在底部、電腦在上方）──
@@ -1618,7 +1653,7 @@
         document.querySelectorAll('#acTabs .ac-tab').forEach(b => { let me = b.getAttribute('data-tab') === homeTab; b.classList.toggle('on', me); b.setAttribute('aria-selected', me ? 'true' : 'false'); });
         document.querySelectorAll('#acMascot .m').forEach(m => m.classList.toggle('on', m.getAttribute('data-tab') === homeTab));
         document.querySelectorAll('#homeDashboardView .hm-pane').forEach(p => p.style.display = p.getAttribute('data-pane') === homeTab ? '' : 'none');
-        if (on && homeTab === 'practice') renderHomeToday();
+        if (on) renderHomeToday();
     }
     setTimeout(() => { try { let v = document.querySelector('.app-view.active'); syncHomeChrome(v ? v.id : 'homeDashboardView'); } catch (e) {} }, 0);
     // ── 有返回鍵的頁面：往下捲時，頂部縮成和卡片同寬的細長條（返回鍵＋標題）──
@@ -1678,8 +1713,15 @@
 
     // 練習分頁最上面：今日任務
     function renderHomeToday() {
+        if (typeof chickenData === 'undefined') return;
+        try {   // 右上角的雞塊：外圈是今日任務進度，有可以領的就亮紅點
+            let n0 = CHICKEN_TASK_KEYS.length, d0 = CHICKEN_TASK_KEYS.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done).length;
+            let ring = document.getElementById('acTaskRing'), dot = document.getElementById('acTaskDot');
+            if (ring) ring.setAttribute('stroke-dasharray', `${(d0 / n0 * 106.8).toFixed(1)} 106.8`);
+            if (dot) dot.style.display = CHICKEN_TASK_KEYS.some(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)) ? '' : 'none';
+        } catch (e) {}
         let box = document.getElementById('homeToday');
-        if (!box || typeof chickenData === 'undefined') return;
+        if (!box) return;
         let keys = CHICKEN_TASK_KEYS, n = keys.length;
         let done = keys.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done).length;
         let unclaimed = keys.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)).length;
@@ -1725,7 +1767,7 @@
         let tag = lang => `<span class="lang-tag lang-tag-${lang}">${getLangName(lang)}</span>`;
         let html;
         if (listSeg === 'pack') {
-            html = packs.map(({ l, idx }) => `<div class="lst-row" data-on-click='[["openEditorDetail",[${idx}]]]'><span class="lst-no pk">${(WORD_PACKS[l.pack] || {}).icon || '⭐'}</span><span class="lst-tx"><b>${escapeHTML(l.title)}</b> ${tag(getListLang(l))}<small>${getListWordCount(l.content)} 字</small></span><span class="lst-ar">›</span></div>`).join('')
+            html = packs.map(({ l, idx }) => `<div class="lst-row" data-on-click='[["openEditorDetail",[${idx}]]]'><span class="lst-no pk">${packIconHTML(l.pack, 30)}</span><span class="lst-tx"><b>${escapeHTML(l.title)}</b> ${tag(getListLang(l))}<small>${getListWordCount(l.content)} 字</small></span><span class="lst-ar">›</span></div>`).join('')
                 + `<div class="lst-row lst-shop" data-on-click='[["openChickenShopModal",[]]]'><span class="lst-no">🛒</span><span class="lst-tx"><b>到雞塊補給站看更多</b></span><span class="lst-ar">›</span></div>`;
             container.classList.remove('two');
         } else if (!mine.length) {
@@ -1802,7 +1844,8 @@
         if (!list) return;
 
         let pack = isPackList(list);
-        document.getElementById('editorDetailTitleIndicator').innerText = pack ? `${(WORD_PACKS[list.pack] || {}).icon || '⭐'} ${list.title}` : `📁 ${list.title}`;
+        let ti = document.getElementById('editorDetailTitleIndicator');
+        if (pack) ti.innerHTML = `${packIconHTML(list.pack, 18)} ${escapeHTML(list.title)}`; else ti.innerText = `📁 ${list.title}`;
         editorOpenCount = getListWordCount(list.content);
         document.getElementById('editorWordList').value = list.content || '';
         document.getElementById('wordSearchInput').value = '';
@@ -1916,7 +1959,7 @@
         let pack = isPackList(list);
         return `<div class="select-card pk-row ${isSelected}" data-kind="${pack ? 'pack' : 'custom'}" data-on-click='[["${fn}",[${list.originalIdx},"$this"]]]'>
                     <div class="select-card-info">
-                        <div class="select-card-title">${pack ? ((WORD_PACKS[list.pack] || {}).icon || '⭐') + ' ' : ''}${escapeHTML(list.title)}</div>
+                        <div class="select-card-title">${pack ? packIconHTML(list.pack, 20) + ' ' : ''}${escapeHTML(list.title)}</div>
                         <div class="select-card-count">${count} 字</div>
                     </div>
                     <div class="checkmark-badge">✓</div>
@@ -3167,7 +3210,7 @@
                 if (!trimmed) return line;
                 let curStarred = trimmed.startsWith('*');
                 let cleanLine = curStarred ? trimmed.substring(1).trim() : trimmed;
-                let firstChiIndex = cleanLine.search(/[\u4e00-\u9fa5]/);
+                let firstChiIndex = meaningStart(cleanLine);
                 let engPart = firstChiIndex !== -1 ? cleanLine.substring(0, firstChiIndex).trim() : cleanLine.trim();
                 
                 if (engPart.toLowerCase() === targetEng.toLowerCase()) {
@@ -3452,7 +3495,7 @@
             if (!trimmed) return;
             let isStarred = trimmed.startsWith('*');
             let cleanLine = isStarred ? trimmed.substring(1).trim() : trimmed;
-            let firstChiIndex = cleanLine.search(/[\u4e00-\u9fa5]/);
+            let firstChiIndex = meaningStart(cleanLine);
             let engPart = firstChiIndex !== -1 ? cleanLine.substring(0, firstChiIndex).trim() : cleanLine.trim();
             let key = engPart.toLowerCase();
 
@@ -3537,7 +3580,7 @@
         lines.forEach((line) => {
             let isStarred = line.startsWith('*');
             let cleanLine = isStarred ? line.substring(1).trim() : line;
-            let firstChiIndex = cleanLine.search(/[一-龥]/);
+            let firstChiIndex = meaningStart(cleanLine);
             let engPart = firstChiIndex !== -1 ? cleanLine.substring(0, firstChiIndex).trim() : cleanLine.trim();
             let restPart = firstChiIndex !== -1 ? cleanLine.substring(firstChiIndex).trim() : "";
             let pm = parseMeaningPart(restPart);
@@ -4242,12 +4285,10 @@
         backToHome();
     }
     async function openHistoryModal() {
-        if (accessToken && isCloudSyncActive) {
-            try { await loadDataFromGoogleDrive(); } catch (e) {}
-        }
         hist.mode = 'main';
         switchView('historyView');
         renderHistoryPage();
+        syncDriveInBackground(() => { if (document.getElementById('historyView').classList.contains('active')) renderHistoryPage(); });
         window.scrollTo(0, 0);
         return;
         openHistoryModalContent(); 
@@ -4848,12 +4889,23 @@
           phases: [
               { name: '微波便當',   sprite: 'bento',  hp: 20, atk: 3, agi: 3, def: 3, int: 9, luck: 2, moveName: '便當蓋飛擊', special: 'bento' },
               { name: '愛珍食便當', sprite: 'bento2', hp: 40, atk: 7, agi: 6, def: 2, int: 6, luck: 6, moveName: '即期大反撲', special: 'expire' }
-          ] }
+          ] },
+        { id: 19, name: '美式咖啡', sprite: 'coffee', minWords: 90, hp: 30, atk: 5, agi: 5, def: 3, int: 2, luck: 2, moveName: '滾燙潑灑', movePower: 0, firstShards: 7, firstSauce: 0, repeatShards: 7, firstPotions: 1, firstTickets: 1, special: 'coffee' },
+        { id: 20, name: '全能便利商店員工', sprite: 'clerk', minWords: 100, hp: 40, atk: 6, agi: 4, def: 4, int: 4, luck: 2, moveName: '商品補貨', movePower: 0, firstShards: 0, firstSauce: 2, repeatShards: 8, firstPotions: 2, firstTickets: 2, special: 'clerk' }
     ];
+    const ADV_COFFEE_BURN = 9;              // 美式咖啡：開戰燙傷 = 9 − 雞塊護盾最大值（直接扣體力）
+    // 全能便利商店員工：每回合換崗位（第一階段），各自免疫一類招式
+    const ADV_CLERK_POSTS = [{ name: '收銀台', immune: 'card' }, { name: '做餐中', immune: 'listen' }, { name: '點貨中', immune: 'speak' }];
+    const ADV_CLERK_SHIFT_HP = 20, ADV_CLERK_CD = 3;        // HP 低於 20 進入交班；下班倒數 3
+    const ADV_STAMP_NEED = 2, ADV_STAMP_ATK = 2, ADV_STAMP_HEAL = 5;   // 集點：任兩種 → 兌換集點卡（攻擊 +2、HP +5）
     // 這些敵人對某一類招式有抗性：每一下最多只受到 1 點傷害
     const ADV_RESIST = { darts: 'listen', mahjong: 'card', ring: 'speak', hotdog: 'listen', tea: 'speak' };
     // 這些敵人完全不受某一類招式的傷害
-    const ADV_IMMUNE = { salad: 'card', microwave: 'listen' };
+    const ADV_IMMUNE = { salad: 'card', microwave: 'listen', coffee: 'speak' };
+    function advImmuneType() {                // 這一刻敵人免疫的招式類型
+        if (adv.enemy && adv.enemy.special === 'clerk' && adv.post) return adv.post.immune;
+        return ADV_IMMUNE[adv.enemy && adv.enemy.special] || '';
+    }
     const ADV_WEAK_BONUS = { expire: { type: 'speak', bonus: 4 } };   // 愛珍食便當：朗讀類每一下 +4
     const ADV_MICRO_ATK_UP = 2;             // 微波爐：每次攻擊後攻擊力 +2
     const ADV_EXPIRE_SELF = 4;              // 愛珍食便當：攻擊完自己扣 4 點體力
@@ -4901,19 +4953,21 @@
         stink: '發臭：你的招式失敗時，會被臭味反擊，無視防禦扣 1 點體力',
         heal: '治癒：每次攻擊結束後，會回復 1 點體力',
         claw: '送你娃娃！',
-        darts: '咻咻咻！',
-        mahjong: '摸牌！',
-        ring: '我要套那個娃娃！',
+        darts: '聽力招式只造成 1 點傷害',
+        mahjong: '摸牌！字卡招式只造成 1 點傷害',
+        ring: '朗讀招式只造成 1 點傷害',
         pinball: '打彈珠！',
         egg: '請幫我剝殼 ❤️',
         bun: '熱狗',
         wrap: '拆不掉的包裝',
         tea: '現泡就是回甘！',
         seal: '取票失敗！',
-        salad: '讓我來照顧你！',
-        microwave: '轉吧！美味雞塊！',
+        salad: '蓋子霧霧的，看不清楚字',
+        microwave: '運轉中..聽不到你在說什麼？',
         bento: '月底救星！',
-        expire: '我快過期了..'
+        expire: '我快過期了..',
+        coffee: '太燙，嘴巴張不開！',
+        clerk: '集點卡'
     };
 
     function advLoad() {
@@ -4971,6 +5025,7 @@
             replayDay: typeof d.replayDay === 'string' ? d.replayDay : '', // 重複挑戰次數是哪一天的
             replays: n0(d.replays),
             loginShardDay: typeof d.loginShardDay === 'string' ? d.loginShardDay : '',   // 每日登入碎片最後領取日
+            loseTipShown: d.loseTipShown === true,                         // 第一次戰敗時提醒過恢復藥水了
             ts: n0(d.ts),                                                  // 最後存檔時間（雲端同步用）
             owner: typeof d.owner === 'string' ? d.owner : ''              // 這份進度屬於哪個 Google 帳號（錢包代號）
         };
@@ -5301,6 +5356,31 @@
                 <path d="M 30 44 L 42 49 M 66 44 L 54 49" stroke="#FDE68A" stroke-width="3.5" stroke-linecap="round"/>
                 <path d="M 40 68 Q 48 62 56 68" stroke="#FDE68A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
                 <path d="M 20 10 q -4 -5 0 -9 M 60 12 q -4 -5 0 -9 M 100 10 q -4 -5 0 -9" stroke="#F97316" stroke-width="2.5" fill="none" stroke-linecap="round"/>`);
+        }
+        if (kind === 'coffee') {
+            return wrap(`${shadow}
+                <path d="M 44 14 q -5 -6 0 -12 M 60 12 q -5 -6 0 -12 M 76 14 q -5 -6 0 -12" stroke="#CBD5E1" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <path d="M 26 28 H 94 L 86 96 Q 85 100 80 100 H 40 Q 35 100 34 96 Z" fill="#FFFFFF" stroke="#231F20" stroke-width="5" stroke-linejoin="round"/>
+                <rect x="22" y="20" width="76" height="12" rx="5" fill="#57534E" stroke="#231F20" stroke-width="4.5"/>
+                <path d="M 30 50 H 90 L 87 74 H 33 Z" fill="#92400E"/>
+                <text x="60" y="67" font-size="12" font-weight="900" text-anchor="middle" fill="#FEF3C7" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">美式</text>
+                <circle cx="48" cy="84" r="4" fill="#231F20"/><circle cx="72" cy="84" r="4" fill="#231F20"/>
+                <path d="M 42 76 L 52 79 M 78 76 L 68 79" stroke="#231F20" stroke-width="3.5" stroke-linecap="round"/>
+                <path d="M 53 93 Q 60 89 67 93" stroke="#231F20" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <ellipse cx="38" cy="90" rx="5" ry="3" fill="#F87171" opacity="0.7"/><ellipse cx="82" cy="90" rx="5" ry="3" fill="#F87171" opacity="0.7"/>`);
+        }
+        if (kind === 'clerk') {
+            return wrap(`${shadow}
+                <path d="M 30 100 Q 30 66 60 66 Q 90 66 90 100 Z" fill="#16A34A" stroke="#231F20" stroke-width="5" stroke-linejoin="round"/>
+                <path d="M 46 68 L 60 84 L 74 68" fill="#FFFFFF" stroke="#231F20" stroke-width="4" stroke-linejoin="round"/>
+                <rect x="44" y="84" width="32" height="12" rx="3" fill="#F97316" stroke="#231F20" stroke-width="3"/>
+                <text x="60" y="93.5" font-size="8" font-weight="900" text-anchor="middle" fill="#FFFFFF" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">店員</text>
+                <circle cx="60" cy="40" r="26" fill="#FCD9B6" stroke="#231F20" stroke-width="5"/>
+                <path d="M 34 34 Q 36 12 60 12 Q 84 12 86 34 Q 72 26 60 28 Q 48 26 34 34 Z" fill="#3F2A1D" stroke="#231F20" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M 32 32 Q 60 18 88 32 L 88 36 Q 60 24 32 36 Z" fill="#16A34A" stroke="#231F20" stroke-width="3.5" stroke-linejoin="round"/>
+                <circle cx="50" cy="42" r="4" fill="#231F20"/><circle cx="70" cy="42" r="4" fill="#231F20"/>
+                <path d="M 50 52 Q 60 59 70 52" stroke="#231F20" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <ellipse cx="42" cy="50" rx="5" ry="3" fill="#F87171" opacity="0.7"/><ellipse cx="78" cy="50" rx="5" ry="3" fill="#F87171" opacity="0.7"/>`);
         }
         if (kind === 'bento' || kind === 'bento2') {
             let old = kind === 'bento2';
@@ -5927,7 +6007,7 @@
         let html = lines.map(l => typeof l === 'string' ? l : l.html(l.k === weakKey)).join('');
         let tip = t !== null ? advHitComment(t) : a.length ? advHitComment(cur) : '🗡️ 去大冒險打一場，就會開始累積命中！';
         body.innerHTML = `<div class="adv-hit-title">🎯 命中</div>
-            <div class="adv-hit-sub">字卡、聽力、朗讀各算最近 ${ADV_HIT_N} 題（時間到算錯）</div>
+            <div class="adv-hit-sub">字卡、聽力、朗讀各算最近 ${ADV_HIT_N} 題</div>
             <div class="adv-hit-total">${big}<small>${sub}</small></div>
             ${html}
             <div class="adv-hit-tip">${tip}</div>`;
@@ -6449,7 +6529,7 @@
     function advBuildStage() {
         let st = document.getElementById('advStage');
         st.innerHTML = (adv.level && adv.level.id >= 11 ? advStoreStageBG() : advStageBG()) + `
-            <div class="adv-hud adv-hud-enemy"><div><span id="advEnemyName">${escapeHTML(adv.enemy.name)}</span> <span id="advEnemyHpText"></span></div><div class="adv-hpbar"><div class="adv-hpfill" id="advEnemyFill"></div></div></div>
+            <div class="adv-hud adv-hud-enemy"><div class="adv-enemy-tag" id="advEnemyTag" style="display:none"></div><div><span id="advEnemyName">${escapeHTML(adv.enemy.name)}</span> <span id="advEnemyHpText"></span></div><div class="adv-hpbar"><div class="adv-hpfill" id="advEnemyFill"></div></div></div>
             <div class="adv-actor adv-enemy" id="advEnemy">${advEnemySVG(adv.enemy.sprite)}</div>
             <div class="adv-actor adv-player" id="advPlayer">${advChickenSVG()}</div>
             <div class="adv-hud adv-hud-player"><div>雞塊 <span id="advPlayerHpText"></span></div><div class="adv-hpbar"><div class="adv-hpfill" id="advPlayerFill"></div></div></div>
@@ -6511,6 +6591,8 @@
         if (advHasGear('bag')) { adv.player.shield += ADV_BAG_SHIELD; adv.player.shieldMax += ADV_BAG_SHIELD; }
         advData.hitPrev = advHitTotal();             // 命中的「比上次」用這個比較
         adv.itemUsed = false;
+        adv.stamps = new Set(); adv.redeemed = false; adv.stampTold = false;   // 店員：集點卡
+        adv.post = null; adv.shifted = false; adv.cd = 0; adv.cdFresh = false; adv.billNext = false;
         adv.micOk = false;
         adv.active = true;
         adv.busy = false;
@@ -6518,7 +6600,77 @@
         if (!document.getElementById('adventureBattleView').classList.contains('active')) advLockBattleHeight();
         switchView('adventureBattleView');
         advBuildStage();
+        if (adv.enemy.special === 'coffee') { advCoffeeBurn(adv.runId); return; }
         advBeginRound();
+    }
+    // 美式咖啡：戰鬥一開始燙傷雞塊（直接扣體力，護盾越高燙得越輕）
+    async function advCoffeeBurn(id) {
+        adv.busy = true;
+        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
+        document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">☕ ${escapeHTML(adv.enemy.name)}冒著熱氣…</div>`;
+        await advWait(700);
+        if (id !== adv.runId) return;
+        let dmg = Math.max(0, ADV_COFFEE_BURN - adv.player.shieldMax);
+        advFloat(E, '太燙了！', '#B45309');
+        if (dmg > 0) {
+            adv.player.hp = Math.max(0, adv.player.hp - dmg);
+            advData.hp = adv.player.hp;
+            advSave();
+            advSetLog(`☕ 好燙！雞塊被燙傷了，受到 ${dmg} 點傷害`);
+            advUpdateHud();
+            await advHurt(P, dmg, false, '-' + dmg);
+        } else {
+            advSetLog('☕ 好燙！還好護盾夠厚，雞塊沒有被燙傷');
+            await advWait(500);
+        }
+        if (id !== adv.runId) return;
+        await advWait(500);
+        if (id !== adv.runId) return;
+        if (adv.player.hp <= 0) { await advLose(id); return; }
+        advBeginRound();
+    }
+    // 店員：頭上的牌子（崗位／下班倒數）
+    function advClerkTag() {
+        let el = document.getElementById('advEnemyTag');
+        if (!el) return;
+        let t = '';
+        if (adv.enemy && adv.enemy.special === 'clerk') t = adv.shifted ? (adv.cd > 0 ? `⏰ 下班倒數 ${adv.cd}` : '⏰ 下班了') : adv.post ? `🏷️ ${adv.post.name}` : '';
+        el.textContent = t;
+        el.style.display = t ? '' : 'none';
+        el.classList.toggle('cd', !!adv.shifted);
+    }
+    // 店員：HP 低於 20 → 交班（敏捷 +6、智慧 +4、攻擊 +2、HP +10；帶繳費單的話敏捷只剩 5、幸運 0）
+    async function advClerkShift(id) {
+        let e = adv.enemy;
+        if (!e || e.special !== 'clerk' || adv.shifted || e.hp <= 0 || e.hp >= ADV_CLERK_SHIFT_HP) return;
+        adv.shifted = true; adv.post = null; adv.cd = ADV_CLERK_CD; adv.cdFresh = true;
+        const E = document.getElementById('advEnemy');
+        e.agi += 6; e.int += 4; e.atk += 2; e.hp = Math.min(e.max, e.hp + 10);
+        e.shieldMax = advShieldMax(e.int); e.shield = e.shieldMax;
+        advSetLog(`🔔 交班中！${e.name}換上新的同事：敏捷、攻擊力、護盾都提升了，還回復 10 點體力`);
+        advFloat(E, '交班中！', '#F97316');
+        advUpdateHud(); advClerkTag();
+        await advWait(1100);
+        if (id !== adv.runId) return;
+        if (advHasGear('bill')) {
+            e.agi = 5; e.luck = 0; adv.billNext = true;
+            advSetLog('🧾 救命！是繳費單！（店員被繳費單纏住，動作變慢了）');
+            advFloat(E, '救命！是繳費單！', '#DC2626');
+            advUpdateHud();
+            await advWait(1200);
+        }
+    }
+    // 店員：兌換集點卡（不用考英文、不消耗行動；一場一次）
+    function advRedeemStamps() {
+        if (!adv.active || adv.busy || adv.q || adv.redeemed || !adv.stamps || adv.stamps.size < ADV_STAMP_NEED) return;
+        adv.redeemed = true;
+        adv.player.atk += ADV_STAMP_ATK;
+        let before = adv.player.hp;
+        adv.player.hp = Math.min(adv.player.max, adv.player.hp + ADV_STAMP_HEAL);
+        advData.hp = adv.player.hp; advSave();
+        advShowMenu();
+        advSetLog(`🎫 兌換集點卡！雞塊這場攻擊力 +${ADV_STAMP_ATK}${adv.player.hp > before ? `，HP +${adv.player.hp - before}` : ''}（不消耗行動）`);
+        advFloat(document.getElementById('advPlayer'), `攻擊 +${ADV_STAMP_ATK}`, '#7C3AED');
     }
     // 敵人資料：護盾 = 智慧 ÷ 2（最多 5）；有特別指定 shield 的（御飯糰 12 點）照指定
     function advMakeEnemy(d) {
@@ -6565,6 +6717,15 @@
 
     // ── 回合 ──
     function advBeginRound() {
+        if (adv.enemy.special === 'clerk') {
+            if (adv.shifted) {
+                if (adv.cdFresh) adv.cdFresh = false; else adv.cd--;
+                if (adv.cd <= 0) { advClerkTag(); advLose(adv.runId, 'shift'); return; }
+            } else {
+                adv.post = ADV_CLERK_POSTS[Math.floor(Math.random() * ADV_CLERK_POSTS.length)];
+            }
+            advClerkTag();
+        }
         adv.actionsTotal = advActionCount(adv.player.agi, adv.enemy.agi);
         adv.actionsLeft = adv.actionsTotal;
         adv.busy = false;
@@ -6575,6 +6736,11 @@
             adv.sealed = keys.slice(0, Math.min(2, Math.max(0, keys.length - 1)));
         }
         advShowMenu();
+        if (adv.enemy.special === 'clerk' && !adv.shifted && adv.post) {
+            advSetLog(`🏪「歡迎光臨！今天我負責${adv.post.name}」`);
+            advFloat(document.getElementById('advEnemy'), adv.post.name, '#2563EB');
+        }
+        if (adv.billNext) { adv.billNext = false; advSetLog('🧾 條碼刷不過..'); advFloat(document.getElementById('advEnemy'), '條碼刷不過..', '#64748B'); }
         if (adv.sealed.length) {
             advSetLog(`🧾 取票失敗！這回合有 ${adv.sealed.length} 招被封印（灰色的不能用）`);
             advFloat(document.getElementById('advEnemy'), '取票失敗！', '#F97316');
@@ -6605,9 +6771,13 @@
             if (sealed) { off = true; why = '封印中'; }
             let lvl = advMastery(m.key);
             let per = adv.player.atk + m.power + lvl;      // 不扣敵人防禦：打下去才知道
+            let stamp = adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.has(m.type);
             return `<button type="button" class="adv-move rar-${advRarityKey(m.key)}${sealed ? ' sealed' : ''}" ${off ? 'disabled' : ''} data-on-click='[["advChooseMove",["${m.key}"]]]'>
-                <b class="nm">${m.icon} ${m.name}${lvl ? ` <span class="adv-lv-chip">Lv.${lvl}</span>` : ''}</b><span class="dmg">傷害 ${m.hits > 1 ? per + '×' + m.hits : per}</span><small>${ADV_TYPE_LABEL[m.type]}${why ? '｜' + why : ''}</small></button>`;
+                ${stamp ? '<span class="adv-stamp">已集點</span>' : ''}<b class="nm">${m.icon} ${m.name}${lvl ? ` <span class="adv-lv-chip">Lv.${lvl}</span>` : ''}</b><span class="dmg">傷害 ${m.hits > 1 ? per + '×' + m.hits : per}</span><small>${ADV_TYPE_LABEL[m.type]}${why ? '｜' + why : ''}</small></button>`;
         }).join('');
+        if (adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.size >= ADV_STAMP_NEED && !adv.redeemed) {
+            moves += `<button type="button" class="adv-move adv-redeem rar-legend" data-on-click='[["advRedeemStamps",[]]]'><b class="nm">🎫 兌換集點卡！</b><span class="dmg">攻擊 +${ADV_STAMP_ATK}・HP +${ADV_STAMP_HEAL}</span><small>不用作答・不消耗行動・一場一次</small></button>`;
+        }
         let itemBtn = '';
         if (advHasGear('boba')) {
             let can = !adv.itemUsed && adv.player.hp <= 3 && adv.player.hp < adv.player.max;
@@ -7145,6 +7315,10 @@
         adv.q = null;
         if (ok) {
             document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">${m.icon} 「${m.name}」發動成功！</div>`;
+            if (adv.enemy.special === 'clerk' && adv.stamps && !adv.stamps.has(m.type)) {   // 店員：集點
+                adv.stamps.add(m.type);
+                advFloat(document.getElementById('advPlayer'), `🎫 ${ADV_TYPE_LABEL[m.type]}集點！`, '#7C3AED');
+            }
             // 每一下各自計算：攻擊力 + 招式威力 + 熟練度 − 對方防禦（至少 1）；每一下都各自擲一次幸運幣
             let total = 0;
             let pierce = advHasGear('skewer');         // 竹籤：無視對方護盾
@@ -7158,7 +7332,7 @@
                     if (id !== adv.runId) return;
                     dmg += luck.bonus;
                 }
-                let immune = ADV_IMMUNE[adv.enemy.special] === m.type;
+                let immune = advImmuneType() === m.type;
                 let guarded = immune || ADV_RESIST[adv.enemy.special] === m.type;
                 if (immune) dmg = 0;                    // 完全不受這類招式的傷害
                 else if (guarded) dmg = Math.min(dmg, 1);    // 對這類招式有抗性：每一下最多 1 點
@@ -7180,6 +7354,14 @@
                     if (id !== adv.runId) return;
                     break;                               // 換下一個敵人：這招剩下的攻擊不再繼續
                 }
+                await advClerkShift(id);
+                if (id !== adv.runId) return;
+            }
+            if (adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.size >= ADV_STAMP_NEED && !adv.redeemed && !adv.stampTold) {
+                adv.stampTold = true;
+                advSetLog('🎫 集點卡集滿了！招式選單多了「兌換集點卡！」');
+                await advWait(900);
+                if (id !== adv.runId) return;
             }
         } else {
             document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">💨 「${m.name}」發動失敗…</div>`;
@@ -7199,6 +7381,8 @@
                 if (adv.player.hp <= 0 && adv.enemy.hp > 0) { await advLose(id); return; }
                 if (adv.enemy.hp <= 0) { if (await advEnemyDown(id)) return; if (id !== adv.runId) return; }
                 if (adv.player.hp <= 0) { await advLose(id); return; }
+                await advClerkShift(id);
+                if (id !== adv.runId) return;
             }
             // 臭豆腐的「發臭」：招式失敗就被臭味反擊，無視防禦，固定 1 點
             if (adv.enemy.special === 'stink') {
@@ -7397,15 +7581,27 @@
         advAbort();
         goToAdvLevel(id);
     }
-    async function advLose(id) {
-        const P = document.getElementById('advPlayer');
+    async function advLose(id, why) {
+        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
         adv.active = false;
         releaseWakeLock();
+        let tip = '';
+        if (!advData.loseTipShown) { advData.loseTipShown = true; advSave(); tip = '<br>🧪 背包裡的恢復藥水可以恢復體力喔！'; }   // 第一次失敗才提醒
+        if (why === 'shift') {
+            advData.hp = adv.player.hp; advSave();      // 店員下班：雞塊的體力保留
+            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">⏰ 打卡下班！</div>`;
+            await advAnimate(E, [{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(60px)', opacity: 0 }], { duration: 700, fill: 'forwards' });
+            if (id !== adv.runId) return;
+            document.getElementById('advPanel').innerHTML = `
+            <div class="adv-result"><div class="big">🕘 店員下班了，明天請早</div><div class="line">雞塊的體力保留下來了（${adv.player.hp}/${adv.player.max}）。<br>下次要在倒數結束前打倒店員！${tip}</div></div>
+            <button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`;
+            return;
+        }
         document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">雞塊倒下了…</div>`;
         await advAnimate(P, [{ transform: 'rotate(0deg)', opacity: 1 }, { transform: 'rotate(80deg) translateY(10px)', opacity: 0.55 }], { duration: 600, fill: 'forwards' });
         if (id !== adv.runId) return;
         document.getElementById('advPanel').innerHTML = `
-            <div class="adv-result"><div class="big">😵 挑戰失敗</div><div class="line">雞塊沒有體力了，明天 00:00 恢復。<br>先去練習單字，或用糖醋醬提升能力吧！</div></div>
+            <div class="adv-result"><div class="big">😵 挑戰失敗</div><div class="line">雞塊沒有體力了，明天 00:00 恢復。<br>先去練習單字，或用糖醋醬提升能力吧！${tip}</div></div>
             <button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`;
     }
 
@@ -7415,7 +7611,7 @@
         copyAppUrl,
         playSpeakPracticeSample,
         toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
-        advQuit, advRetry, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
+        advQuit, advRetry, advRedeemStamps, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
         openMicHelpModal,
         closeMicHelpModal,
         recheckMicPermission,
@@ -7465,7 +7661,7 @@
         goToPracticePage,
         handleAuthClick,
         handleCardExamKeyDown,
-        setHomeTab, histSetType, histOpenDetail, histToggleWrong, histOpenSave, histToggleSel, histSelectAll, histSaveWords, historyBack, setListSeg, setPickSeg, pickSelectAll, handleEditorSearch, clearEditorSearch, jumpToEditorLine, toggleEditorSort, togglePackStar,
+        setHomeTab, goDoTask, histSetType, histOpenDetail, histToggleWrong, histOpenSave, histToggleSel, histSelectAll, histSaveWords, historyBack, setListSeg, setPickSeg, pickSelectAll, handleEditorSearch, clearEditorSearch, jumpToEditorLine, toggleEditorSort, togglePackStar,
         handleEditorTextareaInput,
         handleInputKeyDown,
         handleChiKeyDown,
