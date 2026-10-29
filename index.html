@@ -1858,6 +1858,8 @@
         .adv-si-lab { flex: 0 0 48px; text-align: center; color: #FFFFFF; font-size: 13px; font-weight: 800; border-radius: 8px; padding: 3px 0; }
         .adv-si-row p { margin: 1px 0 0; font-size: 14px; line-height: 1.55; color: var(--text-main); }
         body.power-saving-mode .adv-si-row p { color: #E2E8F0; }
+        .fun-lv-badge { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 800; color: #FFFFFF; background: var(--primary-gradient); border-radius: 8px; padding: 2px 8px; vertical-align: 2px; letter-spacing: 0; }
+        .fun-go { flex: 0 0 auto; margin: 0 6px 0 8px; font-size: 13.5px; font-weight: 800; color: #FFFFFF; background: var(--primary-gradient); border-radius: 10px; padding: 6px 14px; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25); white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -1882,7 +1884,7 @@
             </button>
 
             <div class="app-header">
-                <button type="button" class="cloud-st-btn st-off" id="cloudStateBtn" data-on-click='[["openCloudSettings",[]]]' title="Google 雲端" aria-label="Google 雲端：未登入"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path class="cl" d="M9 25 H24 a6 6 0 0 0 0.8 -11.9 A8 8 0 0 0 9.6 11.6 A6.7 6.7 0 0 0 9 25 Z" stroke-width="2" stroke-linejoin="round"/></svg><span class="cloud-st-dot" id="cloudStateDot">!</span></button>
+                <button type="button" class="cloud-st-btn st-off seen" id="cloudStateBtn" data-on-click='[["openCloudSettings",[]]]' title="Google 雲端" aria-label="Google 雲端：未登入"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path class="cl" d="M9 25 H24 a6 6 0 0 0 0.8 -11.9 A8 8 0 0 0 9.6 11.6 A6.7 6.7 0 0 0 9 25 Z" stroke-width="2" stroke-linejoin="round"/></svg><span class="cloud-st-dot" id="cloudStateDot">!</span></button>
                 <div class="cloud-tip" id="cloudTip" style="display: none;">雲端已中斷，點一下重新連線</div>
                 <button class="settings-gear-btn" data-on-click='[["openSystemSettingsModal",[]]]' title="系統設定">⚙️</button>
                 <div class="app-logo-icon">
@@ -2110,24 +2112,14 @@
                             </svg>
                             </div>
                             <div class="section-title-group">
-                                <div class="section-title">雞塊樂園</div>
+                                <div class="section-title">雞塊樂園<span class="fun-lv-badge" id="funLvBadge" style="display:none"></span></div>
+                                <div class="section-desc">邊打怪邊背單字，也是一種練習！</div>
                             </div>
                             <div class="item-arrow">⌄</div>
                         </div>
                     </div>
 
                     <div class="collapsible-list" id="funList">
-                        <div class="list-item" data-on-click='[["openChickenShopModal",[]]]'>
-                            <div class="item-icon-box">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                            </div>
-                            <div class="item-content">
-                                <div class="item-title">雞塊補給站</div>
-                                <div class="item-desc">用雞塊兌換更多題庫與功能！</div>
-                            </div>
-                            <div class="item-arrow">›</div>
-                        </div>
-
                         <div class="list-item" data-on-click='[["goToAdventurePage",[]]]'>
                             <div class="item-icon-box">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"></path><path d="M4 4h13l-2 4 2 4H4"></path></svg>
@@ -2135,6 +2127,17 @@
                             <div class="item-content">
                                 <div class="item-title">雞塊大冒險</div>
                                 <div class="item-desc">打敗敵人，賺雞塊與糖醋醬！</div>
+                            </div>
+                            <span class="fun-go">出發</span>
+                        </div>
+
+                        <div class="list-item" data-on-click='[["openChickenShopModal",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">雞塊補給站</div>
+                                <div class="item-desc">用雞塊兌換更多題庫與功能！</div>
                             </div>
                             <div class="item-arrow">›</div>
                         </div>
@@ -2657,7 +2660,7 @@
                     </svg>
                 </button>
                 <div class="current-mode-indicator" style="background:#EEF2FF; color:var(--primary);">📁 題庫清單</div>
-                <button type="button" class="cloud-st-btn st-off in-nav" data-on-click='[["openCloudSettings",[]]]' title="Google 雲端" aria-label="Google 雲端：未登入"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path class="cl" d="M9 25 H24 a6 6 0 0 0 0.8 -11.9 A8 8 0 0 0 9.6 11.6 A6.7 6.7 0 0 0 9 25 Z" stroke-width="2" stroke-linejoin="round"/></svg><span class="cloud-st-dot">!</span></button>
+                <button type="button" class="cloud-st-btn st-off seen in-nav" data-on-click='[["openCloudSettings",[]]]' title="Google 雲端" aria-label="Google 雲端：未登入"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path class="cl" d="M9 25 H24 a6 6 0 0 0 0.8 -11.9 A8 8 0 0 0 9.6 11.6 A6.7 6.7 0 0 0 9 25 Z" stroke-width="2" stroke-linejoin="round"/></svg><span class="cloud-st-dot">!</span></button>
             </div>
 
             <div id="listQuotaBar" style="text-align:center; font-size:14px; font-weight:600; color:var(--text-muted); margin-bottom:10px;"></div>
