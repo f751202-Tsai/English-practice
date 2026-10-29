@@ -14,7 +14,7 @@
         object-src 'none';
         base-uri 'self';
         form-action 'self'">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="icon" href="data:,">
     <!-- 引入 Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -1860,6 +1860,227 @@
         body.power-saving-mode .adv-si-row p { color: #E2E8F0; }
         .fun-lv-badge { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 800; color: #FFFFFF; background: var(--primary-gradient); border-radius: 8px; padding: 2px 8px; vertical-align: 2px; letter-spacing: 0; }
         .fun-go { flex: 0 0 auto; margin: 0 6px 0 8px; font-size: 13.5px; font-weight: 800; color: #FFFFFF; background: var(--primary-gradient); border-radius: 10px; padding: 6px 14px; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25); white-space: nowrap; }
+        /* ══ 單字編輯頁 ══ */
+        .ed-search { display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--border-color); border-radius: 14px; background: #FFFFFF; padding: 0 12px 0 14px; margin-bottom: 12px; color: #94A3B8; transition: border-color .15s, box-shadow .15s; }
+        .ed-search:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+        .ed-search .search-input, .ed-search input { flex: 1; min-width: 0; border: none !important; background: transparent !important; box-shadow: none !important; padding: 11px 0 !important; margin: 0 !important; font-size: 15px; color: var(--text-main); outline: none; }
+        .ed-search-x { display: none; border: none; background: transparent; color: #94A3B8; font-size: 15px; font-weight: 900; cursor: pointer; padding: 4px; }
+        .ed-search.has-q .ed-search-x { display: block; }
+        body.power-saving-mode .ed-search { background: #232733; border-color: #2B303C; }
+        body.power-saving-mode .ed-search input { color: #FFFFFF; }
+        .ed-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px 8px; }
+        .ed-tools { display: flex; align-items: center; gap: 6px; }
+        .ed-chip { border: none; background: #EEF2FF; color: var(--primary); font: 800 12.5px inherit; font-family: inherit; border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+        body.power-saving-mode .ed-chip { background: #2A2F45; color: #A5B4FC; }
+        #editorDetailView .editor-word-counter { position: static; margin: 0; background: transparent !important; padding: 0; font-size: 13px; font-weight: 700; color: var(--text-muted); }
+        #editorDetailView .editor-word-counter b { color: var(--text-main); }
+        #editorDetailView .editor-word-counter.is-near b, #editorDetailView .editor-word-counter.is-full b { color: #EA580C; }
+        body.power-saving-mode #editorDetailView .editor-word-counter b { color: #FFFFFF; }
+        #editorDetailView .editor-word-counter .star, .ed-row .star, .ed-srow .star { color: #F59E0B; font-weight: 900; }
+        #editorDetailView .editor-wrapper { border-radius: 16px; border-width: 1.5px; margin-bottom: 12px; }
+        .ed-pack-hint { display: none; font-size: 12.5px; font-weight: 700; color: var(--text-muted); }
+        .ed-pack .ed-edit-only { display: none !important; }
+        .ed-pack .ed-pack-hint { display: inline; }
+        .ed-starlist { display: none; }
+        .ed-pack .ed-starlist { display: block; }
+        .ed-list { border: 1.5px solid var(--border-color); border-radius: 16px; overflow: hidden; background: #FFFFFF; }
+        body.power-saving-mode .ed-list { background: #232733; border-color: #2B303C; }
+        .ed-row, .ed-srow { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; font-size: 15px; color: var(--text-main); }
+        .ed-row + .ed-row, .ed-srow + .ed-srow { border-top: 1px solid var(--border-color); }
+        body.power-saving-mode .ed-row + .ed-row, body.power-saving-mode .ed-srow + .ed-srow { border-top-color: #2B303C; }
+        .ed-row .t, .ed-srow .t { flex: 1; min-width: 0; }
+        .ed-row b, .ed-srow b { font-weight: 700; } body.power-saving-mode .ed-row, body.power-saving-mode .ed-srow { color: #FFFFFF; }
+        .ed-row .mut, .ed-srow .mut { color: var(--text-muted); font-size: 13.5px; }
+        .ed-row .hit { background: #FEF08A; color: #1E293B; border-radius: 4px; padding: 0 2px; font-weight: 800; }
+        .ed-row .ar { color: #94A3B8; font-size: 18px; font-weight: 900; }
+        .ed-srow .st { flex: 0 0 auto; font-size: 18px; color: #CBD5E1; width: 20px; text-align: center; }
+        .ed-srow.on .st { color: #F59E0B; }
+        .ed-srow.on { background: #FFFBEB; } body.power-saving-mode .ed-srow.on { background: #2E2716; }
+        .ed-found { font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 0 2px 8px; }
+        .ed-found b { color: var(--text-main); }
+        .ed-empty { border: 1.5px dashed var(--border-color); border-radius: 16px; padding: 26px 14px; text-align: center; color: var(--text-muted); font-size: 14px; font-weight: 700; margin-top: 4px; }
+        /* ══ 題庫清單、選題庫頁 ══ */
+        .pk-hide { display: none !important; }
+        .pk-seg { display: flex; gap: 22px; border-bottom: 1.5px solid var(--border-color); margin: 0 2px 12px; }
+        body.power-saving-mode .pk-seg { border-bottom-color: #2B303C; }
+        .pk-seg button { border: none; background: transparent; padding: 8px 2px 9px; font: 800 15px inherit; font-family: inherit; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; position: relative; }
+        .pk-seg button small { font-size: 12px; font-weight: 700; }
+        .pk-seg button em { font-style: normal; font-size: 11px; font-weight: 800; color: #FFFFFF; background: var(--primary); border-radius: 7px; padding: 0 6px; line-height: 17px; }
+        .pk-seg button.on { color: var(--primary); }
+        .pk-seg button.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1.5px; height: 3px; border-radius: 3px; background: var(--primary); }
+        body.power-saving-mode .pk-seg button.on { color: #A5B4FC; }
+        body.power-saving-mode .pk-seg button.on::after { background: #818CF8; }
+        .pk-bar { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 10px; font-size: 13px; font-weight: 700; color: var(--text-muted); }
+        .addb { border: none; background: #EEF2FF; color: var(--primary); font: 800 13px inherit; font-family: inherit; border-radius: 10px; padding: 6px 12px; cursor: pointer; }
+        body.power-saving-mode .addb { background: #2A2F45; color: #A5B4FC; }
+        .select-card-grid.pk-grid { display: block; max-height: none; overflow: visible; padding: 0; margin: 0 0 4px; border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; overflow: hidden; }
+        body.power-saving-mode .select-card-grid.pk-grid { background: #232733; border-color: #2B303C; }
+        .pk-grid.seg-custom .select-card[data-kind="pack"], .pk-grid.seg-pack .select-card[data-kind="custom"] { display: none !important; }
+        .pk-grid .select-card.pk-row, body.power-saving-mode .pk-grid .select-card.pk-row { border: none !important; border-radius: 0; background: transparent !important; box-shadow: none !important; padding: 12px 16px; min-height: 58px; border-top: 1px solid var(--border-color) !important; }
+        body.power-saving-mode .pk-grid .select-card.pk-row { border-top-color: #2B303C !important; }
+        .pk-grid .select-card.pk-row.pk-first { border-top: none !important; }
+        .pk-grid .select-card.pk-row.selected, body.power-saving-mode .pk-grid .select-card.pk-row.selected { background: #F5F7FF !important; }
+        body.power-saving-mode .pk-grid .select-card.pk-row.selected { background: #2A2F45 !important; }
+        .pk-grid .select-card-title, .pk-grid .select-card.selected .select-card-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+        body.power-saving-mode .pk-grid .select-card-title, body.power-saving-mode .pk-grid .select-card.selected .select-card-title { color: #FFFFFF !important; }
+        .pk-grid .select-card-count { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+        .pk-grid .checkmark-badge { width: auto; height: auto; background: transparent; color: var(--primary); font-size: 16px; font-weight: 900; }
+        body.power-saving-mode .pk-grid .checkmark-badge { color: #A5B4FC; }
+        .pk-empty { padding: 22px 14px; text-align: center; font-size: 13.5px; font-weight: 700; color: var(--text-muted); }
+        .stats-status-bar, body.power-saving-mode .stats-status-bar { background: transparent !important; border: none !important; padding: 8px 4px 0 !important; margin-bottom: 12px; font-size: 13px; font-weight: 700; color: var(--text-muted) !important; }
+        .stats-status-bar b { color: var(--text-main); font-weight: 800; } body.power-saving-mode .stats-status-bar b { color: #FFFFFF; }
+        .nav-tune-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--border-color); background: #FFFFFF; color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: border-color .2s; }
+        .nav-tune-btn:hover { border-color: #C7D2FE; }
+        body.power-saving-mode .nav-tune-btn { background: #232733; border-color: #2B303C; color: #A5B4FC; }
+        .back-home-btn[style*="display: none"] ~ .nav-tune-btn { display: none; }
+        .lst-list { border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; overflow: visible; }
+        body.power-saving-mode .lst-list { background: #232733; border-color: #2B303C; }
+        .lst-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; position: relative; }
+        .lst-row + .lst-row { border-top: 1px solid var(--border-color); }
+        body.power-saving-mode .lst-row + .lst-row { border-top-color: #2B303C; }
+        .lst-no { flex: 0 0 30px; height: 30px; border-radius: 9px; background: #EEF2FF; color: var(--primary); font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+        .lst-no.pk { background: var(--primary-gradient); font-size: 15px; }
+        body.power-saving-mode .lst-no { background: #2A2F45; color: #A5B4FC; }
+        .lst-tx { flex: 1; min-width: 0; } .lst-tx b { font-size: 15px; color: var(--text-main); } body.power-saving-mode .lst-tx b { color: #FFFFFF; }
+        .lst-tx small { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-muted); margin-top: 2px; }
+        .lst-tx small .warn { color: #EA580C; font-weight: 800; }
+        .lst-shop .lst-tx b { color: var(--primary); } body.power-saving-mode .lst-shop .lst-tx b { color: #A5B4FC; }
+        .lst-ar { color: #94A3B8; font-size: 18px; font-weight: 900; }
+        .lst-menu { position: relative; }
+        .lst-empty { padding: 24px 14px; text-align: center; font-size: 14px; color: var(--text-muted); }
+        @media (min-width: 769px) {
+            .lst-list.two, .select-card-grid.pk-grid { display: grid; grid-template-columns: 1fr 1fr; }
+            .lst-list.two .lst-row + .lst-row { border-top: none; }
+            .lst-list.two .lst-row:nth-child(odd) { border-right: 1px solid var(--border-color); }
+            .lst-list.two .lst-row:nth-child(n+3) { border-top: 1px solid var(--border-color); }
+            .pk-grid .select-card.pk-row { border-top: none !important; }
+            .pk-grid .select-card.pk-row.pk-odd { border-right: 1px solid var(--border-color) !important; }
+            .pk-grid .select-card.pk-row.pk-r2 { border-top: 1px solid var(--border-color) !important; }
+            .pk-grid .pk-empty { grid-column: 1 / -1; }
+            body.power-saving-mode .lst-list.two .lst-row { border-color: #2B303C !important; }
+            body.power-saving-mode .pk-grid .select-card.pk-row { border-color: #2B303C !important; }
+        }
+        /* ══ 首頁分頁 ══ */
+        #appChrome { margin-bottom: 14px; }
+        .ac-top { display: flex; align-items: center; gap: 10px; position: relative; margin-bottom: 12px; }
+        .ac-mascot { position: relative; width: 40px; height: 40px; border-radius: 12px; background: var(--primary-gradient); flex: 0 0 auto; overflow: hidden; box-shadow: 0 2px 6px rgba(79,70,229,.25); }
+        .ac-mascot .m { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .25s ease; }
+        .ac-mascot .m.on { opacity: 1; }
+        .ac-mascot svg { width: 38px; height: 38px; }
+        .ac-name { flex: 1; font-size: 19px; font-weight: 900; color: var(--text-main); letter-spacing: -.3px; }
+        body.power-saving-mode .ac-name { color: #FFFFFF; }
+        .ac-top .cloud-st-btn { position: relative; top: auto; right: auto; width: 40px; height: 40px; flex: 0 0 auto; }
+        .ac-top .settings-gear-btn { position: relative; top: auto; right: auto; width: 40px; height: 40px; flex: 0 0 auto; }
+        .ac-top .cloud-tip { top: 48px; right: 30px; }
+        .ac-tabs { display: flex; gap: 4px; border-bottom: 1.5px solid var(--border-color); }
+        body.power-saving-mode .ac-tabs { border-bottom-color: #2B303C; }
+        .ac-tab { display: flex; align-items: center; gap: 6px; padding: 9px 14px 10px; border: none; background: transparent; font: 800 15px inherit; font-family: inherit; color: #94A3B8; position: relative; cursor: pointer; }
+        .ac-tab svg { width: 19px; height: 19px; }
+        .ac-tab.on { color: var(--primary); }
+        .ac-tab.on::after { content: ''; position: absolute; left: 8px; right: 8px; bottom: -1.5px; height: 3px; border-radius: 3px; background: var(--primary); }
+        body.power-saving-mode .ac-tab.on { color: #A5B4FC; }
+        .ac-tab .fun-lv-badge { font-style: normal; white-space: nowrap; margin-left: 0; font-size: 10.5px; padding: 1px 6px; }
+        .hm-title { font-size: 15px; font-weight: 800; color: var(--text-main); margin: 4px 2px 8px; }
+        body.power-saving-mode .hm-title { color: #FFFFFF; }
+        .hm-list { border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; overflow: hidden; }
+        body.power-saving-mode .hm-list { background: #232733; border-color: #2B303C; }
+        .hm-list .list-item { padding: 14px 16px; }
+        .hm-list .list-item:first-child { border-top: none !important; }
+        .hm-list .item-icon-box { width: 40px; height: 40px; border-radius: 12px; box-shadow: none; margin-right: 14px; }
+        .hm-today { display: flex; align-items: center; gap: 12px; border-radius: 16px; padding: 13px 15px; background: var(--primary-gradient); color: #FFFFFF; margin: 2px 0 16px; }
+        .hm-today .tx { flex: 1; min-width: 0; }
+        .hm-today b { display: block; font-size: 15.5px; }
+        .hm-today small { display: block; font-size: 12.5px; opacity: .92; margin-top: 2px; }
+        .hm-today .bar { height: 6px; border-radius: 6px; background: rgba(255,255,255,.3); margin-top: 8px; }
+        .hm-today .bar i { display: block; height: 100%; border-radius: 6px; background: #FFFFFF; }
+        .hm-today .go { flex: 0 0 auto; border: none; font: 800 13.5px inherit; font-family: inherit; background: rgba(255,255,255,.22); color: #FFFFFF; border-radius: 10px; padding: 7px 14px; cursor: pointer; }
+        .hm-today .go.hot { background: #FFFFFF; color: var(--primary); }
+        @media screen and (max-width: 768px) {
+            .ac-tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 900; border-bottom: none; border-top: 1px solid var(--border-color); background: rgba(255,255,255,.97); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); gap: 0; }
+            body.power-saving-mode .ac-tabs { background: rgba(27,30,39,.97); border-top-color: #2B303C; }
+            .ac-tab { flex: 1; flex-direction: column; gap: 2px; padding: 6px 0 4px; font-size: 11.5px; }
+            .ac-tab svg { width: 22px; height: 22px; }
+            .ac-tab.on::after { display: none; }
+            .ac-tab .fun-lv-badge { position: absolute; top: 0; left: calc(50% + 8px); white-space: nowrap; font-size: 9.5px; padding: 0 5px; line-height: 15px; }
+            body.home-tabbed { padding-bottom: 0 !important; }
+            body.home-tabbed #mainScaleWrapper { margin-bottom: 0 !important; }
+            body.home-tabbed .paper-card-container { min-height: calc(100vh - 12px - var(--tabh, 64px)); min-height: calc(100dvh - 12px - var(--tabh, 64px)); margin-bottom: var(--tabh, 64px); border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-sizing: border-box; }
+            #appChrome { margin-bottom: 10px; }
+        }
+        /* ══ 設定視窗 ══ */
+        .sm-modal { max-width: 440px !important; }
+        .sm-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+        .sm-head b { font-size: 18px; color: var(--text-main); }
+        body.power-saving-mode .sm-head b { color: #FFFFFF; }
+        .sm-x { position: static !important; float: none !important; font-size: 26px; line-height: 1; }
+        .sm-grp { font-size: 12.5px; font-weight: 800; color: var(--text-muted); margin: 14px 4px 6px; }
+        .sm-list { border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; overflow: hidden; }
+        body.power-saving-mode .sm-list { background: #232733; border-color: #2B303C; }
+        .sm-row { display: flex; align-items: center; gap: 10px; padding: 11px 14px; min-height: 52px; box-sizing: border-box; }
+        .sm-row + .sm-row { border-top: 1px solid var(--border-color); }
+        body.power-saving-mode .sm-row + .sm-row { border-top-color: #2B303C; }
+        .sm-row .t { flex: 1; min-width: 0; font-size: 15px; font-weight: 700; color: var(--text-main); }
+        body.power-saving-mode .sm-row .t { color: #FFFFFF; }
+        .sm-row .t small { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 2px; }
+        .sm-row.col { flex-direction: column; align-items: stretch; gap: 10px; }
+        .sm-row.col .top { display: flex; align-items: center; justify-content: space-between; }
+        .sm-row .speed-val { font-size: 14px; font-weight: 800; color: var(--primary); min-width: 0; }
+        .sm-row .range-slider { width: 100%; margin: 0; }
+        input.sm-num { width: 66px !important; flex: 0 0 auto; text-align: center; font-size: 15px; font-weight: 800; padding: 6px 4px !important; margin: 0 !important; border: 1.5px solid var(--border-color) !important; border-radius: 10px !important; background: #F8FAFC !important; color: var(--text-main) !important; box-sizing: border-box; }
+        body.power-saving-mode input.sm-num { background: #1B1E27 !important; border-color: #2B303C !important; color: #FFFFFF !important; }
+        body.power-saving-mode .sm-list .slider-toggle { background-color: #3B3F4C; }
+        body.power-saving-mode .sm-list input:checked + .slider-toggle { background-color: #10B981; }
+        .sm-note { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin: 8px 4px 0; }
+        .sm-ok { margin-top: 16px !important; }
+        /* ══ 測驗紀錄 ══ */
+        .hs-sum { font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 0 2px 8px; }
+        .hs-sum b { color: var(--text-main); } body.power-saving-mode .hs-sum b { color: #FFFFFF; }
+        .hs-chart { border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; padding: 10px 10px 6px; }
+        body.power-saving-mode .hs-chart { background: #232733; border-color: #2B303C; }
+        .hs-chart polyline { fill: none; stroke: #6366F1; stroke-width: 2.6; stroke-linejoin: round; }
+        .hs-chart circle { fill: #FFFFFF; stroke: #6366F1; stroke-width: 2.2; } .hs-chart circle.last { fill: #4F46E5; }
+        body.power-saving-mode .hs-chart circle { fill: #232733; } body.power-saving-mode .hs-chart circle.last { fill: #818CF8; }
+        .hs-chart line.ref { stroke: #CBD5E1; stroke-dasharray: 4 4; }
+        .hs-chart text.ref { font-size: 10px; font-weight: 700; fill: #94A3B8; }
+        .hs-chart text.val { font-size: 13px; font-weight: 900; fill: #4F46E5; } body.power-saving-mode .hs-chart text.val { fill: #A5B4FC; }
+        .hs-chart .dates { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #94A3B8; padding: 0 4px; }
+        .hs-sec { display: flex; align-items: center; justify-content: space-between; margin: 16px 2px 8px; }
+        .hs-sec b { font-size: 15px; color: var(--text-main); } body.power-saving-mode .hs-sec b { color: #FFFFFF; }
+        .hs-link { border: none; background: transparent; color: var(--primary); font: 800 13px inherit; font-family: inherit; cursor: pointer; padding: 0; }
+        .hs-list { border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; overflow: hidden; }
+        body.power-saving-mode .hs-list { background: #232733; border-color: #2B303C; }
+        .hs-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; min-height: 50px; box-sizing: border-box; }
+        .hs-row + .hs-row { border-top: 1px solid var(--border-color); }
+        body.power-saving-mode .hs-row + .hs-row { border-top-color: #2B303C; }
+        .hs-row.link, .hs-row.pick { cursor: pointer; }
+        .hs-row .t { flex: 1; min-width: 0; font-size: 15px; color: var(--text-main); }
+        body.power-saving-mode .hs-row .t { color: #FFFFFF; }
+        .hs-row .t b { font-weight: 700; }
+        .hs-row .t .mut { color: var(--text-muted); font-size: 13.5px; }
+        .hs-row .t small { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 2px; }
+        .hs-row .t small.yours { color: #EA580C; }
+        .hs-row .cnt { font-size: 12.5px; font-weight: 800; color: #EA580C; white-space: nowrap; }
+        .hs-row .sc { font-size: 18px; font-weight: 900; color: var(--primary); } .hs-row .sc.low { color: #EA580C; }
+        body.power-saving-mode .hs-row .sc { color: #A5B4FC; } body.power-saving-mode .hs-row .sc.low { color: #FB923C; }
+        .hs-row .ar { color: #94A3B8; font-size: 18px; font-weight: 900; }
+        .hs-row .ok { color: #10B981; font-weight: 900; } .hs-row .no { color: #EA580C; font-weight: 900; }
+        .hs-row .ck { width: 16px; color: var(--primary); font-weight: 900; text-align: center; }
+        .hs-row.pick.on { background: #F5F7FF; } body.power-saving-mode .hs-row.pick.on { background: #2A2F45; }
+        .hs-empty { padding: 22px 14px; text-align: center; font-size: 13.5px; font-weight: 700; color: var(--text-muted); }
+        .hs-dhead { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 6px; font-size: 13px; color: var(--text-muted); }
+        .hs-dhead b { font-size: 16px; color: var(--text-main); } body.power-saving-mode .hs-dhead b { color: #FFFFFF; }
+        .hs-big { font-size: 24px; font-weight: 900; color: var(--primary); } .hs-big small { font-size: 13px; }
+        .pk-bar .warn { color: #EA580C; } .pk-bar b { color: var(--text-main); } body.power-saving-mode .pk-bar b { color: #FFFFFF; }
+        .hs-save { display: flex; gap: 8px; margin-top: 12px; }
+        .hs-save select { flex: 1; min-width: 0; margin: 0 !important; border-radius: 12px !important; }
+        .hs-save button { border: none; border-radius: 12px; padding: 0 20px; background: var(--primary-gradient); color: #FFFFFF; font: 800 14px inherit; font-family: inherit; cursor: pointer; }
+        /* ══ 往下捲時的細長條 ══ */
+        #stickyNavBar { position: fixed; top: 0; z-index: 950; height: 52px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.97); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-color); box-sizing: border-box; transform: translateY(-100%); opacity: 0; pointer-events: none; transition: transform .18s ease, opacity .18s ease; }
+        #stickyNavBar.show { transform: none; opacity: 1; pointer-events: auto; }
+        body.power-saving-mode #stickyNavBar { background: rgba(27,30,39,.97); border-bottom-color: #2B303C; }
+        #stickyNavBar .sb-back { position: absolute; left: 14px; width: 32px; height: 32px; border-radius: 10px; border: none; background: var(--primary-gradient); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(79,70,229,.25); padding: 0; }
+        #stickyNavBar .sb-title { font-size: 15.5px; font-weight: 800; color: var(--text-main); max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        body.power-saving-mode #stickyNavBar .sb-title { color: #FFFFFF; }
     </style>
 </head>
 <body>
@@ -1872,57 +2093,12 @@
     <button class="action-btn btn-stop" style="margin: 10px auto 0; max-width: 250px;" data-on-click='[["hideInAppBrowserWarning",[]]]'>我知道了，繼續使用</button>
 </div>
 
-<div id="mainScaleWrapper" class="scale-wrapper">
+<div id="mainScaleWrapper" class="scale-wrapper-practice">
     <div class="paper-card-container">
         
-        <!-- ================= 🏠 首頁儀表板檢視 ================= -->
-        <div id="homeDashboardView" class="app-view active">
-             <!-- 首頁左上角：雞塊獎勵按鈕 (圖2綠色框處) -->
-            <button class="chicken-reward-btn" data-on-click='[["openChickenRewardModal",[]]]' title="雞塊獎勵中心" style="background: #FFFFFF; border-color: #E2E8F0;">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='10 10 80 80'><path d='M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z' fill='%23F3A63B' stroke='%23C27803' stroke-width='3'/><path d='M 38 42 Q 43 45 40 50' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M 58 52 Q 62 58 56 64' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><circle cx='46' cy='38' r='2' fill='%23C27803'/><circle cx='54' cy='68' r='2' fill='%23C27803'/><circle cx='64' cy='42' r='2.5' fill='%23C27803'/><circle cx='34' cy='58' r='2' fill='%23C27803'/><circle cx='48' cy='52' r='2.5' fill='%23C27803'/></svg>" class="chicken-icon-img" alt="雞塊">
-                <div id="chickenRewardBadge" class="reward-badge-dot" style="display: none;">✓</div>
-            </button>
-
-            <div class="app-header">
-                <button type="button" class="cloud-st-btn st-off seen" id="cloudStateBtn" data-on-click='[["openCloudSettings",[]]]' title="Google 雲端" aria-label="Google 雲端：未登入"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path class="cl" d="M9 25 H24 a6 6 0 0 0 0.8 -11.9 A8 8 0 0 0 9.6 11.6 A6.7 6.7 0 0 0 9 25 Z" stroke-width="2" stroke-linejoin="round"/></svg><span class="cloud-st-dot" id="cloudStateDot">!</span></button>
-                <div class="cloud-tip" id="cloudTip" style="display: none;">雲端已中斷，點一下重新連線</div>
-                <button class="settings-gear-btn" data-on-click='[["openSystemSettingsModal",[]]]' title="系統設定">⚙️</button>
-                <div class="app-logo-icon">
-                    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="100" height="100" rx="22" fill="#6366F1"/>
-                        <path d="M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z" fill="#F3A63B" stroke="#2B2118" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="36" cy="46" r="3.5" fill="#EE715C"/>
-                        <circle cx="58" cy="46" r="3.5" fill="#EE715C"/>
-                        <circle cx="30" cy="62" r="2" fill="#E28923"/>
-                        <circle cx="68" cy="58" r="2" fill="#E28923"/>
-                        <circle cx="48" cy="72" r="2.5" fill="#E2861E"/>
-                        <circle cx="40" cy="42" r="2.5" fill="#2B2118"/>
-                        <circle cx="54" cy="42" r="2.5" fill="#2B2118"/>
-                        <path d="M 44 48 Q 47 52 50 48" stroke="#2B2118" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                        <path d="M 38 82 L 36 88 M 36 88 L 32 88 M 58 82 L 60 88 M 60 88 L 64 88" stroke="#2B2118" stroke-width="3" stroke-linecap="round"/>
-                        <path d="M 24 50 Q 17 52 18 58" stroke="#2B2118" stroke-width="3" stroke-linecap="round" fill="none"/>
-                        <path d="M 72 48 Q 78 40 76 34" stroke="#2B2118" stroke-width="3" stroke-linecap="round" fill="none"/>
-                        <g transform="translate(10, 0)">
-                            <path d="M 52 14 L 80 14 C 85 14, 88 17, 88 22 L 88 32 C 88 37, 85 40, 80 40 L 68 40 L 62 46 L 63 40 L 52 40 C 47 40, 44 37, 44 32 L 44 22 C 44 17, 47 14, 52 14 Z" fill="#FFFFFF" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round"/>
-                            <text x="50" y="31" font-family="'Inter', sans-serif" font-weight="800" font-size="11" fill="#4F46E5">A</text>
-                            <text x="59" y="31" font-family="'Inter', sans-serif" font-weight="800" font-size="11" fill="#EF4444">B</text>
-                            <text x="68" y="31" font-family="'Inter', sans-serif" font-weight="800" font-size="11" fill="#10B981">C</text>
-                        </g>
-                    </svg>
-                </div>
-                <h2>Chicky Vocab</h2>
-                <div class="app-subtitle">Professional Learning System</div>
-            </div>
-            
-
-            <div id="homeContentWrapper">
-                
-                <!-- 1. 練習卡片 (可展開) -->
-                <div class="section-card">
-                    <div class="section-header-clickable" data-on-click='[["toggleAccordion",["practiceList"]]]'>
-                        <div class="header-title-box">
-                            <div class="mascot-icon-box">
-                                <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div id="appChrome">
+            <div class="ac-top">
+                <span class="ac-mascot" id="acMascot"><span class="m" data-tab="practice"><svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M 18 68 C 8 68, 2 72, 4 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
                                     <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
                                     <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
@@ -1942,16 +2118,73 @@
                                         <rect x="37" y="0" width="9" height="28" rx="3" fill="#231F20"/>
                                         <rect x="46" y="4" width="5" height="20" rx="2" fill="#3D383A"/>
                                     </g>
-                                </svg>
-                            </div>
-                            <div class="section-title-group">
-                                <div class="section-title" data-t-en="英文練習" data-t-ko="韓文練習">英文練習</div>
-                            </div>
-                            <div class="item-arrow">⌄</div>
-                        </div>
-                    </div>
-
-                    <div class="collapsible-list" id="practiceList">
+                                </svg></span><span class="m" data-tab="exam"><svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                    <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                    <circle cx="40" cy="82" r="3.5" fill="#E2861E"/>
+                                    <circle cx="64" cy="98" r="3.5" fill="#E2861E"/>
+                                    <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+                                    <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                    <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                    <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                    <path d="M 100 68 C 104 62, 103 52, 97 45" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <g transform="translate(98, 15) rotate(22)">
+                                        <rect x="8" y="0" width="12" height="12" rx="2" fill="#231F20" stroke="#231F20" stroke-width="2.5"/>
+                                        <rect x="6" y="12" width="16" height="28" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
+                                        <rect x="6" y="40" width="16" height="26" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
+                                        <path d="M 6 66 L 22 66 L 22 74 C 22 76, 20 78, 14 78 C 8 78, 6 76, 6 74 Z" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
+                                    </g>
+                                </svg></span><span class="m" data-tab="lists"><svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                <circle cx="42" cy="84" r="3.5" fill="#E2861E"/>
+                                <circle cx="68" cy="100" r="3.5" fill="#E2861E"/>
+                                <circle cx="98" cy="78" r="3.5" fill="#E2861E"/>
+                                <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 100 68 C 104 62, 102 54, 96 50" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <g transform="translate(64, 46)">
+                                    <rect x="0" y="0" width="36" height="28" rx="3" fill="#78350F" stroke="#231F20" stroke-width="3"/>
+                                    <path d="M 18 0 L 18 28" stroke="#231F20" stroke-width="2.5"/>
+                                    <path d="M 5 8 Q 11 6 15 10" stroke="#231F20" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M 21 8 Q 27 6 31 10" stroke="#231F20" stroke-width="2" stroke-linecap="round"/>
+                                </g>
+                            </svg></span><span class="m" data-tab="fun"><svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 20 30 L 28 38 M 132 30 L 124 38 M 76 12 L 76 22 M 20 90 L 28 82 M 132 90 L 124 82" stroke="#FACC15" stroke-width="5" stroke-linecap="round"/>
+                                <circle cx="76" cy="68" r="48" fill="#FEF08A" opacity="0.25"/>
+                                <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                <circle cx="36" cy="80" r="4" fill="#E2861E"/>
+                                <circle cx="66" cy="98" r="3.5" fill="#E2861E"/>
+                                <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+                                <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <path d="M 108 68 C 118 68, 124 72, 122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                            </svg></span></span>
+                <b class="ac-name">Chicky Vocab</b>
+                <button type="button" class="cloud-st-btn st-off seen" id="cloudStateBtn" data-on-click='[["openCloudSettings",[]]]' title="Google 雲端" aria-label="Google 雲端：未登入"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path class="cl" d="M9 25 H24 a6 6 0 0 0 0.8 -11.9 A8 8 0 0 0 9.6 11.6 A6.7 6.7 0 0 0 9 25 Z" stroke-width="2" stroke-linejoin="round"/></svg><span class="cloud-st-dot" id="cloudStateDot">!</span></button>
+                <button class="settings-gear-btn" data-on-click='[["openSystemSettingsModal",[]]]' title="系統設定">⚙️</button>
+                <div class="cloud-tip" id="cloudTip" style="display: none;">雲端已中斷，點一下重新連線</div>
+            </div>
+            <nav class="ac-tabs" id="acTabs" role="tablist"><button type="button" class="ac-tab" data-tab="practice" role="tab" data-on-click='[["setHomeTab",["practice"]]]'><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg><span>練習</span></button><button type="button" class="ac-tab" data-tab="exam" role="tab" data-on-click='[["setHomeTab",["exam"]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg><span>測驗</span></button><button type="button" class="ac-tab" data-tab="lists" role="tab" data-on-click='[["setHomeTab",["lists"]]]'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7"/></svg><span>題庫</span></button><button type="button" class="ac-tab" data-tab="fun" role="tab" data-on-click='[["setHomeTab",["fun"]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"></path><path d="M4 4h13l-2 4 2 4H4"></path></svg><span>樂園</span><em class="fun-lv-badge" id="funLvBadge" style="display:none"></em></button></nav>
+        </div>
+        <!-- ================= 🏠 首頁儀表板檢視 ================= -->
+        <div id="homeDashboardView" class="app-view active">
+            <div class="hm-pane" data-pane="practice">
+                <div class="hm-today" id="homeToday"></div>
+                <div class="hm-title" data-t-en="英文練習" data-t-ko="韓文練習">英文練習</div>
+                <div class="hm-list">
                         <div class="list-item" data-on-click='[["goToPracticePage",[]]]'>
                             <div class="item-icon-box">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
@@ -1985,42 +2218,10 @@
                             <div class="item-arrow">›</div>
                         </div>
                     </div>
-                </div>
-
-                <!-- 2. 測驗卡片 (可展開) -->
-                <div class="section-card">
-                    <div class="section-header-clickable" data-on-click='[["toggleAccordion",["examList"]]]'>
-                        <div class="header-title-box">
-                            <div class="mascot-icon-box">
-                                <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
-                                    <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
-                                    <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
-                                    <circle cx="40" cy="82" r="3.5" fill="#E2861E"/>
-                                    <circle cx="64" cy="98" r="3.5" fill="#E2861E"/>
-                                    <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
-                                    <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
-                                    <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
-                                    <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
-                                    <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
-                                    <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-                                    <path d="M 100 68 C 104 62, 103 52, 97 45" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
-                                    <g transform="translate(98, 15) rotate(22)">
-                                        <rect x="8" y="0" width="12" height="12" rx="2" fill="#231F20" stroke="#231F20" stroke-width="2.5"/>
-                                        <rect x="6" y="12" width="16" height="28" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
-                                        <rect x="6" y="40" width="16" height="26" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
-                                        <path d="M 6 66 L 22 66 L 22 74 C 22 76, 20 78, 14 78 C 8 78, 6 76, 6 74 Z" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
-                                    </g>
-                                </svg>
-                            </div>
-                            <div class="section-title-group">
-                                <div class="section-title" data-t-en="英文測驗" data-t-ko="韓文測驗">英文測驗</div>
-                            </div>
-                            <div class="item-arrow">⌄</div>
-                        </div>
-                    </div>
-
-                    <div class="collapsible-list" id="examList">
+            </div>
+            <div class="hm-pane" data-pane="exam">
+                <div class="hm-title" data-t-en="英文測驗" data-t-ko="韓文測驗">英文測驗</div>
+                <div class="hm-list">
                         <div class="list-item" data-on-click='[["goToExamPage",[]]]'>
                             <div class="item-icon-box">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
@@ -2054,72 +2255,10 @@
                             <div class="item-arrow">›</div>
                         </div>
                     </div>
-                </div>
-
-                <!-- 3. 題庫卡片 (單行) -->
-                <div class="section-card" data-on-click='[["goToEditorPage",[]]]'>
-                    <div class="header-title-box">
-                        <div class="mascot-icon-box">
-                            <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
-                                <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
-                                <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
-                                <circle cx="42" cy="84" r="3.5" fill="#E2861E"/>
-                                <circle cx="68" cy="100" r="3.5" fill="#E2861E"/>
-                                <circle cx="98" cy="78" r="3.5" fill="#E2861E"/>
-                                <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
-                                <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
-                                <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
-                                <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
-                                <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-                                <path d="M 100 68 C 104 62, 102 54, 96 50" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
-                                <g transform="translate(64, 46)">
-                                    <rect x="0" y="0" width="36" height="28" rx="3" fill="#78350F" stroke="#231F20" stroke-width="3"/>
-                                    <path d="M 18 0 L 18 28" stroke="#231F20" stroke-width="2.5"/>
-                                    <path d="M 5 8 Q 11 6 15 10" stroke="#231F20" stroke-width="2" stroke-linecap="round"/>
-                                    <path d="M 21 8 Q 27 6 31 10" stroke="#231F20" stroke-width="2" stroke-linecap="round"/>
-                                </g>
-                            </svg>
-                        </div>
-                        <div class="section-title-group">
-                            <div class="section-title" data-t-en="英文題庫" data-t-ko="韓文題庫">英文題庫</div>
-                            <div class="section-desc">自訂題庫標題、管理題庫單字！</div>
-                        </div>
-                        <div class="item-arrow">›</div>
-                    </div>
-                </div>
-
-                <!-- 4. 雞塊樂園 (可展開)：雞塊補給站 + 雞塊大冒險 -->
-                <div class="section-card">
-                    <div class="section-header-clickable" data-on-click='[["toggleAccordion",["funList"]]]'>
-                        <div class="header-title-box">
-                            <div class="mascot-icon-box">
-                                <svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M 20 30 L 28 38 M 132 30 L 124 38 M 76 12 L 76 22 M 20 90 L 28 82 M 132 90 L 124 82" stroke="#FACC15" stroke-width="5" stroke-linecap="round"/>
-                                <circle cx="76" cy="68" r="48" fill="#FEF08A" opacity="0.25"/>
-                                <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
-                                <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
-                                <circle cx="36" cy="80" r="4" fill="#E2861E"/>
-                                <circle cx="66" cy="98" r="3.5" fill="#E2861E"/>
-                                <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
-                                <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
-                                <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
-                                <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
-                                <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
-                                <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
-                                <path d="M 108 68 C 118 68, 124 72, 122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
-                            </svg>
-                            </div>
-                            <div class="section-title-group">
-                                <div class="section-title">雞塊樂園<span class="fun-lv-badge" id="funLvBadge" style="display:none"></span></div>
-                                <div class="section-desc">邊打怪邊背單字，也是一種練習！</div>
-                            </div>
-                            <div class="item-arrow">⌄</div>
-                        </div>
-                    </div>
-
-                    <div class="collapsible-list" id="funList">
+            </div>
+            <div class="hm-pane" data-pane="fun">
+                <div class="hm-title">雞塊樂園</div>
+                <div class="hm-list">
                         <div class="list-item" data-on-click='[["goToAdventurePage",[]]]'>
                             <div class="item-icon-box">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"></path><path d="M4 4h13l-2 4 2 4H4"></path></svg>
@@ -2142,8 +2281,6 @@
                             <div class="item-arrow">›</div>
                         </div>
                     </div>
-                </div>
-
             </div>
         </div>
 
@@ -2156,18 +2293,20 @@
                     </svg>
                 </button>
                 <div class="current-mode-indicator" data-t-en="🗂️ 英文字卡練習" data-t-ko="🗂️ 韓文字卡練習">🗂️ 英文字卡練習</div>
+                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openFlashcardSettingsModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
             </div>
 
             <div>
-                <label>請勾選練習範圍（可複選）：</label>
-                <div class="select-card-grid" id="flashcardGrid"></div>
+                <div class="pk-seg" data-grid="flashcardGrid"></div>
+                <div class="pk-bar"><span>請勾選練習範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["flashcardGrid"]]]'>全選</button></div>
+                <div class="select-card-grid pk-grid seg-custom" id="flashcardGrid"></div>
             </div>
 
             <div class="stats-status-bar">
                 <span id="flashcardStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
             </div>
 
-            <div>
+            <div class="pk-hide">
                 <div class="textarea-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <button class="collapse-toggle-btn collapsed" id="fcCollapseBtn" data-on-click='[["toggleFlashcardPreview",[]]]' title="展開/摺疊預覽">
@@ -2193,7 +2332,7 @@
                 </div>
             </div>
 
-            <button class="btn-advanced" data-on-click='[["openFlashcardSettingsModal",[]]]'>⚙️ 進階設定</button>
+            <button class="btn-advanced pk-hide" data-on-click='[["openFlashcardSettingsModal",[]]]'>⚙️ 進階設定</button>
 
             <button class="action-btn-primary" data-on-click='[["startFlashcardSession",[]]]' style="margin-top: 12px;">
                 ▶ 開始字卡練習
@@ -2249,18 +2388,20 @@
                     </svg>
                 </button>
                 <div class="current-mode-indicator" data-t-en="📋 英文字卡測驗" data-t-ko="📋 韓文字卡測驗">📋 英文字卡測驗</div>
+                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openCardExamSettingsModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
             </div>
 
             <div>
-                <label>請勾選測驗範圍（可複選）：</label>
-                <div class="select-card-grid" id="cardExamGrid"></div>
+                <div class="pk-seg" data-grid="cardExamGrid"></div>
+                <div class="pk-bar"><span>請勾選測驗範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["cardExamGrid"]]]'>全選</button></div>
+                <div class="select-card-grid pk-grid seg-custom" id="cardExamGrid"></div>
             </div>
 
             <div class="stats-status-bar">
                 <span id="cardExamStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
             </div>
 
-            <div>
+            <div class="pk-hide">
                 <div class="textarea-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <button class="collapse-toggle-btn collapsed" id="cardExamCollapseBtn" data-on-click='[["toggleCardExamPreview",[]]]' title="展開/摺疊預覽">
@@ -2286,7 +2427,7 @@
                 </div>
             </div>
 
-            <button class="btn-advanced" data-on-click='[["openCardExamSettingsModal",[]]]'>⚙️ 字卡測驗進階設定</button>
+            <button class="btn-advanced pk-hide" data-on-click='[["openCardExamSettingsModal",[]]]'>⚙️ 字卡測驗進階設定</button>
 
             <button class="action-btn-primary" data-on-click='[["startCardExamSession",[]]]' style="margin-top: 12px;">
                 ▶ 開始字卡測驗
@@ -2354,18 +2495,20 @@
                     </svg>
                 </button>
                 <div class="current-mode-indicator" data-t-en="🎤 英文朗讀練習" data-t-ko="🎤 韓文朗讀練習">🎤 英文朗讀練習</div>
+                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
             </div>
 
             <div>
-                <label>請勾選練習範圍（可複選）：</label>
-                <div class="select-card-grid" id="speakPracticeGrid"></div>
+                <div class="pk-seg" data-grid="speakPracticeGrid"></div>
+                <div class="pk-bar"><span>請勾選練習範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["speakPracticeGrid"]]]'>全選</button></div>
+                <div class="select-card-grid pk-grid seg-custom" id="speakPracticeGrid"></div>
             </div>
 
             <div class="stats-status-bar">
                 <span id="speakPracticeStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
             </div>
 
-            <div>
+            <div class="pk-hide">
                 <div class="textarea-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <button class="collapse-toggle-btn collapsed" id="speakPracticeCollapseBtn" data-on-click='[["toggleSpeakPracticePreview",[]]]' title="展開/摺疊預覽">
@@ -2391,7 +2534,7 @@
                 </div>
             </div>
 
-            <button class="btn-advanced" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'>⚙️ 朗讀練習進階設定</button>
+            <button class="btn-advanced pk-hide" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'>⚙️ 朗讀練習進階設定</button>
 
             <button class="action-btn-primary" data-on-click='[["startSpeakPracticeSession",[]]]' style="margin-top: 12px;">
                 ▶ 開始朗讀練習
@@ -2472,8 +2615,9 @@
                 <div id="advLevelCard"></div>
 
                 <div style="margin-top: 14px;">
-                    <label>請勾選出題範圍（可複選）：</label>
-                    <div class="select-card-grid" id="advGrid"></div>
+                    <div class="pk-seg" data-grid="advGrid"></div>
+                    <div class="pk-bar"><span>請勾選出題範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["advGrid"]]]'>全選</button></div>
+                    <div class="select-card-grid pk-grid seg-custom" id="advGrid"></div>
                 </div>
                 <div class="stats-status-bar" style="margin-top: 10px;">
                     <span id="advStatsText">📊 範圍統計：0 個單字</span>
@@ -2521,18 +2665,20 @@
                     </svg>
                 </button>
                 <div class="current-mode-indicator" data-t-en="🎧 英文聽力練習" data-t-ko="🎧 韓文聽力練習">🎧 英文聽力練習</div>
+                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openAdvancedModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
             </div>
 
             <div id="practiceRangeContainer">
-                <label>請勾選練習範圍（可複選）：</label>
-                <div class="select-card-grid" id="cardGrid"></div>
+                <div class="pk-seg" data-grid="cardGrid"></div>
+                <div class="pk-bar"><span>請勾選練習範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["cardGrid"]]]'>全選</button></div>
+                <div class="select-card-grid pk-grid seg-custom" id="cardGrid"></div>
             </div>
 
             <div class="stats-status-bar" id="practiceStatsBar">
                 <span id="practiceStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
             </div>
 
-            <div id="practicePreviewContainer">
+            <div id="practicePreviewContainer" class="pk-hide">
                 <div class="textarea-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <button class="collapse-toggle-btn collapsed" id="collapseBtn" data-on-click='[["togglePreview",[]]]' title="展開/摺疊預覽">
@@ -2558,7 +2704,7 @@
                 </div>
             </div>
 
-            <div id="advancedBtnContainer">
+            <div id="advancedBtnContainer" class="pk-hide">
                 <button class="btn-advanced" data-on-click='[["openAdvancedModal",[]]]'>⚙️ 聽力練習設定</button>
             </div>
 
@@ -2582,18 +2728,20 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
                     <span data-t-en="英文聽力測驗" data-t-ko="韓文聽力測驗">英文聽力測驗</span>
                 </div>
+                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openExamAdvancedModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
             </div>
 
             <div id="examRangeContainer">
-                <label>請勾選測驗範圍（可複選）：</label>
-                <div class="select-card-grid" id="examCardGrid"></div>
+                <div class="pk-seg" data-grid="examCardGrid"></div>
+                <div class="pk-bar"><span>請勾選測驗範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["examCardGrid"]]]'>全選</button></div>
+                <div class="select-card-grid pk-grid seg-custom" id="examCardGrid"></div>
             </div>
 
             <div class="stats-status-bar" id="examStatsBar">
                 <span id="examStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
             </div>
 
-            <div id="examPreviewContainer">
+            <div id="examPreviewContainer" class="pk-hide">
                 <div class="textarea-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <button class="collapse-toggle-btn collapsed" id="examCollapseBtn" data-on-click='[["toggleExamPreview",[]]]' title="展開/摺疊預覽">
@@ -2619,7 +2767,7 @@
                 </div>
             </div>
 
-            <div id="examAdvancedBtnContainer" style="margin-top: 12px;">
+            <div id="examAdvancedBtnContainer" class="pk-hide" style="margin-top: 12px;">
                 <button class="btn-advanced" data-on-click='[["openExamAdvancedModal",[]]]'>⚙️ 聽力測驗設定</button>
             </div>
 
@@ -2653,24 +2801,20 @@
 
         <!-- ================= 📁 題庫清單頁面 ================= -->
         <div id="editorListView" class="app-view">
+            
+
+            <div class="pk-seg" id="listSeg"></div>
+            <div class="pk-bar" id="listBar"><span id="listQuotaBar"></span><button type="button" class="addb" data-on-click='[["addNewWordList",[]]]'>＋ 新增</button></div>
+            <div class="lst-list" id="editorListCardContainer"></div>
+        </div>
+
+        <!-- ================= 📊 測驗紀錄 ================= -->
+        <div id="historyView" class="app-view">
             <div class="top-nav-bar">
-                <button class="back-home-btn" data-on-click='[["backToHome",[]]]' title="返回首頁">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                    </svg>
-                </button>
-                <div class="current-mode-indicator" style="background:#EEF2FF; color:var(--primary);">📁 題庫清單</div>
-                <button type="button" class="cloud-st-btn st-off seen in-nav" data-on-click='[["openCloudSettings",[]]]' title="Google 雲端" aria-label="Google 雲端：未登入"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path class="cl" d="M9 25 H24 a6 6 0 0 0 0.8 -11.9 A8 8 0 0 0 9.6 11.6 A6.7 6.7 0 0 0 9 25 Z" stroke-width="2" stroke-linejoin="round"/></svg><span class="cloud-st-dot">!</span></button>
+                <button class="back-home-btn" data-on-click='[["historyBack",[]]]' title="返回"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+                <div class="current-mode-indicator" id="historyTitle">📊 測驗紀錄</div>
             </div>
-
-            <div id="listQuotaBar" style="text-align:center; font-size:14px; font-weight:600; color:var(--text-muted); margin-bottom:10px;"></div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <label style="margin: 0; font-size: 15px;">選擇題庫本</label>
-                <button class="cloud-btn" data-on-click='[["addNewWordList",[]]]'>新增題庫本</button>
-            </div>
-
-            <div class="list-card-container" id="editorListCardContainer"></div>
+            <div id="histBody"></div>
         </div>
 
         <!-- ================= 📝 單字編輯內頁 ================= -->
@@ -2681,39 +2825,37 @@
                         <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
                 </button>
-                <div class="current-mode-indicator" id="editorDetailTitleIndicator">📁 unit 1-1 編輯</div>
-                                <div id="editorWordCounter" class="editor-word-counter"></div>
-                <button type="button" class="word-format-btn" title="單字格式說明" aria-label="單字格式說明" data-on-click='[["openWordFormatModal",[]]]'>F</button>
+                <div class="current-mode-indicator" id="editorDetailTitleIndicator">📁 unit 1-1</div>
             </div>
 
-            <div class="editor-top-section">
-                <div class="textarea-header" style="margin-bottom: 2px;">
-                    <label style="margin:0;" data-t-en="英文題庫 (每行一組，不熟前面可加 *)：" data-t-ko="韓文題庫 (每行一組，不熟前面可加 *)：">英文題庫 (每行一組，不熟前面可加 *)：</label>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 14px;">☰</span>
-                        <select style="width: auto !important; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortEditorContent",["$value"]]]'>
-                            <option value="" disabled selected>排序方式</option>
-                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
-                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
-                        </select>
-                    </div>
+            <div class="ed-search" id="edSearchBox">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+                <input type="text" class="search-input" id="wordSearchInput" placeholder="搜尋單字…" autocomplete="off" data-on-input='[["handleEditorSearch",[]]]'>
+                <button type="button" class="ed-search-x" id="edSearchClear" aria-label="清除搜尋" data-on-click='[["clearEditorSearch",[]]]'>✕</button>
+            </div>
+            <div id="searchNotFoundTip" style="display: none;"></div>
+            <div id="edSearchResults" class="ed-results" style="display: none;"></div>
+
+            <div id="edMain">
+                <div class="ed-bar">
+                    <span id="editorWordCounter" class="editor-word-counter"></span>
+                    <span class="ed-tools">
+                        <button type="button" class="ed-chip ed-edit-only" data-on-click='[["openWordFormatModal",[]]]'>格式說明</button>
+                        <button type="button" class="ed-chip ed-edit-only" id="edSortBtn" data-on-click='[["toggleEditorSort",[]]]'>A-Z ⇅</button>
+                        <span class="ed-pack-hint">點單字加星號</span>
+                    </span>
                 </div>
 
-                <div class="editor-wrapper" id="editorWrapperBox">
+                <div class="editor-wrapper ed-edit-only" id="editorWrapperBox">
                     <div class="highlight-backdrop" id="editorBackdrop"></div>
-                    <textarea id="editorWordList" data-on-input='[["handleEditorTextareaInput",[]],["handleEditorSearch",[]]]' data-on-scroll='[["syncEditorScroll",[]]]' data-on-change='[["enforceCurrentEditorLanguage",[]]]' placeholder="格式範例：stubborn 固執的 形容詞" data-p-en="格式範例：stubborn 固執的 形容詞" data-p-ko="格式範例：고집 固執 名詞"></textarea>
+                    <textarea id="editorWordList" data-on-input='[["handleEditorTextareaInput",[]],["handleEditorSearch",[]]]' data-on-scroll='[["syncEditorScroll",[]]]' data-on-change='[["enforceCurrentEditorLanguage",[]]]' placeholder="例如：apple 蘋果 名詞" data-p-en="例如：apple 蘋果 名詞" data-p-ko="例如：사과 蘋果 名詞"></textarea>
                 </div>
-            </div>
+                <div id="packStarList" class="ed-starlist"></div>
 
-            <div class="search-bar-container">
-                <div class="search-icon">🔍</div>
-                <input type="text" class="search-input" id="wordSearchInput" placeholder="請輸入搜尋單字..." data-on-input='[["handleEditorSearch",[]]]'>
+                <button class="action-btn-primary ed-edit-only" id="editorSaveBtn" data-on-click='[["saveAndStayInEditor",[]]]'>
+                    儲存
+                </button>
             </div>
-            <div id="searchNotFoundTip" style="font-size: 12.5px; color: #EF4444; font-weight: 600; margin-top: -2px; margin-bottom: 8px; display: none;"></div>
-
-            <button class="action-btn-primary" data-on-click='[["saveAndStayInEditor",[]]]'>
-                儲存
-            </button>
         </div>
 
     </div>
@@ -2771,7 +2913,6 @@
             </div>
         </div>
 
-        <div class="shop-hint-row"><p>點選商品，使用雞塊兌換！</p></div>
         <div id="walletNoteShop" class="wallet-note"></div>
         <div class="shop-tabs" id="shopTabs" role="tablist">
             <button type="button" id="shopTab0" class="shop-tab active" role="tab" data-on-click='[["setShopTab",[0]]]'>單字庫</button>
@@ -2825,75 +2966,18 @@
     </div>
 </div>
 <div id="flashcardSettingsModal" class="modal">
-    <div class="modal-content">
-        <div style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 18px;">
-            <span>⚙️</span> 字卡練習進階設定
-        </div>
-
-        <div class="settings-card-group">
-            <div class="setting-item">
-                <div class="setting-label"><span>🌟</span> 只選擇有加星號 (*) 的單字</div>
-                <label class="switch">
-                    <input type="checkbox" id="fcSettingStarred">
-                    <span class="slider-toggle"></span>
-                </label>
-            </div>
-
-            <div class="setting-item">
-                <div class="setting-label"><span>🔀</span> 隨機播放單字</div>
-                <label class="switch">
-                    <input type="checkbox" id="fcSettingShuffle" checked>
-                    <span class="slider-toggle"></span>
-                </label>
-            </div>
-        </div>
-
-        <div class="config-group" style="margin-top: 14px;">
-            <label for="fcSpeakRate" style="margin-top:0;">調整總朗讀語速：</label>
-            <div class="slider-container">
-                <input type="range" id="fcSpeakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" data-on-input='[["updateSpeedDisplay",["fcSpeakRate","fcSpeedValue"]],["updateSliderProgress",["$this"]]]'>
-                <span id="fcSpeedValue" class="speed-val">0.80 倍</span>
-            </div>
-        </div>
-
-        <button class="action-btn-primary" data-on-click='[["saveFlashcardSettings",[]]]' style="margin-top: 18px;">
-            確定
-        </button>
+    <div class="modal-content sm-modal">
+        <div class="sm-head"><b>字卡練習設定</b><span class="close-modal sm-x" data-on-click='[["saveFlashcardSettings",[]]]'>&times;</span></div>
+        <div class="sm-grp">題目</div><div class="sm-list"><div class="sm-row"><span class="t">只選加星號（*）的單字</span><label class="switch"><input type="checkbox" id="fcSettingStarred"><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">隨機出題</span><label class="switch"><input type="checkbox" id="fcSettingShuffle" checked><span class="slider-toggle"></span></label></div></div><div class="sm-grp">朗讀</div><div class="sm-list"><div class="sm-row col"><div class="top"><span class="t">語速</span><span id="fcSpeedValue" class="speed-val">0.80 倍</span></div><input type="range" id="fcSpeakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" data-on-input='[["updateSpeedDisplay",["fcSpeakRate","fcSpeedValue"]],["updateSliderProgress",["$this"]]]'></div></div>
+        <button class="action-btn-primary sm-ok" data-on-click='[["saveFlashcardSettings",[]]]'>確定</button>
     </div>
 </div>
 
 <div id="cardExamSettingsModal" class="modal">
-    <div class="modal-content">
-        <div style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 18px;">
-            <span>⚙️</span> 字卡測驗進階設定
-        </div>
-
-        <div class="settings-card-group">
-            <div class="setting-item">
-                <div class="setting-label"><span>🌟</span> 只選擇有加星號 (*) 的單字</div>
-                <label class="switch">
-                    <input type="checkbox" id="cardExamSettingStarred">
-                    <span class="slider-toggle"></span>
-                </label>
-            </div>
-            <div class="setting-item">
-                <div class="setting-label"><span>🎙️</span> 語音輸入中文<small class="voice-chi-note">中文欄位旁會有麥克風按鈕</small></div>
-                <label class="switch">
-                    <input type="checkbox" id="cardExamVoiceChi" data-on-change='[["applyVoiceChiButtons",[]]]'>
-                    <span class="slider-toggle"></span>
-                </label>
-            </div>
-        </div>
-
-        <label for="cardExamQuestionCount" style="margin-top: 14px;">題目數量 (0為全部)：</label>
-        <input type="number" id="cardExamQuestionCount" value="0" min="0">
-
-        <label for="cardExamAnswerTime" style="margin-top: 14px;">考試作答秒數：</label>
-        <input type="number" id="cardExamAnswerTime" value="20" min="5" max="120">
-
-        <button class="action-btn-primary" data-on-click='[["saveCardExamSettings",[]]]' style="margin-top: 18px;">
-            確定
-        </button>
+    <div class="modal-content sm-modal">
+        <div class="sm-head"><b>字卡測驗設定</b><span class="close-modal sm-x" data-on-click='[["saveCardExamSettings",[]]]'>&times;</span></div>
+        <div class="sm-grp">題目</div><div class="sm-list"><div class="sm-row"><span class="t">只考加星號（*）的單字</span><label class="switch"><input type="checkbox" id="cardExamSettingStarred"><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">題目數量<small>0 為全部</small></span><input type="number" class="sm-num" id="cardExamQuestionCount" value="0" min="0"></div></div><div class="sm-grp">作答</div><div class="sm-list"><div class="sm-row"><span class="t">作答秒數</span><input type="number" class="sm-num" id="cardExamAnswerTime" value="20" min="5" max="120"></div><div class="sm-row"><span class="t">語音輸入中文<small>中文欄位旁會有麥克風按鈕</small></span><label class="switch"><input type="checkbox" id="cardExamVoiceChi" data-on-change='[["applyVoiceChiButtons",[]]]'><span class="slider-toggle"></span></label></div></div>
+        <button class="action-btn-primary sm-ok" data-on-click='[["saveCardExamSettings",[]]]'>確定</button>
     </div>
 </div>
 
@@ -2940,34 +3024,10 @@
 </div>
 
 <div id="speakPracticeSettingsModal" class="modal">
-    <div class="modal-content">
-        <div style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 18px;">
-            <span>⚙️</span> 朗讀練習進階設定
-        </div>
-
-        <div class="settings-card-group">
-            <div class="setting-item">
-                <div class="setting-label"><span>🌟</span> 只選擇有加星號 (*) 的單字</div>
-                <label class="switch">
-                    <input type="checkbox" id="speakPracticeSettingStarred">
-                    <span class="slider-toggle"></span>
-                </label>
-            </div>
-        </div>
-
-        <label for="speakPracticeQuestionCount" style="margin-top: 14px;">題目數量 (0為全部)：</label>
-        <input type="number" id="speakPracticeQuestionCount" value="0" min="0">
-
-        <label for="speakPracticePassScore" style="margin-top: 14px;">評分標準（60～100 分，達到才算通過）：</label>
-        <input type="number" id="speakPracticePassScore" value="70" min="60" max="100" step="1">
-        <div style="margin-top: 8px; font-size: 12.5px; color: var(--text-muted); line-height: 1.7;">
-            評分方式：系統把你說的話轉成文字，和目標單字比對相似度（同音字、發音相近的拼法會被視為相同）。<br>
-            這不是專業的發音分析，辨識結果仍可能受環境噪音、單字長短影響。
-        </div>
-
-        <button class="action-btn-primary" data-on-click='[["saveSpeakPracticeSettings",[]]]' style="margin-top: 18px;">
-            確定
-        </button>
+    <div class="modal-content sm-modal">
+        <div class="sm-head"><b>朗讀練習設定</b><span class="close-modal sm-x" data-on-click='[["saveSpeakPracticeSettings",[]]]'>&times;</span></div>
+        <div class="sm-grp">題目</div><div class="sm-list"><div class="sm-row"><span class="t">只選加星號（*）的單字</span><label class="switch"><input type="checkbox" id="speakPracticeSettingStarred"><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">題目數量<small>0 為全部</small></span><input type="number" class="sm-num" id="speakPracticeQuestionCount" value="0" min="0"></div></div><div class="sm-grp">評分</div><div class="sm-list"><div class="sm-row"><span class="t">及格分數<small>60～100 分，達到才算通過</small></span><input type="number" class="sm-num" id="speakPracticePassScore" value="70" min="60" max="100" step="1"></div></div><div class="sm-note">評分方式：系統把你說的話轉成文字，和目標單字比對相似度（同音字、發音相近的拼法會被視為相同）。</div>
+        <button class="action-btn-primary sm-ok" data-on-click='[["saveSpeakPracticeSettings",[]]]'>確定</button>
     </div>
 </div>
 
@@ -3233,86 +3293,18 @@
 </div>
 
 <div id="examAdvancedModal" class="modal">
-    <div class="modal-content">
-        <h3 style="margin-top:0; color:var(--primary); font-size:18px; font-weight:700;">⚙️ 聽力測驗進階設定</h3>
-        
-        <div class="config-group" style="margin-top: 14px;">
-            <div class="config-row-item">
-                <span>☀️ 只考有加星號（*）的單字</span>
-                <label class="switch"><input type="checkbox" id="examOnlyStarred" data-on-change='[["saveExamAppSettings",[]]]'><span class="slider-toggle"></span></label>
-            </div>
-            <div class="config-row-item">
-                <span>🎙️ 語音輸入中文<small class="voice-chi-note">中文欄位旁會有麥克風按鈕</small></span>
-                <label class="switch"><input type="checkbox" id="examVoiceChi" data-on-change='[["saveExamAppSettings",[]],["applyVoiceChiButtons",[]]]'><span class="slider-toggle"></span></label>
-            </div>
-        </div>
-        
-        <label for="examSpeakRate" style="margin-top: 14px;">調整總朗讀語速：</label>
-        <div class="slider-container">
-            <input type="range" id="examSpeakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" data-on-input='[["updateSpeedDisplay",["examSpeakRate","examSpeedValue"]],["saveExamAppSettings",[]],["updateSliderProgress",["$this"]]]'>
-            <span id="examSpeedValue" class="speed-val">0.80 倍</span>
-        </div>
-
-        <label for="examQuestionCount" style="margin-top: 14px;">題目數量 (0為全部)：</label>
-        <input type="number" id="examQuestionCount" value="0" min="0" data-on-input='[["saveExamAppSettings",[]]]'>
-        
-        <label for="examPauseTime" style="margin-top: 14px;">單字間隔秒數：</label>
-        <input type="number" id="examPauseTime" value="1" min="0" max="10" data-on-input='[["saveExamAppSettings",[]]]'>
-
-        <label for="examAnswerTime" style="margin-top: 14px;">考試作答秒數：</label>
-        <input type="number" id="examAnswerTime" value="26" min="5" max="120" data-on-input='[["saveExamAppSettings",[]]]'>
-        
-        <label for="examRepeatCount" style="margin-top: 14px;">單字朗讀次數：</label>
-        <input type="number" id="examRepeatCount" value="1" min="1" max="5" data-on-input='[["saveExamAppSettings",[]]]'>
-
-        <button class="action-btn btn-start" style="margin-top: 20px; width: 100%; background: var(--primary-gradient);" data-on-click='[["closeExamAdvancedModal",[]]]'>確定</button>
+    <div class="modal-content sm-modal">
+        <div class="sm-head"><b>聽力測驗設定</b><span class="close-modal sm-x" data-on-click='[["closeExamAdvancedModal",[]]]'>&times;</span></div>
+        <div class="sm-grp">題目</div><div class="sm-list"><div class="sm-row"><span class="t">只考加星號（*）的單字</span><label class="switch"><input type="checkbox" id="examOnlyStarred" data-on-change='[["saveExamAppSettings",[]]]'><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">題目數量<small>0 為全部</small></span><input type="number" class="sm-num" id="examQuestionCount" value="0" min="0" data-on-input='[["saveExamAppSettings",[]]]'></div></div><div class="sm-grp">作答</div><div class="sm-list"><div class="sm-row"><span class="t">作答秒數</span><input type="number" class="sm-num" id="examAnswerTime" value="26" min="5" max="120" data-on-input='[["saveExamAppSettings",[]]]'></div><div class="sm-row"><span class="t">語音輸入中文<small>中文欄位旁會有麥克風按鈕</small></span><label class="switch"><input type="checkbox" id="examVoiceChi" data-on-change='[["saveExamAppSettings",[]],["applyVoiceChiButtons",[]]]'><span class="slider-toggle"></span></label></div></div><div class="sm-grp">朗讀</div><div class="sm-list"><div class="sm-row col"><div class="top"><span class="t">語速</span><span id="examSpeedValue" class="speed-val">0.80 倍</span></div><input type="range" id="examSpeakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" data-on-input='[["updateSpeedDisplay",["examSpeakRate","examSpeedValue"]],["saveExamAppSettings",[]],["updateSliderProgress",["$this"]]]'></div><div class="sm-row"><span class="t">每個單字唸幾次</span><input type="number" class="sm-num" id="examRepeatCount" value="1" min="1" max="5" data-on-input='[["saveExamAppSettings",[]]]'></div><div class="sm-row"><span class="t">單字間隔秒數</span><input type="number" class="sm-num" id="examPauseTime" value="1" min="0" max="10" data-on-input='[["saveExamAppSettings",[]]]'></div></div>
+        <button class="action-btn-primary sm-ok" data-on-click='[["closeExamAdvancedModal",[]]]'>確定</button>
     </div>
 </div>
 
 <div id="advancedModal" class="modal">
-    <div class="modal-content">
-        <h3 style="margin-top:0; color:var(--primary); font-size:18px; font-weight:700;">⚙️ 聽力練習進階設定</h3>
-        
-        <div class="config-group" style="margin-top: 14px;">
-            <div class="config-row-item">
-                <span>🌟 只選擇有加星號（*）的單字</span>
-                <label class="switch"><input type="checkbox" id="onlyStarred" data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label>
-            </div>
-            <div class="config-row-item">
-                <span>🔀 隨機播放單字</span>
-                <label class="switch"><input type="checkbox" id="enableShuffle" data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label>
-            </div>
-            <div class="config-row-item">
-                <span data-t-en="🔠 拼讀字母 (a-p-p-l-e)" data-t-ko="🔠 拼讀音節 (사-과-나-무)">🔠 拼讀字母 (a-p-p-l-e)</span>
-                <label class="switch"><input type="checkbox" id="enableSpell" checked data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label>
-            </div>
-            <div class="config-row-item">
-                <span>🗣 播放中文含義</span>
-                <label class="switch"><input type="checkbox" id="enableChinese" checked data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label>
-            </div>
-            <div class="config-row-item">
-                <span><span style="color:#6366F1; font-weight:bold; margin-right:4px;">▲</span> 播放詞性</span>
-                <label class="switch"><input type="checkbox" id="enablePOS" checked data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label>
-            </div>
-            <div class="config-row-item">
-                <span>🔁 循環播放</span>
-                <label class="switch"><input type="checkbox" id="enableLoop" data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label>
-            </div>
-        </div>
-        
-        <label for="speakRate" style="margin-top: 14px;">調整總朗讀語速：</label>
-        <div class="slider-container">
-            <input type="range" id="speakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" data-on-input='[["updateSpeedDisplay",["speakRate","speedValue"]],["saveAppSettings",[]],["updateSliderProgress",["$this"]]]'>
-            <span id="speedValue" class="speed-val">0.80 倍</span>
-        </div>
-        
-        <label for="pauseTime" style="margin-top: 14px;">單字之間停頓秒數：</label>
-        <input type="number" id="pauseTime" value="2" min="0" max="10" data-on-input='[["saveAppSettings",[]]]'>
-        
-        <label for="repeatCount" style="margin-top: 14px;">單字朗讀次數：</label>
-        <input type="number" id="repeatCount" value="1" min="1" max="5" data-on-input='[["saveAppSettings",[]]]'>
-
-        <button class="action-btn btn-start" style="margin-top: 20px; width: 100%;" data-on-click='[["closeAdvancedModal",[]]]'>確定</button>
+    <div class="modal-content sm-modal">
+        <div class="sm-head"><b>聽力練習設定</b><span class="close-modal sm-x" data-on-click='[["closeAdvancedModal",[]]]'>&times;</span></div>
+        <div class="sm-grp">題目</div><div class="sm-list"><div class="sm-row"><span class="t">只選加星號（*）的單字</span><label class="switch"><input type="checkbox" id="onlyStarred" data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">隨機播放</span><label class="switch"><input type="checkbox" id="enableShuffle" data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">循環播放</span><label class="switch"><input type="checkbox" id="enableLoop" data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div></div><div class="sm-grp">朗讀內容</div><div class="sm-list"><div class="sm-row"><span class="t" data-t-en="拼讀字母（a-p-p-l-e）" data-t-ko="拼讀音節（사-과-나-무）">拼讀字母（a-p-p-l-e）</span><label class="switch"><input type="checkbox" id="enableSpell" checked data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">播放中文意思</span><label class="switch"><input type="checkbox" id="enableChinese" checked data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">播放詞性</span><label class="switch"><input type="checkbox" id="enablePOS" checked data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div></div><div class="sm-grp">朗讀</div><div class="sm-list"><div class="sm-row col"><div class="top"><span class="t">語速</span><span id="speedValue" class="speed-val">0.80 倍</span></div><input type="range" id="speakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" data-on-input='[["updateSpeedDisplay",["speakRate","speedValue"]],["saveAppSettings",[]],["updateSliderProgress",["$this"]]]'></div><div class="sm-row"><span class="t">每個單字唸幾次</span><input type="number" class="sm-num" id="repeatCount" value="1" min="1" max="5" data-on-input='[["saveAppSettings",[]]]'></div><div class="sm-row"><span class="t">單字之間停頓秒數</span><input type="number" class="sm-num" id="pauseTime" value="2" min="0" max="10" data-on-input='[["saveAppSettings",[]]]'></div></div>
+        <button class="action-btn-primary sm-ok" data-on-click='[["closeAdvancedModal",[]]]'>確定</button>
     </div>
 </div>
 
