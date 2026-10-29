@@ -1541,6 +1541,7 @@
         try { if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = (viewId === 'adventureBattleView'); } catch (e) {}
         document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
+        if (viewId === 'homeDashboardView') { try { homeAdvBadge(); } catch (e) {} }
         
         let wrapper = document.getElementById('mainScaleWrapper');
         if (viewId === 'practiceView' || viewId === 'examView' || viewId === 'flashcardPlayView' || viewId === 'flashcardSetupView' || viewId === 'cardExamSetupView' || viewId === 'cardExamPlayView' || viewId === 'speakPracticeSetupView' || viewId === 'speakPracticePlayView') {
@@ -4473,7 +4474,7 @@
 
     // 招式
     //   type：card 字卡 / listen 聽力 / speak 朗讀（用來決定這招需要什麼條件）
-    //   mode：choice 選擇題 / typeCn 輸入中文 / listenChoice 聽音選英文 / listenSpell 聽音拼英文 / speak 朗讀
+    //   mode：choice 選擇題 / typeCn 輸入中文 / listenChoice 聽音選英文 / listenCn 聽英文選中文 / listenSpell 聽音拼英文 / speak 朗讀
     //   power：每一下的威力；hits：打幾下（每一下各自扣掉對方防禦）；q：要連續答對幾題
     //   buy：free 一開始就有 / shards 用碎片買 / chicken 用雞塊買（item 是商店商品代號）
     // 招式圖示（SVG，會跟著文字大小縮放）
@@ -4495,11 +4496,11 @@
         { key: 'combo',   name: '連續衝撞',     icon: ADV_ICONS.combo(), type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 3 },                         desc: '選擇題' },
         { key: 'charge',  name: '衝鋒撞擊',     icon: '🐗', type: 'card',   mode: 'typeCn',      fx: 'charge', power: 3, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_charge' }, desc: '輸入中文意思' },
         { key: 'slash',   name: '斬擊',         icon: ADV_ICONS.slash(), type: 'listen', mode: 'listenChoice', fx: 'slash',  power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '聽發音，選出正確的單字' },
-        { key: 'slash2',  name: '連續斬擊',     icon: ADV_ICONS.slash2(), type: 'listen', mode: 'listenChoice', fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 4, item: 'mv_slash2' },       desc: '選擇題' },
+        { key: 'slash2',  name: '連續斬擊',     icon: ADV_ICONS.slash2(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 4, item: 'mv_slash2' },       desc: '聽英文，選中文' },
         { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 3, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_thrust' }, desc: '聽發音，拼出英文單字' },
         { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 2, buy: { kind: 'free' },                                       desc: '按住麥克風唸出單字' },
         { key: 'wave2',   name: '雙重衝擊波',   icon: ADV_ICONS.wave2(), type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 2, buy: { kind: 'reward', level: 5, item: 'mv_wave2' },        desc: '按住麥克風唸出單字' },
-        { key: 'wave3',   name: '雞塊氣功波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'speak',        fx: 'yellow', power: 3, hits: 1, q: 2, tries: 2, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_wave3' }, desc: '按住麥克風唸出單字' }
+        { key: 'wave3',   name: '雞塊氣功波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'speakCn',      fx: 'yellow', power: 3, hits: 1, q: 2, tries: 2, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_wave3' }, desc: '顯示中文，唸英文' }
     ];
     const ADV_TYPE_LABEL = { card: '字卡', listen: '聽力', speak: '朗讀' };
     // 稀有度：普通（灰框，熟練度上限 1）／稀有（深金框，上限 2）／傳說（亮紫框，上限 3）
@@ -4694,8 +4695,10 @@
             localStorage.setItem(ADV_STORE_G, localStorage.getItem(ADV_STORE));
     } catch (e) {}
     let advData = advLoad();
+    setTimeout(() => { try { homeAdvBadge(); } catch (e) {} }, 0);
     let advCloudReady = false, advCloudTimer = null, advDirty = false;   // advDirty：Google 進度有還沒上傳的變更
     function advSave(keepTs) {      // keepTs：只是每天體力重置這類自動整理，不算「新的進度」，不改存檔時間、也不上傳
+        try { setTimeout(homeAdvBadge, 0); } catch (e) {}
         if (!keepTs) advData.ts = Date.now();
         if (advIsGoogleMode() && !advData.owner && typeof cloudWalletKey === 'string' && cloudWalletKey) advData.owner = cloudWalletKey;
         try { localStorage.setItem(advStoreKey(), JSON.stringify(advData)); } catch (e) {}
@@ -4746,30 +4749,15 @@
         return true;                             // 雲端還沒有進度：把本機的上傳
     }
     // 每天最多重複挑戰已通關關卡 3 次
-    // ── 開發者指令（按 F12 打開 Console 使用）──
-    //   advDev.help()            顯示說明
-    //   advDev.resetReplays()    清空今天「已通關關卡只能重複挑戰 3 次」的次數
-    //   advDev.setShards(100)    把糖醋醬碎片設成 100 個
-    //   advDev.addShards(10)     糖醋醬碎片 +10（可以是負數）
-    //   advDev.setSauce(5)       把糖醋醬設成 5 瓶
-    //   advDev.healFull()        體力補滿
-    window.advDev = {
-        help() {
-            console.log('%c🍗 雞塊大冒險開發者指令', 'font-weight:bold;font-size:14px',
-                '\n advDev.resetReplays()  清空今天重複挑戰次數\n advDev.setShards(n)    設定糖醋醬碎片\n advDev.addShards(n)    增加糖醋醬碎片\n advDev.setSauce(n)     設定糖醋醬\n advDev.healFull()      體力補滿\n advDev.give(\'ticket\', n)  冒險卷 / wipe 濕紙巾 / potion 藥水');
-            return '目前碎片 ' + advData.shards + '、糖醋醬 ' + advData.sauce + '、今天還能重複挑戰 ' + advReplaysLeft() + ' 次';
-        },
-        resetReplays() { advData.replayDay = ''; advData.replays = 0; advDevDone(); return '✅ 今天的重複挑戰次數已重置（還有 ' + advReplaysLeft() + ' 次）'; },
-        setShards(n) { advData.shards = Math.max(0, parseInt(n) || 0); advDevDone(); return '✅ 糖醋醬碎片 = ' + advData.shards; },
-        addShards(n) { advData.shards = Math.max(0, advData.shards + (parseInt(n) || 0)); advDevDone(); return '✅ 糖醋醬碎片 = ' + advData.shards; },
-        setSauce(n) { advData.sauce = Math.max(0, parseInt(n) || 0); advDevDone(); return '✅ 糖醋醬 = ' + advData.sauce; },
-        healFull() { advData.hp = advMaxHp(); advDevDone(); return '✅ 體力 = ' + advData.hp; },
-        give(kind, n) {         // advDev.give('ticket', 3)：ticket 冒險卷／wipe 濕紙巾／potion 恢復藥水
-            let k = { ticket: 'tickets', wipe: 'wipes', potion: 'potions' }[kind];
-            if (!k) return '可用：ticket、wipe、potion';
-            advData[k] = Math.max(0, (advData[k] || 0) + (parseInt(n) || 1)); advDevDone(); return '✅ ' + kind + ' = ' + advData[k];
-        }
-    };
+    // 首頁「雞塊樂園」標題旁的小標籤：目前要打第幾關
+    function homeAdvBadge() {
+        let el = document.getElementById('funLvBadge');
+        if (!el || typeof advData === 'undefined' || !advData) return;
+        let n = ADV_LEVELS.length, next = 1;
+        while (next <= n && advData.cleared[next]) next++;
+        el.textContent = next > n ? '全破' : `第 ${next} 關`;
+        el.style.display = '';
+    }
     function advDevDone() { advSave(); try { advRefreshViews(); } catch (e) {} }
 
     function advReplayCap() { return ADV_REPLAY_PER_DAY + (advData.replayBonusDay === getLocalDateStr() ? advData.replayBonus : 0); }
@@ -5603,10 +5591,10 @@
     }
     // ── 命中：能力值頁最上面一條；點進去看字卡／聽力／朗讀 ──
     function advHitRowHTML() {
-        let a = advData.hits.all, t = advHitTotal();
+        let a = advHitAll(), t = advHitTotal();
         let tile = t === null ? `<div class="adv-stat-tile hit">命中<b class="wait">累積中</b></div>` : `<div class="adv-stat-tile hit">命中<b>${t}%</b></div>`;
         let bar = t === null
-            ? `<div class="adv-bar"><i class="adv-hit-wait" style="width:${(a.length / ADV_HIT_N * 100).toFixed(1)}%"></i></div>`
+            ? `<div class="adv-bar"><i class="adv-hit-wait" style="width:${(Math.min(a.length, ADV_HIT_N) / ADV_HIT_N * 100).toFixed(1)}%"></i></div>`
             : `<div class="adv-bar"><i style="width:${t}%;background:#EAB308"></i></div>`;
         return `<div class="adv-stat-row adv-hit-row" data-stat="hit" role="button" title="點一下看字卡、聽力、朗讀的命中" data-on-click='[["advOpenHit",[]]]'>${tile}${bar}<span class="adv-hit-chev">›</span></div>`;
     }
@@ -5639,7 +5627,7 @@
     function advOpenHit() {
         let body = document.getElementById('advHitBody');
         if (!body) return;
-        let a = advData.hits.all, t = advHitTotal(), cur = advHitPct(a);
+        let a = advHitAll(), t = advHitTotal(), cur = advHitPct(a);
         let big, sub;
         if (t !== null) {
             let diff = advData.hitPrev === null ? 0 : t - advData.hitPrev;
@@ -5660,7 +5648,7 @@
         let html = lines.map(l => typeof l === 'string' ? l : l.html(l.k === weakKey)).join('');
         let tip = t !== null ? advHitComment(t) : a.length ? advHitComment(cur) : '🗡️ 去大冒險打一場，就會開始累積命中！';
         body.innerHTML = `<div class="adv-hit-title">🎯 命中</div>
-            <div class="adv-hit-sub">最近 ${ADV_HIT_N} 題的答對率（每一題算一次，時間到算錯）</div>
+            <div class="adv-hit-sub">字卡、聽力、朗讀各算最近 ${ADV_HIT_N} 題（時間到算錯）</div>
             <div class="adv-hit-total">${big}<small>${sub}</small></div>
             ${html}
             <div class="adv-hit-tip">${tip}</div>`;
@@ -6322,7 +6310,8 @@
     }
     // 這招因為題庫或瀏覽器的關係不能用：回傳原因（可以用就回傳空字串）
     function advMoveBlock(m) {
-        if (m.mode === 'choice' && adv.cnWords.length < 4) return '缺中文';
+        if ((m.mode === 'choice' || m.mode === 'listenCn') && adv.cnWords.length < 4) return '缺中文';
+        if (m.mode === 'speakCn' && adv.cnWords.length < 1) return '缺中文';
         if (m.mode === 'typeCn' && adv.cnWords.length < 1) return '缺中文';
         if (m.type === 'speak' && !getSpeechRecognitionCtor()) return '不支援';
         return '';
@@ -6388,7 +6377,7 @@
         adv.triesLeft = m.tries;
         if (m.mode === 'choice') advAskCard();
         else if (m.mode === 'typeCn') advAskTypeCn();
-        else if (m.mode === 'listenChoice') advAskListenChoice();
+        else if (m.mode === 'listenChoice' || m.mode === 'listenCn') advAskListenChoice();
         else if (m.mode === 'listenSpell') advAskListen();
         else advAskSpeak();
         advMountTimer();
@@ -6402,7 +6391,9 @@
         [t, 'all'].forEach(k => { advData.hits[k].push(ok ? 1 : 0); if (advData.hits[k].length > ADV_HIT_N) advData.hits[k].splice(0, advData.hits[k].length - ADV_HIT_N); });
     }
     function advHitPct(arr) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 100) : null; }
-    function advHitTotal() { let a = advData.hits.all; return a.length >= ADV_HIT_N ? advHitPct(a) : null; }
+    // 總命中 = 字卡、聽力、朗讀各自最近 20 題合起來算（不會只看最近 20 題而忽略比較弱的類別）
+    function advHitAll() { return ['card', 'listen', 'speak'].reduce((x, k) => x.concat(advData.hits[k] || []), []); }
+    function advHitTotal() { let a = advHitAll(); return a.length >= ADV_HIT_N ? advHitPct(a) : null; }
     function advQuestionPassed() {
         advRecordHit(true);
         adv.progress++;
@@ -6523,13 +6514,15 @@
     // 聽力（聽發音，選出單字）
     function advNorm(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC').toLowerCase().replace(/[\s'’\-.,!?]/g, ''); }
     function advAskListenChoice() {
-        let w = advNextWord('all');
-        let wrong = advPickDistractors(w, 3, x => !!advNorm(x.english), x => advNorm(x.english)).map(x => x.english);
-        let opts = advShuffle([w.english, ...wrong]);
-        adv.q = { type: 'listenChoice', word: w, opts, correct: opts.indexOf(w.english), done: false };
-        let m = adv.move;
+        let m = adv.move, cn = m.mode === 'listenCn';     // listenCn：聽英文，選中文意思
+        let w = advNextWord(cn ? 'cn' : 'all');
+        let wrong = cn ? advPickDistractors(w, 3, x => !!x.chinese, x => x.chinese).map(x => x.chinese)
+                       : advPickDistractors(w, 3, x => !!advNorm(x.english), x => advNorm(x.english)).map(x => x.english);
+        let ans = cn ? w.chinese : w.english;
+        let opts = advShuffle([ans, ...wrong]);
+        adv.q = { type: 'listenChoice', word: w, opts, correct: opts.indexOf(ans), done: false };
         document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：聽發音，選出正確的單字</div>
+            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：${cn ? '聽英文，選出中文意思' : '聽發音，選出正確的單字'}</div>
             <div class="adv-opts">${opts.map((o, i) => `<button type="button" class="adv-opt" data-on-click='[["advAnswerListen",[${i}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
         advSpeakWord(w.english);
     }
@@ -6581,13 +6574,14 @@
 
     // 朗讀（按住麥克風）
     function advAskSpeak() {
-        let w = advNextWord('all');
-        adv.q = { type: 'speak', word: w, done: false };
-        let m = adv.move;
+        let m = adv.move, cn = m.mode === 'speakCn';     // speakCn：只顯示中文，要唸出英文
+        let w = advNextWord(cn ? 'cn' : 'all');
+        adv.q = { type: 'speak', word: w, done: false, cn };
         document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：按住麥克風唸出單字</div>
-            <div class="adv-qword">${escapeHTML(w.english)}</div>
-            <div class="adv-qsub">${escapeHTML(w.chinese || '')}</div>
+            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：${cn ? '看中文，唸出英文單字' : '按住麥克風唸出單字'}</div>
+            ${cn ? `<div class="adv-qword">${escapeHTML(w.chinese)}</div>
+            <div class="adv-qsub">唸出這個意思的英文單字</div>` : `<div class="adv-qword">${escapeHTML(w.english)}</div>
+            <div class="adv-qsub">${escapeHTML(w.chinese || '')}</div>`}
             <button type="button" class="adv-mic" id="advMicBtn" aria-label="按住麥克風說話"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg></button>
             <div class="adv-qsub" id="advSpeakHint">剩 ${adv.triesLeft} 次機會 ｜ 說完再多按住約 2 秒</div>
             <button type="button" class="adv-speak-btn" data-on-click='[["advGiveUpSpeak",[]]]'>放棄這招</button>`;
@@ -6685,7 +6679,7 @@
             advQuestionPassed();
         } else if (adv.triesLeft <= 0) {
             q.done = true;
-            advSpeakHint(`❌ ${res.score} 分（需 ${getSpeakPassScore()} 分），沒有機會了`);
+            advSpeakHint(`❌ ${res.score} 分（需 ${getSpeakPassScore()} 分），沒有機會了${q.cn ? `｜答案：${q.word.english}` : ''}`);
             await advWait(1100);
             if (id !== adv.runId) return;
             advResolveMove(false);
