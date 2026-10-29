@@ -153,12 +153,19 @@
 
     // ── 官方單字庫（用雞塊購買，從後端下載；不占用題庫數量，不能清空／刪除／更換語言）──
     const WORD_PACKS = {
-        toeic_job: { item: 'pack_toeic_job', title: '多益-職場', lang: 'en', words: 300 }
+        basic_noun: { free: true, title: '基礎單字-名詞', lang: 'en', words: 300, icon: '🏫' },
+        basic_verb: { free: true, title: '基礎單字-動詞形容詞', lang: 'en', words: 300, icon: '🏃' },
+        toeic_job: { item: 'pack_toeic_job', title: '多益-職場', lang: 'en', words: 300, icon: '💼' }
+    };
+    // 免費附贈的精選單字庫：直接放在 App 裡，不用下載
+    const FREE_PACK_CONTENT = {
+        basic_noun: "activity 活動 名詞\nafternoon 下午 名詞\nage 年齡 名詞\napplication form 申請表 名詞\narea 區域 名詞\nart 藝術 美術 名詞\nauditorium 禮堂 名詞\nback 後面 名詞\nbackpack 背包 名詞\nbag 包包 名詞\nbank 銀行 名詞\nbe late for 遲到 動詞\nbeginner 初學者 名詞\nbike 腳踏車 名詞\nbirthday 生日 名詞\nbook 書籍 名詞 預訂 動詞\nbookshelf 書架 名詞\nbookstore 書店 名詞\nboss 老闆 名詞\nbottle 瓶子 名詞\nbottom 底部 名詞\nbox 箱子 名詞\nbreakfast 早餐 名詞\nbuilding 建築物 名詞\nbus 公車 名詞\nbusiness card 名片 名詞\ncafeteria 自助餐廳 名詞\ncalendar 日曆 名詞\ncampus 校園 名詞\ncar 汽車 名詞\ncard 卡片 名詞\ncenter 中心 名詞\nchair 椅子 名詞\nchance 機會 名詞\nchapter 章節 名詞\nchild 小孩 名詞\ncity 城市 名詞\nclass 班級 課堂 名詞\nclassmate 同學 名詞\nclassroom 教室 名詞\nclock 時鐘 名詞\nclosing time 打烊時間 名詞\nclothes 衣服 名詞\nclub 社團 俱樂部 名詞\ncoffee 咖啡 名詞\ncoffee break 休息時間 名詞\ncoin 硬幣 名詞\ncollege 大學 學院 名詞\ncolor 顏色 名詞\ncompany 公司 名詞\ncomputer 電腦 名詞\ncontest 比賽 名詞\ncorner 角落 轉角 名詞\ncountry 國家 名詞\ncourse 課程 名詞\ncup 杯子 名詞\ndaily 每日的 形容詞 每天 副詞\ndate 日期 名詞\nday 天 名詞\nday shift 日班 名詞\ndebate 辯論 名詞 動詞\ndesk 書桌 名詞\ndictionary 字典 名詞\ndinner 晚餐 名詞\ndiscussion 討論 名詞\ndoctor 醫生 名詞\ndoor 門 名詞\ndormitory 宿舍 名詞\ndrawing 圖畫 名詞\ndream 夢想 名詞 做夢 動詞\ndriver 司機 名詞\neducation 教育 名詞\nelevator 電梯 名詞\nemail 電子郵件 名詞 寄電子郵件 動詞\nemail address 電子郵件地址 名詞\nenrollment 註冊 名詞\nentrance 入口 名詞\neraser 橡皮擦 名詞\nessay 短文 論文 名詞\nevening 傍晚 名詞\nevent 活動 事件 名詞\nexam 考試 名詞\nexample 例子 名詞\nexcited 興奮的 形容詞\nexit 出口 名詞 離開 動詞\nexperience 經驗 名詞\nextracurricular 課外的 形容詞\nfaculty 全體教職員 名詞\nfamily 家庭 名詞\nfirst day 第一天 名詞\nfirst job 第一份工作 名詞\nfirst name 名字 名詞\nfloor 地板 樓層 名詞\nfood 食物 名詞\nfriend 朋友 名詞\nfront 前面 名詞\nfull-time 全職的 形容詞\ngame 遊戲 比賽 名詞\ngift 禮物 名詞\ngoal 目標 名詞\ngrade 成績 年級 名詞\ngraduate 畢業 動詞 畢業生 名詞\ngraduation 畢業 畢業典禮 名詞\ngroup 群體 小組 名詞\ngroup project 小組作業 名詞\nguest 客人 來賓 名詞\nguidance 輔導 指導 名詞\ngym 體育館 健身房 名詞\nhabit 習慣 名詞\nhall 大廳 走廊 名詞\nhallway 走廊 名詞\nhand in 繳交 動詞\nhardworking 努力的 形容詞\nhat 帽子 名詞\nheadphones 耳機 名詞\nhealth 健康 名詞\nhelper 幫手 名詞\nhistory 歷史 名詞\nhobby 嗜好 名詞\nholiday 假日 名詞\nhometown 家鄉 名詞\nhomework 家庭作業 名詞\nhospital 醫院 名詞\nhour 小時 名詞\nidea 主意 想法 名詞\ninstructor 講師 名詞\ninternet 網際網路 名詞\nintroduction 介紹 名詞\njob 工作 名詞\njob hunting 找工作 名詞\njob title 職稱 名詞\nkey 鑰匙 關鍵 名詞\nkeyboard 鍵盤 名詞\nknowledge 知識 名詞\nlaboratory 實驗室 名詞\nlanguage 語言 名詞\nlaptop 筆記型電腦 名詞\nlast name 姓氏 名詞\nleader 領導者 名詞\nlecture 講課 名詞 演講 動詞\nlesson 課程 教訓 名詞\nletter 信件 字母 名詞\nlevel 程度 等級 名詞\nlibrarian 圖書館員 名詞\nlibrary 圖書館 名詞\nline 線 隊伍 名詞\nlist 清單 名詞 列出 動詞\nlocation 地點 位置 名詞\nlunch 午餐 名詞\nlunch break 午休 名詞\nlunchroom 員工餐廳 名詞\nlunchtime 午餐時間 名詞\nmagazine 雜誌 名詞\nmajor 主修 名詞 動詞\nmap 地圖 名詞\nmark 分數 名詞 打分數 動詞\nmarket 市場 名詞\nmath 數學 名詞\nmeal 餐點 名詞\nmeasure 測量 動詞 措施 名詞\nmember 成員 名詞\nmessage 訊息 名詞\nmiddle 中間 名詞\nminute 分鐘 名詞\nmistake 錯誤 名詞\nmoney 金錢 名詞\nmonth 月份 名詞\nmorning 早晨 名詞\nmusic 音樂 名詞\nnameplate 名牌 名詞\nnationality 國籍 名詞\nnervous 緊張的 形容詞\nnewcomer 新人 名詞\nnews 新聞 消息 名詞\nnewspaper 報紙 名詞\nnight 夜晚 名詞\nnight shift 夜班 名詞\nnote 筆記 名詞 記下 動詞\nnotebook 筆記本 名詞\nnumber 數字 號碼 名詞\nnurse 護士 名詞\noffice 辦公室 名詞\noffice worker 上班族 名詞\nowner 擁有者 老闆 名詞\npage 頁 名詞\npaper 紙張 報告 名詞\nparent 父母 名詞\npark 公園 名詞 停車 動詞\nparking lot 停車場 名詞\npart-time 兼職的 形容詞\npart-time job 打工 名詞\npartner 夥伴 名詞\nparty 派對 名詞\npassword 密碼 名詞\npay attention to 注意 動詞\npen 原子筆 名詞\npencil 鉛筆 名詞\npeople 人們 名詞\nperson 個人 名詞\nphone 電話 名詞\nphone number 電話號碼 名詞\nphoto 照片 名詞\nphysics 物理 名詞\npicture 圖片 照片 名詞\npiece 一片 一件 名詞\npost 郵件 名詞 張貼 動詞\npractice 練習 名詞 動詞\npresentation 簡報 名詞\nprice 價格 名詞\nprincipal 校長 名詞 主要的 形容詞\nprize 獎品 名詞\nproblem 問題 名詞\nprofessor 教授 名詞\nproject 專案 計畫 名詞\nquestion 問題 名詞 質問 動詞\nquiz 小考 名詞\nreason 原因 理由 名詞\nresearch 研究 名詞 動詞\nrestaurant 餐廳 名詞\nrestroom 洗手間 名詞\nresult 結果 名詞\nroad 道路 名詞\nroom 房間 空間 名詞\nroommate 室友 名詞\nrule 規則 名詞\nsalesclerk 店員 名詞\nsalesperson 售貨員 名詞\nscholarship 獎學金 名詞\nschool 學校 名詞\nscience 科學 名詞\nscore 分數 名詞 得分 動詞\nseat 座位 名詞\nsemester 學期 名詞\nseminar 研討會 名詞\nsentence 句子 名詞\nshape 形狀 名詞\nshirt 襯衫 名詞\nshoe 鞋子 名詞\nshop 商店 名詞 購物 動詞\nside 旁邊 一側 名詞\nsign 招牌 標誌 名詞 簽名 動詞\nsize 尺寸 名詞\nskill 技能 名詞\nsmart 聰明的 形容詞\nsnack 點心 名詞\nspace 空間 名詞\nspeaker 演講者 喇叭 名詞\nspeech 演講 名詞\nsport 運動 名詞\nstairs 樓梯 名詞\nstation 車站 名詞\nstep 步驟 名詞\nstore 商店 名詞 儲存 動詞\nstory 故事 樓層 名詞\nstreet 街道 名詞\nstudent 學生 名詞\nstudy group 讀書會 名詞\nsubject 科目 主題 名詞\nsubway 地鐵 名詞\ntable 桌子 表格 名詞\ntake notes 做筆記 動詞\ntaxi 計程車 名詞\ntea 茶 名詞\nteacher 老師 名詞\nteam 團隊 名詞\nteam member 團隊成員 名詞\nteammate 隊友 名詞\ntelephone 電話 名詞\nterm 學期 期限 名詞\ntest 測驗 名詞 測試 動詞\nticket 票 名詞\ntime 時間 次數 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\ntop 頂端 名詞\ntopic 主題 名詞\ntown 城鎮 名詞\ntrain 火車 名詞 訓練 動詞\ntranslate 翻譯 動詞\ntranslation 翻譯 名詞\ntype 類型 名詞 打字 動詞\numbrella 雨傘 名詞\nuniform 制服 名詞 一致的 形容詞\nvocabulary 字彙 名詞\nvolunteer 志工 名詞 自願 動詞\nwaiter 服務生 名詞\nwall 牆壁 名詞\nwater 水 名詞\nweather 天氣 名詞\nwebsite 網站 名詞\nweek 星期 名詞\nweekday 平日 名詞\nweekend 週末 名詞\nwindow 窗戶 名詞\nword 單字 名詞\nwork hours 工作時數 名詞\nworker 工人 員工 名詞\nyear 年 名詞\nyearly 每年的 形容詞\nyesterday 昨天 名詞 副詞",
+        basic_verb: "able 有能力的 形容詞\naccept 接受 動詞\nachieve 達成 動詞\nact 行動 動詞\nactive 積極的 形容詞\nadd 增加 動詞\nafford 負擔得起 動詞\nafraid 害怕的 形容詞\nagree 同意 動詞\nallow 允許 動詞\nalone 單獨的 形容詞\nangry 生氣的 形容詞\nanswer 回答 動詞 名詞\narrive 到達 動詞\nask 詢問 動詞\navoid 避免 動詞\nbad 壞的 形容詞\nbeautiful 美麗的 形容詞\nbegin 開始 動詞\nbelieve 相信 動詞\nbelong 屬於 動詞\nbig 大的 形容詞\nborrow 借入 動詞\nbreak 打破 動詞 休息 名詞\nbright 明亮的 聰明的 形容詞\nbring 帶來 動詞\nbuild 建造 動詞\nbusy 忙碌的 形容詞\nbuy 購買 動詞\ncall 打電話 呼叫 動詞\ncall off 取消 動詞\ncarry 攜帶 搬運 動詞\ncarry out 執行 動詞\ncatch 抓住 趕上 動詞\nchange 改變 動詞 零錢 名詞\ncheap 便宜的 形容詞\nchoose 選擇 動詞\nclean 打掃 動詞 乾淨的 形容詞\nclear 清楚的 形容詞\nclose 關閉 動詞 接近的 形容詞\ncold 冷的 形容詞 感冒 名詞\ncome 來 動詞\ncome up with 想出 動詞\ncomfortable 舒適的 形容詞\ncompare 比較 動詞\ncomplete 完成 動詞 完整的 形容詞\nconsider 考慮 動詞\ncontinue 繼續 動詞\ncook 烹調 動詞 廚師 名詞\ncopy 複製 動詞 副本 名詞\ncorrect 正確的 形容詞 改正 動詞\ncreate 創造 動詞\ncross 穿越 動詞\ncut 切 剪 動詞\ndark 黑暗的 形容詞\ndecide 決定 動詞\ndeliver 遞送 動詞\ndepend 依賴 動詞\ndevelop 發展 動詞\ndifferent 不同的 形容詞\ndifficult 困難的 形容詞\ndirty 髒的 形容詞\ndisappear 消失 動詞\ndiscover 發現 動詞\ndiscuss 討論 動詞\ndo 做 動詞\ndraw 畫畫 動詞\ndrink 喝 動詞 飲料 名詞\ndrive 開車 動詞\ndrop 落下 動詞\ndrop off 放下 送達 動詞\nearly 早的 形容詞\neasy 簡單的 形容詞\neat 吃 動詞\nempty 空的 形容詞\nenjoy 享受 動詞\nenter 進入 動詞\nexpect 期待 預期 動詞\nexpensive 昂貴的 形容詞\nexplain 解釋 動詞\nfail 失敗 動詞\nfall 落下 動詞\nfamous 有名的 形容詞\nfast 快的 形容詞\nfeel 感覺 動詞\nfew 很少的 形容詞\nfigure out 想出 弄清楚 動詞\nfill 填滿 填寫 動詞\nfind 找到 動詞\nfind out 查明 發現 動詞\nfine 好的 形容詞 罰款 名詞\nfinish 完成 動詞\nfit 合身 動詞 健康的 形容詞\nfix 修理 固定 動詞\nfly 飛 搭飛機 動詞\nfollow 跟隨 遵循 動詞\nforget 忘記 動詞\nfree 免費的 自由的 形容詞\nfresh 新鮮的 形容詞\nfull 滿的 形容詞\nget 得到 動詞\nget rid of 擺脫 丟掉 動詞\ngive 給予 動詞\ngive up 放棄 動詞\ngo 去 動詞\ngood 好的 形容詞\ngreat 很棒的 偉大的 形容詞\ngrow 生長 成長 動詞\nguess 猜測 動詞\nhang 懸掛 動詞\nhappen 發生 動詞\nhappy 快樂的 形容詞\nhard 困難的 堅硬的 形容詞\nhave 有 動詞\nhealthy 健康的 形容詞\nhear 聽到 動詞\nheavy 重的 形容詞\nhelp 幫助 動詞 名詞\nhigh 高的 形容詞\nhold 握住 舉行 動詞\nhope 希望 動詞\nhot 熱的 形容詞\nhuge 巨大的 形容詞\nhurry 趕快 動詞\nimagine 想像 動詞\nimportant 重要的 形容詞\nimprove 改善 動詞\ninclude 包含 動詞\ninteresting 有趣的 形容詞\ninvite 邀請 動詞\njoin 加入 動詞\nkeep 保持 動詞\nkind 親切的 形容詞 種類 名詞\nknow 知道 動詞\nlarge 大的 形容詞\nlate 遲的 晚的 形容詞\nlaugh 笑 動詞\nlearn 學習 動詞\nleave 離開 動詞\nlift 舉起 動詞\nlight 輕的 形容詞 光線 名詞\nlike 喜歡 動詞\nlisten 聽 動詞\nlittle 小的 形容詞\nlive 居住 動詞\nlong 長的 形容詞\nlook 看 動詞\nlook for 尋找 動詞\nlook forward to 期待 動詞\nlose 失去 動詞\nloud 大聲的 形容詞\nlow 低的 形容詞\nlucky 幸運的 形容詞\nmain 主要的 形容詞\nmake 製作 動詞\nmake sure 確定 動詞\nmany 許多的 形容詞\nmature 成熟的 形容詞 成熟 動詞\nmean 意指 動詞 刻薄的 形容詞\nmeet 見面 動詞\nmind 介意 動詞 頭腦 名詞\nmiss 錯過 想念 動詞\nmodern 現代的 形容詞\nmove 移動 搬家 動詞\nmuch 許多的 形容詞\nnarrow 狹窄的 形容詞\nnear 接近的 形容詞\nneed 需要 動詞\nnew 新的 形容詞\nnice 不錯的 形容詞\nnoisy 吵鬧的 形容詞\nnormal 正常的 形容詞\nnotice 注意到 動詞 通知 名詞\nold 老的 舊的 形容詞\nopen 打開 動詞 開放的 形容詞\npack 打包 動詞\npay 支付 動詞\npick 挑選 撿起 動詞\npick up 撿起 接送 動詞\nplace 放置 動詞 地方 名詞\nplan 計劃 動詞 名詞\nplay 玩 動詞\npoint 指向 動詞\npoor 貧窮的 差的 形容詞\npopular 受歡迎的 形容詞\npossible 可能的 形容詞\nprefer 更喜歡 動詞\nprepare 準備 動詞\nprotect 保護 動詞\nprove 證明 動詞\nprovide 提供 動詞\npull 拉 動詞\npush 推 動詞\nput 放置 動詞\nput off 延後 動詞\nquick 快速的 形容詞\nquiet 安靜的 形容詞\nread 閱讀 動詞\nready 準備好的 形容詞\nreal 真實的 形容詞\nreceive 收到 動詞\nreduce 減少 動詞\nremember 記得 動詞\nremove 移除 動詞\nrepeat 重複 動詞\nreply 回覆 動詞 名詞\nrest 休息 動詞 名詞\nreturn 返回 歸還 動詞\nrich 富有的 形容詞\nride 騎 搭乘 動詞\nright 正確的 右邊的 形容詞\nring 響 動詞 戒指 名詞\nrise 上升 動詞\nrun 跑 動詞\nrun out of 用完 動詞\nsafe 安全的 形容詞\nsame 相同的 形容詞\nsave 節省 拯救 動詞\nsay 說 動詞\nsee 看見 動詞\nseem 似乎 動詞\nsell 銷售 動詞\nsend 寄出 動詞\nserious 嚴重的 認真的 形容詞\nset up 設立 安排 動詞\nshare 分享 動詞\nshort 短的 矮的 形容詞\nshow 顯示 動詞 表演 名詞\nshow up 出現 動詞\nshut 關上 動詞\nsick 生病的 形容詞\nsign up 報名 動詞\nsimple 簡單的 形容詞\nsit 坐 動詞\nsleep 睡眠 動詞 名詞\nslow 慢的 形容詞\nsmall 小的 形容詞\nsmell 聞 動詞 氣味 名詞\nsmile 微笑 動詞 名詞\nsoft 柔軟的 形容詞\nspeak 說話 動詞\nspecial 特別的 形容詞\nspend 花費 動詞\nstand 站立 動詞\nstart 開始 動詞\nstay 停留 動詞\nstop 停止 動詞\nstrong 強壯的 形容詞\nstudy 學習 動詞\nsucceed 成功 動詞\nsuggest 建議 動詞\nsure 確定的 形容詞\nsweet 甜的 形容詞\ntake 拿取 動詞\ntake care of 照顧 處理 動詞\ntalk 談話 動詞\ntall 高的 形容詞\ntaste 品嚐 動詞 味道 名詞\nteach 教導 動詞\ntell 告訴 動詞\nthick 厚的 形容詞\nthin 薄的 瘦的 形容詞\nthink 想 動詞\nthrow 投擲 動詞\ntired 疲倦的 形容詞\ntouch 觸摸 動詞\ntrue 真實的 形容詞\ntry 嘗試 動詞\ntry on 試穿 動詞\nturn 轉動 動詞\nturn down 拒絕 調低 動詞\nturn off 關掉 動詞\nturn on 打開 動詞\nunderstand 理解 動詞\nuse 使用 動詞\nuseful 有用的 形容詞\nusual 通常的 形容詞\nvisit 參觀 拜訪 動詞\nwait 等待 動詞\nwake 醒來 動詞\nwake up 醒來 動詞\nwalk 走路 動詞\nwant 想要 動詞\nwarm 溫暖的 形容詞\nwash 洗 動詞\nwatch 觀看 動詞 手錶 名詞\nweak 虛弱的 形容詞\nwear 穿戴 動詞\nwet 濕的 形容詞\nwide 寬的 形容詞\nwin 贏 動詞\nwise 明智的 形容詞\nwish 希望 動詞\nwonder 想知道 動詞\nwonderful 美好的 形容詞\nwork 工作 動詞 名詞\nworry 擔心 動詞\nwrite 書寫 動詞\nwrong 錯誤的 形容詞\nyoung 年輕的 形容詞"
     };
     const PACK_WORD_CAP = 300;
     function isPackList(l) { return !!(l && l.pack && WORD_PACKS[l.pack]); }
     function countUserLists() { return wordLists.filter(l => !isPackList(l)).length; }
-    function packOwned(key) { return !!WORD_PACKS[key] && walletQty(WORD_PACKS[key].item) > 0; }
+    function packOwned(key) { return !!WORD_PACKS[key] && (WORD_PACKS[key].free || walletQty(WORD_PACKS[key].item) > 0); }
     function packInstalled(key) { return wordLists.some(l => l.pack === key); }
     function packKeyByItem(item) { return Object.keys(WORD_PACKS).find(k => WORD_PACKS[k].item === item) || ''; }
     let packInstalling = {};
@@ -167,6 +174,12 @@
         if (!meta) return false;
         if (packInstalled(key)) return true;
         if (packInstalling[key]) return false;
+        if (meta.free) {        // 免費的：內容就在 App 裡
+            wordLists.push({ id: newListId(), title: meta.title, content: FREE_PACK_CONTENT[key], createdAt: Date.now(), lang: meta.lang, pack: key });
+            localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+            try { triggerAutoSaveToCloud(); refreshAllListViews(); } catch (e) {}
+            return true;
+        }
         packInstalling[key] = true;
         try {
             let data = await walletRpc('get_word_pack', { p_pack: key });
@@ -204,6 +217,7 @@
         }
         Object.keys(WORD_PACKS).forEach(k => { if (packOwned(k) && !packInstalled(k)) installWordPack(k, true); });
     }
+    setTimeout(() => { try { ensureWordPacks(); } catch (e) {} }, 0);
     // 每日登入：雞塊 +1（後端錢包）＋ 糖醋醬碎片 +3（存在大冒險進度裡）；其他任務照舊送雞塊
     const LOGIN_SHARDS = 3;
     function isLoginShardClaimed() { try { return advData.loginShardDay === chickenData.lastDate; } catch (e) { return false; } }
@@ -428,6 +442,7 @@
         checkDailyReset();
         let rewardModal = document.getElementById('chickenRewardModal');
         if (rewardModal && rewardModal.style.display === 'block') updateChickenModalUI();
+        try { renderHomeToday(); } catch (e) {}
         let badge = document.getElementById('chickenRewardBadge');
         if (!badge) return;
 
@@ -1170,10 +1185,8 @@
     function updateListQuotaBar() {
         let bar = document.getElementById('listQuotaBar');
         if (!bar) return;
-        let c = countListsByLang(), cur = getLearningLanguage();
         let remain = Math.max(0, getMaxLists() - countUserLists());
-        let part = (lang) => `<span style="${cur === lang ? 'color:var(--primary); font-weight:800;' : ''}">${getLangName(lang)} ${c[lang]}</span>`;
-        bar.innerHTML = `${part('en')} ｜ ${part('ko')} ｜ <span>剩餘 ${remain}</span>`;
+        bar.textContent = `還可新增 ${remain} 本`;
     }
 
     // 單字行的「外語部分」：第一個中文字之前的內容（與 parseWordsRaw 的切法一致）
@@ -1427,6 +1440,7 @@
                     if (Array.isArray(cloudData.wordLists)) {
                         wordLists = cloudData.wordLists;
                         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+                        setTimeout(() => { try { ensureWordPacks(); } catch (e) {} }, 0);   // 雲端舊資料沒有免費單字庫：補上
                         if (ensureListIds()) setTimeout(triggerAutoSaveToCloud, 0);   // 雲端舊資料沒有識別碼：補上並回傳
                     }
                     if (cloudData.examHistory) {
@@ -1542,9 +1556,11 @@
         document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
         if (viewId === 'homeDashboardView') { try { homeAdvBadge(); } catch (e) {} }
+        try { syncHomeChrome(viewId); } catch (e) {}
+        try { setTimeout(updateStickyBar, 0); } catch (e) {}
         
         let wrapper = document.getElementById('mainScaleWrapper');
-        if (viewId === 'practiceView' || viewId === 'examView' || viewId === 'flashcardPlayView' || viewId === 'flashcardSetupView' || viewId === 'cardExamSetupView' || viewId === 'cardExamPlayView' || viewId === 'speakPracticeSetupView' || viewId === 'speakPracticePlayView') {
+        if (['practiceView', 'examView', 'flashcardPlayView', 'flashcardSetupView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'speakPracticePlayView', 'homeDashboardView', 'editorListView', 'editorDetailView', 'historyView'].includes(viewId)) {
             wrapper.className = 'scale-wrapper-practice';
         } else {
             wrapper.className = 'scale-wrapper';
@@ -1580,6 +1596,98 @@
         switchView('editorListView');
     }
 
+    // ── 首頁分頁：練習／測驗／題庫／樂園（手機在底部、電腦在上方）──
+    let homeTab = 'practice';
+    const HOME_TAB_VIEWS = ['homeDashboardView', 'editorListView'];
+    function setHomeTab(t) {
+        homeTab = ['practice', 'exam', 'lists', 'fun'].includes(t) ? t : 'practice';
+        if (homeTab === 'lists') { goToEditorPage(); return; }
+        if (!document.getElementById('homeDashboardView').classList.contains('active')) switchView('homeDashboardView');
+        else syncHomeChrome('homeDashboardView');
+        window.scrollTo(0, 0);
+    }
+    function syncHomeChrome(viewId) {
+        let on = HOME_TAB_VIEWS.includes(viewId);
+        if (viewId === 'editorListView') homeTab = 'lists';
+        else if (viewId === 'homeDashboardView' && homeTab === 'lists') homeTab = 'practice';
+        let chrome = document.getElementById('appChrome');
+        if (chrome) chrome.style.display = on ? '' : 'none';
+        document.body.classList.toggle('home-tabbed', on);
+        let bar = document.getElementById('acTabs');      // 手機：卡片往下延伸到底部分頁列
+        if (on && bar) requestAnimationFrame(() => { if (bar.offsetHeight) document.documentElement.style.setProperty('--tabh', bar.offsetHeight + 'px'); });
+        document.querySelectorAll('#acTabs .ac-tab').forEach(b => { let me = b.getAttribute('data-tab') === homeTab; b.classList.toggle('on', me); b.setAttribute('aria-selected', me ? 'true' : 'false'); });
+        document.querySelectorAll('#acMascot .m').forEach(m => m.classList.toggle('on', m.getAttribute('data-tab') === homeTab));
+        document.querySelectorAll('#homeDashboardView .hm-pane').forEach(p => p.style.display = p.getAttribute('data-pane') === homeTab ? '' : 'none');
+        if (on && homeTab === 'practice') renderHomeToday();
+    }
+    setTimeout(() => { try { let v = document.querySelector('.app-view.active'); syncHomeChrome(v ? v.id : 'homeDashboardView'); } catch (e) {} }, 0);
+    // ── 有返回鍵的頁面：往下捲時，頂部縮成和卡片同寬的細長條（返回鍵＋標題）──
+    function stickyBarEl() {
+        let el = document.getElementById('stickyNavBar');
+        if (!el) {
+            document.body.insertAdjacentHTML('beforeend', `<div id="stickyNavBar" aria-hidden="true"><button type="button" class="sb-back" aria-label="返回"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><b class="sb-title"></b></div>`);
+            el = document.getElementById('stickyNavBar');
+            el.querySelector('.sb-back').addEventListener('click', () => { let b = activeBackBtn(); if (b) b.click(); });
+        }
+        return el;
+    }
+    function activeBackBtn() {
+        let v = document.querySelector('.app-view.active');
+        if (!v) return null;
+        return [...v.querySelectorAll('.top-nav-bar .back-home-btn, .adv-topbar .back-home-btn')].find(b => b.offsetParent !== null) || null;
+    }
+    function updateStickyBar() {
+        let el = stickyBarEl();
+        let v = document.querySelector('.app-view.active'), nav = v && v.querySelector('.top-nav-bar');
+        let back = activeBackBtn();
+        let show = !!(nav && back && !HOME_TAB_VIEWS.includes(v.id) && v.id !== 'adventureBattleView' && nav.getBoundingClientRect().bottom < 0);
+        if (show) {
+            let card = document.querySelector('.paper-card-container').getBoundingClientRect();
+            el.style.left = card.left + 'px'; el.style.width = card.width + 'px';
+            let t = nav.querySelector('.current-mode-indicator');
+            el.querySelector('.sb-title').textContent = t ? t.textContent.replace(/^[^\w一-鿿가-힯]+/, '').trim() : '';
+        }
+        el.classList.toggle('show', show);
+    }
+    window.addEventListener('scroll', () => { try { updateStickyBar(); } catch (e) {} }, { passive: true });
+    window.addEventListener('resize', () => { try { updateStickyBar(); } catch (e) {} });
+    // ── 手機的返回手勢／Android 返回鍵：回到 App 的上一頁，而不是離開網頁 ──
+    let backGuard = false;
+    function armBackGuard() {
+        if (backGuard) return;
+        try { history.pushState({ chicky: 1 }, ''); backGuard = true; } catch (e) {}
+    }
+    window.addEventListener('popstate', () => {
+        backGuard = false;
+        let v = document.querySelector('.app-view.active');
+        let openModal = [...document.querySelectorAll('.modal')].find(m => m.style.display === 'block');
+        if (openModal) {
+            let x = openModal.querySelector('.close-modal, .modal-back-btn');
+            if (x) x.click(); else openModal.style.display = 'none';
+            armBackGuard(); return;
+        }
+        if (v && !HOME_TAB_VIEWS.includes(v.id)) {
+            let b = activeBackBtn();
+            if (b) b.click();
+            armBackGuard(); return;
+        }
+        if (homeTab !== 'practice') { setHomeTab('practice'); armBackGuard(); return; }
+        // 已經在首頁「練習」：再按一次返回就照瀏覽器原本的行為
+    });
+    document.addEventListener('click', () => { if (!backGuard) armBackGuard(); }, true);
+
+    // 練習分頁最上面：今日任務
+    function renderHomeToday() {
+        let box = document.getElementById('homeToday');
+        if (!box || typeof chickenData === 'undefined') return;
+        let keys = CHICKEN_TASK_KEYS, n = keys.length;
+        let done = keys.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done).length;
+        let unclaimed = keys.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)).length;
+        let sub = unclaimed ? `有 ${unclaimed} 項可以領雞塊！` : done >= n ? '今天的任務全部完成了！' : `再完成 ${n - done} 項，就能多領雞塊`;
+        box.innerHTML = `<div class="tx"><b>今日任務 ${done} / ${n}</b><small>${sub}</small><div class="bar"><i style="width:${(done / n * 100).toFixed(0)}%"></i></div></div>
+            <button type="button" class="go${unclaimed ? ' hot' : ''}" data-on-click='[["openChickenRewardModal",[]]]'>${unclaimed ? '領取' : '查看'}</button>`;
+    }
+
     function backToHome() {
         stopDictation();
         stopCardExamSession();
@@ -1599,46 +1707,45 @@
         switchView('homeDashboardView');
     }
 
+    // ── 題庫清單：上面「精選／自訂」切換，下面精簡清單 ──
+    let listSeg = 'custom';
+    function setListSeg(k) { listSeg = k === 'pack' ? 'pack' : 'custom'; initEditorListCards(); }
     function initEditorListCards() {
         let container = document.getElementById('editorListCardContainer');
         if (!container) return;
         document.querySelectorAll('body > .dropdown-menu').forEach(m => m.remove()); // 清掉搬到最外層的舊選單
-        container.innerHTML = '';
         updateListQuotaBar();
-
-        let cur = getLearningLanguage(), shown = 0;
-        wordLists.forEach((l, idx) => {
-            if (getListLang(l) !== cur) return;
-            shown++;
-            let count = getListWordCount(l.content);
-            let lang = getListLang(l);
-            let pack = isPackList(l);
-            let menuItems = pack
-                ? `<button class="dropdown-item" data-on-click='[["$stop",[]],["renameListTitleFromMenu",[${idx}]]]'>修改</button>
-                            <div class="dropdown-note">🔒 官方單字庫無法清空、刪除或更換語言</div>`
-                : `<button class="dropdown-item" data-on-click='[["$stop",[]],["renameListTitleFromMenu",[${idx}]]]'>修改</button>
+        let cur = getLearningLanguage();
+        let items = wordLists.map((l, idx) => ({ l, idx })).filter(x => getListLang(x.l) === cur);
+        let packs = items.filter(x => isPackList(x.l)), mine = items.filter(x => !isPackList(x.l));
+        let seg = document.getElementById('listSeg');
+        if (seg) seg.innerHTML = `<button type="button" class="${listSeg === 'pack' ? 'on' : ''}" data-on-click='[["setListSeg",["pack"]]]'>精選單字庫<small>${packs.length}</small></button><button type="button" class="${listSeg === 'custom' ? 'on' : ''}" data-on-click='[["setListSeg",["custom"]]]'>自訂單字庫<small>${mine.length}</small></button>`;
+        let bar = document.getElementById('listBar');
+        if (bar) bar.style.display = listSeg === 'custom' ? '' : 'none';
+        let tag = lang => `<span class="lang-tag lang-tag-${lang}">${getLangName(lang)}</span>`;
+        let html;
+        if (listSeg === 'pack') {
+            html = packs.map(({ l, idx }) => `<div class="lst-row" data-on-click='[["openEditorDetail",[${idx}]]]'><span class="lst-no pk">${(WORD_PACKS[l.pack] || {}).icon || '⭐'}</span><span class="lst-tx"><b>${escapeHTML(l.title)}</b> ${tag(getListLang(l))}<small>${getListWordCount(l.content)} 字</small></span><span class="lst-ar">›</span></div>`).join('')
+                + `<div class="lst-row lst-shop" data-on-click='[["openChickenShopModal",[]]]'><span class="lst-no">🛒</span><span class="lst-tx"><b>到雞塊補給站看更多</b></span><span class="lst-ar">›</span></div>`;
+            container.classList.remove('two');
+        } else if (!mine.length) {
+            html = `<div class="lst-empty">目前還沒有${getLangName(cur)}題庫，按右上角「＋ 新增」開始建立</div>`;
+            container.classList.remove('two');
+        } else {
+            html = mine.map(({ l, idx }, k) => {
+                let count = getListWordCount(l.content), cap = getListWordCap(l);
+                return `<div class="lst-row" data-on-click='[["openEditorDetail",[${idx}]]]'><span class="lst-no">${k + 1}</span><span class="lst-tx"><b>${escapeHTML(l.title)}</b> ${tag(getListLang(l))}<small><span class="${count >= cap * 0.9 ? 'warn' : ''}">${count}</span> / ${cap} 字</small></span>
+                    <span class="lst-menu"><button class="list-card-menu-btn" data-on-click='[["$stop",[]],["toggleDropdownMenu",[${idx},"$event"]]]'>⋮</button>
+                        <div class="dropdown-menu" id="dropdownMenu_${idx}">
+                            <button class="dropdown-item" data-on-click='[["$stop",[]],["renameListTitleFromMenu",[${idx}]]]'>修改</button>
                             <button class="dropdown-item" data-on-click='[["$stop",[]],["changeListLanguageFromMenu",[${idx}]]]'>更換語言</button>
                             <button class="dropdown-item" data-on-click='[["$stop",[]],["clearListContentFromMenu",[${idx}]]]'>清空</button>
-                            <button class="dropdown-item danger" data-on-click='[["$stop",[]],["deleteListFromMenu",[${idx}]]]'>刪除</button>`;
-            let cardHtml = `
-                <div class="list-card-item${pack ? ' is-pack' : ''}" data-on-click='[["openEditorDetail",[${idx}]]]'>
-                    <div class="list-card-info">
-                        <div class="list-card-title">${shown}: ${escapeHTML(l.title)} <span class="lang-tag lang-tag-${lang}">${getLangName(lang)}</span>${pack ? ' <span class="pack-tag">🔒 官方</span>' : ''}</div>
-                        <div class="list-card-count">(${count}/${getListWordCap(wordLists[idx])} 字)</div>
-                    </div>
-                    <div style="position: relative;">
-                        <button class="list-card-menu-btn" data-on-click='[["$stop",[]],["toggleDropdownMenu",[${idx},"$event"]]]'>⋮</button>
-                        <div class="dropdown-menu" id="dropdownMenu_${idx}">
-                            ${menuItems}
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', cardHtml);
-        });
-        if (shown === 0) {
-            container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:24px 8px; font-size:14px;">目前還沒有${getLangName(cur)}題庫<br>按右上角「新增題庫本」開始建立</div>`;
+                            <button class="dropdown-item danger" data-on-click='[["$stop",[]],["deleteListFromMenu",[${idx}]]]'>刪除</button>
+                        </div></span></div>`;
+            }).join('');
+            container.classList.add('two');
         }
+        container.innerHTML = html;
     }
 
     function toggleDropdownMenu(idx, event) {
@@ -1694,12 +1801,15 @@
         let list = wordLists[idx];
         if (!list) return;
 
-        document.getElementById('editorDetailTitleIndicator').innerText = `📁 ${getLangSeq(idx)}: ${list.title} 編輯（${getLangName(getListLang(list))}）`;
+        let pack = isPackList(list);
+        document.getElementById('editorDetailTitleIndicator').innerText = pack ? `${(WORD_PACKS[list.pack] || {}).icon || '⭐'} ${list.title}` : `📁 ${list.title}`;
         editorOpenCount = getListWordCount(list.content);
         document.getElementById('editorWordList').value = list.content || '';
         document.getElementById('wordSearchInput').value = '';
         document.getElementById('searchNotFoundTip').style.display = 'none';
-        
+        document.getElementById('editorDetailView').classList.toggle('ed-pack', pack);   // 精選單字庫：只能加星號
+        if (pack) renderPackStarList();
+        else document.getElementById('packStarList').innerHTML = '';
         handleEditorSearch();
         switchView('editorDetailView');
     }
@@ -1773,7 +1883,7 @@
 
     function handleEditorTextareaInput() {
         let idx = lastSelectedList;
-        if (!wordLists[idx]) return;
+        if (!wordLists[idx] || isPackList(wordLists[idx])) return;
         let text = document.getElementById('editorWordList').value;
         wordLists[idx].content = text;
         triggerAutoSaveToCloud();
@@ -1795,18 +1905,74 @@
         activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
             let isSelected = savedPracticeSelected.includes(list.originalIdx) ? 'selected' : '';
-            let cardHtml = `
-                <div class="select-card ${isSelected}" data-on-click='[["togglePracticeCard",[${list.originalIdx},"$this"]]]'>
-                    <div class="select-card-info">
-                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/${getListWordCap(list)} 字)</div>
-                    </div>
-                    <div class="checkmark-badge">✓</div>
-                </div>
-            `;
+            let cardHtml = pickRowHTML(list, count, isSelected, 'togglePracticeCard');
             grid.insertAdjacentHTML('beforeend', cardHtml);
         });
         loadPracticeSelectedContent();
+    }
+
+    // ── 選題庫頁共用：每一列、精選／自訂切換、已選幾本、全選 ──
+    function pickRowHTML(list, count, isSelected, fn) {
+        let pack = isPackList(list);
+        return `<div class="select-card pk-row ${isSelected}" data-kind="${pack ? 'pack' : 'custom'}" data-on-click='[["${fn}",[${list.originalIdx},"$this"]]]'>
+                    <div class="select-card-info">
+                        <div class="select-card-title">${pack ? ((WORD_PACKS[list.pack] || {}).icon || '⭐') + ' ' : ''}${escapeHTML(list.title)}</div>
+                        <div class="select-card-count">${count} 字</div>
+                    </div>
+                    <div class="checkmark-badge">✓</div>
+                </div>`;
+    }
+    let pickSeg = {};
+    const PICK_STATS = { cardGrid: 'practiceStatsText', flashcardGrid: 'flashcardStatsText', cardExamGrid: 'cardExamStatsText', speakPracticeGrid: 'speakPracticeStatsText', examCardGrid: 'examStatsText' };
+    function pickFns(gid) {
+        return ({ cardGrid: [savePracticeSelectionState, loadPracticeSelectedContent], flashcardGrid: [saveFlashcardSelectionState, loadFlashcardSelectedContent],
+                  cardExamGrid: [saveCardExamSelectionState, loadCardExamSelectedContent], speakPracticeGrid: [saveSpeakPracticeSelectionState, loadSpeakPracticeSelectedContent],
+                  examCardGrid: [saveExamSelectionState, loadExamSelectedContent], advGrid: [advSyncSelFromGrid, advRenderLevelPage] })[gid];
+    }
+    // 大冒險：依畫面上勾選的列更新 advSelected（其他語言的題庫保留原本的選擇）
+    function advSyncSelFromGrid() {
+        let grid = document.getElementById('advGrid');
+        if (!grid) return;
+        let inGrid = [], on = [];
+        grid.querySelectorAll('.select-card').forEach(c => {
+            let m = (c.getAttribute('data-on-click') || '').match(/"toggleAdvCard",\[(\d+),/);
+            if (!m) return;
+            let i = parseInt(m[1]); inGrid.push(i); if (c.classList.contains('selected')) on.push(i);
+        });
+        advSelected = advSelected.filter(i => !inGrid.includes(i)).concat(on);
+        try { localStorage.setItem(ADV_SEL_KEY, JSON.stringify(advSelected)); } catch (e) {}
+    }
+    function setPickSummary(statsId, gid, words, stars) {
+        let grid = document.getElementById(gid);
+        if (!grid) return;
+        let rows = [...grid.querySelectorAll('.select-card')];
+        let cnt = k => rows.filter(r => r.dataset.kind === k).length;
+        let sel = k => rows.filter(r => r.dataset.kind === k && r.classList.contains('selected')).length;
+        let cur = pickSeg[gid] || (cnt('custom') ? 'custom' : 'pack');
+        grid.classList.toggle('seg-pack', cur === 'pack');
+        grid.classList.toggle('seg-custom', cur === 'custom');
+        rows.filter(r => r.dataset.kind === cur).forEach((r, i) => { r.classList.toggle('pk-first', i === 0); r.classList.toggle('pk-odd', i % 2 === 0); r.classList.toggle('pk-r2', i >= 2); });
+        let seg = document.querySelector(`.pk-seg[data-grid="${gid}"]`);
+        let badge = n => n ? `<em>已選 ${n}</em>` : '';
+        if (seg) seg.innerHTML = `<button type="button" class="${cur === 'pack' ? 'on' : ''}" data-on-click='[["setPickSeg",["${gid}","pack"]]]'>精選單字庫${badge(sel('pack'))}</button><button type="button" class="${cur === 'custom' ? 'on' : ''}" data-on-click='[["setPickSeg",["${gid}","custom"]]]'>自訂單字庫${badge(sel('custom'))}</button>`;
+        let empty = grid.querySelector('.pk-empty');
+        if (!cnt(cur)) { if (!empty) grid.insertAdjacentHTML('beforeend', '<div class="pk-empty"></div>'); grid.querySelector('.pk-empty').textContent = cur === 'pack' ? '還沒有精選單字庫' : '還沒有放了單字的自訂題庫'; }
+        else if (empty) empty.remove();
+        let st = document.getElementById(statsId);
+        if (st) st.innerHTML = `已選 <b>${sel('pack') + sel('custom')} 本</b>・<b>${words}</b> 字・星號 <b>${stars}</b> 個`;
+    }
+    function setPickSeg(gid, k) {
+        pickSeg[gid] = k === 'pack' ? 'pack' : 'custom';
+        let f = pickFns(gid); if (f) f[1]();
+    }
+    function pickSelectAll(gid) {
+        let grid = document.getElementById(gid), f = pickFns(gid);
+        if (!grid || !f) return;
+        let cur = grid.classList.contains('seg-pack') ? 'pack' : 'custom';
+        let rows = [...grid.querySelectorAll(`.select-card[data-kind="${cur}"]`)];
+        let all = rows.length && rows.every(r => r.classList.contains('selected'));
+        rows.forEach(r => r.classList.toggle('selected', !all));
+        f[0](); f[1]();
     }
 
     function togglePracticeCard(originalIdx, cardEl) {
@@ -1847,7 +2013,7 @@
         let allWords = parseWordsRaw(combinedText);
         let totalWords = allWords.length;
         let starCount = allWords.filter(w => w.starred).length;
-        document.getElementById('practiceStatsText').innerText = `📊 範圍統計：總單字數 ${totalWords} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
+        setPickSummary('practiceStatsText', 'cardGrid', totalWords, starCount);
     }
 
     function initFlashcardGrid() {
@@ -1861,15 +2027,7 @@
         activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
             let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
-            let cardHtml = `
-                <div class="select-card ${isSelected}" data-on-click='[["toggleFlashcardCard",[${list.originalIdx},"$this"]]]'>
-                    <div class="select-card-info">
-                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/${getListWordCap(list)} 字)</div>
-                    </div>
-                    <div class="checkmark-badge">✓</div>
-                </div>
-            `;
+            let cardHtml = pickRowHTML(list, count, isSelected, 'toggleFlashcardCard');
             grid.insertAdjacentHTML('beforeend', cardHtml);
         });
         loadFlashcardSelectedContent();
@@ -1911,7 +2069,7 @@
         document.getElementById('flashcardPreviewTextarea').value = combinedText.trim();
         let allWords = parseWordsRaw(combinedText);
         let starCount = allWords.filter(w => w.starred).length;
-        document.getElementById('flashcardStatsText').innerText = `📊 範圍統計：總單字數 ${allWords.length} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
+        setPickSummary('flashcardStatsText', 'flashcardGrid', allWords.length, starCount);
     }
 
     function toggleFlashcardPreview() {
@@ -2080,15 +2238,7 @@
         activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
             let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
-            let cardHtml = `
-                <div class="select-card ${isSelected}" data-on-click='[["toggleCardExamCard",[${list.originalIdx},"$this"]]]'>
-                    <div class="select-card-info">
-                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/${getListWordCap(list)} 字)</div>
-                    </div>
-                    <div class="checkmark-badge">✓</div>
-                </div>
-            `;
+            let cardHtml = pickRowHTML(list, count, isSelected, 'toggleCardExamCard');
             grid.insertAdjacentHTML('beforeend', cardHtml);
         });
         loadCardExamSelectedContent();
@@ -2133,7 +2283,7 @@
         document.getElementById('cardExamPreviewTextarea').value = combinedText.trim();
         let allWords = parseWordsRaw(combinedText);
         let starCount = allWords.filter(w => w.starred).length;
-        document.getElementById('cardExamStatsText').innerText = `📊 範圍統計：總單字數 ${allWords.length} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
+        setPickSummary('cardExamStatsText', 'cardExamGrid', allWords.length, starCount);
     }
 
     function toggleCardExamPreview() {
@@ -2190,15 +2340,7 @@
         activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
             let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
-            let cardHtml = `
-                <div class="select-card ${isSelected}" data-on-click='[["toggleSpeakPracticeCard",[${list.originalIdx},"$this"]]]'>
-                    <div class="select-card-info">
-                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/${getListWordCap(list)} 字)</div>
-                    </div>
-                    <div class="checkmark-badge">✓</div>
-                </div>
-            `;
+            let cardHtml = pickRowHTML(list, count, isSelected, 'toggleSpeakPracticeCard');
             grid.insertAdjacentHTML('beforeend', cardHtml);
         });
         loadSpeakPracticeSelectedContent();
@@ -2243,7 +2385,7 @@
         document.getElementById('speakPracticePreviewTextarea').value = combinedText.trim();
         let allWords = parseWordsRaw(combinedText);
         let starCount = allWords.filter(w => w.starred).length;
-        document.getElementById('speakPracticeStatsText').innerText = `📊 範圍統計：總單字數 ${allWords.length} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
+        setPickSummary('speakPracticeStatsText', 'speakPracticeGrid', allWords.length, starCount);
     }
 
     function toggleSpeakPracticePreview() {
@@ -3069,15 +3211,7 @@
         activeLists.forEach((list, displayIdx) => {
             let count = getListWordCount(list.content);
             let isSelected = savedExamSelected.includes(list.originalIdx) ? 'selected' : '';
-            let cardHtml = `
-                <div class="select-card ${isSelected}" data-on-click='[["toggleExamCard",[${list.originalIdx},"$this"]]]'>
-                    <div class="select-card-info">
-                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${count}/${getListWordCap(list)} 字)</div>
-                    </div>
-                    <div class="checkmark-badge">✓</div>
-                </div>
-            `;
+            let cardHtml = pickRowHTML(list, count, isSelected, 'toggleExamCard');
             grid.insertAdjacentHTML('beforeend', cardHtml);
         });
         loadExamSelectedContent();
@@ -3121,7 +3255,7 @@
         let allWords = parseWordsRaw(combinedText);
         let totalWords = allWords.length;
         let starCount = allWords.filter(w => w.starred).length;
-        document.getElementById('examStatsText').innerText = `📊 範圍統計：總單字數 ${totalWords} 個 ｜ 星號 (*) 單字數 ${starCount} 個`;
+        setPickSummary('examStatsText', 'examCardGrid', totalWords, starCount);
     }
 
     function toggleExamPreview() {
@@ -3188,7 +3322,14 @@
         if (!el || !list || !ta) return;
         let count = getListWordCount(ta.value);
         let cap = getListWordCap(list);
-        el.textContent = `(${count}/${cap})`;
+        if (isPackList(list)) {
+            let stars = (list.content || '').split('\n').filter(l => l.trim().startsWith('*')).length;
+            el.innerHTML = `${count} 字・<span class="star">★</span> ${stars}`;
+            el.classList.remove('is-full', 'is-near');
+            el.title = '';
+            return;
+        }
+        el.innerHTML = `<b>${count}</b> / ${cap} 字`;
         el.classList.toggle('is-full', count >= cap);
         el.classList.toggle('is-near', count < cap && count >= cap * 0.9);
         el.title = count >= cap
@@ -3196,70 +3337,108 @@
             : `還可以再放 ${cap - count} 個單字`;
     }
 
+    // ── 單字編輯頁的搜尋：打字時只列出找到的單字；點一列就回到那一行 ──
+    function editorBackdropPlain() {
+        let ta = document.getElementById('editorWordList'), bd = document.getElementById('editorBackdrop');
+        if (ta && bd) bd.innerHTML = escapeHTML(ta.value);
+        syncEditorScroll();
+    }
+    function editorSearchHL(s, q) {
+        let i = s.toLowerCase().indexOf(q.toLowerCase());
+        if (i < 0) return escapeHTML(s);
+        return escapeHTML(s.slice(0, i)) + '<span class="hit">' + escapeHTML(s.slice(i, i + q.length)) + '</span>' + escapeHTML(s.slice(i + q.length));
+    }
+    function editorWordRowHTML(line, q) {
+        let starred = line.trim().startsWith('*'), clean = line.trim().replace(/^\*\s*/, '');
+        let fi = getForeignPart(clean).length, en = clean.slice(0, fi).trim(), rest = clean.slice(fi).trim();
+        return `${starred ? '<span class="star">*</span>' : ''}<b>${q ? editorSearchHL(en, q) : escapeHTML(en)}</b> <span class="mut">${q ? editorSearchHL(rest, q) : escapeHTML(rest)}</span>`;
+    }
     function handleEditorSearch() {
         updateEditorWordCounter();
-        const textarea = document.getElementById('editorWordList');
-        const searchInput = document.getElementById('wordSearchInput');
-        const backdrop = document.getElementById('editorBackdrop');
-        const notFoundTip = document.getElementById('searchNotFoundTip');
-        
-        if (!textarea || !searchInput || !backdrop) return;
-        
-        const text = textarea.value;
-        const query = searchInput.value.trim();
-
-        syncEditorScroll();
-
-        if (!query) {
-            backdrop.innerHTML = text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-            if (notFoundTip) notFoundTip.style.display = 'none';
+        const ta = document.getElementById('editorWordList');
+        const input = document.getElementById('wordSearchInput');
+        const res = document.getElementById('edSearchResults'), main = document.getElementById('edMain');
+        if (!ta || !input || !res || !main) return;
+        editorBackdropPlain();
+        const q = input.value.trim();
+        document.getElementById('edSearchBox').classList.toggle('has-q', !!q);
+        const pack = document.getElementById('editorDetailView').classList.contains('ed-pack');
+        if (pack) {           // 精選單字庫：直接篩選下面的星號清單
+            res.style.display = 'none'; main.style.display = '';
+            let n = 0;
+            document.querySelectorAll('#packStarList .ed-srow').forEach(r => {
+                let on = !q || r.getAttribute('data-text').toLowerCase().includes(q.toLowerCase());
+                r.style.display = on ? '' : 'none'; if (on) n++;
+            });
+            let empty = document.getElementById('packStarEmpty');
+            if (empty) { empty.style.display = q && !n ? '' : 'none'; empty.textContent = `找不到「${q}」`; }
             return;
         }
-
-        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(${escapedQuery})`, 'gi');
-
-        const hasMatch = regex.test(text);
-        regex.lastIndex = 0;
-
-        if (!hasMatch) {
-            if (notFoundTip) {
-                notFoundTip.innerText = `找不到該單字 "${query}"`;
-                notFoundTip.style.display = 'block';
-            }
-            backdrop.innerHTML = text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-            return;
-        } else {
-            if (notFoundTip) notFoundTip.style.display = 'none';
-        }
-
-        const highlightedText = text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(regex, '<span class="highlight-match">$1</span>');
-
-        backdrop.innerHTML = highlightedText;
-
-        let firstMatchIndex = text.toLowerCase().indexOf(query.toLowerCase());
-        if (firstMatchIndex !== -1) {
-            let linesBefore = text.substring(0, firstMatchIndex).split('\n').length;
-            let targetScrollTop = Math.max(0, (linesBefore - 3) * 22);
-            textarea.scrollTop = targetScrollTop;
-            backdrop.scrollTop = textarea.scrollTop;
-        }
+        if (!q) { res.style.display = 'none'; main.style.display = ''; return; }
+        let hits = [];
+        ta.value.split('\n').forEach((line, i) => { if (line.trim() && line.toLowerCase().includes(q.toLowerCase())) hits.push(i); });
+        main.style.display = 'none'; res.style.display = '';
+        if (!hits.length) { res.innerHTML = `<div class="ed-empty">找不到「${escapeHTML(q)}」</div>`; return; }
+        let lines = ta.value.split('\n');
+        res.innerHTML = `<div class="ed-found">找到 <b>${hits.length}</b> 個</div><div class="ed-list">${hits.map(i =>
+            `<div class="ed-row" data-on-click='[["jumpToEditorLine",[${i}]]]'><span class="t">${editorWordRowHTML(lines[i], q)}</span><span class="ar">›</span></div>`).join('')}</div>`;
     }
+    function clearEditorSearch() {
+        let input = document.getElementById('wordSearchInput');
+        if (input) input.value = '';
+        handleEditorSearch();
+    }
+    // 點搜尋結果：回到完整的編輯框，捲到那一行並選起來
+    function jumpToEditorLine(i) {
+        i = parseInt(i) || 0;
+        clearEditorSearch();
+        let ta = document.getElementById('editorWordList');
+        if (!ta) return;
+        let lines = ta.value.split('\n'), start = 0;
+        for (let k = 0; k < i && k < lines.length; k++) start += lines[k].length + 1;
+        let lh = parseFloat(getComputedStyle(ta).lineHeight) || 22;
+        try { ta.focus({ preventScroll: true }); } catch (e) { ta.focus(); }
+        ta.setSelectionRange(start, start + (lines[i] || '').length);
+        ta.scrollTop = Math.max(0, (i - 1) * lh);
+        syncEditorScroll();
+    }
+    let editorSortDir = 'az';
+    function toggleEditorSort() {
+        sortEditorContent(editorSortDir);
+        editorSortDir = editorSortDir === 'az' ? 'za' : 'az';
+        let b = document.getElementById('edSortBtn');
+        if (b) b.textContent = (editorSortDir === 'az' ? 'A-Z' : 'Z-A') + ' ⇅';
+    }
+    // ── 精選單字庫：不能編輯，只能點單字加／取消星號 ──
+    function renderPackStarList() {
+        let box = document.getElementById('packStarList'), list = wordLists[lastSelectedList];
+        if (!box || !list) return;
+        let lines = (list.content || '').split('\n');
+        box.innerHTML = `<div class="ed-list">${lines.map((line, i) => line.trim() ? `<div class="ed-srow${line.trim().startsWith('*') ? ' on' : ''}" data-line="${i}" data-text="${escapeHTML(line.replace(/^\s*\*\s*/, ''))}" data-on-click='[["togglePackStar",[${i}]]]'><span class="st">${line.trim().startsWith('*') ? '★' : '☆'}</span><span class="t">${editorWordRowHTML(line.replace(/^\s*\*\s*/, ''), '')}</span></div>` : '').join('')}</div><div class="ed-empty" id="packStarEmpty" style="display:none"></div>`;
+    }
+    function togglePackStar(i) {
+        let list = wordLists[lastSelectedList];
+        if (!list || !isPackList(list)) return;
+        i = parseInt(i);
+        let lines = (list.content || '').split('\n');
+        if (!lines[i] || !lines[i].trim()) return;
+        let on = lines[i].trim().startsWith('*');
+        lines[i] = on ? lines[i].replace(/^\s*\*\s*/, '') : '*' + lines[i].trim();
+        list.content = lines.join('\n');
+        document.getElementById('editorWordList').value = list.content;
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        triggerAutoSaveToCloud();
+        refreshListViewsSoon();
+        let row = document.querySelector(`#packStarList .ed-srow[data-line="${i}"]`);
+        if (row) { row.classList.toggle('on', !on); row.querySelector('.st').textContent = on ? '☆' : '★'; }
+        updateEditorWordCounter();
+    }
+    function refreshListViewsSoon() { clearTimeout(refreshListViewsSoon.t); refreshListViewsSoon.t = setTimeout(() => { try { refreshAllListViews(); } catch (e) {} }, 300); }
 
     function saveAndStayInEditor() {
         handleEditorTextareaInput();
         let idx = lastSelectedList;
-        if (!wordLists[idx]) return;
+        if (!wordLists[idx] || isPackList(wordLists[idx])) return;
 
         let content = wordLists[idx].content || '';
         let lines = content.split('\n');
@@ -3960,10 +4139,117 @@
         closeExportModal();
     }
     
-    async function openHistoryModal() { 
-        if (accessToken && isCloudSyncActive) {
-            await loadDataFromGoogleDrive();
+    // ── 測驗紀錄（一般頁面）──
+    let hist = { type: 'listening', mode: 'main', idx: 0, onlyWrong: false, sel: new Set() };
+    function histData() { return filterHistoryByLang(hist.type === 'listening' ? examHistory : cardExamHistory); }
+    function histDate(s) {
+        let m = String(s || '').match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})\D+?(上午|下午|AM|PM)?\s*(\d{1,2}):(\d{2})/i);
+        if (!m) return String(s || '');
+        let hr = parseInt(m[5]); if (/下午|PM/i.test(m[4] || '') && hr < 12) hr += 12; if (/上午|AM/i.test(m[4] || '') && hr === 12) hr = 0;
+        return `${parseInt(m[2])}/${parseInt(m[3])} ${String(hr).padStart(2, '0')}:${m[6]}`;
+    }
+    function histWrongList() {
+        let map = {};
+        histData().forEach(h => (h.results || []).forEach(r => {
+            if (r.isCorrect || !r.english) return;
+            let key = r.english.toLowerCase();
+            if (!map[key]) map[key] = { english: r.english, chinese: r.senseText || r.chinese || '', line: r.line || '', count: 0 };
+            map[key].count++;
+        }));
+        return Object.values(map).sort((x, y) => y.count - x.count).slice(0, 20);
+    }
+    function histChartSVG(list) {
+        let sc = list.slice(0, 10).reverse().map(h => Number(h.score) || 0);
+        if (!sc.length) return '';
+        let bw = (document.getElementById('histBody') || {}).clientWidth || 360;
+        let w = Math.max(300, Math.min(760, bw - 24)), hgt = 120, px = 18, py = 20, n = sc.length;   // 寬度跟著畫面，高度固定
+        let xs = sc.map((s, i) => n === 1 ? w / 2 : px + i * (w - 2 * px) / (n - 1));
+        let y = s => hgt - py - Math.max(0, Math.min(100, s)) / 100 * (hgt - 2 * py);
+        let pts = sc.map((s, i) => `${xs[i].toFixed(0)},${y(s).toFixed(0)}`).join(' ');
+        let dots = sc.map((s, i) => `<circle cx="${xs[i].toFixed(0)}" cy="${y(s).toFixed(0)}" r="${i === n - 1 ? 5 : 3.5}" class="${i === n - 1 ? 'last' : ''}"/>`).join('');
+        let dates = list.slice(0, 10).reverse().map(h => histDate(h.date).split(' ')[0]);
+        return `<div class="hs-chart"><svg viewBox="0 0 ${w} ${hgt}" width="100%" aria-label="成績曲線"><line class="ref" x1="${px}" x2="${w - px}" y1="${y(60).toFixed(0)}" y2="${y(60).toFixed(0)}"/><text class="ref" x="${w - px}" y="${(y(60) - 5).toFixed(0)}" text-anchor="end">60</text>
+            ${n > 1 ? `<polyline points="${pts}"/>` : ''}${dots}<text class="val" x="${xs[n - 1].toFixed(0)}" y="${(y(sc[n - 1]) - 10).toFixed(0)}" text-anchor="middle">${sc[n - 1]}</text></svg>
+            <div class="dates">${dates.map(d => `<span>${escapeHTML(d)}</span>`).join('')}</div></div>`;
+    }
+    function renderHistoryPage() {
+        let body = document.getElementById('histBody'), title = document.getElementById('historyTitle');
+        if (!body) return;
+        let list = histData(), name = hist.type === 'listening' ? '聽力測驗' : '字卡測驗';
+        let wordRow = (e, c, right) => `<span class="t"><b>${escapeHTML(e)}</b> <span class="mut">${escapeHTML(c || '')}</span></span>${right || ''}`;
+        if (hist.mode === 'detail' && list[hist.idx]) {
+            let h = list[hist.idx], rs = h.results || [], wrong = rs.filter(r => !r.isCorrect).length;
+            title.textContent = `📊 ${histDate(h.date).split(' ')[0]} ${name}`;
+            let rows = rs.map(r => {
+                if (hist.onlyWrong && r.isCorrect) return '';
+                let yours = hist.type === 'listening' ? [r.userEng || '未填', r.userChi || '未填'].join('／') : [r.userChi || '未填', r.pos ? (r.userPos || '未選') : ''].filter(Boolean).join('／');
+                return `<div class="hs-row"><span class="${r.isCorrect ? 'ok' : 'no'}">${r.isCorrect ? '✓' : '✕'}</span><span class="t"><b>${escapeHTML(r.english || '')}</b> <span class="mut">${escapeHTML(r.senseText || r.chinese || '')}</span>${r.isCorrect ? '' : `<small class="yours">你的答案：${escapeHTML(yours)}</small>`}</span></div>`;
+            }).join('');
+            body.innerHTML = `<div class="hs-dhead"><span><b>${escapeHTML(histDate(h.date))}</b>　<span class="mut">${escapeHTML(h.range || '')}</span></span><span class="hs-big">${escapeHTML(h.score)}<small> 分</small></span></div>
+                <div class="pk-bar"><span>${escapeHTML(h.total)} 題・答錯 <b class="warn">${wrong}</b> 題</span><button type="button" class="addb${hist.onlyWrong ? ' on' : ''}" data-on-click='[["histToggleWrong",[]]]'>${hist.onlyWrong ? '顯示全部' : '只看錯的'}</button></div>
+                <div class="hs-list">${rows || '<div class="hs-empty">這次全部答對！</div>'}</div>`;
+            return;
         }
+        if (hist.mode === 'save') {
+            title.textContent = '📥 存到題庫';
+            let wl = histWrongList();
+            let opts = wordLists.map((l, i) => ({ l, i })).filter(x => isListInCurrentLang(x.l) && !isPackList(x.l))
+                .map(x => `<option value="${x.i}">${escapeHTML(x.l.title)}（${getListWordCount(x.l.content)}/${getListWordCap(x.l)}）</option>`).join('');
+            body.innerHTML = `<div class="pk-bar"><span>選要存的單字・已選 <b>${hist.sel.size}</b> 個</span><button type="button" class="addb" data-on-click='[["histSelectAll",[]]]'>全選</button></div>
+                <div class="hs-list">${wl.map((w, i) => `<div class="hs-row pick${hist.sel.has(i) ? ' on' : ''}" data-on-click='[["histToggleSel",[${i}]]]'>${wordRow(w.english, w.chinese, `<span class="cnt">錯 ${w.count} 次</span><span class="ck">${hist.sel.has(i) ? '✓' : ''}</span>`)}</div>`).join('') || '<div class="hs-empty">目前沒有錯題</div>'}</div>
+                <div class="hs-save"><select id="histTarget">${opts || '<option value="">（還沒有自訂題庫）</option>'}</select><button type="button" data-on-click='[["histSaveWords",[]]]'>存入</button></div>`;
+            return;
+        }
+        title.textContent = '📊 測驗紀錄';
+        let avg = list.length ? Math.round(list.reduce((s, h) => s + (Number(h.score) || 0), 0) / list.length) : 0;
+        let best = list.length ? Math.max(...list.map(h => Number(h.score) || 0)) : 0;
+        let wl = histWrongList().slice(0, 5);
+        body.innerHTML = `<div class="pk-seg"><button type="button" class="${hist.type === 'listening' ? 'on' : ''}" data-on-click='[["histSetType",["listening"]]]'>聽力測驗</button><button type="button" class="${hist.type === 'card' ? 'on' : ''}" data-on-click='[["histSetType",["card"]]]'>字卡測驗</button></div>
+            ${list.length ? `<div class="hs-sum">共 <b>${list.length}</b> 次・平均 <b>${avg}</b> 分・最高 <b>${best}</b> 分</div>${histChartSVG(list)}
+            <div class="hs-sec"><b>常錯單字</b>${wl.length ? `<button type="button" class="hs-link" data-on-click='[["histOpenSave",[]]]'>存到題庫 ›</button>` : ''}</div>
+            <div class="hs-list">${wl.map(w => `<div class="hs-row">${wordRow(w.english, w.chinese, `<span class="cnt">錯 ${w.count} 次</span>`)}</div>`).join('') || '<div class="hs-empty">目前沒有錯題，太厲害了！</div>'}</div>
+            <div class="hs-sec"><b>歷史紀錄</b></div>
+            <div class="hs-list">${list.map((h, i) => `<div class="hs-row link" data-on-click='[["histOpenDetail",[${i}]]]'><span class="t"><b>${escapeHTML(histDate(h.date))}</b><small>${escapeHTML(h.range || '')}・${escapeHTML(h.total)} 題</small></span><span class="sc${Number(h.score) < 60 ? ' low' : ''}">${escapeHTML(h.score)}</span><span class="ar">›</span></div>`).join('')}</div>`
+            : `<div class="hs-empty" style="margin-top:4px">還沒有${getLangName(getLearningLanguage())}${name}紀錄，去考一次吧！</div>`}`;
+    }
+    function histSetType(t) { hist.type = t === 'card' ? 'card' : 'listening'; hist.mode = 'main'; renderHistoryPage(); }
+    function histOpenDetail(i) { hist.mode = 'detail'; hist.idx = parseInt(i) || 0; hist.onlyWrong = false; renderHistoryPage(); window.scrollTo(0, 0); }
+    function histToggleWrong() { hist.onlyWrong = !hist.onlyWrong; renderHistoryPage(); }
+    function histOpenSave() { hist.mode = 'save'; hist.sel = new Set([0, 1, 2].filter(i => i < histWrongList().length)); renderHistoryPage(); window.scrollTo(0, 0); }
+    function histToggleSel(i) { i = parseInt(i); hist.sel.has(i) ? hist.sel.delete(i) : hist.sel.add(i); renderHistoryPage(); }
+    function histSelectAll() { let n = histWrongList().length; hist.sel = hist.sel.size === n ? new Set() : new Set([...Array(n).keys()]); renderHistoryPage(); }
+    function histSaveWords() {
+        let sel = document.getElementById('histTarget'), idx = sel ? parseInt(sel.value) : NaN;
+        if (isNaN(idx) || !wordLists[idx]) { alert(`⚠️ 目前沒有可儲存的${getLangName(getLearningLanguage())}題庫，請先到「題庫」新增。`); return; }
+        let wl = histWrongList().filter((w, i) => hist.sel.has(i));
+        if (!wl.length) { alert('⚠️ 請至少選一個單字！'); return; }
+        let added = 0, full = 0;
+        wl.forEach(w => {
+            let cur = wordLists[idx].content || '';
+            if (parseWordsRaw(cur).some(x => x.english.toLowerCase() === w.english.toLowerCase())) return;
+            if (getListWordCount(cur) >= getListWordCap(wordLists[idx])) { full++; return; }
+            wordLists[idx].content = cur + (cur ? '\n' : '') + ((w.line || '').trim() || `${w.english} ${w.chinese}`.trim());
+            added++;
+        });
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        triggerAutoSaveToCloud();
+        try { refreshAllListViews(); } catch (e) {}
+        alert(`✅ 已將 ${added} 個單字存到「${wordLists[idx].title}」！${full ? `\n⚠️ 題庫已達上限，有 ${full} 個沒有加入。` : ''}`);
+        hist.mode = 'main'; renderHistoryPage();
+    }
+    function historyBack() {
+        if (hist.mode !== 'main') { hist.mode = 'main'; renderHistoryPage(); window.scrollTo(0, 0); return; }
+        backToHome();
+    }
+    async function openHistoryModal() {
+        if (accessToken && isCloudSyncActive) {
+            try { await loadDataFromGoogleDrive(); } catch (e) {}
+        }
+        hist.mode = 'main';
+        switchView('historyView');
+        renderHistoryPage();
+        window.scrollTo(0, 0);
+        return;
         openHistoryModalContent(); 
         document.getElementById('historyModal').style.display = 'block'; 
         setTimeout(() => {
@@ -5260,14 +5546,7 @@
         let lists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
         lists.forEach((list, displayIdx) => {
             let sel = advSelected.includes(list.originalIdx) ? 'selected' : '';
-            grid.insertAdjacentHTML('beforeend', `
-                <div class="select-card ${sel}" data-on-click='[["toggleAdvCard",[${list.originalIdx},"$this"]]]'>
-                    <div class="select-card-info">
-                        <div class="select-card-title">${displayIdx + 1}: ${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">(${getListWordCount(list.content)}/${getListWordCap(list)} 字)</div>
-                    </div>
-                    <div class="checkmark-badge">✓</div>
-                </div>`);
+            grid.insertAdjacentHTML('beforeend', pickRowHTML(list, getListWordCount(list.content), sel, 'toggleAdvCard'));
         });
     }
     function toggleAdvCard(idx, cardEl) {
@@ -5282,7 +5561,7 @@
         let words = advGetWords();
         let n = words.length;
         let stat = document.getElementById('advStatsText');
-        if (stat) stat.textContent = `📊 範圍統計：${n} 個單字`;
+        if (stat) setPickSummary('advStatsText', 'advGrid', n, words.filter(w => w.starred).length);
         advSyncDaily();
         let ok = n >= lv.minWords;
         let tired = advData.hp <= 0;
@@ -7186,7 +7465,7 @@
         goToPracticePage,
         handleAuthClick,
         handleCardExamKeyDown,
-        handleEditorSearch,
+        setHomeTab, histSetType, histOpenDetail, histToggleWrong, histOpenSave, histToggleSel, histSelectAll, histSaveWords, historyBack, setListSeg, setPickSeg, pickSelectAll, handleEditorSearch, clearEditorSearch, jumpToEditorLine, toggleEditorSort, togglePackStar,
         handleEditorTextareaInput,
         handleInputKeyDown,
         handleChiKeyDown,
