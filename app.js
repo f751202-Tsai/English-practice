@@ -1,7775 +1,3361 @@
-    function escapeHTML(str) {
-        if (!str && str !== 0) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <!-- 內容安全政策 (CSP)：只允許自己的腳本 + Google 登入，擋掉其他來源的腳本與連線 -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://accounts.google.com https://cdn.jsdelivr.net;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com;
+        font-src https://fonts.gstatic.com;
+        img-src 'self' data:;
+        connect-src 'self' https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://uofxthfbcerayugaxefn.supabase.co;
+        frame-src https://accounts.google.com;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self'">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="icon" href="data:,">
+    <!-- 引入 Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #EEF2F6;
+            --card-bg: #FFFFFF;
+            --primary: #6366F1;
+            --primary-hover: #4F46E5;
+            --primary-gradient: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --radius-outer: 24px;
+            --radius-inner: 16px;
+        }
 
-    // 使用 Base64 解碼還原 Client ID，避免明文暴露
-    const CLIENT_ID = '976805087499-l4auf66i1qkj91ba335jvgtk3b04a9av.apps.googleusercontent.com';
-    const SCOPES = 'https://www.googleapis.com/auth/drive.appdata'; 
-    const FILENAME = 'english_dictation_lists_v2.json';
-    const SUPABASE_URL = 'https://uofxthfbcerayugaxefn.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_-WzDzNfADAl83FBpt2OsOg_vUV1b80s';
+        body.power-saving-mode {
+            --bg-body: #14171E !important;
+            --card-bg: #1B1E27 !important;
+            --card-border: #2B303C !important;
+            --text-main: #FFFFFF !important;
+            --text-muted: #94A3B8 !important;
+            --divider-color: rgba(255, 255, 255, 0.08) !important;
+            background-image: none !important;
+        }
 
-    // 初始化 Supabase 客戶端
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let tokenClient, accessToken = null, isCloudSyncActive = false;
-    let myDeviceId = localStorage.getItem('dictation_device_id');
-    if (!myDeviceId) {
-        myDeviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('dictation_device_id', myDeviceId);
-    }
+        body.power-saving-mode .paper-card-container {
+            background-color: #1B1E27 !important;
+            color: #FFFFFF !important;
+            border-color: #2B303C !important;
+        }
 
-    let wakeLockSentinel = null;
+        body.power-saving-mode .section-card-wrapper {
+            background-color: #1B1E27 !important;
+            color: #FFFFFF !important;
+            border-color: #2B303C !important;
+        }
 
-    async function requestWakeLock() {
-        if ('wakeLock' in navigator) {
-            try {
-                wakeLockSentinel = await navigator.wakeLock.request('screen');
-            } catch (err) {
-                console.log('Wake Lock Error:', err.name, err.message);
+        body.power-saving-mode .cloud-sync-bar,
+        body.power-saving-mode .select-card,
+        body.power-saving-mode textarea,
+        body.power-saving-mode .config-group,
+        body.power-saving-mode .exam-setup-box,
+        body.power-saving-mode #examArea,
+        body.power-saving-mode #cardExamPlayView,
+        body.power-saving-mode .result-box,
+        body.power-saving-mode input,
+        body.power-saving-mode select,
+        body.power-saving-mode .mode-status-card,
+        body.power-saving-mode .database-load-card,
+        body.power-saving-mode .search-bar-container,
+        body.power-saving-mode .list-card-item,
+        body.power-saving-mode .dropdown-menu { 
+            background-color: #1B1E27 !important; 
+            color: #FFFFFF !important;            
+            border-color: #2B303C !important;
+        }
+
+        body.power-saving-mode .modal-content { 
+            background-color: #1B1E27 !important; 
+            color: #FFFFFF !important;            
+            border-color: #2B303C !important; 
+        }
+
+        body.power-saving-mode .author-box {
+            background-color: #1B1E27 !important;
+            color: #FFFFFF !important;
+            border-color: #2B303C !important;
+        }
+
+        body.power-saving-mode .section-header,
+        body.power-saving-mode .item-title,
+        body.power-saving-mode .item-desc,
+        body.power-saving-mode .list-card-title {
+            color: #FFFFFF !important;
+        }
+
+        body.power-saving-mode .select-card.selected {
+            background: #1B1E27 !important;
+            border-color: #818CF8 !important;
+        }
+        body.power-saving-mode .select-card-title {
+            color: #FFFFFF !important;
+        }
+        body.power-saving-mode .select-card.selected .select-card-title {
+            color: #A5B4FC !important;
+        }
+        body.power-saving-mode .stats-status-bar {
+            background: #2E3147 !important;
+            color: #C7D2FE !important;
+            border-color: #4338CA !important;
+        }
+        body.power-saving-mode #topWrongWordsList {
+            background-color: #1B1E27 !important;
+            color: #FFFFFF !important;
+        }
+        body.power-saving-mode #topWrongWordsList span {
+            color: #FFFFFF !important;
+        }
+
+        body.power-saving-mode .tab-card-item {
+            background: #1B1E27 !important;
+            border-color: #2B303C !important;
+        }
+        body.power-saving-mode .tab-card-item .history-item-title {
+            color: #FFFFFF !important;
+        }
+        body.power-saving-mode .tab-card-item .history-item-icon-box {
+            background: #1B1E27 !important;
+            border-color: #2B303C !important;
+            color: #94A3B8 !important;
+        }
+
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: var(--bg-body); 
+            background-image: none; 
+            margin: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-x: hidden;
+            padding: 20px 10px;
+        }
+
+        .scale-wrapper {
+            transform: scale(1.25);
+            transform-origin: top center;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            max-width: 620px;
+            margin: 20px 0 80px 0;
+            box-sizing: border-box;
+        }
+
+        .scale-wrapper-practice {
+            transform: scale(1.45);
+            transform-origin: top center;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            max-width: 620px;
+            margin: 20px 0 120px 0;
+            box-sizing: border-box;
+        }
+
+        .paper-card-container { 
+            width: 100%; 
+            background: var(--card-bg); 
+            padding: 24px 28px; 
+            border-radius: var(--radius-outer); 
+            box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03); 
+            border: 1px solid var(--border-color); 
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        
+        .paper-card-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 5px;
+            background: var(--primary-gradient);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+        }
+
+        /* 雞塊獎勵快捷按鈕 (首頁左上角綠色框處) */
+        .chicken-reward-btn {
+            position: absolute;
+            top: 20px;
+            left: 24px;
+            background: #1B1E27;
+            border: 2px solid #2B303C;
+            border-radius: 14px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 60;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .chicken-reward-btn:hover { transform: scale(1.05); border-color: #FACC15; }
+        .chicken-icon-img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+        /* 紅色醒目勾勾 */
+        .reward-badge-dot {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #EF4444;
+            color: white;
+            font-size: 11px;
+            font-weight: 800;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5);
+            border: 2px solid #1B1E27;
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .settings-gear-btn {
+            position: absolute;
+            top: 0; right: 0;
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 42px; height: 42px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 18px; transition: all 0.2s; color: var(--text-muted);
+        }
+        .settings-gear-btn:hover { background: #EEF2FF; color: var(--primary); border-color: #C7D2FE; }
+
+        .app-logo-icon {
+            width: 80px;
+            height: 80px;
+            background: #6366F1;
+            border-radius: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            box-shadow: 0 12px 24px -6px rgba(99, 102, 241, 0.45), 0 0 0 4px rgba(99, 102, 241, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        h2 { text-align: center; color: var(--text-main); font-weight: 800; letter-spacing: -0.5px; margin: 0; font-size: 26px; }
+        .app-subtitle { margin: 6px 0 0 0; font-size: 14px; color: var(--text-muted); text-align: center; font-weight: 500; }
+
+        .cloud-sync-bar { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #F8FAFC; padding: 12px 18px; border-radius: 14px; 
+            margin-bottom: 22px; font-size: 13.5px; font-weight: 500; color: var(--text-muted); 
+            border: 1px solid var(--border-color); 
+        }
+        /* 首頁雲朵狀態按鈕（在 ⚙️ 左邊） */
+        .cloud-st-btn { position: absolute; top: 0; right: 52px; width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--border-color); background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: all 0.2s; }
+        .cloud-st-btn:hover { border-color: #C7D2FE; }
+        .cloud-st-btn .cl { fill: #E2E8F0; stroke: #94A3B8; }
+        .cloud-st-btn.st-ok .cl { fill: #BFDBFE; stroke: #2563EB; }
+        .cloud-st-btn.st-bad .cl { fill: #FED7AA; stroke: #EA580C; }
+        .cloud-st-dot { position: absolute; right: -5px; bottom: -5px; width: 18px; height: 18px; border-radius: 50%; color: #FFFFFF; font-size: 11px; font-weight: 900; line-height: 14px; text-align: center; border: 2px solid #FFFFFF; background: #EF4444; box-sizing: border-box; }
+        .cloud-st-btn.st-ok .cloud-st-dot { background: #10B981; }
+        .cloud-st-btn.st-bad .cloud-st-dot { background: #F97316; }
+        .cloud-st-btn.st-busy .cl { fill: #DBEAFE; stroke: #60A5FA; }
+        .cloud-st-btn.st-busy .cloud-st-dot, .cloud-st-btn.seen .cloud-st-dot { display: none; }
+        .cloud-st-btn.in-nav { top: 50%; right: 0; transform: translateY(-50%); width: 38px; height: 38px; }
+        body.power-saving-mode .cloud-st-btn.in-nav { background: #232733; border-color: #2B303C; }
+        #cloudSettingsBox .gbtn { position: relative; }
+        .cloud-tip { position: absolute; top: 52px; right: 0; z-index: 5; background: #FFF7ED; color: #9A3412; border: 1.5px solid #FDBA74; border-radius: 10px; padding: 5px 10px; font-size: 12.5px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .cloud-tip::before { content: ''; position: absolute; top: -7px; right: 66px; border: 6px solid transparent; border-bottom-color: #FDBA74; border-top: 0; }
+        body.power-saving-mode .cloud-tip { background: #431407; color: #FED7AA; border-color: #C2410C; }
+        /* 系統設定：Google 雲端區塊 */
+        .gsec { border: 1.5px solid #C7D2FE; background: #EEF2FF; border-radius: 14px; padding: 12px; margin: 12px 0 4px; transition: box-shadow 0.3s; }
+        .gsec.hl { border-color: #6366F1; box-shadow: 0 0 0 4px rgba(99,102,241,0.25); }
+        .gsec .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .gsec b { font-size: 14.5px; color: var(--text-main); }
+        .gsec small { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; word-break: break-all; }
+        .gsec .st { font-size: 13px; font-weight: 800; color: #16A34A; white-space: nowrap; }
+        .gsec .st.bad { color: #EA580C; }
+        .gsec .note { margin-top: 10px; padding-top: 9px; border-top: 1px dashed #C7D2FE; font-size: 12.5px; color: #4338CA; font-weight: 700; line-height: 1.5; }
+        .gbtn { border: none; border-radius: 10px; padding: 8px 14px; font-weight: 800; font-size: 13.5px; font-family: inherit; color: #FFFFFF; background: var(--primary); white-space: nowrap; cursor: pointer; width: auto; margin: 0; }
+        .gbtn.out { background: #E2E8F0; color: #334155; }
+        body.power-saving-mode .gsec { background: #232842; border-color: #3B3F63; }
+        body.power-saving-mode .gsec b { color: #FFFFFF; }
+        body.power-saving-mode .gsec .note { color: #C7D2FE; border-top-color: #3B3F63; }
+        body.power-saving-mode .gbtn.out { background: #2B303C; color: #E2E8F0; }
+        .cloud-btn { 
+            background: var(--primary-gradient); color: white; border: none; 
+            padding: 7px 15px; border-radius: 8px; cursor: pointer; 
+            font-weight: 600; font-size: 13px; box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+            transition: all 0.2s; 
+        }
+        .cloud-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .cloud-btn.logout { background-color: #EF4444; box-shadow: none; }
+
+        .app-view { display: none; }
+        .app-view.active { display: block; }
+
+        #homeContentWrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .section-card {
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .section-card:hover {
+            border-color: #C7D2FE;
+            transform: translateY(-2px);
+        }
+
+        body.power-saving-mode .section-card {
+            background-color: #1B1E27 !important;
+            border-color: #2B303C !important;
+        }
+
+        body.power-saving-mode .section-card:hover {
+            border-color: #4F46E5 !important;
+        }
+
+        .section-header-clickable {
+            display: flex;
+            align-items: center;
+            user-select: none;
+            padding: 2px 0;
+            width: 100%;
+        }
+
+        .header-title-box {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .section-title-group {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.3px;
+        }
+
+        body.power-saving-mode .section-title {
+            color: #FFFFFF !important;
+        }
+
+        .section-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-top: 3px;
+        }
+
+        .collapsible-list {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin-top 0.35s ease;
+            margin-top: 0;
+        }
+
+        .collapsible-list.expanded {
+            max-height: 500px;
+            opacity: 1;
+            margin-top: 14px;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 0;
+            border-top: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        body.power-saving-mode .list-item {
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .section-card .list-item:first-child {
+            border-top: 1px solid var(--border-color);
+        }
+
+        body.power-saving-mode .section-card .list-item:first-child {
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .list-item:hover {
+            transform: translateX(4px);
+        }
+
+        .item-icon-box {
+            width: 44px; height: 44px; background: #EEF2FF; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center; margin-right: 16px;
+            flex-shrink: 0; color: var(--primary); transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        body.power-saving-mode .item-icon-box {
+            background: #252836 !important;
+            color: #818CF8 !important;
+        }
+
+        .list-item:hover .item-icon-box { background: var(--primary); color: #FFFFFF; }
+        .item-content { flex: 1; min-width: 0; }
+        .item-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 3px; }
+        
+        body.power-saving-mode .item-title {
+            color: #FFFFFF !important;
+        }
+
+        .list-item:hover .item-title { color: var(--primary); }
+        .item-desc { font-size: 13px; color: var(--text-muted); font-weight: 400; }
+        .item-arrow { color: #CBD5E1; font-size: 18px; font-weight: bold; transition: transform 0.2s; margin-left: 10px; flex-shrink: 0; }
+        .list-item:hover .item-arrow { color: var(--primary); transform: translateX(3px); }
+
+        .mascot-icon-box {
+            width: 48px;
+            height: 48px;
+            background-color: #6366F1;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+            overflow: hidden;
+        }
+
+        .mascot-svg {
+            width: 42px;
+            height: 42px;
+        }
+
+        .top-nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 50;
+        }
+
+        .back-home-btn {
+            background: var(--primary-gradient);
+            border: none;
+            color: #FFFFFF;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 50;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+            flex-shrink: 0;
+        }
+        .back-home-btn:hover { opacity: 0.9; transform: translateX(-2px); }
+
+        .current-mode-indicator {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary);
+            background: #EEF2FF;
+            padding: 7px 18px;
+            border-radius: 20px;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+        body.power-saving-mode .current-mode-indicator {
+            background: #2E3147 !important;
+            color: #A5B4FC !important;
+        }
+
+        label { font-weight: 700; display: block; margin-bottom: 6px; font-size: 13.5px; color: #334155; }
+        body.power-saving-mode label { color: #CBD5E1 !important; }
+
+        input[type="text"], input[type="password"], input[type="number"], select, textarea {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 14px;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+            background: #FFFFFF;
+        }
+
+        .select-card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            max-height: 196px;
+            overflow-y: auto;
+            padding: 4px;
+            padding-right: 8px;
+            padding-bottom: 6px;
+            margin-bottom: 18px;
+            box-sizing: border-box;
+        }
+        .select-card-grid::-webkit-scrollbar { width: 5px; }
+        .select-card-grid::-webkit-scrollbar-track { background: #F1F5F9; border-radius: 4px; }
+        .select-card-grid::-webkit-scrollbar-thumb { background: #C7D2FE; border-radius: 4px; }
+
+        .select-card {
+            background: #F8FAFC;
+            border: 1.5px solid var(--border-color);
+            border-radius: 12px;
+            padding: 11px 13px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            box-sizing: border-box;
+        }
+        .select-card:hover { border-color: #C7D2FE; background: #FFFFFF; }
+        .select-card.selected {
+            border-color: var(--primary);
+            background: #EEF2FF;
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+        .select-card-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .select-card-title { font-size: 13px; font-weight: 600; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .select-card.selected .select-card-title { color: var(--primary); font-weight: 700; }
+        .select-card-count { font-size: 11px; color: var(--text-muted); }
+
+        .checkmark-badge {
+            width: 17px; height: 17px; border-radius: 50%;
+            background: var(--primary); color: white; display: none;
+            align-items: center; justify-content: center; font-size: 10.5px;
+            font-weight: bold; flex-shrink: 0;
+        }
+        .select-card.selected .checkmark-badge { display: flex; }
+
+        .stats-status-bar {
+            background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 12px;
+            padding: 10px 16px; margin-bottom: 16px; font-size: 13px; font-weight: 600;
+            color: var(--primary); display: flex; align-items: center; gap: 8px;
+            box-sizing: border-box;
+        }
+
+        .textarea-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 6px; margin-bottom: 8px;
+        }
+        .preview-collapse-container {
+            transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+            max-height: 600px; overflow: hidden; opacity: 1;
+        }
+        .preview-collapse-container.collapsed { max-height: 0; opacity: 0; margin-bottom: 0; }
+
+        #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea, #speakPracticePreviewTextarea {
+            height: 345px !important;
+        }
+
+        .collapse-toggle-btn {
+            background: var(--primary-gradient); border: none; color: white;
+            width: 24px; height: 24px; border-radius: 6px; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: transform 0.3s ease; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.25); flex-shrink: 0;
+        }
+        .collapse-toggle-btn.collapsed svg { transform: rotate(180deg); }
+
+        .btn-advanced { 
+            background-color: #F8FAFC; color: #334155; border: 1px solid var(--border-color); 
+            padding: 11px; font-size: 13.5px; border-radius: var(--radius-inner); cursor: pointer; 
+            width: 100%; font-weight: 600; text-align: center; transition: all 0.2s; margin-top: 4px; 
+            box-sizing: border-box;
+        }
+        .btn-advanced:hover { background-color: #EEF2FF; color: var(--primary); border-color: #C7D2FE; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
+        .modal-content { background-color: #ffffff; margin: 3vh auto; padding: 25px; border-radius: 20px; width: 90%; max-width: 650px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: relative; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-sizing: border-box; }
+        
+        #examResultModal .modal-content {
+            max-height: 85vh !important;
+            margin: 3vh auto !important;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        #examResultModal .result-box {
+            max-height: calc(85vh - 120px) !important;
+            overflow-y: auto;
+        }
+
+        #historyModal .modal-content {
+            width: 92%;
+            max-width: 880px;
+            margin: 3vh auto;
+            border-radius: var(--radius-outer);
+            padding: 0; 
+            background: var(--card-bg);
+            box-shadow: 0 25px 40px -10px rgba(15, 23, 42, 0.2);
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+            max-height: 92vh;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #historyModal .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0; 
+            left: 0; 
+            right: 0;
+            height: 5px;
+            background: var(--primary-gradient);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+            z-index: 20;
+        }
+
+        .modal-inner-padding {
+            padding: 28px 32px 24px 32px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 92vh;
+            box-sizing: border-box;
+        }
+
+        #historyModal .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 28px;
+            color: var(--text-muted);
+            font-size: 26px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            z-index: 30;
+            transition: color 0.2s;
+        }
+        #historyModal .close-modal:hover { color: var(--text-main); }
+
+        .close-modal { color: var(--text-muted); float: right; font-size: 26px; font-weight: bold; cursor: pointer; line-height: 20px; }
+        .close-modal:hover { color: var(--text-main); }
+
+        .config-group { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; background: #F8FAFC; padding: 15px; border-radius: 14px; border: 1px solid var(--border-color); box-sizing: border-box; }
+        body.power-saving-mode .config-group { background: #1B1E27 !important; }
+        .config-row-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-weight: 600; font-size: 14.3px; color: #0F172A; }
+        body.power-saving-mode .config-row-item { color: #FFFFFF !important; }
+
+        .slider-container { display: flex; align-items: center; gap: 16px; margin-top: 5px; }
+        .slider-container input[type="range"] { flex: 1; margin: 0; cursor: pointer; }
+        .speed-val { font-weight: bold; color: #818CF8; width: 65px; font-size: 16.5px; }
+
+        .btn-group { margin-top: 15px; display: flex; gap: 10px; }
+        button.action-btn { flex: 1; padding: 12px; font-size: 14.5px; border: none; border-radius: 12px; cursor: pointer; color: white; font-weight: 700; transition: all 0.2s; box-sizing: border-box; }
+        
+        .btn-start { background: var(--primary-gradient); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25); }
+        .btn-stop { background-color: #EF4444; }
+        .btn-pause { background: var(--primary-gradient); display: none; }
+        .btn-resume { background: var(--primary-gradient); }
+
+        #practiceNavBar {
+            margin-bottom: 26px !important;
+        }
+
+        #status { 
+            margin-top: 26px; 
+            padding: 14px 18px; 
+            background: #F1F5F9; 
+            border-left: 5px solid var(--primary); 
+            font-weight: 600; 
+            border-radius: 14px; 
+            font-size: 14.5px; 
+            display: none; 
+            align-items: center; 
+            justify-content: space-between;
+        }
+        body.power-saving-mode #status { 
+            background: #1B1E27 !important; 
+            color: #FFFFFF !important; 
+            border: 1px solid #2B303C !important; 
+            border-left: 5px solid var(--primary) !important;
+        }
+
+        body.power-saving-mode #status strong,
+        body.power-saving-mode #status span {
+            color: #FFFFFF !important;
+        }
+
+        .exam-setup-box { margin-top: 16px; padding: 22px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; box-sizing: border-box; }
+        .exam-lists-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; max-height: 200px; overflow-y: auto; background: white; padding: 13px; border: 1px solid var(--border-color); border-radius: 14px; margin-top: 9px; box-sizing: border-box; }
+        body.power-saving-mode .exam-lists-grid { background: #1B1E27 !important; }
+        .checkbox-item-row { display: flex; align-items: center; gap: 7px; font-size: 14.3px; font-weight: normal; margin-top: 4px; cursor: pointer; }
+        .checkbox-item-row input[type="checkbox"] { width: auto !important; margin: 0; cursor: pointer; }
+        .exam-stats { margin-top: 13px; padding: 13px; background: #E0E7FF; border-radius: 8px; font-weight: 600; color: #3730A3; font-size: 13.5px; border: 1px solid #A5B4FC; }
+        body.power-saving-mode .exam-stats { background: #2E3147 !important; color: #C7D2FE !important; }
+
+        #examArea { margin-top: 16px; padding: 20px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; display: none; position: relative; z-index: 40; box-sizing: border-box; }
+        body.power-saving-mode #examArea { background: #1B1E27 !important; }
+        #examTimer { font-size: 16.5px; color: #EF4444; font-weight: 700; text-align: right; margin-top: 5px; }
+        #cardExamTimer { font-size: 13.5px; color: #EF4444; font-weight: 700; }
+
+        .pos-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; background: #fff; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 12px; box-sizing: border-box; }
+        body.power-saving-mode .pos-checkbox-group { background: #1B1E27 !important; }
+        .pos-checkbox-group label { margin-top: 0; font-weight: normal; display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13.5px; margin-bottom: 0; }
+        .pos-checkbox-group input { width: auto !important; margin: 0; cursor: pointer; }
+
+        .result-box { margin-top: 16px; padding: 18px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; max-height: 280px; overflow-y: auto; font-size: 14.3px; position: relative; z-index: 40; box-sizing: border-box; }
+        body.power-saving-mode .result-box { background: #1B1E27 !important; }
+        .correct-item { color: #10B981; margin-bottom: 6px; font-weight: 500; }
+        .wrong-item { color: #EF4444; margin-bottom: 6px; font-weight: 500; }
+
+        .switch { position: relative; display: inline-flex; align-items: center; width: 46px; height: 24px; vertical-align: middle; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-toggle { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #CBD5E1; transition: .3s; border-radius: 34px; }
+        .slider-toggle:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider-toggle { background-color: #10B981; }
+        input:checked + .slider-toggle:before { transform: translateX(22px); }
+
+        #inAppBrowserWarning { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.9); color: white; text-align: center; padding: 40px 20px; box-sizing: border-box; font-size: 15.4px; }
+
+        .flashcard-perspective {
+            perspective: 1000px;
+            margin-bottom: 2px;
+            width: 100%;
+        }
+
+        .flashcard {
+            width: 100%;
+            min-height: 260px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s ease;
+            box-sizing: border-box;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .flashcard-perspective:hover .flashcard {
+                transform: rotateY(180deg);
             }
         }
-    }
 
-    async function releaseWakeLock() {
-        if (wakeLockSentinel !== null) {
-            try {
-                await wakeLockSentinel.release();
-                wakeLockSentinel = null;
-            } catch (err) {
-                console.log('Wake Lock Release Error:', err.name, err.message);
-            }
-        }
-    }
-
-    document.addEventListener('visibilitychange', async () => {
-        if (wakeLockSentinel !== null && document.visibilityState === 'visible') {
-            await requestWakeLock();
-        }
-    });
-
-    let synth = window.speechSynthesis, timeoutId = null, voices = [];
-    let isPlaying = false, isPaused = false, wordsData = [], currentWordIndex = 0;
-    let isExamRunning = false, examTimerId = null, examTimeLeft = 0, examResults = [], currentExamRanges = "";
-    
-    let examHistory = (JSON.parse(localStorage.getItem('dictation_exam_history')) || []);
-    let cardExamHistory = (JSON.parse(localStorage.getItem('dictation_card_exam_history')) || []);
-    
-    let lastSelectedList = parseInt(localStorage.getItem('dictation_last_selected_list')) || 0;
-
-    const MAX_LISTS_DEFAULT = 10;
-    
-    let wordLists = JSON.parse(localStorage.getItem('dictation_word_lists')) || [];
-    
-    if (wordLists.length === 0) {
-        let nowTs = Date.now();
-        wordLists.push({ title: `unit 1-1`, content: "courage 勇氣\n*foreigner 外國人\n*fantastic 極好的 形容詞", createdAt: nowTs });
-        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-    }
-    ensureListIds();   // 舊題庫補上固定識別碼
-
-    // ---------------------------------
-    // 🍗 雞塊系統：雞塊數量、領取紀錄、購買紀錄一律以後端 (Supabase) 為準
-    // ---------------------------------
-    // 本機只保存「今天各任務有沒有完成」(chickenData)。
-    // 前端不能直接寫入雞塊數，只能呼叫後端函式 claim_reward / buy_item；
-    // 就算有人用 F12 改了畫面上的數字，下次連線也會被後端的數字蓋回來。
-    const CHICKEN_TASK_KEYS = ['dailyLogin', 'listeningPractice', 'cardPractice', 'listeningPerfect', 'cardPerfect', 'advWin'];
-
-    function loadLocalChickenProgress() {
-        let raw = {};
-        try { raw = JSON.parse(localStorage.getItem('chicky_chicken_data')) || {}; } catch (e) { raw = {}; }
-        let tasks = {};
-        // 舊版存的 count / claims / claimed 一律捨棄，只留任務完成進度
-        CHICKEN_TASK_KEYS.forEach(k => { tasks[k] = { done: !!(raw.tasks && raw.tasks[k] && raw.tasks[k].done) }; });
-        return { lastDate: typeof raw.lastDate === 'string' ? raw.lastDate : '', tasks };
-    }
-    let chickenData = loadLocalChickenProgress();
-
-    // 取得「本地時區」的今天日期（YYYY-MM-DD），台灣時間 00:00 即換日
-    function getLocalDateStr() {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    }
-
-    // ── 後端錢包的本機快取（只用來「沒網路時顯示上次的數字」，不具任何效力） ──
-    const WALLET_CACHE_KEY = 'chicky_wallet_cache';
-    let wallet = (function () {
-        try {
-            let w = JSON.parse(localStorage.getItem(WALLET_CACHE_KEY));
-            if (w && typeof w.balance === 'number') return w;
-        } catch (e) {}
-        return { balance: 0, day: '', claimedToday: [], purchases: {}, listCaps: {} };
-    })();
-    let walletBusy = false;      // 防止連點造成重複送出
-    let walletOnline = true;     // 最近一次和後端通訊是否成功
-    let editorOpenCount = 0;     // 開啟編輯頁時該題庫的單字數（舊題庫超過上限時不會被刪除）
-
-    // ── 商品目錄：價格與上限以後端 shop_items 為準，這裡只是連不上時的預設值 ──
-    const BASE_WORD_CAP = 100, WORD_CAP_STEP = 50;
-    const SHOP_ITEM_META = {
-        word_cap_50: { name: '單字上限 +50',  desc: '指定一本題庫，單字上限 +50' },
-        list_slot_1: { name: '題庫數量 +1',   desc: '增加 1 本空白題庫（可存放 100 個單字）' },
-        mv_charge:   { name: '衝鋒撞擊',     desc: '雞塊大冒險新招式（字卡：輸入中文，威力 3）' },
-        mv_slash2:   { name: '連續斬擊',     desc: '雞塊大冒險新招式（聽力：斬 2 下）' },
-        mv_thrust:   { name: '突刺',         desc: '雞塊大冒險新招式（聽力：拼出英文，威力 3）' },
-        mv_wave2:    { name: '雙重衝擊波',   desc: '雞塊大冒險新招式（朗讀：射 2 發）' },
-        mv_wave3:    { name: '雞塊氣功波',   desc: '雞塊大冒險新招式（朗讀：威力 3）' },
-        pack_toeic_job: { name: '多益-職場', desc: '購買後多一本「多益-職場」英文單字庫（300 個職場單字），不占用你原本的題庫數量。\n這本單字庫不能清空、刪除或更換語言。' }
-    };
-    let shopCatalog = {
-        word_cap_50: { price: 30, max: 4 },
-        list_slot_1: { price: 60, max: 89 },
-        mv_charge: { price: 5, max: 1 },
-        mv_slash2: { price: 3, max: 1 },
-        mv_thrust: { price: 5, max: 1 },
-        mv_wave2:  { price: 3, max: 1 },
-        mv_wave3:  { price: 5, max: 1 },
-        pack_toeic_job: { price: 700, max: 1 }
-    };
-
-    function walletQty(key) { return Number((wallet.purchases || {})[key]) || 0; }
-    // 每本題庫各自的單字上限：基本 100 字 + 這本題庫兌換過幾次「單字上限 +50」
-    function getListWordCap(list) {
-        if (list && list.pack && WORD_PACKS[list.pack]) return Math.max(PACK_WORD_CAP, getListWordCount(list.content));
-        let extra = (list && list.id) ? (Number((wallet.listCaps || {})[list.id]) || 0) : 0;
-        return BASE_WORD_CAP + WORD_CAP_STEP * extra;
-    }
-
-    // 題庫的固定識別碼：購買「單字上限」時，後端靠它知道是哪一本題庫
-    function newListId() { return 'l_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
-    function ensureListIds() {
-        let changed = false;
-        wordLists.forEach(l => { if (!l.id) { l.id = newListId(); changed = true; } });
-        if (changed) localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        return changed;
-    }
-    function getMaxLists() { return MAX_LISTS_DEFAULT + walletQty('list_slot_1'); }
-
-    // ── 官方單字庫（用雞塊購買，從後端下載；不占用題庫數量，不能清空／刪除／更換語言）──
-    const WORD_PACKS = {
-        basic_noun: { free: true, title: '基礎單字-名詞', lang: 'en', words: 300, kind: 'basic' },
-        basic_verb: { free: true, title: '基礎單字-動詞形容詞', lang: 'en', words: 300, kind: 'basic' },
-        toeic_job: { item: 'pack_toeic_job', title: '多益-職場', lang: 'en', words: 300, kind: 'toeic' }
-    };
-    // 精選單字庫的圖示：同一類共用一張（多益：TOEIC 字樣／基礎：ABC 字樣），紫色實心
-    function packIconHTML(packKey, size) {
-        size = size || 30;
-        let kind = (WORD_PACKS[packKey] || {}).kind || 'basic';
-        let txt = kind === 'toeic' ? '<text x="20" y="24.2" text-anchor="middle" font-size="11" font-weight="900" fill="#FFFFFF" textLength="30" lengthAdjust="spacingAndGlyphs" font-family="Inter,Arial,sans-serif">TOEIC</text>'
-                                   : '<text x="20" y="25.4" text-anchor="middle" font-size="14" font-weight="900" fill="#FFFFFF" textLength="27" lengthAdjust="spacingAndGlyphs" font-family="Inter,Arial,sans-serif">ABC</text>';
-        return `<svg class="pk-ic" width="${size}" height="${size}" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#5B54EA"/>${txt}</svg>`;
-    }
-    // 免費附贈的精選單字庫：直接放在 App 裡，不用下載
-    const FREE_PACK_CONTENT = {
-        basic_noun: "activity 活動 名詞\nafternoon 下午 名詞\nage 年齡 名詞\napplication form 申請表 名詞\narea 區域 名詞\nart 藝術 美術 名詞\nauditorium 禮堂 名詞\nback 後面 名詞\nbackpack 背包 名詞\nbag 包包 名詞\nbank 銀行 名詞\nbe late for 遲到 動詞\nbeginner 初學者 名詞\nbike 腳踏車 名詞\nbirthday 生日 名詞\nbook 書籍 名詞 預訂 動詞\nbookshelf 書架 名詞\nbookstore 書店 名詞\nboss 老闆 名詞\nbottle 瓶子 名詞\nbottom 底部 名詞\nbox 箱子 名詞\nbreakfast 早餐 名詞\nbuilding 建築物 名詞\nbus 公車 名詞\nbusiness card 名片 名詞\ncafeteria 自助餐廳 名詞\ncalendar 日曆 名詞\ncampus 校園 名詞\ncar 汽車 名詞\ncard 卡片 名詞\ncenter 中心 名詞\nchair 椅子 名詞\nchance 機會 名詞\nchapter 章節 名詞\nchild 小孩 名詞\ncity 城市 名詞\nclass 班級 課堂 名詞\nclassmate 同學 名詞\nclassroom 教室 名詞\nclock 時鐘 名詞\nclosing time 打烊時間 名詞\nclothes 衣服 名詞\nclub 社團 俱樂部 名詞\ncoffee 咖啡 名詞\ncoffee break 休息時間 名詞\ncoin 硬幣 名詞\ncollege 大學 學院 名詞\ncolor 顏色 名詞\ncompany 公司 名詞\ncomputer 電腦 名詞\ncontest 比賽 名詞\ncorner 角落 轉角 名詞\ncountry 國家 名詞\ncourse 課程 名詞\ncup 杯子 名詞\ndaily 每日的 形容詞 每天 副詞\ndate 日期 名詞\nday 天 名詞\nday shift 日班 名詞\ndebate 辯論 名詞 動詞\ndesk 書桌 名詞\ndictionary 字典 名詞\ndinner 晚餐 名詞\ndiscussion 討論 名詞\ndoctor 醫生 名詞\ndoor 門 名詞\ndormitory 宿舍 名詞\ndrawing 圖畫 名詞\ndream 夢想 名詞 做夢 動詞\ndriver 司機 名詞\neducation 教育 名詞\nelevator 電梯 名詞\nemail 電子郵件 名詞 寄電子郵件 動詞\nemail address 電子郵件地址 名詞\nenrollment 註冊 名詞\nentrance 入口 名詞\neraser 橡皮擦 名詞\nessay 短文 論文 名詞\nevening 傍晚 名詞\nevent 活動 事件 名詞\nexam 考試 名詞\nexample 例子 名詞\nexcited 興奮的 形容詞\nexit 出口 名詞 離開 動詞\nexperience 經驗 名詞\nextracurricular 課外的 形容詞\nfaculty 全體教職員 名詞\nfamily 家庭 名詞\nfirst day 第一天 名詞\nfirst job 第一份工作 名詞\nfirst name 名字 名詞\nfloor 地板 樓層 名詞\nfood 食物 名詞\nfriend 朋友 名詞\nfront 前面 名詞\nfull-time 全職的 形容詞\ngame 遊戲 比賽 名詞\ngift 禮物 名詞\ngoal 目標 名詞\ngrade 成績 年級 名詞\ngraduate 畢業 動詞 畢業生 名詞\ngraduation 畢業 畢業典禮 名詞\ngroup 群體 小組 名詞\ngroup project 小組作業 名詞\nguest 客人 來賓 名詞\nguidance 輔導 指導 名詞\ngym 體育館 健身房 名詞\nhabit 習慣 名詞\nhall 大廳 走廊 名詞\nhallway 走廊 名詞\nhand in 繳交 動詞\nhardworking 努力的 形容詞\nhat 帽子 名詞\nheadphones 耳機 名詞\nhealth 健康 名詞\nhelper 幫手 名詞\nhistory 歷史 名詞\nhobby 嗜好 名詞\nholiday 假日 名詞\nhometown 家鄉 名詞\nhomework 家庭作業 名詞\nhospital 醫院 名詞\nhour 小時 名詞\nidea 主意 想法 名詞\ninstructor 講師 名詞\ninternet 網際網路 名詞\nintroduction 介紹 名詞\njob 工作 名詞\njob hunting 找工作 名詞\njob title 職稱 名詞\nkey 鑰匙 關鍵 名詞\nkeyboard 鍵盤 名詞\nknowledge 知識 名詞\nlaboratory 實驗室 名詞\nlanguage 語言 名詞\nlaptop 筆記型電腦 名詞\nlast name 姓氏 名詞\nleader 領導者 名詞\nlecture 講課 名詞 演講 動詞\nlesson 課程 教訓 名詞\nletter 信件 字母 名詞\nlevel 程度 等級 名詞\nlibrarian 圖書館員 名詞\nlibrary 圖書館 名詞\nline 線 隊伍 名詞\nlist 清單 名詞 列出 動詞\nlocation 地點 位置 名詞\nlunch 午餐 名詞\nlunch break 午休 名詞\nlunchroom 員工餐廳 名詞\nlunchtime 午餐時間 名詞\nmagazine 雜誌 名詞\nmajor 主修 名詞 動詞\nmap 地圖 名詞\nmark 分數 名詞 打分數 動詞\nmarket 市場 名詞\nmath 數學 名詞\nmeal 餐點 名詞\nmeasure 測量 動詞 措施 名詞\nmember 成員 名詞\nmessage 訊息 名詞\nmiddle 中間 名詞\nminute 分鐘 名詞\nmistake 錯誤 名詞\nmoney 金錢 名詞\nmonth 月份 名詞\nmorning 早晨 名詞\nmusic 音樂 名詞\nnameplate 名牌 名詞\nnationality 國籍 名詞\nnervous 緊張的 形容詞\nnewcomer 新人 名詞\nnews 新聞 消息 名詞\nnewspaper 報紙 名詞\nnight 夜晚 名詞\nnight shift 夜班 名詞\nnote 筆記 名詞 記下 動詞\nnotebook 筆記本 名詞\nnumber 數字 號碼 名詞\nnurse 護士 名詞\noffice 辦公室 名詞\noffice worker 上班族 名詞\nowner 擁有者 老闆 名詞\npage 頁 名詞\npaper 紙張 報告 名詞\nparent 父母 名詞\npark 公園 名詞 停車 動詞\nparking lot 停車場 名詞\npart-time 兼職的 形容詞\npart-time job 打工 名詞\npartner 夥伴 名詞\nparty 派對 名詞\npassword 密碼 名詞\npay attention to 注意 動詞\npen 原子筆 名詞\npencil 鉛筆 名詞\npeople 人們 名詞\nperson 個人 名詞\nphone 電話 名詞\nphone number 電話號碼 名詞\nphoto 照片 名詞\nphysics 物理 名詞\npicture 圖片 照片 名詞\npiece 一片 一件 名詞\npost 郵件 名詞 張貼 動詞\npractice 練習 名詞 動詞\npresentation 簡報 名詞\nprice 價格 名詞\nprincipal 校長 名詞 主要的 形容詞\nprize 獎品 名詞\nproblem 問題 名詞\nprofessor 教授 名詞\nproject 專案 計畫 名詞\nquestion 問題 名詞 質問 動詞\nquiz 小考 名詞\nreason 原因 理由 名詞\nresearch 研究 名詞 動詞\nrestaurant 餐廳 名詞\nrestroom 洗手間 名詞\nresult 結果 名詞\nroad 道路 名詞\nroom 房間 空間 名詞\nroommate 室友 名詞\nrule 規則 名詞\nsalesclerk 店員 名詞\nsalesperson 售貨員 名詞\nscholarship 獎學金 名詞\nschool 學校 名詞\nscience 科學 名詞\nscore 分數 名詞 得分 動詞\nseat 座位 名詞\nsemester 學期 名詞\nseminar 研討會 名詞\nsentence 句子 名詞\nshape 形狀 名詞\nshirt 襯衫 名詞\nshoe 鞋子 名詞\nshop 商店 名詞 購物 動詞\nside 旁邊 一側 名詞\nsign 招牌 標誌 名詞 簽名 動詞\nsize 尺寸 名詞\nskill 技能 名詞\nsmart 聰明的 形容詞\nsnack 點心 名詞\nspace 空間 名詞\nspeaker 演講者 喇叭 名詞\nspeech 演講 名詞\nsport 運動 名詞\nstairs 樓梯 名詞\nstation 車站 名詞\nstep 步驟 名詞\nstore 商店 名詞 儲存 動詞\nstory 故事 樓層 名詞\nstreet 街道 名詞\nstudent 學生 名詞\nstudy group 讀書會 名詞\nsubject 科目 主題 名詞\nsubway 地鐵 名詞\ntable 桌子 表格 名詞\ntake notes 做筆記 動詞\ntaxi 計程車 名詞\ntea 茶 名詞\nteacher 老師 名詞\nteam 團隊 名詞\nteam member 團隊成員 名詞\nteammate 隊友 名詞\ntelephone 電話 名詞\nterm 學期 期限 名詞\ntest 測驗 名詞 測試 動詞\nticket 票 名詞\ntime 時間 次數 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\ntop 頂端 名詞\ntopic 主題 名詞\ntown 城鎮 名詞\ntrain 火車 名詞 訓練 動詞\ntranslate 翻譯 動詞\ntranslation 翻譯 名詞\ntype 類型 名詞 打字 動詞\numbrella 雨傘 名詞\nuniform 制服 名詞 一致的 形容詞\nvocabulary 字彙 名詞\nvolunteer 志工 名詞 自願 動詞\nwaiter 服務生 名詞\nwall 牆壁 名詞\nwater 水 名詞\nweather 天氣 名詞\nwebsite 網站 名詞\nweek 星期 名詞\nweekday 平日 名詞\nweekend 週末 名詞\nwindow 窗戶 名詞\nword 單字 名詞\nwork hours 工作時數 名詞\nworker 工人 員工 名詞\nyear 年 名詞\nyearly 每年的 形容詞\nyesterday 昨天 名詞 副詞",
-        basic_verb: "able 有能力的 形容詞\naccept 接受 動詞\nachieve 達成 動詞\nact 行動 動詞\nactive 積極的 形容詞\nadd 增加 動詞\nafford 負擔得起 動詞\nafraid 害怕的 形容詞\nagree 同意 動詞\nallow 允許 動詞\nalone 單獨的 形容詞\nangry 生氣的 形容詞\nanswer 回答 動詞 名詞\narrive 到達 動詞\nask 詢問 動詞\navoid 避免 動詞\nbad 壞的 形容詞\nbeautiful 美麗的 形容詞\nbegin 開始 動詞\nbelieve 相信 動詞\nbelong 屬於 動詞\nbig 大的 形容詞\nborrow 借入 動詞\nbreak 打破 動詞 休息 名詞\nbright 明亮的 聰明的 形容詞\nbring 帶來 動詞\nbuild 建造 動詞\nbusy 忙碌的 形容詞\nbuy 購買 動詞\ncall 打電話 呼叫 動詞\ncall off 取消 動詞\ncarry 攜帶 搬運 動詞\ncarry out 執行 動詞\ncatch 抓住 趕上 動詞\nchange 改變 動詞 零錢 名詞\ncheap 便宜的 形容詞\nchoose 選擇 動詞\nclean 打掃 動詞 乾淨的 形容詞\nclear 清楚的 形容詞\nclose 關閉 動詞 接近的 形容詞\ncold 冷的 形容詞 感冒 名詞\ncome 來 動詞\ncome up with 想出 動詞\ncomfortable 舒適的 形容詞\ncompare 比較 動詞\ncomplete 完成 動詞 完整的 形容詞\nconsider 考慮 動詞\ncontinue 繼續 動詞\ncook 烹調 動詞 廚師 名詞\ncopy 複製 動詞 副本 名詞\ncorrect 正確的 形容詞 改正 動詞\ncreate 創造 動詞\ncross 穿越 動詞\ncut 切 剪 動詞\ndark 黑暗的 形容詞\ndecide 決定 動詞\ndeliver 遞送 動詞\ndepend 依賴 動詞\ndevelop 發展 動詞\ndifferent 不同的 形容詞\ndifficult 困難的 形容詞\ndirty 髒的 形容詞\ndisappear 消失 動詞\ndiscover 發現 動詞\ndiscuss 討論 動詞\ndo 做 動詞\ndraw 畫畫 動詞\ndrink 喝 動詞 飲料 名詞\ndrive 開車 動詞\ndrop 落下 動詞\ndrop off 放下 送達 動詞\nearly 早的 形容詞\neasy 簡單的 形容詞\neat 吃 動詞\nempty 空的 形容詞\nenjoy 享受 動詞\nenter 進入 動詞\nexpect 期待 預期 動詞\nexpensive 昂貴的 形容詞\nexplain 解釋 動詞\nfail 失敗 動詞\nfall 落下 動詞\nfamous 有名的 形容詞\nfast 快的 形容詞\nfeel 感覺 動詞\nfew 很少的 形容詞\nfigure out 想出 弄清楚 動詞\nfill 填滿 填寫 動詞\nfind 找到 動詞\nfind out 查明 發現 動詞\nfine 好的 形容詞 罰款 名詞\nfinish 完成 動詞\nfit 合身 動詞 健康的 形容詞\nfix 修理 固定 動詞\nfly 飛 搭飛機 動詞\nfollow 跟隨 遵循 動詞\nforget 忘記 動詞\nfree 免費的 自由的 形容詞\nfresh 新鮮的 形容詞\nfull 滿的 形容詞\nget 得到 動詞\nget rid of 擺脫 丟掉 動詞\ngive 給予 動詞\ngive up 放棄 動詞\ngo 去 動詞\ngood 好的 形容詞\ngreat 很棒的 偉大的 形容詞\ngrow 生長 成長 動詞\nguess 猜測 動詞\nhang 懸掛 動詞\nhappen 發生 動詞\nhappy 快樂的 形容詞\nhard 困難的 堅硬的 形容詞\nhave 有 動詞\nhealthy 健康的 形容詞\nhear 聽到 動詞\nheavy 重的 形容詞\nhelp 幫助 動詞 名詞\nhigh 高的 形容詞\nhold 握住 舉行 動詞\nhope 希望 動詞\nhot 熱的 形容詞\nhuge 巨大的 形容詞\nhurry 趕快 動詞\nimagine 想像 動詞\nimportant 重要的 形容詞\nimprove 改善 動詞\ninclude 包含 動詞\ninteresting 有趣的 形容詞\ninvite 邀請 動詞\njoin 加入 動詞\nkeep 保持 動詞\nkind 親切的 形容詞 種類 名詞\nknow 知道 動詞\nlarge 大的 形容詞\nlate 遲的 晚的 形容詞\nlaugh 笑 動詞\nlearn 學習 動詞\nleave 離開 動詞\nlift 舉起 動詞\nlight 輕的 形容詞 光線 名詞\nlike 喜歡 動詞\nlisten 聽 動詞\nlittle 小的 形容詞\nlive 居住 動詞\nlong 長的 形容詞\nlook 看 動詞\nlook for 尋找 動詞\nlook forward to 期待 動詞\nlose 失去 動詞\nloud 大聲的 形容詞\nlow 低的 形容詞\nlucky 幸運的 形容詞\nmain 主要的 形容詞\nmake 製作 動詞\nmake sure 確定 動詞\nmany 許多的 形容詞\nmature 成熟的 形容詞 成熟 動詞\nmean 意指 動詞 刻薄的 形容詞\nmeet 見面 動詞\nmind 介意 動詞 頭腦 名詞\nmiss 錯過 想念 動詞\nmodern 現代的 形容詞\nmove 移動 搬家 動詞\nmuch 許多的 形容詞\nnarrow 狹窄的 形容詞\nnear 接近的 形容詞\nneed 需要 動詞\nnew 新的 形容詞\nnice 不錯的 形容詞\nnoisy 吵鬧的 形容詞\nnormal 正常的 形容詞\nnotice 注意到 動詞 通知 名詞\nold 老的 舊的 形容詞\nopen 打開 動詞 開放的 形容詞\npack 打包 動詞\npay 支付 動詞\npick 挑選 撿起 動詞\npick up 撿起 接送 動詞\nplace 放置 動詞 地方 名詞\nplan 計劃 動詞 名詞\nplay 玩 動詞\npoint 指向 動詞\npoor 貧窮的 差的 形容詞\npopular 受歡迎的 形容詞\npossible 可能的 形容詞\nprefer 更喜歡 動詞\nprepare 準備 動詞\nprotect 保護 動詞\nprove 證明 動詞\nprovide 提供 動詞\npull 拉 動詞\npush 推 動詞\nput 放置 動詞\nput off 延後 動詞\nquick 快速的 形容詞\nquiet 安靜的 形容詞\nread 閱讀 動詞\nready 準備好的 形容詞\nreal 真實的 形容詞\nreceive 收到 動詞\nreduce 減少 動詞\nremember 記得 動詞\nremove 移除 動詞\nrepeat 重複 動詞\nreply 回覆 動詞 名詞\nrest 休息 動詞 名詞\nreturn 返回 歸還 動詞\nrich 富有的 形容詞\nride 騎 搭乘 動詞\nright 正確的 右邊的 形容詞\nring 響 動詞 戒指 名詞\nrise 上升 動詞\nrun 跑 動詞\nrun out of 用完 動詞\nsafe 安全的 形容詞\nsame 相同的 形容詞\nsave 節省 拯救 動詞\nsay 說 動詞\nsee 看見 動詞\nseem 似乎 動詞\nsell 銷售 動詞\nsend 寄出 動詞\nserious 嚴重的 認真的 形容詞\nset up 設立 安排 動詞\nshare 分享 動詞\nshort 短的 矮的 形容詞\nshow 顯示 動詞 表演 名詞\nshow up 出現 動詞\nshut 關上 動詞\nsick 生病的 形容詞\nsign up 報名 動詞\nsimple 簡單的 形容詞\nsit 坐 動詞\nsleep 睡眠 動詞 名詞\nslow 慢的 形容詞\nsmall 小的 形容詞\nsmell 聞 動詞 氣味 名詞\nsmile 微笑 動詞 名詞\nsoft 柔軟的 形容詞\nspeak 說話 動詞\nspecial 特別的 形容詞\nspend 花費 動詞\nstand 站立 動詞\nstart 開始 動詞\nstay 停留 動詞\nstop 停止 動詞\nstrong 強壯的 形容詞\nstudy 學習 動詞\nsucceed 成功 動詞\nsuggest 建議 動詞\nsure 確定的 形容詞\nsweet 甜的 形容詞\ntake 拿取 動詞\ntake care of 照顧 處理 動詞\ntalk 談話 動詞\ntall 高的 形容詞\ntaste 品嚐 動詞 味道 名詞\nteach 教導 動詞\ntell 告訴 動詞\nthick 厚的 形容詞\nthin 薄的 瘦的 形容詞\nthink 想 動詞\nthrow 投擲 動詞\ntired 疲倦的 形容詞\ntouch 觸摸 動詞\ntrue 真實的 形容詞\ntry 嘗試 動詞\ntry on 試穿 動詞\nturn 轉動 動詞\nturn down 拒絕 調低 動詞\nturn off 關掉 動詞\nturn on 打開 動詞\nunderstand 理解 動詞\nuse 使用 動詞\nuseful 有用的 形容詞\nusual 通常的 形容詞\nvisit 參觀 拜訪 動詞\nwait 等待 動詞\nwake 醒來 動詞\nwake up 醒來 動詞\nwalk 走路 動詞\nwant 想要 動詞\nwarm 溫暖的 形容詞\nwash 洗 動詞\nwatch 觀看 動詞 手錶 名詞\nweak 虛弱的 形容詞\nwear 穿戴 動詞\nwet 濕的 形容詞\nwide 寬的 形容詞\nwin 贏 動詞\nwise 明智的 形容詞\nwish 希望 動詞\nwonder 想知道 動詞\nwonderful 美好的 形容詞\nwork 工作 動詞 名詞\nworry 擔心 動詞\nwrite 書寫 動詞\nwrong 錯誤的 形容詞\nyoung 年輕的 形容詞"
-    };
-    const PACK_WORD_CAP = 300;
-    function isPackList(l) { return !!(l && l.pack && WORD_PACKS[l.pack]); }
-    function countUserLists() { return wordLists.filter(l => !isPackList(l)).length; }
-    function packOwned(key) { return !!WORD_PACKS[key] && (WORD_PACKS[key].free || walletQty(WORD_PACKS[key].item) > 0); }
-    function packInstalled(key) { return wordLists.some(l => l.pack === key); }
-    function packKeyByItem(item) { return Object.keys(WORD_PACKS).find(k => WORD_PACKS[k].item === item) || ''; }
-    let packInstalling = {};
-    async function installWordPack(key, silent) {
-        let meta = WORD_PACKS[key];
-        if (!meta) return false;
-        if (packInstalled(key)) return true;
-        if (packInstalling[key]) return false;
-        if (meta.free) {        // 免費的：內容就在 App 裡
-            wordLists.push({ id: newListId(), title: meta.title, content: FREE_PACK_CONTENT[key], createdAt: Date.now(), lang: meta.lang, pack: key });
-            localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-            try { triggerAutoSaveToCloud(); refreshAllListViews(); } catch (e) {}
-            return true;
-        }
-        packInstalling[key] = true;
-        try {
-            let data = await walletRpc('get_word_pack', { p_pack: key });
-            let content = data && typeof data.content === 'string' ? data.content : '';
-            if (!content.trim()) throw new Error('empty_pack');
-            if (packInstalled(key)) return true;
-            wordLists.push({ id: newListId(), title: (data.title || meta.title), content: content.trim(), createdAt: Date.now(), lang: data.lang === 'ko' ? 'ko' : 'en', pack: key });
-            localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-            triggerAutoSaveToCloud();
-            refreshAllListViews();
-            try { updateChickenShopUI(); } catch (e) {}
-            if (!silent) alert(`✅ 已下載「${data.title || meta.title}」單字庫（${getListWordCount(content)} 個單字）！\n到「題庫清單」或各個練習頁就能看到它。`);
-            return true;
-        } catch (e) {
-            console.warn('單字庫下載失敗:', e && e.message || e);
-            if (!silent) {
-                let m = String((e && e.message) || '');
-                if (m.includes('get_word_pack') && (m.includes('function') || m.includes('schema'))) alert('伺服器還沒更新：請先在 Supabase 執行 supabase_adv_v3_3.sql。');
-                else alert(`❌ 單字庫下載失敗：${walletErrorMessage(e)}\n已購買的不會重複扣雞塊，稍後到補給站再點一次就能重新下載。`);
-            }
-            return false;
-        } finally {
-            packInstalling[key] = false;
-        }
-    }
-    // 已購買但這台裝置還沒有 → 自動下載；同一本重複出現時只留一本
-    function ensureWordPacks() {
-        let seen = {}, dup = false;
-        wordLists.forEach(l => { if (isPackList(l)) { if (seen[l.pack]) dup = true; seen[l.pack] = true; } });
-        if (dup) {
-            let keep = {};
-            wordLists = wordLists.filter(l => { if (!isPackList(l)) return true; if (keep[l.pack]) return false; keep[l.pack] = true; return true; });
-            localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-            refreshAllListViews();
-        }
-        Object.keys(WORD_PACKS).forEach(k => { if (packOwned(k) && !packInstalled(k)) installWordPack(k, true); });
-    }
-    setTimeout(() => { try { ensureWordPacks(); } catch (e) {} }, 0);
-    setTimeout(() => { let el = document.getElementById('shopPackIcon_toeic_job'); if (el) el.innerHTML = packIconHTML('toeic_job', 46); }, 0);
-    // 每日登入：雞塊 +1（後端錢包）＋ 糖醋醬碎片 +3（存在大冒險進度裡）；其他任務照舊送雞塊
-    const LOGIN_SHARDS = 3;
-    function isLoginShardClaimed() { try { return advData.loginShardDay === chickenData.lastDate; } catch (e) { return false; } }
-    function isTaskClaimed(key) {
-        if (key === 'dailyLogin' && !isLoginShardClaimed()) return false;   // 每日登入：雞塊和碎片都領了才算領完
-        return wallet.day === chickenData.lastDate && (wallet.claimedToday || []).indexOf(key) !== -1;
-    }
-
-    // ── 與後端溝通 ──
-    // 沒登入 Google 也能用：自動建立「匿名帳號」取得身分（之後綁定 Google 登入時會沿用同一個帳號）。
-    // 需要在 Supabase 後台開啟 Authentication → Sign In / Providers → Allow anonymous sign-ins
-    let sessionPromise = null;
-    function ensureSupabaseSession() {
-        // 同一時間只允許一個登入流程；同時發出的請求共用結果，避免建立出多個匿名帳號
-        if (!sessionPromise) {
-            sessionPromise = (async () => {
-                try {
-                    let got = await supabaseClient.auth.getSession();
-                    if (got && got.data && got.data.session) return got.data.session;
-                    let res = await supabaseClient.auth.signInAnonymously();
-                    if (res.error) throw res.error;
-                    return res.data.session;
-                } catch (e) {
-                    console.error('⚠️ Supabase 登入失敗（請確認後台已開啟 Anonymous sign-ins）:', e && e.message || e);
-                    return null;
-                }
-            })().finally(() => { sessionPromise = null; });
-        }
-        return sessionPromise;
-    }
-
-    async function walletRpc(fn, args) {
-        let session = await ensureSupabaseSession();
-        if (!session) throw new Error('no_session');
-        let res = await supabaseClient.rpc(fn, args);
-        if (res.error) throw res.error;
-        return res.data;
-    }
-
-    function walletErrorMessage(e) {
-        let m = String((e && e.message) || '');
-        if (m.includes('login_required')) return '請先登入 Google 雲端再兌換';
-        if (m.includes('insufficient')) return '雞塊不足';
-        if (m.includes('max_reached')) return '已達購買上限';
-        if (m.includes('already_claimed')) return '今天已經領過了';
-        if (m.includes('weekly_used')) return '這週已經兌換過了';
-        if (m.includes('invalid_day')) return '日期異常，請確認手機的日期時間是否正確';
-        if (m.includes('invalid_item') || m.includes('invalid_task')) return '商品或任務不存在';
-        if (m.includes('not_purchased')) return '尚未購買這本單字庫';
-        return '無法連線到雞塊伺服器，請稍後再試';
-    }
-
-    function setWalletNote() {
-        ['walletNoteReward', 'walletNoteShop'].forEach(id => {
-            let el = document.getElementById(id);
-            if (el) el.textContent = walletOnline ? '' : '⚠️ 目前無法連線，顯示的是上次的雞塊數量，無法領取或兌換';
-        });
-    }
-
-    function applyWallet(w, day) {
-        wallet = {
-            balance: Number(w.balance) || 0,
-            day: day || getLocalDateStr(),
-            claimedToday: Array.isArray(w.claimed_today) ? w.claimed_today : [],
-            purchases: (w.purchases && typeof w.purchases === 'object') ? w.purchases : {},
-            listCaps: (w.list_caps && typeof w.list_caps === 'object') ? w.list_caps : {}
-        };
-        try { localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify(wallet)); } catch (e) {}
-        walletOnline = true;
-        setWalletNote();
-        updateChickenBadgeUI();
-        updateChickenShopUI();
-        updateListQuotaBar();
-        let picker = document.getElementById('shopListPickerModal');
-        if (picker && picker.style.display === 'block') renderShopListPicker();
-        setTimeout(ensureWordPacks, 0);
-    }
-
-    async function refreshWallet() {
-        try {
-            let day = getLocalDateStr();
-            let w = await walletRpc('get_wallet', { p_day: day });
-            applyWallet(w, day);
-            return true;
-        } catch (e) {
-            walletOnline = false;
-            setWalletNote();
-            console.warn('讀取雞塊餘額失敗（顯示上次快取）:', e && e.message || e);
-            return false;
-        }
-    }
-
-    // ── 錢包綁定（登入 Google 後，把這台裝置的錢包和 Google 雲端裡的錢包合併） ──
-    // 原理：每個 Google 帳號的雲端檔案裡存一把隨機「錢包金鑰」。
-    //   第一次登入：產生金鑰，綁在「目前這台裝置的錢包」上（登入前領的雞塊、買的東西都保留）。
-    //   之後在別台裝置登入：讀到同一把金鑰，後端把兩邊的錢包合併（領取紀錄取聯集、購買紀錄全保留）。
-    //   登出 Google 不會解除綁定，所以登出後的領取／購買仍然進同一個錢包，不會回溯。
-    const WALLET_KEY_STORAGE = 'chicky_wallet_key';
-    let cloudWalletKey = null;          // 這次登入的 Google 雲端裡的金鑰（存檔時要原樣寫回去）
-    let walletBoundThisLogin = false;
-
-    function isValidWalletKey(k) { return typeof k === 'string' && /^[A-Za-z0-9_-]{32,128}$/.test(k); }
-    function generateWalletKey() {
-        let a = new Uint8Array(32);
-        crypto.getRandomValues(a);
-        return btoa(String.fromCharCode.apply(null, a)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    }
-    async function switchToFreshAnonymousWallet() {
-        try { await supabaseClient.auth.signOut(); } catch (e) { console.warn('signOut 失敗', e); }
-        sessionPromise = null;
-    }
-
-    // 回傳「目前使用的金鑰」（連線失敗時回傳 null，下次登入會再試一次）
-    async function bindWalletAfterLogin(cloudKey) {
-        let localKey = localStorage.getItem(WALLET_KEY_STORAGE);
-        let key = null, fresh = false;
-        if (isValidWalletKey(cloudKey)) {
-            key = cloudKey;
-        } else if (isValidWalletKey(localKey)) {
-            // 這台裝置的錢包以前綁過 Google 帳號，但現在登入的帳號雲端裡沒有金鑰
-            if (confirm('這台裝置的雞塊錢包以前已綁定過 Google 帳號，但你現在登入的 Google 雲端裡沒有錢包資料。\n\n按「確定」：沿用這台裝置的錢包（同一個帳號重新登入請選這個）\n按「取消」：這個 Google 帳號改用全新的錢包')) {
-                key = localKey;
-            } else {
-                key = generateWalletKey(); fresh = true;
-            }
-        } else {
-            key = generateWalletKey();
-        }
-        walletBusy = true;
-        try {
-            if (fresh) await switchToFreshAnonymousWallet();
-            let r = await walletRpc('link_wallet', { p_key: key });
-            if (r && r.status === 'conflict') {
-                // 這台裝置已綁定另一個 Google 帳號：換成這個帳號自己的錢包
-                await switchToFreshAnonymousWallet();
-                r = await walletRpc('link_wallet', { p_key: key });
-            }
-            localStorage.setItem(WALLET_KEY_STORAGE, key);
-            await refreshWallet();
-            refreshAllListViews();
-            return key;
-        } catch (e) {
-            console.warn('錢包綁定失敗（下次登入會再試）:', e && e.message || e);
-            return null;
-        } finally {
-            walletBusy = false;
-        }
-    }
-
-    // 錢包尚未綁定 Google 帳號時不能花雞塊（避免兩台裝置各自花掉同一批雞塊）
-    function isWalletBound() { return isValidWalletKey(localStorage.getItem(WALLET_KEY_STORAGE)); }
-    function ensureLoginBeforeSpend() {
-        if (isWalletBound()) return true;
-        if (confirm('兌換雞塊前，需要先登入 Google 雲端。\n\n這樣不同裝置的雞塊才能合併，不會被重複花掉。現在要登入嗎？')) handleAuthClick();
-        return false;
-    }
-
-    async function loadShopCatalog() {
-        try {
-            let session = await ensureSupabaseSession();
-            if (!session) return;
-            let res = await supabaseClient.from('shop_items').select('item_key, price, max_qty, enabled');
-            if (res.error || !Array.isArray(res.data)) return;
-            res.data.forEach(r => {
-                if (shopCatalog[r.item_key]) {
-                    shopCatalog[r.item_key].price = Number(r.price) || shopCatalog[r.item_key].price;
-                    shopCatalog[r.item_key].max = Number(r.max_qty) || shopCatalog[r.item_key].max;
-                    shopCatalog[r.item_key].enabled = r.enabled !== false;
-                }
-            });
-            updateChickenShopUI();
-        } catch (e) { /* 連不上就沿用預設值 */ }
-    }
-
-    // 每日重置：只重置本機的「任務完成進度」；今天領過什麼由後端告訴我們
-    function checkDailyReset() {
-        let todayStr = getLocalDateStr();
-        if (chickenData.lastDate !== todayStr) {
-            chickenData.lastDate = todayStr;
-            CHICKEN_TASK_KEYS.forEach(k => { chickenData.tasks[k] = { done: false }; });
-            chickenData.tasks.dailyLogin = { done: true };   // 每日登入自動完成
-            localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
-            setTimeout(refreshWallet, 0);                    // 新的一天：向後端確認今天已領取哪些
-            triggerAutoSaveToCloud();
-        }
-    }
-
-    // 🍗 儲存任務完成進度（只存本機；雞塊數量不在這裡）
-    function saveChickenData() {
-        localStorage.setItem('chicky_chicken_data', JSON.stringify(chickenData));
-        updateChickenBadgeUI();
-    }
-
-    // 在右上角的雞塊數量旁顯示浮動數字（+1 / -30），1 秒後消失
-    function showChickenFloat(countElId, text, color) {
-        let countEl = document.getElementById(countElId);
-        if (!countEl) return;
-        let badgeContainer = countEl.parentElement;
-        if (!badgeContainer) return;
-        let floatSpan = document.createElement('span');
-        floatSpan.innerText = text;
-        floatSpan.style.position = 'absolute';
-        floatSpan.style.left = '50%';
-        floatSpan.style.top = '-10px';
-        floatSpan.style.transform = 'translateX(-50%)';
-        floatSpan.style.color = color || '#EF4444';
-        floatSpan.style.fontWeight = '800';
-        floatSpan.style.fontSize = '14px';
-        floatSpan.style.pointerEvents = 'none';
-        floatSpan.style.transition = 'all 1s ease';
-        floatSpan.style.opacity = '1';
-        floatSpan.className = 'chicken-float';
-        badgeContainer.appendChild(floatSpan);
-        setTimeout(() => {
-            floatSpan.style.transform = 'translateX(-50%) translateY(-25px)';
-            floatSpan.style.opacity = '0';
-        }, 50);
-        setTimeout(() => { floatSpan.remove(); }, 1050);
-    }
-
-    function updateChickenBadgeUI() {
-        checkDailyReset();
-        let rewardModal = document.getElementById('chickenRewardModal');
-        if (rewardModal && rewardModal.style.display === 'block') updateChickenModalUI();
-        try { renderHomeToday(); } catch (e) {}
-        let badge = document.getElementById('chickenRewardBadge');
-        if (!badge) return;
-
-        // 檢查是否有「已達成但未領取」的任務
-        let hasUnclaimed = CHICKEN_TASK_KEYS.some(k => chickenData.tasks[k].done && !isTaskClaimed(k));
-        badge.style.display = hasUnclaimed ? 'flex' : 'none';
-    }
-
-    function openChickenRewardModal() {
-        checkDailyReset();
-        updateChickenModalUI();
-        document.getElementById('chickenRewardModal').style.display = 'block';
-        refreshWallet();
-    }
-
-    // 今日任務的「去做 ›」：直接跳到那個功能
-    function goDoTask(key) {
-        closeChickenRewardModal();
-        if (key === 'listeningPractice' || key === 'listeningPerfect') { homeTab = 'exam'; goToExamPage(); }
-        else if (key === 'cardPractice' || key === 'cardPerfect') { homeTab = 'exam'; goToCardExamPage(); }
-        else if (key === 'advWin') { homeTab = 'fun'; goToAdventurePage(); }
-    }
-    function closeChickenRewardModal() {
-        document.getElementById('chickenRewardModal').style.display = 'none';
-    }
-
-    function updateChickenModalUI() {
-        document.getElementById('chickenCountDisplay').innerText = wallet.balance;
-        let rs = document.getElementById('rewardShardCount');
-        if (rs) { try { rs.innerText = advData.shards; } catch (e) {} }
-        let container = document.getElementById('rewardTasksContainer');
-        if (!container) return;
-
-        const taskDefs = [
-            { key: 'dailyLogin', title: '1. 每日登入', desc: `雞塊 ×1、糖醋醬碎片 ×${LOGIN_SHARDS}` },
-            { key: 'listeningPractice', title: '2. 完成一次聽力測驗', desc: '' },
-            { key: 'cardPractice', title: '3. 完成一次字卡測驗', desc: '' },
-            { key: 'listeningPerfect', title: '4. 聽力測驗 80 分且題數≥ 10 ', desc: '' },
-            { key: 'cardPerfect', title: '5. 字卡測驗 80 分且題數≥ 10', desc: '' },
-            { key: 'advWin', title: '6. 在大冒險中打贏一場敵人', desc: '雞塊 ×1' }
-        ];
-
-        let html = '', done = 0;
-        taskDefs.forEach(def => {
-            let t = chickenData.tasks[def.key];
-            if (t.done) done++;
-            let right;
-            if (isTaskClaimed(def.key)) right = `<span class="tk-done">✓ 已領取</span>`;
-            else if (t.done) right = `<button type="button" class="tk-claim" data-on-click='[["claimChickenReward",["${def.key}"]]]'>領取</button>`;
-            else right = `<button type="button" class="tk-todo" data-on-click='[["goDoTask",["${def.key}"]]]'>去做 ›</button>`;
-            html += `<div class="tk-row"><span class="t">${def.title.replace(/^\d+\.\s*/, '')}<small>${def.desc || '雞塊 ×1'}</small></span>${right}</div>`;
-        });
-        container.innerHTML = `<div class="tk-head"><span>${done} / ${taskDefs.length} 完成</span></div><div class="tk-list">${html}</div>`;
-        try { renderHomeToday(); } catch (e) {}
-    }
-
-    // 領取：向後端登記（同一天同一任務只會算一次），成功後以後端回傳的餘額為準
-    async function claimChickenReward(taskKey) {
-        checkDailyReset();
-        let t = chickenData.tasks[taskKey];
-        if (!t || !t.done || isTaskClaimed(taskKey) || walletBusy) return;
-        if (taskKey === 'dailyLogin' && !isLoginShardClaimed()) {
-            // 碎片先發（存在本機進度）；雞塊下面照原本的方式向後端領
-            advData.shards += LOGIN_SHARDS;
-            advData.loginShardDay = chickenData.lastDate;
-            advSave();
-            showChickenFloat('rewardShardCount', '+' + LOGIN_SHARDS, '#10B981');
-            try { advRenderShopBox(); } catch (e) {}
-            updateChickenBadgeUI();
-            let alreadyChicken = wallet.day === chickenData.lastDate && (wallet.claimedToday || []).indexOf('dailyLogin') !== -1;
-            if (alreadyChicken) { updateChickenModalUI(); return; }
-        }
-        walletBusy = true;
-        try {
-            let before = wallet.balance;
-            // 大冒險勝利是後來新增的任務，用獨立的後端函式領取（見 supabase_adv_v3_4.sql）
-            let data = taskKey === 'advWin'
-                ? await walletRpc('claim_adv_win', { p_day: chickenData.lastDate })
-                : await walletRpc('claim_reward', { p_task: taskKey, p_day: chickenData.lastDate });
-            applyWallet(data, chickenData.lastDate);
-            let gained = wallet.balance - before;
-            if (gained > 0) showChickenFloat('chickenCountDisplay', '+' + gained, '#EF4444');
-        } catch (e) {
-            if (String((e && e.message) || '').includes('already_claimed')) {   // 同一個帳號在別台裝置已經領過
-                if (!Array.isArray(wallet.claimedToday)) wallet.claimedToday = [];
-                if (wallet.claimedToday.indexOf(taskKey) === -1) wallet.claimedToday.push(taskKey);
-                wallet.day = chickenData.lastDate;
-                try { localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify(wallet)); } catch (e2) {}
-                updateChickenModalUI(); updateChickenBadgeUI();
-                return;
-            }
-            console.warn('領取失敗:', e && e.message || e);
-            walletOnline = !String((e && e.message) || '').includes('no_session') && walletOnline;
-            alert(`❌ 領取失敗：${walletErrorMessage(e)}`);
-            refreshWallet();
-        } finally {
-            walletBusy = false;
-            updateChickenModalUI();
-        }
-    }
-
-    // ---------------------------------
-    // 🛒 雞塊補給站
-    // ---------------------------------
-    function openChickenShopModal() {
-        checkDailyReset();
-        updateChickenShopUI();
-        advRenderShopBox();
-        document.getElementById('chickenShopModal').style.display = 'block';
-        refreshWallet();
-        loadShopCatalog();
-    }
-
-    function closeChickenShopModal() {
-        document.getElementById('chickenShopModal').style.display = 'none';
-    }
-
-    function updateChickenShopUI() {
-        let countEl = document.getElementById('chickenShopCountDisplay');
-        if (!countEl) return;
-        countEl.innerText = wallet.balance;
-        // 官方英文單字庫：學習語言是韓文時不顯示
-        let hidePack = getLearningLanguage() === 'ko';
-        let filler = document.getElementById('shopPackFiller');
-        if (filler) filler.style.display = hidePack ? '' : 'none';
-        Object.keys(SHOP_ITEM_META).forEach(key => {
-            if (key.indexOf('mv_') === 0) return;      // 招式商品由 advRenderShopBox 負責畫
-            let cell = document.getElementById('shopItem_' + key);
-            if (!cell) return;
-            let pk = packKeyByItem(key);
-            if (pk) {
-                cell.style.display = hidePack ? 'none' : '';
-                let catP = shopCatalog[key], owned = walletQty(key) > 0, installed = packInstalled(pk);
-                let needDl = owned && !installed;
-                cell.classList.toggle('is-maxed', owned && installed);
-                cell.classList.toggle('is-poor', !owned && wallet.balance < catP.price);
-                let subP = document.getElementById('shopSub_' + key);
-                if (subP) subP.textContent = needDl ? '點一下重新下載' : (owned ? '已在你的題庫裡' : `${WORD_PACKS[pk].words} 個職場單字`);
-                let priceP = document.getElementById('shopPrice_' + key);
-                if (priceP) priceP.innerHTML = owned ? (needDl ? '⬇️ 下載' : '已擁有') : `<span class="chicken-mini"></span><b>${catP.price}</b>`;
-                return;
-            }
-            let cat = shopCatalog[key], qty = walletQty(key);
-            // 單字上限是「每本題庫」各自計算次數，所以整個商品不會有「全部買完」的狀態
-            let maxed = key === 'word_cap_50' ? (cat.enabled === false) : (qty >= cat.max || cat.enabled === false);
-            let poor = !maxed && wallet.balance < cat.price;
-            cell.classList.toggle('is-maxed', maxed);
-            cell.classList.toggle('is-poor', poor);
-            let sub = document.getElementById('shopSub_' + key);
-            if (sub) {
-                sub.textContent = key === 'word_cap_50'
-                    ? '指定一本題庫'
-                    : `目前上限 ${getMaxLists()} 本`;
-            }
-            let price = document.getElementById('shopPrice_' + key);
-            if (price) price.innerHTML = maxed ? '已達上限' : `<span class="chicken-mini"></span><b>${cat.price}</b>`;
-        });
-        try { advRenderShopBox(); } catch (e) {}
-    }
-
-    async function buyShopItem(key) {
-        let meta = SHOP_ITEM_META[key], cat = shopCatalog[key];
-        if (!meta || !cat || walletBusy) return;
-        if (!ensureLoginBeforeSpend()) return;
-
-        // 官方單字庫：已購買就只要（重新）下載
-        let packKey = packKeyByItem(key);
-        if (packKey) {
-            if (getLearningLanguage() === 'ko') return;
-            if (walletQty(key) > 0) {
-                if (packInstalled(packKey)) { alert(`已經擁有「${meta.name}」了，到「題庫清單」就能看到。`); return; }
-                installWordPack(packKey, false);
-                return;
-            }
+        .flashcard.flipped {
+            transform: rotateY(180deg) !important;
         }
 
-        // 單字上限：先選要擴增哪一本題庫
-        if (key === 'word_cap_50') {
-            if (cat.enabled === false) { alert('此商品目前無法兌換。'); return; }
-            if (wallet.balance < cat.price) {
-                alert(`🍗 雞塊不足！需要 ${cat.price} 個，目前有 ${wallet.balance} 個。`);
-                return;
-            }
-            openShopListPicker();
-            return;
+        .card-face {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border: 2px solid var(--primary);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+            border-radius: 20px;
+            padding: 42px 24px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%);
         }
 
-        if (cat.enabled === false || walletQty(key) >= cat.max) {
-            alert(`「${meta.name}」已達購買上限。`);
-            return;
+        body.power-saving-mode .card-face {
+            background: linear-gradient(145deg, #1B1E27 0%, #1B1E27 100%) !important;
         }
-        if (wallet.balance < cat.price) {
-            alert(`🍗 雞塊不足！需要 ${cat.price} 個，目前有 ${wallet.balance} 個。`);
-            return;
+
+        .card-face.card-front {
+            z-index: 2;
+            transform: rotateY(0deg);
         }
-        if (!confirm(`要用 ${cat.price} 個雞塊兌換「${meta.name}」嗎？\n\n${meta.desc}`)) return;
 
-        walletBusy = true;
-        try {
-            let data = await walletRpc('buy_item', { p_item: key });
-            applyWallet(data, getLocalDateStr());
-            showChickenFloat('chickenShopCountDisplay', '-' + (data.spent || cat.price), '#EF4444');
-            refreshAllListViews();
-            if (key.indexOf('mv_') === 0) advOnShopPurchase(key);
-            if (packKey) await installWordPack(packKey, false);
-        } catch (e) {
-            console.warn('兌換失敗:', e && e.message || e);
-            alert(`❌ 兌換失敗：${walletErrorMessage(e)}`);
-            refreshWallet();
-        } finally {
-            walletBusy = false;
+        .card-face.card-back {
+            transform: rotateY(180deg);
         }
-    }
 
-    // ── 選擇要擴增單字上限的題庫 ──
-    function openShopListPicker() {
-        renderShopListPicker();
-        document.getElementById('shopListPickerModal').style.display = 'block';
-    }
+        .card-english { font-size: 34px; font-weight: 700; color: var(--text-main); text-align: center; word-break: break-word; }
+        .card-footer-info { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .card-chinese { font-size: 26px; font-weight: 700; color: #334155; word-break: break-word; }
+        body.power-saving-mode .card-chinese { color: #E2E8F0 !important; }
+        .card-pos { font-size: 13.5px; font-weight: 600; color: var(--primary); background: #EEF2FF; padding: 4px 10px; border-radius: 6px; }
+        
+        .swipe-hint { text-align: center; font-size: 11.5px; color: var(--text-muted); margin: 6px 0 14px 0; }
+        
+        .card-nav-controls { display: flex; gap: 10px; align-items: center; }
+        
+        .ctrl-btn {
+            flex: 1; padding: 13px; font-size: 14.5px; font-weight: 600; border: 1px solid var(--border-color);
+            border-radius: 14px; cursor: pointer; background: #FFFFFF; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 6px;
+            box-sizing: border-box;
+        }
+        .ctrl-btn:disabled {
+            background: #F1F5F9 !important;
+            color: #94A3B8 !important;
+            border-color: #E2E8F0 !important;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        body.power-saving-mode .ctrl-btn { background: #1B1E27 !important; color: #FFFFFF !important; }
 
-    function closeShopListPicker() {
-        document.getElementById('shopListPickerModal').style.display = 'none';
-    }
+        .external-card-audio-btn, .external-card-star-btn {
+            background: #FFFFFF; border: 1px solid var(--border-color);
+            border-radius: 14px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px;
+            flex-shrink: 0; transition: all 0.2s; box-sizing: border-box;
+        }
+        body.power-saving-mode .external-card-audio-btn, body.power-saving-mode .external-card-star-btn {
+            background: #1B1E27 !important; border-color: var(--border-color) !important; color: #FFFFFF !important;
+        }
+        .external-card-audio-btn:hover, .external-card-star-btn:hover { background: #EEF2FF; border-color: #C7D2FE; }
+        .external-card-star-btn.starred { background: #FEF3C7; border-color: #F59E0B; color: #D97706; }
+        body.power-saving-mode .external-card-star-btn.starred { background: #451A03 !important; border-color: #F59E0B !important; color: #FBBF24 !important; }
 
-    function renderShopListPicker() {
-        let box = document.getElementById('shopListPickerContainer');
-        if (!box) return;
-        let cat = shopCatalog.word_cap_50;
-        let html = '';
-        wordLists.forEach((l, idx) => {
-            if (isPackList(l)) return;          // 官方單字庫不能擴增
-            let lang = getListLang(l);
-            let extra = Number((wallet.listCaps || {})[l.id]) || 0;
-            let maxed = extra >= cat.max;
-            let count = getListWordCount(l.content), cap = getListWordCap(l);
-            html += `
-                <button type="button" class="picker-item${maxed ? ' is-maxed' : ''}" data-on-click='[["buyWordCapForList",["${l.id}"]]]'>
-                    <div class="picker-main">
-                        <div class="picker-title">${getLangSeq(idx)}: ${escapeHTML(l.title)} <span class="lang-tag lang-tag-${lang}">${getLangName(lang)}</span></div>
-                        <div class="picker-sub">${count} / ${cap} 字　${maxed ? '已達擴充上限' : `兌換後 ${cap + WORD_CAP_STEP} 字`}</div>
+        .progress-bar-container { width: 100%; height: 6px; background: #E2E8F0; border-radius: 3px; margin-bottom: 20px; overflow: hidden; }
+        .progress-bar-fill { width: 0%; height: 100%; background: var(--primary-gradient); transition: width 0.3s ease; }
+
+        .settings-card-group { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 16px; padding: 4px 16px; margin-bottom: 16px; box-sizing: border-box; }
+        body.power-saving-mode .settings-card-group { background: #1B1E27 !important; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
+        .setting-item:not(:last-child) { border-bottom: 1px solid var(--border-color); }
+        .setting-label { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: #334155; }
+        body.power-saving-mode .setting-label { color: #E2E8F0 !important; }
+
+        .mode-status-card {
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+
+        .list-card-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-bottom: 16px;
+        }
+        .list-card-item {
+            background: #F8FAFC;
+            border: 1.5px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .list-card-item:hover { border-color: #C7D2FE; background: #FFFFFF; }
+        .list-card-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+        .list-card-title { font-size: 17px; font-weight: 700; color: var(--text-main); }
+        .list-card-count { font-size: 13px; color: var(--text-muted); }
+        .lang-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+        .lang-tag-en { background: #DBEAFE; color: #1D4ED8; }
+        .lang-tag-ko { background: #FCE7F3; color: #BE185D; }
+        
+        .list-card-menu-btn {
+            background: transparent; border: none; cursor: pointer; padding: 8px; font-size: 18px; color: var(--text-muted);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.2s;
+        }
+        .list-card-menu-btn:hover { background: rgba(0,0,0,0.05); color: var(--text-main); }
+
+        .dropdown-menu {
+            display: none; position: absolute; right: 16px; top: 60px; background: #FFFFFF;
+            border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 100; min-width: 120px; overflow: hidden;
+        }
+        .dropdown-menu.drop-up {
+            top: auto !important;
+            bottom: 60px !important;
+        }
+        .dropdown-menu.show { display: block; }
+        /* 選單改為固定定位：不會被題庫清單或卡片外框的 overflow 切掉，位置由程式依按鈕計算 */
+        .dropdown-menu { position: fixed !important; right: auto !important; bottom: auto !important; top: 0; left: 0; }        
+        .dropdown-item {
+            padding: 10px 16px; font-size: 13.5px; font-weight: 600; color: var(--text-main); cursor: pointer;
+            transition: background 0.15s; display: block; width: 100%; text-align: left; border: none; background: transparent;
+        }
+        .dropdown-item:hover { background: #EEF2FF; color: var(--primary); }
+        .dropdown-item.danger { color: #EF4444; }
+        .dropdown-item.danger:hover { background: #FEF2F2; }
+
+        .editor-top-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .editor-wrapper {
+            position: relative;
+            width: 100%;
+            height: 310px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: #FFFFFF;
+            overflow: hidden !important; 
+            box-sizing: border-box;
+        }
+        
+        body.power-saving-mode .editor-wrapper {
+            background: #1B1E27 !important;
+            border-color: #2B303C !important;
+        }
+
+        .highlight-backdrop, 
+        .editor-wrapper textarea {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+            padding: 12px 14px;
+            box-sizing: border-box !important;
+            font-size: 14px;
+            font-weight: 400;
+            font-family: inherit;
+            line-height: 1.6;
+            letter-spacing: normal;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            word-break: break-all;
+            margin: 0;
+            border: none !important;
+            outline: none;
+            resize: none;
+        }
+
+        .highlight-backdrop {
+            z-index: 1;
+            color: transparent !important;
+            text-shadow: none !important;
+            overflow: hidden;
+            pointer-events: none;
+            background: transparent;
+        }
+
+        .editor-wrapper textarea { 
+            z-index: 2; 
+            background: transparent !important; 
+            color: var(--text-main) !important;
+            overflow-y: auto !important;
+            caret-color: #6366F1;
+        }
+        
+        body.power-saving-mode .editor-wrapper textarea {
+            background: transparent !important;
+            color: #FFFFFF !important;
+            caret-color: #FFFFFF !important;
+        }
+
+        .highlight-match { 
+            background-color: #FDE047 !important; 
+            color: transparent !important; 
+            border-radius: 3px; 
+            font-weight: inherit;
+            padding: 0;
+            box-shadow: none !important;
+        }
+
+        .search-bar-container {
+            display: flex; align-items: center; background: #FFFFFF;
+            border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 10px 14px; margin: 12px 0 6px 0; gap: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s;
+            box-sizing: border-box;
+        }
+        body.power-saving-mode .search-bar-container { background: #1B1E27 !important; border-color: #2B303C !important; }
+        .search-bar-container:focus-within {
+            border-color: var(--primary); box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+        .search-icon { font-size: 15px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
+        .search-input { flex: 1; border: none !important; outline: none !important; font-size: 13px; color: var(--text-main); background: transparent !important; font-family: inherit; }
+        body.power-saving-mode .search-input { color: #FFFFFF !important; }
+        .search-input::placeholder { color: #94A3B8; }
+        
+        .action-btn-primary {
+            width: 100%; margin-top: 4px; padding: 12px; font-size: 14.5px; font-weight: 700;
+            border: none; border-radius: var(--radius-inner); cursor: pointer; color: white;
+            background: var(--primary-gradient); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
+            box-sizing: border-box;
+        }
+        .action-btn-primary:hover { opacity: 0.95; transform: translateY(-1px); }
+
+        .page-main-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 18px;
+            padding-right: 30px;
+        }
+        body.power-saving-mode .page-main-title {
+            color: #FFFFFF !important;
+        }
+
+        .tab-cards-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        body.power-saving-mode .tab-cards-container { border-color: #2B303C !important; }
+
+        .tab-card-item {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-inner);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+        body.power-saving-mode .tab-card-item { background: #1B1E27 !important; border-color: #2B303C !important; }
+
+        .tab-card-item.active {
+            background: #EEF2FF;
+            border-color: transparent;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
+        }
+        body.power-saving-mode .tab-card-item.active {
+            background: #2E3147 !important;
+            border-color: #4338CA !important;
+        }
+
+        .history-item-icon-box {
+            width: 40px;
+            height: 40px;
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+            color: var(--text-muted);
+        }
+        body.power-saving-mode .history-item-icon-box { background: #1B1E27 !important; border-color: #2B303C !important; }
+
+        .history-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .history-item-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        body.power-saving-mode .history-item-title { color: #FFFFFF !important; }
+
+        .tab-card-item.active .history-item-title {
+            color: var(--primary);
+            font-weight: 700;
+        }
+        body.power-saving-mode .tab-card-item.active .history-item-title {
+            color: #C7D2FE !important;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .sub-card {
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+        body.power-saving-mode .sub-card { background: #1B1E27 !important; border-color: #2B303C !important; }
+
+        .sub-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        body.power-saving-mode .sub-card-title { color: #CBD5E1 !important; }
+
+        .sub-card-content-wrapper {
+            transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+            max-height: 800px;
+            overflow: hidden;
+            opacity: 1;
+        }
+        .sub-card-content-wrapper.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+        }
+
+        .sub-card-toggle-btn {
+            background: #6366F1;
+            border: none;
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.25);
+            flex-shrink: 0;
+        }
+        .sub-card-toggle-btn.collapsed svg {
+            transform: rotate(180deg);
+        }
+
+        .chart-wrapper {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            height: 180px;
+            position: relative;
+            box-sizing: border-box;
+        }
+        body.power-saving-mode .chart-wrapper { background: #1B1E27 !important; border-color: #2B303C !important; }
+        canvas.score-chart-canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        .error-word-list {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        body.power-saving-mode .error-word-list { background: #1B1E27 !important; border-color: #2B303C !important; }
+        .error-word-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13.5px;
+            color: var(--text-main);
+            padding: 8px 0;
+        }
+        body.power-saving-mode .error-word-item { color: #FFFFFF !important; }
+        .error-word-item:not(:last-child) { border-bottom: 1px solid #F1F5F9; }
+        body.power-saving-mode .error-word-item:not(:last-child) { border-bottom: 1px solid #2B303C !important; }
+        .error-count { color: #EF4444; font-weight: 600; }
+
+        .save-target-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .save-target-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+        body.power-saving-mode .save-target-label { color: #A5B4FC !important; }
+        .target-select {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            outline: none;
+            min-width: 0;
+        }
+        body.power-saving-mode .target-select { background: #1B1E27 !important; color: #FFFFFF !important; border-color: #2B303C !important; }
+
+        .btn-purple {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .btn-purple:hover { opacity: 0.92; transform: translateY(-1px); }
+
+        .history-card { 
+            background: #FFFFFF; 
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; 
+            margin-bottom: 10px; 
+            padding: 13px 16px; 
+            box-sizing: border-box;
+        }
+        body.power-saving-mode .history-card { background: #1B1E27 !important; border-color: #2B303C !important; }
+        .history-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 13.5px; 
+            color: var(--text-main); 
+        }
+        body.power-saving-mode .history-header { color: #FFFFFF !important; }
+        .history-detail { 
+            display: none; 
+            margin-top: 12px; 
+            padding-top: 12px; 
+            border-top: 1px dashed var(--border-color); 
+            font-size: 13px; 
+            max-height: 180px; 
+            overflow-y: auto; 
+        }
+        body.power-saving-mode .history-detail { color: #CBD5E1 !important; border-color: #2B303C !important; }
+
+        /* 雞塊任務列表樣式 */
+        .reward-task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        body.power-saving-mode .reward-task-item { background: #1B1E27 !important; border-color: #2B303C !important; }
+        .reward-task-info { display: flex; flex-direction: column; gap: 2px; }
+        .reward-task-title { font-size: 14.5px; font-weight: 700; color: var(--text-main); }
+        body.power-saving-mode .reward-task-title { color: #FFFFFF !important; }
+        .reward-task-desc { font-size: 12px; color: var(--text-muted); }
+        .reward-action-area { display: flex; align-items: center; gap: 8px; }
+        .task-status-text { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .task-status-text.completed { color: #10B981; }
+
+
+        /* 雞塊補給站 */
+        .chicken-mini { display: inline-block; width: 16px; height: 16px; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='10 10 80 80'><path d='M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z' fill='%23F3A63B' stroke='%23C27803' stroke-width='3'/><path d='M 38 42 Q 43 45 40 50' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M 58 52 Q 62 58 56 64' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><circle cx='46' cy='38' r='2' fill='%23C27803'/><circle cx='54' cy='68' r='2' fill='%23C27803'/><circle cx='64' cy='42' r='2.5' fill='%23C27803'/><circle cx='34' cy='58' r='2' fill='%23C27803'/><circle cx='48' cy='52' r='2.5' fill='%23C27803'/></svg>") center / contain no-repeat; }
+        .wallet-note { font-size: 12.5px; color: #B45309; background: #FEF3C7; border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; }
+        .wallet-note:empty { display: none; }
+        body.power-saving-mode .wallet-note { background: #3B2F12 !important; color: #FCD34D !important; }
+        #chickenShopModal { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .shop-cell { box-sizing: border-box; min-height: 148px; border-radius: 16px; border: 1px solid var(--border-color); background: #F8FAFC; }
+        .shop-item { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; padding: 12px 6px 10px; cursor: pointer; font-family: inherit; color: var(--text-main); transition: transform 0.15s, border-color 0.15s; }
+        .shop-item:hover { transform: translateY(-2px); border-color: #FACC15; }
+        .shop-item:active { transform: scale(0.97); }
+        .shop-empty { border-style: dashed; background: transparent; opacity: 0.55; }
+        .shop-icon { 
+            width: 64px; 
+            height: 64px; 
+            object-fit: contain; 
+            margin-bottom: 2px;
+            background: #FFFFFF; /* 一般模式下背景改為白色 */
+            border-radius: 14px; /* 加上適當圓角 */
+            padding: 4px;        /* 讓內部圖示與邊框保持間距 */
+        }
+        .shop-name { font-size: 13.5px; font-weight: 700; text-align: center; line-height: 1.25; }
+        .shop-sub { font-size: 11.5px; color: var(--text-muted); text-align: center; line-height: 1.25; }
+        .shop-price { margin-top: auto; display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 700; color: #B45309; background: #FEF3C7; border-radius: 12px; padding: 3px 12px; }
+        .shop-item.is-poor .shop-price { color: #94A3B8; background: #E2E8F0; }
+        .shop-item.is-poor { opacity: 0.8; }
+        .shop-item.is-maxed { opacity: 0.6; cursor: not-allowed; }
+        .shop-item.is-maxed:hover { transform: none; border-color: var(--border-color); }
+        .shop-item.is-maxed .shop-price { color: #64748B; background: #E2E8F0; font-size: 12.5px; }
+        body.power-saving-mode .shop-cell { background: #1B1E27 !important; border-color: #2B303C !important; }
+        body.power-saving-mode .shop-empty { background: transparent !important; }
+        body.power-saving-mode .shop-name { color: #FFFFFF !important; }
+        body.power-saving-mode .shop-icon { 
+            background: #1B1E27 !important; 
+            border-radius: 16px; 
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.10); 
+        }
+        body.power-saving-mode .shop-price { background: #3B2F12 !important; color: #FCD34D !important; }
+        body.power-saving-mode .shop-item.is-poor .shop-price, body.power-saving-mode .shop-item.is-maxed .shop-price { background: #2B303C !important; color: #94A3B8 !important; }
+        @media screen and (max-width: 480px) {
+            .shop-grid { gap: 8px; }
+            .shop-cell { min-height: 140px; }
+            .shop-icon { width: 56px; height: 56px; }
+            .shop-name { font-size: 12.5px; }
+        }
+        /* 編輯頁右上角單字計數 */
+        #editorDetailTitleIndicator { max-width: 52%; overflow: hidden; text-overflow: ellipsis; }
+        .editor-word-counter { flex-shrink: 0; margin-left: auto; font-size: 13.5px; font-weight: 700; color: var(--text-muted); background: #F1F5F9; border-radius: 12px; padding: 5px 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .editor-word-counter:empty { display: none; }
+        .pack-tag { display: inline-block; font-size: 11px; font-weight: 800; color: #92400E; background: #FEF3C7; border-radius: 8px; padding: 1px 7px; vertical-align: 1px; }
+        body.power-saving-mode .pack-tag { background: #3B2F12; color: #FCD34D; }
+        .dropdown-note { font-size: 11.5px; color: var(--text-muted); padding: 6px 12px 8px; max-width: 180px; line-height: 1.4; }
+        .word-format-btn { position: absolute; right: 0; top: calc(100% + 4px); width: 30px; height: 26px; padding: 0; border: 1.5px solid #C7D2FE; border-radius: 8px; background: #EEF2FF; color: var(--primary); font-size: 14px; font-weight: 900; font-family: inherit; cursor: pointer; line-height: 1; }
+        .word-format-btn:active { transform: scale(0.95); }
+        body.power-saving-mode .word-format-btn { background: #23264A; border-color: #3B3F63; color: #A5B4FC; }
+        .word-format-list { display: flex; flex-direction: column; gap: 8px; }
+        .word-format-list div { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 10px; background: #F8FAFC; }
+        .word-format-list code { font-size: 15px; font-weight: 700; color: var(--text-main); font-family: inherit; }
+        .word-format-list small { font-size: 12px; color: var(--text-muted); }
+        body.power-saving-mode .word-format-list div { background: #1B1E27; border-color: #2B303C; }
+        body.power-saving-mode .word-format-list code { color: #FFFFFF; }
+        .chi-input-row { display: flex; gap: 8px; }
+        .chi-input-row input { flex: 1; min-width: 0; }
+        .chi-input-tip { font-size: 12px; color: #B45309; font-weight: 700; margin-top: 4px; }
+        .chi-input-tip:empty { display: none; }
+        .editor-word-counter.is-near { color: #B45309; background: #FEF3C7; }
+        .editor-word-counter.is-full { color: #B91C1C; background: #FEE2E2; }
+        body.power-saving-mode .editor-word-counter { background: #2B303C; color: #CBD5E1; }
+        body.power-saving-mode .editor-word-counter.is-near { background: #3B2F12; color: #FCD34D; }
+        body.power-saving-mode .editor-word-counter.is-full { background: #3F1D1D; color: #FCA5A5; }
+        @media screen and (max-width: 400px) { .editor-word-counter { font-size: 12px; padding: 4px 8px; } }
+
+        /* 選擇要擴增的題庫 */
+        #shopListPickerModal { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .picker-list { display: flex; flex-direction: column; gap: 8px; max-height: 55vh; overflow-y: auto; }
+        .picker-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; box-sizing: border-box; text-align: left; font-family: inherit; color: var(--text-main); background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 14px; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
+        .picker-item:hover { border-color: #FACC15; transform: translateY(-1px); }
+        .picker-main { min-width: 0; }
+        .picker-title { font-size: 14.5px; font-weight: 700; overflow-wrap: anywhere; }
+        .picker-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .picker-plus { flex-shrink: 0; font-size: 15px; font-weight: 800; color: #B45309; background: #FEF3C7; border-radius: 10px; padding: 4px 10px; }
+        .picker-item.is-maxed { opacity: 0.55; cursor: not-allowed; }
+        .picker-item.is-maxed:hover { transform: none; border-color: var(--border-color); }
+        .picker-item.is-maxed .picker-plus { color: #64748B; background: #E2E8F0; }
+        .picker-back { background: #E2E8F0 !important; color: #334155 !important; }
+        body.power-saving-mode .picker-back { background: #2B303C !important; color: #E2E8F0 !important; }
+        body.power-saving-mode .picker-item { background: #1B1E27 !important; border-color: #2B303C !important; }
+        body.power-saving-mode .picker-title { color: #FFFFFF !important; }
+        body.power-saving-mode .picker-plus { background: #3B2F12 !important; color: #FCD34D !important; }
+        body.power-saving-mode .picker-item.is-maxed .picker-plus { background: #2B303C !important; color: #94A3B8 !important; }        
+
+
+        /* ── 🎤 朗讀練習 ── */
+        .speak-mic-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 14px 0 4px; }
+        .speak-mic-btn {
+            width: 96px; height: 96px; border-radius: 50%; border: none; cursor: pointer;
+            background: linear-gradient(135deg, #6366F1, #4F46E5); color: #FFFFFF;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
+            touch-action: none; -webkit-user-select: none; user-select: none;
+            -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+        .speak-mic-btn.recording { background: linear-gradient(135deg, #F43F5E, #E11D48); transform: scale(1.08); animation: speakPulse 1.2s infinite; }
+        .speak-mic-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        @keyframes speakPulse {
+            0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.5); }
+            70% { box-shadow: 0 0 0 22px rgba(244, 63, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+        }
+        #speakMicHint { font-size: 13px; color: var(--text-muted); min-height: 38px; text-align: center; line-height: 1.5; padding: 0 6px; }
+        #speakMicHint.warn { color: #D97706; }
+        .mic-help-note { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px; }
+        .mic-help-status { font-size: 13.5px; font-weight: 700; margin-bottom: 8px; }
+        .mic-help-block { font-size: 13px; line-height: 1.7; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; color: var(--text-main); }
+        .mic-help-block.main { background: #EEF2FF; border-color: #C7D2FE; }
+        .mic-help-block ol { margin: 4px 0 6px 18px; padding: 0; }
+        body.power-saving-mode .mic-help-block { background: #1B1E27 !important; border-color: #2B303C !important; color: #E2E8F0 !important; }
+        body.power-saving-mode .mic-help-block.main { background: #232842 !important; }
+        #speakTip { font-size: 12.5px; line-height: 1.6; text-align: center; color: #92400E; background: #FEF3C7; border-radius: 10px; padding: 6px 10px; margin: 0 6px; }
+        body.power-saving-mode #speakTip { background: #3B2F12 !important; color: #FCD34D !important; }
+        .speak-result-box { display: none; text-align: center; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-inner); padding: 12px; margin-top: 6px; font-size: 14px; color: var(--text-main); }
+        .speak-result-box.show { display: block; }
+        .speak-score { font-size: 40px; font-weight: 800; line-height: 1.1; }
+        .speak-score small { font-size: 15px; font-weight: 700; margin-left: 2px; }
+        .speak-score.pass { color: #10B981; }
+        .speak-score.fail { color: #EF4444; }
+        .speak-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; }
+        body.power-saving-mode .speak-result-box { background: #1B1E27 !important; border-color: #2B303C !important; color: #FFFFFF !important; }
+        body.power-saving-mode .speak-sub { color: #94A3B8 !important; }
+        /* ===== 雞塊大冒險 ===== */
+        .adv-card { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; margin-bottom: 12px; }
+        body.power-saving-mode .adv-card { background: #1B1E27 !important; border-color: #2B303C !important; color: #E2E8F0; }
+        .adv-stats { display: flex; align-items: center; gap: 10px; }
+        .adv-avatar { width: 72px; height: 72px; flex: 0 0 72px; padding: 6px; border-radius: 16px; background: #6366F1; box-shadow: 0 2px 6px rgba(99,102,241,0.35); box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+        .adv-avatar svg { width: 100%; height: 100%; display: block; }
+        .adv-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; flex: 1; text-align: center; }
+        .adv-stat-grid div { background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 10px; padding: 4px 0; font-size: 12px; color: var(--text-muted); }
+        .adv-stat-grid b { display: block; font-size: 16px; color: var(--text-main); }
+        body.power-saving-mode .adv-stat-grid div { background: #232733 !important; border-color: #2B303C !important; }
+        body.power-saving-mode .adv-stat-grid b { color: #FFFFFF !important; }
+        .adv-sauce-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-weight: 700; font-size: 14px; }
+        .adv-btn-sm { border: none; border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: 700; background: #FEF3C7; color: #B45309; cursor: pointer; width: auto; font-family: inherit; }
+        .adv-level { display: flex; align-items: center; gap: 10px; }
+        .adv-special { color: #B45309; font-weight: 700; }
+        body.power-saving-mode .adv-special { color: #FCD34D; }
+        .adv-level-wrap { display: block; }
+        .adv-go-bar { margin-top: 12px; padding-bottom: 6px; }
+        .adv-go.adv-go-wide { display: block; width: 100%; padding: 14px; font-size: 17px; border-radius: 14px; box-shadow: 0 3px 10px rgba(79,70,229,0.3); }
+        .adv-bar { position: relative; }
+        .adv-bar .adv-bar-max { position: absolute; left: 0; top: 0; opacity: 0.28; }
+        .adv-bar .adv-bar-cur { position: absolute; left: 0; top: 0; }
+        .adv-sec-title { margin: 16px 0 8px; font-size: 14px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        .voice-chi-btn { flex: 0 0 40px; width: 40px; min-height: 40px; border: none; border-radius: 10px; background: #EEF2FF; color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; margin-top: 0; }
+        .voice-chi-btn.recording { background: #F43F5E; color: #FFFFFF; animation: speakPulse 1.2s infinite; }
+        .voice-chi-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        body.power-saving-mode .voice-chi-btn { background: #232842; color: #C7D2FE; }
+        .voice-chi-note { display: block; font-size: 11.5px; font-weight: 500; color: var(--text-muted); }
+        .chi-input-row { align-items: stretch; }
+        .shop-hint-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+        .shop-hint-row p { font-size: 12.5px; color: var(--text-muted); margin: 0; }
+        .shop-filter-row { display: flex; justify-content: flex-end; margin: -4px 0 10px; }
+        select.shop-filter { width: auto !important; margin: 0 !important; padding: 4px 26px 4px 10px; font-size: 13px; font-weight: 700; border-radius: 10px; }
+        .adv-alert { position: absolute; top: -7px; right: -7px; width: 18px; height: 18px; border-radius: 50%; background: #EF4444; color: #FFFFFF; font-size: 12px; font-weight: 900; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px #FFFFFF; pointer-events: none; z-index: 2; }
+        body.power-saving-mode .adv-alert { box-shadow: 0 0 0 2px #1B1E27; }
+        .adv-tab, .adv-mini-slot, .adv-gear-slot, .adv-btn-sm { position: relative; }
+        select.adv-move-filter { width: auto !important; margin-left: auto; padding: 4px 26px 4px 10px; font-size: 13px; font-weight: 700; border-radius: 10px; }
+        .adv-equip-slot { flex: 0 0 72px; width: 72px; height: 72px; padding: 4px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 2px dashed #C7D2FE; border-radius: 16px; background: #F8FAFF; cursor: pointer; font-family: inherit; color: var(--text-muted); }
+        .adv-equip-slot.on { border-style: solid; border-color: #8B5CF6; background: #F5F3FF; color: var(--text-main); }
+        .adv-equip-slot small { font-size: 10px; font-weight: 700; line-height: 1.15; text-align: center; }
+        .adv-equip-plus { font-size: 22px; font-weight: 800; color: #A5B4FC; line-height: 1; }
+        body.power-saving-mode .adv-equip-slot { background: #1B1E27; border-color: #3B3F63; }
+        body.power-saving-mode .adv-equip-slot.on { background: #2B2550; border-color: #8B5CF6; color: #FFFFFF; }
+        .adv-bag-sub { margin: 12px 0 8px; font-size: 13px; font-weight: 800; color: var(--text-muted); }
+        .adv-bag-item.is-on { border-color: #8B5CF6; background: #F5F3FF; }
+        body.power-saving-mode .adv-bag-item.is-on { background: #2B2550; }
+        .adv-item-btn { display: block; width: 100%; padding: 8px 10px; border: 1.5px dashed #10B981; border-radius: 12px; background: #ECFDF5; color: #065F46; font-size: 13.5px; font-weight: 800; font-family: inherit; cursor: pointer; text-align: left; }
+        .adv-item-btn small { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+        .adv-item-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .adv-item-tip { font-size: 12px; color: var(--text-muted); text-align: center; }
+        .adv-move.sealed { filter: grayscale(1); opacity: 0.45 !important; }
+        body.power-saving-mode .adv-item-btn { background: #0F2A22; color: #A7F3D0; }
+        .adv-sec-title span { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+        body.power-saving-mode .adv-sec-title { color: #FFFFFF; }
+        .adv-move-grid { margin-top: 0; margin-bottom: 10px; position: relative; overflow-y: auto; max-height: 300px; }
+        /* 招式稀有度：整個 App 的招式欄位邊框（灰＝普通、深金＝稀有、亮紫＝傳說） */
+        .rar-common { border-color: #94A3B8 !important; }
+        .rar-rare { border-color: #B8860B !important; }
+        .rar-legend { border-color: #C026D3 !important; }
+        /* 能力值頁的招式卡：一般是普通邊框；「選到的那一張」亮框（依稀有度上色）；要帶上戰場的打勾 */
+        .select-card.adv-move-card, body.power-saving-mode .select-card.adv-move-card { border: 2px solid var(--border-color) !important; box-shadow: none !important; background: #F8FAFC; }
+        body.power-saving-mode .select-card.adv-move-card { border-color: #2B303C !important; background: #1B1E27 !important; }
+        .select-card.adv-move-card.selected { background: #F8FAFC; }
+        .select-card.adv-move-card .select-card-title, .select-card.adv-move-card.selected .select-card-title { color: var(--text-main); font-weight: 700; }
+        body.power-saving-mode .select-card.adv-move-card .select-card-title { color: #FFFFFF !important; }
+        .select-card.adv-move-card.focus.rar-common, body.power-saving-mode .select-card.adv-move-card.focus.rar-common { border-color: #94A3B8 !important; box-shadow: 0 0 0 3px rgba(148,163,184,0.35), 0 0 12px rgba(148,163,184,0.45) !important; }
+        .select-card.adv-move-card.focus.rar-rare, body.power-saving-mode .select-card.adv-move-card.focus.rar-rare { border-color: #B8860B !important; box-shadow: 0 0 0 3px rgba(184,134,11,0.3), 0 0 12px rgba(234,179,8,0.45) !important; }
+        .select-card.adv-move-card.focus.rar-legend, body.power-saving-mode .select-card.adv-move-card.focus.rar-legend { border-color: #C026D3 !important; box-shadow: 0 0 0 3px rgba(192,38,211,0.3), 0 0 12px rgba(217,70,239,0.5) !important; }
+        /* 戰鬥畫面、補給站的招式：邊框依稀有度（夜間模式也一樣） */
+        body.power-saving-mode .adv-move.rar-common, body.power-saving-mode .shop-item.rar-common { border-color: #94A3B8 !important; }
+        body.power-saving-mode .adv-move.rar-rare, body.power-saving-mode .shop-item.rar-rare { border-color: #B8860B !important; }
+        body.power-saving-mode .adv-move.rar-legend, body.power-saving-mode .shop-item.rar-legend { border-color: #C026D3 !important; }
+        .adv-stats-wrap { margin-bottom: 12px; }
+        /* 頭像旁的兩個小裝備欄（左手、右手），邊框依稀有度 */
+        .adv-mini-gear { display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto; }
+        .adv-mini-slot { width: 33px; height: 33px; padding: 0; display: flex; align-items: center; justify-content: center; border: 2px solid #94A3B8; border-radius: 9px; background: #FFFFFF; cursor: pointer; font-family: inherit; box-sizing: border-box; }
+        .adv-mini-slot.empty { border: 2px dashed #C7D2FE; background: #F8FAFF; color: #A5B4FC; font-size: 16px; font-weight: 800; }
+        body.power-saving-mode .adv-mini-slot { background: #1B1E27; }
+        body.power-saving-mode .adv-mini-slot.empty { border-color: #3B3F63; }
+        .adv-hero .adv-bag-btn { width: 72px; height: 72px; flex: 0 0 72px; align-self: flex-start; }
+        /* 能力值：命中 */
+        .adv-hit-row { cursor: pointer; }
+        .adv-stat-tile.hit b { color: #B45309; }
+        .adv-stat-tile.hit b.wait { font-size: 13px; color: #64748B; }
+        .adv-stat-tile.low b { color: #DC2626 !important; }
+        .adv-hit-chev { flex: 0 0 auto; font-size: 20px; font-weight: 900; color: #94A3B8; margin-left: -4px; }
+        .adv-hit-wait { background: repeating-linear-gradient(45deg, #CBD5E1 0 6px, #E2E8F0 6px 12px) !important; }
+        .adv-hit-divider { border: none; border-top: 1.5px dashed #CBD5E1; margin: 6px 0; }
+        body.power-saving-mode .adv-hit-divider { border-top-color: #3B3F4C; }
+        .adv-hit-title { text-align: center; font-size: 16px; font-weight: 800; color: var(--primary); margin: 4px 0; }
+        .adv-hit-sub { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+        .adv-hit-total { text-align: center; font-size: 34px; font-weight: 900; color: #B45309; line-height: 1.1; margin-bottom: 6px; }
+        .adv-hit-total small { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); }
+        .adv-hit-total .up { color: #16A34A; } .adv-hit-total .down { color: #DC2626; }
+        .adv-hit-line { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        .adv-hit-line .lab { flex: 0 0 40px; font-size: 14px; font-weight: 800; color: var(--text-main); }
+        .adv-hit-line .val { flex: 0 0 70px; text-align: right; font-size: 14px; font-weight: 800; color: var(--text-main); }
+        .adv-hit-line .val small { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); }
+        .adv-hit-line .val.low { color: #DC2626; }
+        body.power-saving-mode .adv-hit-line .lab, body.power-saving-mode .adv-hit-line .val { color: #FFFFFF; }
+        .adv-hit-tip { margin-top: 12px; font-size: 12.5px; color: #92400E; line-height: 1.6; background: #FEF3C7; border-radius: 10px; padding: 8px 12px; }
+        body.power-saving-mode .adv-hit-tip { background: #3B2F12; color: #FCD34D; }
+        /* 招式卡：只顯示名稱；右邊「已裝備」 */
+        .select-card.adv-move-card { padding: 8px 12px; min-height: 40px; }
+        .adv-eq-tag { flex: 0 0 auto; font-size: 11.5px; font-weight: 800; color: #FFFFFF; background: var(--primary); border-radius: 8px; padding: 2px 8px; }
+        .adv-move-detail { padding: 14px; }
+        .adv-md-stats { margin: 12px 0 10px !important; }
+        .adv-md-desc { margin-bottom: 12px !important; line-height: 1.55; }
+        .adv-md-mrow { margin-bottom: 6px !important; }
+        .adv-md-btn { margin-top: 14px !important; }
+        /* 裝備分頁：左手／右手 */
+        .adv-gear-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .adv-gear-slot { display: flex; align-items: center; gap: 10px; min-height: 86px; padding: 10px; border: 2px solid #94A3B8; border-radius: 14px; background: #FFFFFF; text-align: left; cursor: pointer; font-family: inherit; color: var(--text-main); box-sizing: border-box; }
+        .adv-gear-slot.empty { justify-content: center; border: 2px dashed #C7D2FE; background: #F8FAFF; color: var(--text-muted); font-size: 13.5px; font-weight: 800; }
+        .adv-gear-slot .ico { flex: 0 0 40px; display: flex; justify-content: center; }
+        .adv-gear-slot .txt { min-width: 0; }
+        .adv-gear-slot .no { display: block; font-size: 11px; font-weight: 800; color: #7C3AED; }
+        .adv-gear-slot b { display: block; font-size: 14.5px; }
+        .adv-gear-slot small { display: block; font-size: 11px; color: var(--text-muted); line-height: 1.35; }
+        body.power-saving-mode .adv-gear-slot { background: #1B1E27; color: #FFFFFF; }
+        body.power-saving-mode .adv-gear-slot.empty { background: #1B1E27; border-color: #3B3F63; }
+        .adv-gear-slot.rar-common, .adv-gear-slot.rar-rare, .adv-gear-slot.rar-legend { border-style: solid; }
+        /* 背包：九宮格下面的說明欄 */
+        .adv-bag-cell.sel { box-shadow: 0 0 0 3px rgba(99,102,241,0.35); }
+        .adv-bag-cell.rar-common, .adv-bag-cell.rar-rare, .adv-bag-cell.rar-legend { border-width: 2px; }
+        .adv-bag-info { margin-top: 12px; }
+        .adv-bag-hint { text-align: center; font-size: 12.5px; color: var(--text-muted); border: 1.5px dashed var(--border-color); border-radius: 12px; padding: 12px; }
+        .adv-bag-dname { display: block; font-size: 15px; color: var(--text-main); margin-top: 2px; }
+        body.power-saving-mode .adv-bag-dname { color: #FFFFFF; }
+        .adv-stats-wrap > .adv-hero { padding: 0 13px; }    /* 跟框框裡的分頁按鈕對齊（框線 1px + 內距 12px） */
+        .adv-stats-panel { padding: 12px; }
+        .adv-plain-btn.danger, .adv-md-btn.off, body.power-saving-mode .adv-md-btn.off { background: #EF4444; color: #FFFFFF; }
+        .adv-coin-row { position: absolute; transform: translateX(-50%); display: flex; gap: 4px; z-index: 7; perspective: 300px; }
+        .adv-coin { width: 26px; height: 26px; }
+        .adv-coin-in { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
+        .adv-coin-in span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 13px; font-weight: 900; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: inset 0 0 0 2px rgba(0,0,0,0.18), 0 2px 4px rgba(0,0,0,0.3); }
+        .adv-coin-f { background: radial-gradient(circle at 35% 30%, #FEF3C7, #F59E0B 70%); color: #78350F; }
+        .adv-coin-b { background: radial-gradient(circle at 35% 30%, #F1F5F9, #94A3B8 70%); color: #334155; transform: rotateY(180deg); }
+        .adv-coin-in.done.heads .adv-coin-f { box-shadow: 0 0 0 2px #FDE047, 0 0 10px #FACC15; }
+        .shop-item.rar-common, .shop-item.rar-rare, .shop-item.rar-legend { border-width: 2px; }
+        .adv-move.rar-common, .adv-move.rar-rare, .adv-move.rar-legend { border-width: 2px; border-style: solid; }
+        .adv-lv-chip { display: inline-block; font-size: 10px; font-weight: 800; color: #FFFFFF; background: #6366F1; border-radius: 6px; padding: 0 5px; vertical-align: 1px; }
+        .adv-tabs { display: flex; gap: 12px; margin: -2px 0 12px; }
+        .adv-tab { width: 72px; flex: 0 0 72px; padding: 5px 0; border: 1.5px solid var(--border-color); border-radius: 10px; background: #FFFFFF; color: var(--text-muted); font-size: 12.5px; font-weight: 800; font-family: inherit; cursor: pointer; }
+        .adv-tab.on { background: var(--primary); border-color: var(--primary); color: #FFFFFF; box-shadow: 0 2px 6px rgba(79,70,229,0.3); }
+        body.power-saving-mode .adv-tab { background: #232733; border-color: #2B303C; color: #94A3B8; }
+        body.power-saving-mode .adv-tab.on { background: var(--primary); border-color: var(--primary); color: #FFFFFF; }
+        .adv-move-detail { border: 1.5px solid var(--border-color); border-radius: 14px; padding: 12px; background: #FFFFFF; }
+        body.power-saving-mode .adv-move-detail { background: #232733; border-color: #2B303C; color: #E2E8F0; }
+        .adv-md-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .adv-md-head b { font-size: 16px; color: var(--text-main); }
+        body.power-saving-mode .adv-md-head b { color: #FFFFFF; }
+        .adv-md-icon { font-size: 20px; line-height: 1; }
+        .adv-rar-badge { font-size: 11.5px; font-weight: 800; border: 2px solid; border-radius: 8px; padding: 0 7px; line-height: 18px; }
+        .adv-rar-badge.rar-common { color: #64748B; background: #F1F5F9; }
+        .adv-rar-badge.rar-rare { color: #8B6508; background: #FEF3C7; }
+        .adv-rar-badge.rar-legend { color: #A21CAF; background: #FAE8FF; }
+        .adv-md-eq { font-size: 11.5px; font-weight: 800; color: #FFFFFF; background: var(--primary); border-radius: 8px; padding: 1px 7px; margin-left: auto; }
+        .adv-md-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0 8px; }
+        .adv-md-stats div { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 10px; padding: 4px 0; text-align: center; font-size: 11.5px; color: var(--text-muted); }
+        .adv-md-stats b { display: block; font-size: 15px; color: var(--text-main); }
+        .adv-md-stats em { font-style: normal; font-size: 12px; color: #16A34A; margin-left: 2px; }
+        body.power-saving-mode .adv-md-stats div { background: #1B1E27; border-color: #2B303C; }
+        body.power-saving-mode .adv-md-stats b { color: #FFFFFF; }
+        .adv-md-desc { font-size: 13px; color: var(--text-main); margin-bottom: 8px; }
+        body.power-saving-mode .adv-md-desc { color: #E2E8F0; }
+        .adv-md-mrow { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+        body.power-saving-mode .adv-md-mrow { color: #FFFFFF; }
+        .adv-md-mrow b { font-size: 16px; color: var(--primary); }
+        .adv-md-mrow small { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+        .adv-md-bar { height: 10px; margin-bottom: 4px; }
+        .adv-md-mastery > small { display: block; font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+        .adv-md-btn { display: block; width: 100%; margin-top: 10px; padding: 10px; border: none; border-radius: 12px; background: var(--primary); color: #FFFFFF; font-size: 14.5px; font-weight: 800; font-family: inherit; cursor: pointer; }
+
+        .adv-bag-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 26px 12px 0; }
+        .adv-bag-head .adv-bag-title { margin: 0; }
+        select.adv-bag-filter { width: auto !important; padding: 4px 26px 4px 10px; font-size: 13px; font-weight: 700; border-radius: 10px; }
+        .adv-bag-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .adv-bag-cell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 96px; padding: 8px 4px; border: 1.5px solid var(--border-color); border-radius: 14px; background: #F8FAFC; color: var(--text-main); font-family: inherit; cursor: pointer; box-sizing: border-box; }
+        .adv-bag-cell b { font-size: 12.5px; line-height: 1.2; text-align: center; }
+        .adv-bag-cell small { font-size: 11.5px; color: var(--primary); font-weight: 800; }
+        .adv-bag-cell.is-on { border-color: #8B5CF6; background: #F5F3FF; box-shadow: 0 0 0 1px #8B5CF6; }
+        .adv-bag-cell.empty { border-style: dashed; background: transparent; opacity: 0.55; cursor: default; }
+        .adv-bag-cell:not(.empty):active { transform: scale(0.97); }
+        .adv-bag-cico { height: 38px; display: flex; align-items: center; justify-content: center; }
+        body.power-saving-mode .adv-bag-cell { background: #1B1E27; border-color: #2B303C; color: #FFFFFF; }
+        body.power-saving-mode .adv-bag-cell.is-on { background: #2B2550; border-color: #8B5CF6; }
+        body.power-saving-mode .adv-bag-cell.empty { background: transparent; }
+        .adv-bag-detail { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1.5px solid var(--border-color); border-radius: 14px; margin-bottom: 12px; }
+        .adv-bag-dico { width: 64px; flex: 0 0 64px; display: flex; align-items: center; justify-content: center; }
+        .adv-bag-dkind { font-size: 12.5px; font-weight: 800; color: var(--text-muted); }
+        .adv-bag-dtxt p { margin: 4px 0 0; font-size: 14px; color: var(--text-main); line-height: 1.5; }
+        body.power-saving-mode .adv-bag-dtxt p { color: #E2E8F0; }
+        .adv-plain-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .adv-more-closed .adv-extra { display: none; }
+        .adv-more-btn { display: block; width: 100%; margin: 8px 0 4px; padding: 9px 12px; border: 1.5px dashed #C7D2FE; border-radius: 12px; background: #F8FAFF; color: var(--primary); font-size: 14px; font-weight: 800; font-family: inherit; cursor: pointer; }
+        body.power-saving-mode .adv-more-btn { background: #1B1E27; border-color: #3B3F63; color: #A5B4FC; }
+        .modal-back-btn { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
+        .modal-back-btn:hover { transform: translateY(-50%) translateX(-2px); }
+        .shop-pills { position: absolute; right: 0; top: -6px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .shop-pill { position: relative; display: flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; }
+        .shop-pill-chicken { background: #EEF2FF; color: var(--primary); }
+        .shop-pill-shard { background: #FFEDE5; color: #C2410C; }
+        body.power-saving-mode .shop-pill-shard { background: #3A1E12; color: #FDBA74; }
+        .shop-tabs { display: flex; gap: 6px; margin-bottom: 12px; padding: 4px; border-radius: 14px; background: #EEF2FF; }
+        .shop-tab { flex: 1; border: none; border-radius: 11px; padding: 8px 4px; font-size: 13.5px; font-weight: 800; cursor: pointer; font-family: inherit; background: transparent; color: var(--text-muted); width: auto; }
+        .shop-tab.active { background: #FFFFFF; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+        body.power-saving-mode .shop-tabs { background: #1B1E27; }
+        body.power-saving-mode .shop-tab.active { background: #2B303C; color: #FFFFFF; }
+        .shop-emoji svg { width: 46px; height: 46px; }
+        .shop-emoji { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; font-size: 38px; border-radius: 14px; background: #FFFFFF; margin-bottom: 2px; }
+        body.power-saving-mode .shop-emoji { background: #2B303C; }
+        @media screen and (max-width: 480px) { .shop-emoji { width: 56px; height: 56px; font-size: 32px; } }
+        .adv-lv-sprite { width: 60px; flex: 0 0 60px; }
+        .adv-lv-sprite svg { width: 100%; height: auto; display: block; }
+        .adv-lv-info { flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
+        .adv-lv-info b { font-size: 15px; color: var(--text-main); display: block; }
+        body.power-saving-mode .adv-lv-info b { color: #FFFFFF !important; }
+        .adv-go { border: none; border-radius: 12px; padding: 10px 14px; font-size: 14px; font-weight: 800; color: #FFFFFF; background: var(--primary); cursor: pointer; width: auto; font-family: inherit; }
+        .adv-go:disabled { background: #CBD5E1; cursor: not-allowed; }
+        .adv-lock-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .adv-lock { text-align: center; border: 1px dashed var(--border-color); border-radius: 12px; padding: 10px 4px; font-size: 12.5px; color: var(--text-muted); opacity: 0.8; }
+        .adv-nav { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; margin-bottom: 14px; }
+        .adv-nav .current-mode-indicator { position: static !important; transform: none !important; max-width: none !important; white-space: nowrap; }
+        .adv-nav > :first-child { justify-self: start; }
+        .adv-nav > :last-child { justify-self: end; }
+        .adv-map-title { text-align: center; font-size: 17px; font-weight: 800; margin: 2px 0 2px; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 18px; }
+        .adv-map-arrow { width: 40px; height: 34px; padding: 0; border: none; background: transparent; color: #0EA5E9; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+        .adv-map-arrow:not(:disabled):hover { background: rgba(14,165,233,0.1); }
+        .adv-map-arrow:disabled { color: #CBD5E1; cursor: default; }
+        body.power-saving-mode .adv-map-arrow:disabled { color: #3B3F4C; }
+        .adv-map-sub { text-align: center; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; }
+        body.power-saving-mode .adv-map-title { color: #FFFFFF !important; }
+        .adv-map { position: relative; width: 100%; aspect-ratio: 340 / 700; min-height: 0; border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); background: #1E1B4B; }
+        .adv-map-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+        .adv-node { position: absolute; width: 13.4%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid #FFFFFF; font-family: inherit; font-weight: 900; font-size: clamp(15px, 4.6vw, 19px); padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 8px rgba(15,23,42,0.4); }
+        .adv-node.open { background: linear-gradient(135deg, #FDE047, #F59E0B); color: #7C2D12; animation: advNodePulse 1.6s ease-in-out infinite; }
+        .adv-node.cleared { background: linear-gradient(135deg, #6EE7B7, #10B981); color: #064E3B; }
+        .adv-node.cleared::after { content: '⭐'; position: absolute; top: -9px; right: -7px; font-size: 14px; }
+        .adv-node.locked { background: #94A3B8; color: #FFFFFF; cursor: not-allowed; font-size: 15px; opacity: 0.92; }
+        @keyframes advNodePulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.12); } }
+        .adv-ok { color: #16A34A; font-weight: 700; }
+        .adv-bad { color: #DC2626; font-weight: 700; }
+        .adv-hero { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .adv-hero { align-items: flex-start; }
+        .adv-nav-counts { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; justify-self: end; }
+        .adv-nav-counts .adv-count { font-size: 13px; padding: 1px 9px; gap: 4px; }
+        .adv-hero-info { margin-left: auto; font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .adv-count { display: flex; align-items: center; gap: 6px; font-size: 17px; font-weight: 800; background: #FFF1EE; color: #B8553F; padding: 3px 12px; border-radius: 16px; }
+        body.power-saving-mode .adv-count { background: #3A211C; color: #F5ADA3; }
+        .adv-maxed { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: #B45309; }
+        .adv-bag-btn { position: relative; margin-left: auto; align-self: center; display: flex; align-items: center; justify-content: center; width: 64px; height: 56px; padding: 0; border: 1.5px solid #C4B5FD; border-radius: 16px; background: #EDE9FE; cursor: pointer; font-family: inherit; box-shadow: 0 2px 6px rgba(109,40,217,0.25); }
+        body.power-saving-mode .adv-bag-btn { background: #2B2550; border-color: #5B4BC4; }
+        .adv-bag-btn:active { transform: scale(0.98); }
+        .adv-bag-n { position: absolute; top: -7px; right: -7px; min-width: 20px; text-align: center; box-sizing: border-box; background: #EF4444; color: #FFFFFF; border-radius: 10px; padding: 0 8px; font-size: 12px; line-height: 20px; }
+        .adv-bag-title { text-align: center; font-size: 16px; font-weight: 800; color: var(--primary); margin: 6px 0 12px; }
+        .adv-bag-item { display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 8px; padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 14px; background: var(--card-bg); color: var(--text-main); font-family: inherit; cursor: pointer; text-align: left; }
+        .adv-bag-item:disabled { opacity: 0.45; cursor: not-allowed; }
+        .adv-bag-item:not(:disabled):active { transform: scale(0.98); border-color: var(--primary); }
+        .adv-bag-ico { font-size: 28px; width: 38px; text-align: center; flex: 0 0 38px; }
+        .adv-bag-txt { flex: 1; min-width: 0; }
+        .adv-bag-txt b { display: block; font-size: 15px; }
+        .adv-bag-txt small { display: block; font-size: 12px; color: var(--text-muted); }
+        .adv-bag-count { font-size: 15px; font-weight: 800; color: var(--primary); }
+        .adv-stat-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+        .adv-stat-tile { flex: 0 0 64px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 10px; padding: 4px 0; text-align: center; font-size: 12px; color: var(--text-muted); }
+        .adv-stat-tile b { display: block; font-size: 17px; color: var(--text-main); }
+        body.power-saving-mode .adv-stat-tile { background: #232733 !important; border-color: #2B303C !important; }
+        body.power-saving-mode .adv-stat-tile b { color: #FFFFFF !important; }
+        .adv-bar { flex: 1; height: 16px; border-radius: 8px; background: #E2E8F0; overflow: hidden; }
+        body.power-saving-mode .adv-bar { background: #2B303C !important; }
+        .adv-bar i { display: block; height: 100%; border-radius: 8px; transition: width 0.3s; }
+        .adv-plus { flex: 0 0 40px; width: 40px; height: 32px; border: none; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; background: #FEF3C7; color: #B45309; font-family: inherit; }
+        .adv-plus:disabled { opacity: 0.4; cursor: not-allowed; }
+        .adv-note { margin-top: 12px; font-size: 12.5px; color: var(--text-muted); line-height: 1.7; }
+        .adv-battle { display: flex; flex-direction: column; min-height: var(--adv-h, 440px); }
+        .adv-topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex: 0 0 auto; }
+        .adv-topbar .back-home-btn { position: static; flex: 0 0 auto; }
+        .adv-topinfo { font-size: 12.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+        .adv-stage { position: relative; flex: 0 0 auto; height: calc(var(--adv-h, 440px) * 0.37); border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); background: #1E1B4B; }
+        .adv-actor { position: absolute; will-change: transform; }
+        .adv-actor svg { width: 100%; height: auto; display: block; overflow: visible; }
+        .adv-player { left: 8%; bottom: 7%; width: 27%; max-width: 100px; }
+        .adv-enemy { right: 10%; top: 22%; width: 24%; max-width: 92px; }
+        .adv-hud { position: absolute; z-index: 3; font-size: 11.5px; font-weight: 700; background: rgba(255,255,255,0.9); color: #1E293B; border-radius: 10px; padding: 3px 8px; min-width: 96px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+        .adv-hud-enemy { right: 6px; bottom: 6px; }
+        .adv-hud-player { left: 6px; top: 6px; }
+        .adv-stage-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+        .adv-hpbar { height: 7px; border-radius: 5px; background: #E2E8F0; overflow: hidden; margin-top: 2px; }
+        .adv-hpfill { height: 100%; width: 100%; background: linear-gradient(90deg, #34D399, #10B981); transition: width 0.35s; }
+        .adv-hpfill.low { background: linear-gradient(90deg, #FB7185, #F43F5E); }
+        .adv-float { position: absolute; z-index: 6; white-space: nowrap; font-weight: 900; font-size: 24px; color: #EF4444; text-shadow: 0 2px 0 #FFFFFF, 0 0 6px #FFFFFF; pointer-events: none; transform: translateX(-50%); }
+        .adv-fx { position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
+        .adv-fx > * { position: absolute; }
+        .adv-panel { flex: 1 0 auto; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; padding-bottom: 4px; }
+        .adv-log.has-timer { position: relative; padding-right: 46px; }
+        .adv-timer { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; }
+        .adv-timer svg { display: block; }
+        .adv-timer b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #475569; }
+        body.power-saving-mode .adv-timer b { color: #E2E8F0; }
+        .adv-reward-title { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 12px; }
+        .adv-reward-item { font-size: 16px; font-weight: 700; padding: 8px 12px; margin-bottom: 6px; border-radius: 12px; background: #F1F5F9; color: var(--text-main); }
+        body.power-saving-mode .adv-reward-item { background: #232733; color: #FFFFFF; }
+        body.power-saving-mode .adv-opt.ok { background: #14532D !important; border-color: #22C55E !important; color: #DCFCE7 !important; box-shadow: 0 0 0 2px #22C55E; }
+        body.power-saving-mode .adv-opt.bad { background: #7F1D1D !important; border-color: #EF4444 !important; color: #FEE2E2 !important; }
+        .adv-opt.ok { box-shadow: 0 0 0 2px #22C55E; }
+        .adv-log { font-size: 13.5px; font-weight: 700; text-align: center; background: #EEF2FF; color: var(--primary); border-radius: 10px; padding: 5px 8px; flex: 0 0 auto; line-height: 1.4; }
+        body.power-saving-mode .adv-log { background: #232842 !important; color: #C7D2FE !important; }
+        .adv-moves { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .adv-move { border: 1.5px solid var(--border-color); background: #FFFFFF; border-radius: 12px; padding: 7px 8px; text-align: left; cursor: pointer; font-family: inherit; color: var(--text-main); width: 100%; }
+        .adv-move:active { transform: scale(0.97); }
+        .adv-move:disabled { opacity: 0.45; cursor: not-allowed; }
+        .adv-move b { font-size: 14px; display: block; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .adv-move .dmg { display: block; font-size: 13px; font-weight: 800; color: var(--primary); line-height: 1.35; }
+        .adv-move small { display: block; font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+        body.power-saving-mode .adv-move .dmg { color: #A5B4FC; }
+        .adv-move-grid { background: #FFFFFF; border: 1.5px solid var(--border-color); border-radius: 14px; padding: 8px; }
+        body.power-saving-mode .adv-move-grid { background: #232733; border-color: #2B303C; }
+        body.power-saving-mode .adv-move, body.power-saving-mode .adv-opt { background: #1B1E27 !important; border-color: #2B303C !important; color: #FFFFFF !important; }
+        .adv-qhead { font-size: 12px; color: var(--text-muted); text-align: center; }
+        .adv-qword { font-size: 26px; font-weight: 800; text-align: center; word-break: break-word; line-height: 1.25; }
+        .adv-qsub { font-size: 13px; color: var(--text-muted); text-align: center; min-height: 18px; }
+        .adv-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .adv-opt { border: 1.5px solid var(--border-color); background: #FFFFFF; border-radius: 12px; padding: 9px 6px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; color: var(--text-main); width: 100%; line-height: 1.3; }
+        .adv-opt.ok { background: #DCFCE7 !important; border-color: #22C55E !important; color: #14532D !important; }
+        .adv-opt.bad { background: #FEE2E2 !important; border-color: #EF4444 !important; color: #7F1D1D !important; }
+        .adv-input-row { display: flex; gap: 6px; }
+        .adv-input-row input { flex: 1; min-width: 0; font-size: 16px; padding: 9px 10px; border-radius: 10px; }
+        .adv-input-row button { width: auto; border: none; border-radius: 10px; padding: 0 14px; font-weight: 800; font-size: 14px; color: #FFFFFF; background: var(--primary); cursor: pointer; font-family: inherit; }
+        .adv-speak-btn { width: auto; border: none; border-radius: 20px; padding: 6px 14px; font-size: 13px; font-weight: 700; background: #EEF2FF; color: var(--primary); cursor: pointer; align-self: center; font-family: inherit; }
+        .adv-mic { width: 64px; height: 64px; border-radius: 50%; border: none; cursor: pointer; align-self: center; color: #FFFFFF; background: linear-gradient(135deg, #6366F1, #4F46E5); display: flex; align-items: center; justify-content: center; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; flex: 0 0 auto; }
+        .adv-mic.recording { background: linear-gradient(135deg, #F43F5E, #E11D48); transform: scale(1.08); animation: speakPulse 1.2s infinite; }
+        .adv-result { text-align: center; padding: 6px 4px; }
+        .adv-result .big { font-size: 22px; font-weight: 900; margin-bottom: 6px; }
+        .adv-result .line { font-size: 13.5px; line-height: 1.7; }
+        .adv-plain-btn { border: none; border-radius: 12px; padding: 10px; font-size: 14px; font-weight: 800; cursor: pointer; font-family: inherit; width: 100%; }
+        .adv-plain-btn.main { background: var(--primary); color: #FFFFFF; }
+        .adv-plain-btn.sub { background: #E2E8F0; color: #334155; }
+        .adv-plain-btn.next { background: #10B981; color: #FFFFFF; box-shadow: 0 3px 8px rgba(16,185,129,0.3); }
+        .adv-up-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+        .adv-up-row:last-of-type { border-bottom: none; }
+        .adv-up-row small { display: block; color: var(--text-muted); font-size: 12px; }
+        .adventure-soon { text-align: center; padding: 36px 12px 28px; color: var(--text-muted); font-size: 14px; line-height: 1.8; }
+        .adventure-soon .adv-emoji { font-size: 56px; margin-bottom: 8px; }
+        .adventure-soon .adv-title { font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 6px; }
+        body.power-saving-mode .adventure-soon .adv-title { color: #FFFFFF !important; }
+
+        @media screen and (max-width: 768px) {
+            body { padding: 12px 8px; }
+            .scale-wrapper, .scale-wrapper-practice { transform: none !important; margin: 0 0 40px 0 !important; max-width: 100% !important; width: 100% !important; }
+            .paper-card-container { padding: 16px 14px; border-radius: 16px; }
+            .current-mode-indicator { font-size: 13px; padding: 5px 12px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
+            .modal-content { width: 95% !important; padding: 16px !important; margin: 2vh auto !important; }
+            .modal-inner-padding { padding: 16px 12px !important; }
+            .tab-cards-container { gap: 6px; }
+            .tab-card-item { flex-direction: row; justify-content: center; align-items: center; gap: 6px; padding: 6px 8px; min-width: 0; }
+            .history-item-icon-box { width: 26px; height: 26px; margin-right: 0; flex: 0 0 auto; }
+            .history-item-content { flex: 0 1 auto; width: auto; }
+            .history-item-title { font-size: 13px; text-align: center; }
+            #wordList, #examWordList, #flashcardPreviewTextarea, #cardExamPreviewTextarea, #speakPracticePreviewTextarea { height: clamp(140px, 22vh, 220px) !important; }
+            .editor-wrapper { height: clamp(180px, 26vh, 240px) !important; }
+        }
+
+        @media screen and (max-width: 480px) {
+            .select-card-grid { grid-template-columns: 1fr; }
+            .stats-status-bar { font-size: 12px; padding: 8px 12px; }
+            .card-english { font-size: 26px; }
+            .card-chinese { font-size: 20px; }
+        }
+        /* ── 招式輪播 ── */
+        .adv-car { position: relative; display: flex; align-items: center; gap: 6px; background: #FFFFFF; border: 1.5px solid var(--border-color); border-radius: 14px; padding: 10px 6px 16px; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+        .adv-car-empty { justify-content: center; padding: 18px 10px; }
+        body.power-saving-mode .adv-car { background: #232733; border-color: #2B303C; }
+        .adv-car-arr { flex: 0 0 26px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--primary); padding: 0; cursor: pointer; }
+        .adv-car-arr.off { color: #CBD5E1; cursor: default; }
+        .adv-car-side { flex: 0 0 52px; height: 66px; border-radius: 12px; border: 2px solid var(--border-color); background: #F8FAFC; display: flex; align-items: center; justify-content: center; font-size: 22px; opacity: .55; cursor: pointer; padding: 0; font-family: inherit; transition: opacity .15s; }
+        .adv-car-side:hover { opacity: .85; }
+        .adv-car-side.ghost { visibility: hidden; }
+        .adv-car-side.rar-rare { border-color: #E9C46A; } .adv-car-side.rar-legend { border-color: #E9A8F2; }
+        body.power-saving-mode .adv-car-side { background: #1B1E27; border-color: #2B303C; }
+        .adv-move-card.adv-car-center { flex: 1; min-width: 0; height: 82px; border-radius: 14px; border: 2.5px solid #94A3B8; box-shadow: 0 0 0 3px rgba(148,163,184,.3); background: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 4px 6px; box-sizing: border-box; }
+        .adv-car-center.rar-rare { border-color: #B8860B; box-shadow: 0 0 0 3px rgba(184,134,11,.3), 0 0 12px rgba(234,179,8,.35); }
+        .adv-car-center.rar-legend { border-color: #C026D3; box-shadow: 0 0 0 3px rgba(192,38,211,.25), 0 0 12px rgba(217,70,239,.4); }
+        body.power-saving-mode .adv-car-center { background: #1B1E27; }
+        .adv-car-center .ic { font-size: 28px; line-height: 1; }
+        .adv-car-center b { font-size: 15.5px; margin-top: 4px; color: var(--text-main); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        body.power-saving-mode .adv-car-center b { color: #FFFFFF; }
+        .adv-car-center .adv-eq-tag { position: absolute; top: 5px; right: 6px; }
+        .adv-car-center.go-r { animation: advCarR .22s ease-out; }
+        .adv-car-center.go-l { animation: advCarL .22s ease-out; }
+        @keyframes advCarR { from { transform: translateX(28px); opacity: .3; } to { transform: none; opacity: 1; } }
+        @keyframes advCarL { from { transform: translateX(-28px); opacity: .3; } to { transform: none; opacity: 1; } }
+        .adv-car-dots { position: absolute; bottom: 5px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; pointer-events: none; }
+        .adv-car-dots i { width: 6px; height: 6px; border-radius: 50%; background: #CBD5E1; }
+        .adv-car-dots i.on { background: var(--primary); }
+        .adv-car-hint { text-align: center; font-size: 12px; color: var(--text-muted); margin: 5px 0 8px; }
+        .adv-md-mrow .prog { font-size: 13px; font-weight: 700; color: var(--text-muted); }
+        .adv-md-btn { width: auto !important; min-width: 150px; margin: 14px auto 0 !important; padding: 9px 28px !important; }
+        .adv-move-detail .adv-md-stats { margin-top: 0 !important; }
+        /* ── 能力介紹 ── */
+        .adv-stat-click { cursor: pointer; }
+        .adv-si-list { margin-top: 8px; }
+        .adv-si-row { display: flex; align-items: flex-start; gap: 12px; padding: 9px 8px; border-radius: 10px; }
+        .adv-si-row + .adv-si-row { border-top: 1px dashed var(--border-color); }
+        .adv-si-row.on { background: #EEF2FF; }
+        body.power-saving-mode .adv-si-row.on { background: #2A2F45; }
+        .adv-si-lab { flex: 0 0 48px; text-align: center; color: #FFFFFF; font-size: 13px; font-weight: 800; border-radius: 8px; padding: 3px 0; }
+        .adv-si-row p { margin: 1px 0 0; font-size: 14px; line-height: 1.55; color: var(--text-main); }
+        body.power-saving-mode .adv-si-row p { color: #E2E8F0; }
+        .fun-lv-badge { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 800; color: #FFFFFF; background: var(--primary-gradient); border-radius: 8px; padding: 2px 8px; vertical-align: 2px; letter-spacing: 0; }
+        .fun-go { flex: 0 0 auto; margin: 0 6px 0 8px; font-size: 13.5px; font-weight: 800; color: #FFFFFF; background: var(--primary-gradient); border-radius: 10px; padding: 6px 14px; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25); white-space: nowrap; }
+        /* ══ 單字編輯頁 ══ */
+        .ed-search { display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--border-color); border-radius: 14px; background: #FFFFFF; padding: 0 12px 0 14px; margin-bottom: 12px; color: #94A3B8; transition: border-color .15s, box-shadow .15s; }
+        .ed-search:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+        .ed-search .search-input, .ed-search input { flex: 1; min-width: 0; border: none !important; background: transparent !important; box-shadow: none !important; padding: 11px 0 !important; margin: 0 !important; font-size: 15px; color: var(--text-main); outline: none; }
+        .ed-search-x { display: none; border: none; background: transparent; color: #94A3B8; font-size: 15px; font-weight: 900; cursor: pointer; padding: 4px; }
+        .ed-search.has-q .ed-search-x { display: block; }
+        body.power-saving-mode .ed-search { background: #232733; border-color: #2B303C; }
+        body.power-saving-mode .ed-search input { color: #FFFFFF; }
+        .ed-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px 8px; }
+        .ed-tools { display: flex; align-items: center; gap: 6px; }
+        .ed-chip { border: none; background: #EEF2FF; color: var(--primary); font: 800 12.5px inherit; font-family: inherit; border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+        body.power-saving-mode .ed-chip { background: #2A2F45; color: #A5B4FC; }
+        #editorDetailView .editor-word-counter { position: static; margin: 0; background: transparent !important; padding: 0; font-size: 13px; font-weight: 700; color: var(--text-muted); }
+        #editorDetailView .editor-word-counter b { color: var(--text-main); }
+        #editorDetailView .editor-word-counter.is-near b, #editorDetailView .editor-word-counter.is-full b { color: #EA580C; }
+        body.power-saving-mode #editorDetailView .editor-word-counter b { color: #FFFFFF; }
+        #editorDetailView .editor-word-counter .star, .ed-row .star, .ed-srow .star { color: #F59E0B; font-weight: 900; }
+        #editorDetailView .editor-wrapper { border-radius: 16px; border-width: 1.5px; margin-bottom: 12px; }
+        .ed-pack-hint { display: none; font-size: 12.5px; font-weight: 700; color: var(--text-muted); }
+        .ed-pack .ed-edit-only { display: none !important; }
+        .ed-pack .ed-pack-hint { display: inline; }
+        .ed-starlist { display: none; }
+        .ed-pack .ed-starlist { display: block; }
+        .ed-list { border: 1.5px solid var(--border-color); border-radius: 16px; overflow: hidden; background: #FFFFFF; }
+        body.power-saving-mode .ed-list { background: #232733; border-color: #2B303C; }
+        .ed-row, .ed-srow { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; font-size: 15px; color: var(--text-main); }
+        .ed-row + .ed-row, .ed-srow + .ed-srow { border-top: 1px solid var(--border-color); }
+        body.power-saving-mode .ed-row + .ed-row, body.power-saving-mode .ed-srow + .ed-srow { border-top-color: #2B303C; }
+        .ed-row .t, .ed-srow .t { flex: 1; min-width: 0; }
+        .ed-row b, .ed-srow b { font-weight: 700; } body.power-saving-mode .ed-row, body.power-saving-mode .ed-srow { color: #FFFFFF; }
+        .ed-row .mut, .ed-srow .mut { color: var(--text-muted); font-size: 13.5px; }
+        .ed-row .hit { background: #FEF08A; color: #1E293B; border-radius: 4px; padding: 0 2px; font-weight: 800; }
+        .ed-row .ar { color: #94A3B8; font-size: 18px; font-weight: 900; }
+        .ed-srow .st { flex: 0 0 auto; font-size: 18px; color: #CBD5E1; width: 20px; text-align: center; }
+        .ed-srow.on .st { color: #F59E0B; }
+        .ed-srow.on { background: #FFFBEB; } body.power-saving-mode .ed-srow.on { background: #2E2716; }
+        .ed-found { font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 0 2px 8px; }
+        .ed-found b { color: var(--text-main); }
+        .ed-empty { border: 1.5px dashed var(--border-color); border-radius: 16px; padding: 26px 14px; text-align: center; color: var(--text-muted); font-size: 14px; font-weight: 700; margin-top: 4px; }
+        /* ══ 題庫清單、選題庫頁 ══ */
+        .pk-hide { display: none !important; }
+        .pk-seg { display: flex; gap: 22px; border-bottom: 1.5px solid var(--border-color); margin: 0 2px 12px; }
+        body.power-saving-mode .pk-seg { border-bottom-color: #2B303C; }
+        .pk-seg button { border: none; background: transparent; padding: 8px 2px 9px; font: 800 15px inherit; font-family: inherit; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; position: relative; }
+        .pk-seg button small { font-size: 12px; font-weight: 700; }
+        .pk-seg button em { font-style: normal; font-size: 11px; font-weight: 800; color: #FFFFFF; background: var(--primary); border-radius: 7px; padding: 0 6px; line-height: 17px; }
+        .pk-seg button.on { color: var(--primary); }
+        .pk-seg button.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1.5px; height: 3px; border-radius: 3px; background: var(--primary); }
+        body.power-saving-mode .pk-seg button.on { color: #A5B4FC; }
+        body.power-saving-mode .pk-seg button.on::after { background: #818CF8; }
+        .pk-bar { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 10px; font-size: 13px; font-weight: 700; color: var(--text-muted); }
+        .addb { border: none; background: #EEF2FF; color: var(--primary); font: 800 13px inherit; font-family: inherit; border-radius: 10px; padding: 6px 12px; cursor: pointer; }
+        body.power-saving-mode .addb { background: #2A2F45; color: #A5B4FC; }
+        .select-card-grid.pk-grid { display: block; max-height: none; overflow: visible; padding: 0; margin: 0 0 4px; border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; overflow: hidden; }
+        body.power-saving-mode .select-card-grid.pk-grid { background: #232733; border-color: #2B303C; }
+        .pk-grid.seg-custom .select-card[data-kind="pack"], .pk-grid.seg-pack .select-card[data-kind="custom"] { display: none !important; }
+        .pk-grid .select-card.pk-row, body.power-saving-mode .pk-grid .select-card.pk-row { border: none !important; border-radius: 0; background: transparent !important; box-shadow: none !important; padding: 12px 16px; min-height: 58px; border-top: 1px solid var(--border-color) !important; }
+        body.power-saving-mode .pk-grid .select-card.pk-row { border-top-color: #2B303C !important; }
+        .pk-grid .select-card.pk-row.pk-first { border-top: none !important; }
+        .pk-grid .select-card.pk-row.selected, body.power-saving-mode .pk-grid .select-card.pk-row.selected { background: #F5F7FF !important; }
+        body.power-saving-mode .pk-grid .select-card.pk-row.selected { background: #2A2F45 !important; }
+        .pk-grid .select-card-title, .pk-grid .select-card.selected .select-card-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+        body.power-saving-mode .pk-grid .select-card-title, body.power-saving-mode .pk-grid .select-card.selected .select-card-title { color: #FFFFFF !important; }
+        .pk-grid .select-card-count { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+        .pk-grid .checkmark-badge { width: auto; height: auto; background: transparent; color: var(--primary); font-size: 16px; font-weight: 900; }
+        body.power-saving-mode .pk-grid .checkmark-badge { color: #A5B4FC; }
+        .pk-empty { padding: 22px 14px; text-align: center; font-size: 13.5px; font-weight: 700; color: var(--text-muted); }
+        .stats-status-bar, body.power-saving-mode .stats-status-bar { background: transparent !important; border: none !important; padding: 8px 4px 0 !important; margin-bottom: 12px; font-size: 13px; font-weight: 700; color: var(--text-muted) !important; }
+        .stats-status-bar b { color: var(--text-main); font-weight: 800; } body.power-saving-mode .stats-status-bar b { color: #FFFFFF; }
+        .nav-tune-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--border-color); background: #FFFFFF; color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: border-color .2s; }
+        .nav-tune-btn:hover { border-color: #C7D2FE; }
+        body.power-saving-mode .nav-tune-btn { background: #232733; border-color: #2B303C; color: #A5B4FC; }
+        .back-home-btn[style*="display: none"] ~ .nav-tune-btn { display: none; }
+        .lst-list { border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; overflow: visible; }
+        body.power-saving-mode .lst-list { background: #232733; border-color: #2B303C; }
+        .lst-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; position: relative; }
+        .lst-row + .lst-row { border-top: 1px solid var(--border-color); }
+        body.power-saving-mode .lst-row + .lst-row { border-top-color: #2B303C; }
+        .lst-no { flex: 0 0 30px; height: 30px; border-radius: 9px; background: #EEF2FF; color: var(--primary); font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+        .lst-no.pk { background: var(--primary-gradient); font-size: 15px; }
+        body.power-saving-mode .lst-no { background: #2A2F45; color: #A5B4FC; }
+        .lst-tx { flex: 1; min-width: 0; } .lst-tx b { font-size: 15px; color: var(--text-main); } body.power-saving-mode .lst-tx b { color: #FFFFFF; }
+        .lst-tx small { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-muted); margin-top: 2px; }
+        .lst-tx small .warn { color: #EA580C; font-weight: 800; }
+        .lst-shop .lst-tx b { color: var(--primary); } body.power-saving-mode .lst-shop .lst-tx b { color: #A5B4FC; }
+        .lst-ar { color: #94A3B8; font-size: 18px; font-weight: 900; }
+        .lst-menu { position: relative; }
+        .lst-empty { padding: 24px 14px; text-align: center; font-size: 14px; color: var(--text-muted); }
+        @media (min-width: 769px) {
+            .lst-list.two, .select-card-grid.pk-grid { display: grid; grid-template-columns: 1fr 1fr; }
+            .lst-list.two .lst-row + .lst-row { border-top: none; }
+            .lst-list.two .lst-row:nth-child(odd) { border-right: 1px solid var(--border-color); }
+            .lst-list.two .lst-row:nth-child(n+3) { border-top: 1px solid var(--border-color); }
+            .pk-grid .select-card.pk-row { border-top: none !important; }
+            .pk-grid .select-card.pk-row.pk-odd { border-right: 1px solid var(--border-color) !important; }
+            .pk-grid .select-card.pk-row.pk-r2 { border-top: 1px solid var(--border-color) !important; }
+            .pk-grid .pk-empty { grid-column: 1 / -1; }
+            body.power-saving-mode .lst-list.two .lst-row { border-color: #2B303C !important; }
+            body.power-saving-mode .pk-grid .select-card.pk-row { border-color: #2B303C !important; }
+        }
+        /* ══ 首頁分頁 ══ */
+        #appChrome { margin-bottom: 14px; }
+        .ac-top { display: flex; align-items: center; gap: 10px; position: relative; margin-bottom: 12px; }
+        .ac-mascot { position: relative; width: 40px; height: 40px; border-radius: 12px; background: var(--primary-gradient); flex: 0 0 auto; overflow: hidden; box-shadow: 0 2px 6px rgba(79,70,229,.25); }
+        .ac-mascot .m { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .25s ease; }
+        .ac-mascot .m.on { opacity: 1; }
+        .ac-mascot svg { width: 38px; height: 38px; }
+        .ac-name { flex: 1; font-size: 19px; font-weight: 900; color: var(--text-main); letter-spacing: -.3px; }
+        body.power-saving-mode .ac-name { color: #FFFFFF; }
+        .ac-top .cloud-st-btn, .ac-top .cloud-tip, .hm-today { display: none !important; }
+        .ac-task { position: relative; width: 40px; height: 40px; flex: 0 0 auto; border: none; background: transparent; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .ac-task .ring { position: absolute; inset: 0; width: 40px; height: 40px; }
+        .ac-task .ring circle { fill: none; stroke-width: 3; }
+        .ac-task .ring .bg { stroke: #E2E8F0; } body.power-saving-mode .ac-task .ring .bg { stroke: #2B303C; }
+        .ac-task .ring .fg { stroke: #6366F1; stroke-linecap: round; transition: stroke-dasharray .4s ease; }
+        .ac-task img { position: relative; }
+        .ac-task-dot, .gear-dot { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; border-radius: 50%; background: #EF4444; color: #FFFFFF; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF; box-sizing: border-box; font-style: normal; }
+        body.power-saving-mode .ac-task-dot, body.power-saving-mode .gear-dot { border-color: #1B1E27; }
+        .settings-gear-btn { position: relative; }
+        .ac-top .settings-gear-btn { position: relative; top: auto; right: auto; width: 40px; height: 40px; flex: 0 0 auto; }
+        .ac-top .cloud-tip { top: 48px; right: 30px; }
+        .ac-tabs { display: flex; gap: 4px; border-bottom: 1.5px solid var(--border-color); }
+        body.power-saving-mode .ac-tabs { border-bottom-color: #2B303C; }
+        .ac-tab { display: flex; align-items: center; gap: 6px; padding: 9px 14px 10px; border: none; background: transparent; font: 800 15px inherit; font-family: inherit; color: #94A3B8; position: relative; cursor: pointer; }
+        .ac-tab svg { width: 19px; height: 19px; }
+        .ac-tab.on { color: var(--primary); }
+        .ac-tab.on::after { content: ''; position: absolute; left: 8px; right: 8px; bottom: -1.5px; height: 3px; border-radius: 3px; background: var(--primary); }
+        body.power-saving-mode .ac-tab.on { color: #A5B4FC; }
+        .ac-tab .fun-lv-badge { font-style: normal; white-space: nowrap; margin-left: 0; font-size: 10.5px; padding: 1px 6px; }
+        .hm-title { font-size: 15px; font-weight: 800; color: var(--text-main); margin: 4px 2px 8px; }
+        body.power-saving-mode .hm-title { color: #FFFFFF; }
+        .hm-list { border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; overflow: hidden; }
+        body.power-saving-mode .hm-list { background: #232733; border-color: #2B303C; }
+        .hm-list .list-item { padding: 14px 16px; }
+        .hm-list .list-item:first-child { border-top: none !important; }
+        .hm-list .item-icon-box { width: 40px; height: 40px; border-radius: 12px; box-shadow: none; margin-right: 14px; }
+        .hm-today { display: flex; align-items: center; gap: 12px; border-radius: 16px; padding: 13px 15px; background: var(--primary-gradient); color: #FFFFFF; margin: 2px 0 16px; }
+        .hm-today .tx { flex: 1; min-width: 0; }
+        .hm-today b { display: block; font-size: 15.5px; }
+        .hm-today small { display: block; font-size: 12.5px; opacity: .92; margin-top: 2px; }
+        .hm-today .bar { height: 6px; border-radius: 6px; background: rgba(255,255,255,.3); margin-top: 8px; }
+        .hm-today .bar i { display: block; height: 100%; border-radius: 6px; background: #FFFFFF; }
+        .hm-today .go { flex: 0 0 auto; border: none; font: 800 13.5px inherit; font-family: inherit; background: rgba(255,255,255,.22); color: #FFFFFF; border-radius: 10px; padding: 7px 14px; cursor: pointer; }
+        .hm-today .go.hot { background: #FFFFFF; color: var(--primary); }
+        @media screen and (max-width: 768px) {
+            .ac-tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 900; border-bottom: none; border-top: 1px solid var(--border-color); background: rgba(255,255,255,.97); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); gap: 0; }
+            body.power-saving-mode .ac-tabs { background: rgba(27,30,39,.97); border-top-color: #2B303C; }
+            .ac-tab { flex: 1; flex-direction: column; gap: 2px; padding: 6px 0 4px; font-size: 11.5px; }
+            .ac-tab svg { width: 22px; height: 22px; }
+            .ac-tab.on::after { display: none; }
+            .ac-tab .fun-lv-badge { position: absolute; top: 0; left: calc(50% + 8px); white-space: nowrap; font-size: 9.5px; padding: 0 5px; line-height: 15px; }
+            body.home-tabbed { padding-bottom: 0 !important; }
+            body.home-tabbed #mainScaleWrapper { margin-bottom: 0 !important; }
+            body.home-tabbed .paper-card-container { min-height: calc(100vh - 12px - var(--tabh, 64px)); min-height: calc(100dvh - 12px - var(--tabh, 64px)); margin-bottom: var(--tabh, 64px); border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-sizing: border-box; }
+            #appChrome { margin-bottom: 10px; }
+        }
+        /* ══ 設定視窗 ══ */
+        .sm-modal { max-width: 440px !important; }
+        .sm-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+        .sm-head b { font-size: 18px; color: var(--text-main); }
+        body.power-saving-mode .sm-head b { color: #FFFFFF; }
+        .sm-x { position: static !important; float: none !important; font-size: 26px; line-height: 1; }
+        .sm-grp { font-size: 12.5px; font-weight: 800; color: var(--text-muted); margin: 14px 4px 6px; }
+        .sm-list { border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; overflow: hidden; }
+        body.power-saving-mode .sm-list { background: #232733; border-color: #2B303C; }
+        .sm-row { display: flex; align-items: center; gap: 10px; padding: 11px 14px; min-height: 52px; box-sizing: border-box; }
+        .sm-row + .sm-row { border-top: 1px solid var(--border-color); }
+        body.power-saving-mode .sm-row + .sm-row { border-top-color: #2B303C; }
+        .sm-row .t { flex: 1; min-width: 0; font-size: 15px; font-weight: 700; color: var(--text-main); }
+        body.power-saving-mode .sm-row .t { color: #FFFFFF; }
+        .sm-row .t small { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 2px; }
+        .sm-row.col { flex-direction: column; align-items: stretch; gap: 10px; }
+        .sm-row.col .top { display: flex; align-items: center; justify-content: space-between; }
+        .sm-row .speed-val { font-size: 14px; font-weight: 800; color: var(--primary); min-width: 0; }
+        .sm-row .range-slider { width: 100%; margin: 0; }
+        input.sm-num { width: 66px !important; flex: 0 0 auto; text-align: center; font-size: 15px; font-weight: 800; padding: 6px 4px !important; margin: 0 !important; border: 1.5px solid var(--border-color) !important; border-radius: 10px !important; background: #F8FAFC !important; color: var(--text-main) !important; box-sizing: border-box; }
+        body.power-saving-mode input.sm-num { background: #1B1E27 !important; border-color: #2B303C !important; color: #FFFFFF !important; }
+        body.power-saving-mode .sm-list .slider-toggle { background-color: #3B3F4C; }
+        body.power-saving-mode .sm-list input:checked + .slider-toggle { background-color: #10B981; }
+        .sm-note { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin: 8px 4px 0; }
+        .sm-ok { margin-top: 16px !important; }
+        /* ══ 測驗紀錄 ══ */
+        .hs-sum { font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 0 2px 8px; }
+        .hs-sum b { color: var(--text-main); } body.power-saving-mode .hs-sum b { color: #FFFFFF; }
+        .hs-chart { border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; padding: 10px 10px 6px; }
+        body.power-saving-mode .hs-chart { background: #232733; border-color: #2B303C; }
+        .hs-chart polyline { fill: none; stroke: #6366F1; stroke-width: 2.6; stroke-linejoin: round; }
+        .hs-chart circle { fill: #FFFFFF; stroke: #6366F1; stroke-width: 2.2; } .hs-chart circle.last { fill: #4F46E5; }
+        body.power-saving-mode .hs-chart circle { fill: #232733; } body.power-saving-mode .hs-chart circle.last { fill: #818CF8; }
+        .hs-chart line.ref { stroke: #CBD5E1; stroke-dasharray: 4 4; }
+        .hs-chart text.ref { font-size: 10px; font-weight: 700; fill: #94A3B8; }
+        .hs-chart text.val { font-size: 13px; font-weight: 900; fill: #4F46E5; } body.power-saving-mode .hs-chart text.val { fill: #A5B4FC; }
+        .hs-chart .dates { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #94A3B8; padding: 0 4px; }
+        .hs-sec { display: flex; align-items: center; justify-content: space-between; margin: 16px 2px 8px; }
+        .hs-sec b { font-size: 15px; color: var(--text-main); } body.power-saving-mode .hs-sec b { color: #FFFFFF; }
+        .hs-link { border: none; background: transparent; color: var(--primary); font: 800 13px inherit; font-family: inherit; cursor: pointer; padding: 0; }
+        .hs-list { border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; overflow: hidden; }
+        body.power-saving-mode .hs-list { background: #232733; border-color: #2B303C; }
+        .hs-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; min-height: 50px; box-sizing: border-box; }
+        .hs-row + .hs-row { border-top: 1px solid var(--border-color); }
+        body.power-saving-mode .hs-row + .hs-row { border-top-color: #2B303C; }
+        .hs-row.link, .hs-row.pick { cursor: pointer; }
+        .hs-row .t { flex: 1; min-width: 0; font-size: 15px; color: var(--text-main); }
+        body.power-saving-mode .hs-row .t { color: #FFFFFF; }
+        .hs-row .t b { font-weight: 700; }
+        .hs-row .t .mut { color: var(--text-muted); font-size: 13.5px; }
+        .hs-row .t small { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 2px; }
+        .hs-row .t small.yours { color: #EA580C; }
+        .hs-row .cnt { font-size: 12.5px; font-weight: 800; color: #EA580C; white-space: nowrap; }
+        .hs-row .sc { font-size: 18px; font-weight: 900; color: var(--primary); } .hs-row .sc.low { color: #EA580C; }
+        body.power-saving-mode .hs-row .sc { color: #A5B4FC; } body.power-saving-mode .hs-row .sc.low { color: #FB923C; }
+        .hs-row .ar { color: #94A3B8; font-size: 18px; font-weight: 900; }
+        .hs-row .ok { color: #10B981; font-weight: 900; } .hs-row .no { color: #EA580C; font-weight: 900; }
+        .hs-row .ck { width: 16px; color: var(--primary); font-weight: 900; text-align: center; }
+        .hs-row.pick.on { background: #F5F7FF; } body.power-saving-mode .hs-row.pick.on { background: #2A2F45; }
+        .hs-empty { padding: 22px 14px; text-align: center; font-size: 13.5px; font-weight: 700; color: var(--text-muted); }
+        .hs-dhead { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 6px; font-size: 13px; color: var(--text-muted); }
+        .hs-dhead b { font-size: 16px; color: var(--text-main); } body.power-saving-mode .hs-dhead b { color: #FFFFFF; }
+        .hs-big { font-size: 24px; font-weight: 900; color: var(--primary); } .hs-big small { font-size: 13px; }
+        .pk-bar .warn { color: #EA580C; } .pk-bar b { color: var(--text-main); } body.power-saving-mode .pk-bar b { color: #FFFFFF; }
+        .hs-save { display: flex; gap: 8px; margin-top: 12px; }
+        .hs-save select { flex: 1; min-width: 0; margin: 0 !important; border-radius: 12px !important; }
+        .hs-save button { border: none; border-radius: 12px; padding: 0 20px; background: var(--primary-gradient); color: #FFFFFF; font: 800 14px inherit; font-family: inherit; cursor: pointer; }
+        /* ══ 往下捲時的細長條 ══ */
+        #stickyNavBar { position: fixed; top: 0; z-index: 950; height: 52px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.97); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-color); box-sizing: border-box; transform: translateY(-100%); opacity: 0; pointer-events: none; transition: transform .18s ease, opacity .18s ease; }
+        #stickyNavBar.show { transform: none; opacity: 1; pointer-events: auto; }
+        body.power-saving-mode #stickyNavBar { background: rgba(27,30,39,.97); border-bottom-color: #2B303C; }
+        #stickyNavBar .sb-back { position: absolute; left: 14px; width: 32px; height: 32px; border-radius: 10px; border: none; background: var(--primary-gradient); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(79,70,229,.25); padding: 0; }
+        #stickyNavBar .sb-title { font-size: 15.5px; font-weight: 800; color: var(--text-main); max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        body.power-saving-mode #stickyNavBar .sb-title { color: #FFFFFF; }
+        /* ══ 第 19～20 關 ══ */
+        .adv-enemy-tag { display: inline-block; margin-bottom: 3px; font-size: 11px; font-weight: 900; color: #FFFFFF; background: #2563EB; border-radius: 7px; padding: 1px 7px; }
+        .adv-enemy-tag.cd { background: #DC2626; }
+        .adv-move { position: relative; }
+        .adv-stamp { position: absolute; top: -7px; right: 6px; font-size: 10px; font-weight: 900; color: #FFFFFF; background: #7C3AED; border-radius: 6px; padding: 0 5px; line-height: 15px; }
+        .adv-move.adv-redeem { grid-column: 1 / -1; background: linear-gradient(135deg, #F5F3FF, #FAE8FF); }
+        body.power-saving-mode .adv-move.adv-redeem { background: linear-gradient(135deg, #2E1065, #4A044E); }
+        /* ══ 今日任務清單 ══ */
+        .tk-note { font-size: 12.5px; color: var(--text-muted); margin: 0 2px 8px; }
+        .tk-head { display: flex; justify-content: flex-end; font-size: 13px; font-weight: 700; color: var(--text-muted); margin: -24px 2px 8px; }
+        .tk-list { border: 1.5px solid var(--border-color); border-radius: 16px; background: #FFFFFF; overflow: hidden; }
+        body.power-saving-mode .tk-list { background: #232733; border-color: #2B303C; }
+        .tk-row { display: flex; align-items: center; gap: 10px; padding: 11px 14px; min-height: 54px; box-sizing: border-box; }
+        .tk-row + .tk-row { border-top: 1px solid var(--border-color); } body.power-saving-mode .tk-row + .tk-row { border-top-color: #2B303C; }
+        .tk-row .t { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 700; color: var(--text-main); } body.power-saving-mode .tk-row .t { color: #FFFFFF; }
+        .tk-row .t small { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 2px; }
+        .tk-done { font-size: 12.5px; font-weight: 800; color: #10B981; white-space: nowrap; }
+        .tk-claim { border: none; border-radius: 10px; padding: 7px 14px; font: 800 13px inherit; font-family: inherit; background: var(--primary-gradient); color: #FFFFFF; cursor: pointer; }
+        .tk-todo { border: none; background: transparent; font: 800 13px inherit; font-family: inherit; color: var(--primary); cursor: pointer; white-space: nowrap; padding: 4px 0; }
+        body.power-saving-mode .tk-todo { color: #A5B4FC; }
+        @media screen and (max-width: 768px) {
+            .hm-title { font-size: 16.5px; margin: 10px 2px 10px; }
+            .hm-list .list-item { padding: 20px 18px; }
+            .hm-list .item-icon-box { width: 48px; height: 48px; border-radius: 14px; }
+            .hm-list .item-icon-box svg { width: 24px; height: 24px; }
+            .hm-list .item-title { font-size: 17.5px; margin-bottom: 4px; }
+            .hm-list .item-desc { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .ac-name { font-size: 20px; }
+        }
+        .pk-ic { vertical-align: -4px; flex: 0 0 auto; }
+        .lst-no.pk { background: transparent !important; overflow: hidden; }
+        #editorDetailTitleIndicator .pk-ic { vertical-align: -3px; }
+        .sync-chick { position: fixed; left: 50%; top: 10px; transform: translate(-50%, -70px); z-index: 5000; display: flex; align-items: center; gap: 6px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 20px; padding: 4px 14px 4px 6px; font-size: 13px; font-weight: 800; color: var(--primary); box-shadow: 0 4px 14px rgba(15,23,42,.12); transition: transform .25s ease; pointer-events: none; }
+        .sync-chick.show { transform: translate(-50%, 0); }
+        .sync-chick .ck { width: 26px; height: 26px; display: inline-block; animation: chickRun .5s ease-in-out infinite alternate; }
+        .sync-chick .ck svg { width: 26px; height: 26px; }
+        @keyframes chickRun { from { transform: translateY(0) rotate(-6deg); } to { transform: translateY(-3px) rotate(6deg); } }
+        body.power-saving-mode .sync-chick { background: #232733; border-color: #2B303C; color: #A5B4FC; }
+    </style>
+</head>
+<body>
+
+<div id="inAppBrowserWarning" style="display:none;">
+    <h3>⚠️ 請改用 Safari 開啟</h3>
+    <p>偵測到您目前使用的是 LINE、Facebook、Instagram 等 App 內嵌的網頁，這會導致<b>語音無法播放</b>、<b>麥克風無法使用</b>及<b>Google 登入出錯</b>！</p>
+    <p style="margin-top: 14px;">請點畫面角落的「⋯」或分享圖示，選擇<b>「在 Safari 中開啟」</b>；<br>或先複製網址，再貼到 Safari。</p>
+    <button class="action-btn btn-start" style="margin: 20px auto 0; max-width: 250px;" data-on-click='[["copyAppUrl",[]]]'>📋 複製網址</button>
+    <button class="action-btn btn-stop" style="margin: 10px auto 0; max-width: 250px;" data-on-click='[["hideInAppBrowserWarning",[]]]'>我知道了，繼續使用</button>
+</div>
+
+<div id="mainScaleWrapper" class="scale-wrapper-practice">
+    <div class="paper-card-container">
+        
+        <div id="appChrome">
+            <div class="ac-top">
+                <span class="ac-mascot" id="acMascot"><span class="m" data-tab="practice"><svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M 18 68 C 8 68, 2 72, 4 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                    <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                    <circle cx="36" cy="80" r="4" fill="#E2861E"/>
+                                    <circle cx="66" cy="98" r="3.5" fill="#E2861E"/>
+                                    <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+                                    <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                    <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                    <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                    <path d="M 98 60 Q 112 48 102 38" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <g transform="translate(86, 20) rotate(-12)">
+                                        <rect x="2" y="10" width="38" height="8" rx="4" fill="#231F20"/>
+                                        <rect x="-6" y="0" width="9" height="28" rx="3" fill="#231F20"/>
+                                        <rect x="-11" y="4" width="5" height="20" rx="2" fill="#3D383A"/>
+                                        <rect x="37" y="0" width="9" height="28" rx="3" fill="#231F20"/>
+                                        <rect x="46" y="4" width="5" height="20" rx="2" fill="#3D383A"/>
+                                    </g>
+                                </svg></span><span class="m" data-tab="exam"><svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                    <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                    <circle cx="40" cy="82" r="3.5" fill="#E2861E"/>
+                                    <circle cx="64" cy="98" r="3.5" fill="#E2861E"/>
+                                    <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+                                    <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                    <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                    <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                    <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                    <path d="M 100 68 C 104 62, 103 52, 97 45" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                    <g transform="translate(98, 15) rotate(22)">
+                                        <rect x="8" y="0" width="12" height="12" rx="2" fill="#231F20" stroke="#231F20" stroke-width="2.5"/>
+                                        <rect x="6" y="12" width="16" height="28" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
+                                        <rect x="6" y="40" width="16" height="26" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
+                                        <path d="M 6 66 L 22 66 L 22 74 C 22 76, 20 78, 14 78 C 8 78, 6 76, 6 74 Z" fill="#10B981" stroke="#231F20" stroke-width="2.5"/>
+                                    </g>
+                                </svg></span><span class="m" data-tab="lists"><svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                <circle cx="42" cy="84" r="3.5" fill="#E2861E"/>
+                                <circle cx="68" cy="100" r="3.5" fill="#E2861E"/>
+                                <circle cx="98" cy="78" r="3.5" fill="#E2861E"/>
+                                <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 100 68 C 104 62, 102 54, 96 50" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <g transform="translate(64, 46)">
+                                    <rect x="0" y="0" width="36" height="28" rx="3" fill="#78350F" stroke="#231F20" stroke-width="3"/>
+                                    <path d="M 18 0 L 18 28" stroke="#231F20" stroke-width="2.5"/>
+                                    <path d="M 5 8 Q 11 6 15 10" stroke="#231F20" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M 21 8 Q 27 6 31 10" stroke="#231F20" stroke-width="2" stroke-linecap="round"/>
+                                </g>
+                            </svg></span><span class="m" data-tab="fun"><svg class="mascot-svg" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 20 30 L 28 38 M 132 30 L 124 38 M 76 12 L 76 22 M 20 90 L 28 82 M 132 90 L 124 82" stroke="#FACC15" stroke-width="5" stroke-linecap="round"/>
+                                <circle cx="76" cy="68" r="48" fill="#FEF08A" opacity="0.25"/>
+                                <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+                                <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+                                <circle cx="36" cy="80" r="4" fill="#E2861E"/>
+                                <circle cx="66" cy="98" r="3.5" fill="#E2861E"/>
+                                <circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
+                                <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
+                                <circle cx="54" cy="64" r="4.5" fill="#231F20"/>
+                                <circle cx="80" cy="64" r="4.5" fill="#231F20"/>
+                                <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <path d="M 108 68 C 118 68, 124 72, 122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round" fill="none"/>
+                            </svg></span></span>
+                <b class="ac-name">Chicky Vocab</b>
+                <button type="button" class="cloud-st-btn st-off seen" id="cloudStateBtn" data-on-click='[["openCloudSettings",[]]]' title="Google 雲端" aria-label="Google 雲端：未登入"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path class="cl" d="M9 25 H24 a6 6 0 0 0 0.8 -11.9 A8 8 0 0 0 9.6 11.6 A6.7 6.7 0 0 0 9 25 Z" stroke-width="2" stroke-linejoin="round"/></svg><span class="cloud-st-dot" id="cloudStateDot">!</span></button>
+                <button type="button" class="ac-task" id="acTaskBtn" title="今日任務" aria-label="今日任務" data-on-click='[["openChickenRewardModal",[]]]'><svg class="ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" class="bg"/><circle cx="20" cy="20" r="17" class="fg" id="acTaskRing" stroke-dasharray="0 106.8" transform="rotate(-90 20 20)"/></svg><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='10 10 80 80'><path d='M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z' fill='%23F3A63B' stroke='%23C27803' stroke-width='3'/><path d='M 38 42 Q 43 45 40 50' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M 58 52 Q 62 58 56 64' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><circle cx='46' cy='38' r='2' fill='%23C27803'/><circle cx='54' cy='68' r='2' fill='%23C27803'/><circle cx='64' cy='42' r='2.5' fill='%23C27803'/><circle cx='34' cy='58' r='2' fill='%23C27803'/><circle cx='48' cy='52' r='2.5' fill='%23C27803'/></svg>" width="24" height="24" alt=""><span class="ac-task-dot" id="acTaskDot" style="display:none">!</span></button>
+                <button class="settings-gear-btn" data-on-click='[["openSystemSettingsModal",[]]]' title="系統設定">⚙️<span class="gear-dot" id="gearDot" style="display:none">!</span></button>
+                <div class="cloud-tip" id="cloudTip" style="display: none;">雲端已中斷，點一下重新連線</div>
+            </div>
+            <nav class="ac-tabs" id="acTabs" role="tablist"><button type="button" class="ac-tab" data-tab="practice" role="tab" data-on-click='[["setHomeTab",["practice"]]]'><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg><span>練習</span></button><button type="button" class="ac-tab" data-tab="exam" role="tab" data-on-click='[["setHomeTab",["exam"]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg><span>測驗</span></button><button type="button" class="ac-tab" data-tab="lists" role="tab" data-on-click='[["setHomeTab",["lists"]]]'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7"/></svg><span>題庫</span></button><button type="button" class="ac-tab" data-tab="fun" role="tab" data-on-click='[["setHomeTab",["fun"]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"></path><path d="M4 4h13l-2 4 2 4H4"></path></svg><span>樂園</span><em class="fun-lv-badge" id="funLvBadge" style="display:none"></em></button></nav>
+        </div>
+        <!-- ================= 🏠 首頁儀表板檢視 ================= -->
+        <div id="homeDashboardView" class="app-view active">
+            <div class="hm-pane" data-pane="practice">
+                <div class="hm-today" id="homeToday"></div>
+                <div class="hm-title" data-t-en="英文練習" data-t-ko="韓文練習">英文練習</div>
+                <div class="hm-list">
+                        <div class="list-item" data-on-click='[["goToPracticePage",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">聽力練習</div>
+                                <div class="item-desc">聽發音、拼單字</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+
+                        <div class="list-item" data-on-click='[["goToFlashcardPage",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">字卡練習</div>
+                                <div class="item-desc">翻字卡記單字</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+
+                        <div class="list-item" data-on-click='[["goToSpeakPracticePage",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">朗讀練習</div>
+                                <div class="item-desc">唸出單字，即時評分</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
                     </div>
-                    <div class="picker-plus">${maxed ? '—' : '+' + WORD_CAP_STEP}</div>
-                </button>`;
-        });
-        box.innerHTML = html || '<div style="text-align:center; color:var(--text-muted); padding:20px;">目前沒有題庫</div>';
-    }
-
-    async function buyWordCapForList(listId) {
-        let cat = shopCatalog.word_cap_50;
-        let idx = wordLists.findIndex(l => l.id === listId);
-        if (idx < 0 || walletBusy) return;
-        if (!ensureLoginBeforeSpend()) return;
-        let list = wordLists[idx];
-        let extra = Number((wallet.listCaps || {})[listId]) || 0;
-        if (extra >= cat.max) {
-            alert(`「${list.title}」的單字上限已擴充到最大（共可兌換 ${cat.max} 次）。`);
-            return;
-        }
-        if (wallet.balance < cat.price) {
-            alert(`🍗 雞塊不足！需要 ${cat.price} 個，目前有 ${wallet.balance} 個。`);
-            return;
-        }
-        let cap = getListWordCap(list);
-        if (!confirm(`要用 ${cat.price} 個雞塊，為「${list.title}」擴增單字上限嗎？\n\n${cap} 字 → ${cap + WORD_CAP_STEP} 字\n（只增加這一本題庫，其他題庫不變）`)) return;
-
-        walletBusy = true;
-        try {
-            let data = await walletRpc('buy_item', { p_item: 'word_cap_50', p_target: listId });
-            applyWallet(data, getLocalDateStr());
-            closeShopListPicker();
-            showChickenFloat('chickenShopCountDisplay', '-' + (data.spent || cat.price), '#EF4444');
-            refreshAllListViews();
-        } catch (e) {
-            console.warn('兌換失敗:', e && e.message || e);
-            alert(`❌ 兌換失敗：${walletErrorMessage(e)}`);
-            refreshWallet();
-        } finally {
-            walletBusy = false;
-        }
-    }
-
-    // 觸發任務完成檢查 (供外部呼叫)
-    function triggerTaskCheck(taskType, data = {}) {
-        checkDailyReset();
-        let updated = false;
-
-        if (taskType === 'listening_exam_done') {
-            if (!isTaskClaimed('listeningPractice')) {
-                chickenData.tasks.listeningPractice.done = true;
-                updated = true;
-            }
-            if (data.total >= 10 && data.score >= 80) {
-                if (!isTaskClaimed('listeningPerfect')) {
-                    chickenData.tasks.listeningPerfect.done = true;
-                    updated = true;
-                }
-            }
-        } else if (taskType === 'card_exam_done') {
-            if (!isTaskClaimed('cardPractice')) {
-                chickenData.tasks.cardPractice.done = true;
-                updated = true;
-            }
-            if (data.total >= 10 && data.score >= 80) {
-                if (!isTaskClaimed('cardPerfect')) {
-                    chickenData.tasks.cardPerfect.done = true;
-                    updated = true;
-                }
-            }
-        }
-
-        if (updated) {
-            saveChickenData();
-        }
-    }
-
-    // ---------------------------------
-
-    let flashcardActiveList = [];
-    let currentFcIndex = 0;
-
-    let cardExamActiveList = [];
-    let currentCardExamIndex = 0;
-    let cardExamTimerId = null;
-    let cardExamTimeLeft = 0;
-    let cardExamResults = [];
-    let currentCardExamRanges = "";
-
-    // 朗讀練習
-    // 評分標準：可在進階設定調整，最低 60、最高 100，預設 70
-    function getSpeakPassScore() {
-        let el = document.getElementById('speakPracticePassScore');
-        let v = parseInt(el ? el.value : 70);
-        if (isNaN(v)) v = 70;
-        return Math.max(60, Math.min(100, v));
-    }
-    let speakPracticeActiveList = [];
-    let currentSpeakPracticeIndex = 0;
-    let speakPracticeResults = [];
-    let currentSpeakPracticeRanges = "";
-    let speakStarting = false;
-    let speakRec = null, speakListening = false, speakPressAt = 0, speakShortTap = false, speakIgnoreResult = false, speakStarted = false, speakLatched = false, speakSkipUp = false;
-    let speakHeardAlts = [], speakLastError = '', speakWatchdog = null;
-    let speakQuestion = { attempts: 0, best: null, last: null };
-
-    let touchStartX = 0;
-    let touchEndX = 0;
-    let isSwipeAction = false;
-
-    window.onload = async function() {
-        checkAndRedirectInAppBrowser();
-        loadVoices();
-        if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
-        loadAppSettings();
-        loadExamAppSettings();
-        loadSystemSettings();
-        applyLanguageUI();
-        loadFlashcardAppSettings();
-        loadCardExamAppSettings();
-        loadSpeakPracticeAppSettings();
-        initSpeakMicButton();
-        initPracticeCardGrid();
-        initExamCardGrid();
-        initFlashcardGrid();
-        initCardExamGrid();
-        initSpeakPracticeGrid();
-        initEditorListCards();
-        initExamCheckboxes();
-        initFlashcardTouchListeners();
-        loadCollapseStates();
-
-        // 初始化雞塊系統與每日登入任務
-        checkDailyReset();
-        updateChickenBadgeUI();
-        refreshWallet();   // 背景向後端讀取最新雞塊數與購買紀錄（連不上時先用上次的快取）
-
-        // 切回 app 時檢查是否已跨日
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') updateChickenBadgeUI();
-        });
-        // app 開著不動時，每分鐘檢查一次是否跨日
-        setInterval(updateChickenBadgeUI, 60 * 1000);
-
-        window.addEventListener('click', function(e) {
-            if (!e.target.closest('.list-card-menu-btn') && !e.target.closest('.dropdown-menu')) {
-                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
-            }
-        });
-
-        document.querySelectorAll('input[type="range"]').forEach(slider => updateSliderProgress(slider));
-
-        if (typeof google !== 'undefined') {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: async (resp) => {
-                    authBusyUntil = 0;
-                    let wasAuto = autoReconnecting; autoReconnecting = false;
-                    if (resp.error !== undefined || !resp.access_token) {
-                        if (wasAuto && accessToken) return;          // 換新失敗但舊權杖還能用：先不動
-                        accessToken = null; isCloudSyncActive = false;
-                        updateCloudStatusText(wasAuto ? `💻 未登入（請按「登入 Google 雲端」重新連線）` : `💻 未登入`);
-                        return;
-                    }
-                    localStorage.setItem(GOOGLE_LINKED_FLAG, '1');
-                    scheduleTokenRefresh(resp.expires_in);
-                    let renewing = wasAuto && accessToken;           // 只是換新權杖：不必重新同步與綁定
-                    if (!renewing) { cloudWalletKey = null; walletBoundThisLogin = false; advSwitchStore(); }   // 換成 Google 進度
-                    accessToken = resp.access_token;
-                    isCloudSyncActive = true;
-                    updateCloudStatusText(`✅ 已連結 Google 雲端`);
-                    if (!renewing) { loadDataFromGoogleDrive(); cloudFetchEmail(); }
-                },
-                // 登入視窗打不開、被關閉等錯誤（例如 iOS 擋彈出視窗）
-                error_callback: (err) => {
-                    authBusyUntil = 0;
-                    console.warn('Google 登入視窗錯誤:', err);
-                    let t = err && err.type;
-                    if (autoReconnecting) {                         // 自動重連被瀏覽器擋下：等使用者點一下畫面
-                        autoReconnecting = false;
-                        if (!accessToken) armReconnectOnNextClick();
-                        return;
-                    }
-                    if (t === 'popup_failed_to_open') {
-                        alert('⚠️ 無法開啟 Google 登入視窗。\n\n請確認瀏覽器沒有封鎖彈出視窗，並且不是在 LINE / Facebook 等 App 內開啟（請改用 Safari 或 Chrome）。');
-                    } else if (t !== 'popup_closed') {
-                        alert('⚠️ Google 登入失敗，請稍後再試。\n\n若畫面出現「400」，請關閉登入視窗，用 Safari / Chrome 重新開啟本網頁再登入；仍失敗可清除瀏覽器對 google.com 的網站資料後再試。');
-                    }
-                }
-            });
-        }
-
-        cloudRender();
-        // 上次登入過：重新整理後自動重新連線 Google 雲端
-        if (localStorage.getItem(GOOGLE_LINKED_FLAG) === '1') trySilentReconnect(false);
-    };
-
-    function loadCollapseStates() {
-        let collapseStates = JSON.parse(localStorage.getItem('dictation_collapse_states')) || {
-            practice: true,
-            flashcard: true,
-            exam: true,
-            cardExam: true,
-            speakPractice: true,
-            listening_score_chart: false,
-            listening_top_wrong: false,
-            listening_history_list: false,
-            card_score_chart: false,
-            card_top_wrong: false,
-            card_history_list: false
-        };
-
-        applyCollapseState('previewContainer', 'collapseBtn', collapseStates.practice);
-        applyCollapseState('fcPreviewContainer', 'fcCollapseBtn', collapseStates.flashcard);
-        applyCollapseState('examPreviewCollapseContainer', 'examCollapseBtn', collapseStates.exam);
-        applyCollapseState('cardExamPreviewContainer', 'cardExamCollapseBtn', collapseStates.cardExam);
-
-        applySubCardCollapseState('listeningScoreChartContent', 'listeningScoreChartToggleBtn', collapseStates.listening_score_chart);
-        applySubCardCollapseState('listeningTopWrongContent', 'listeningTopWrongToggleBtn', collapseStates.listening_top_wrong);
-        applySubCardCollapseState('listeningHistoryListContent', 'listeningHistoryListToggleBtn', collapseStates.listening_history_list);
-        applySubCardCollapseState('cardScoreChartContent', 'cardScoreChartToggleBtn', collapseStates.card_score_chart);
-        applySubCardCollapseState('cardTopWrongContent', 'cardTopWrongToggleBtn', collapseStates.card_top_wrong);
-        applySubCardCollapseState('cardHistoryListContent', 'cardHistoryListToggleBtn', collapseStates.card_history_list);
-        applyCollapseState('speakPracticePreviewContainer', 'speakPracticeCollapseBtn', collapseStates.speakPractice !== false);
-    }
-
-    function applyCollapseState(containerId, btnId, isCollapsed) {
-        const container = document.getElementById(containerId);
-        const btn = document.getElementById(btnId);
-        if (container && btn) {
-            if (isCollapsed) {
-                container.classList.add('collapsed');
-                btn.classList.add('collapsed');
-            } else {
-                container.classList.remove('collapsed');
-                btn.classList.remove('collapsed');
-            }
-        }
-    }
-
-    function applySubCardCollapseState(contentId, btnId, isCollapsed) {
-        const content = document.getElementById(contentId);
-        const btn = document.getElementById(btnId);
-        if (content && btn) {
-            if (isCollapsed) {
-                content.classList.add('collapsed');
-                btn.classList.add('collapsed');
-            } else {
-                content.classList.remove('collapsed');
-                btn.classList.remove('collapsed');
-            }
-        }
-    }
-
-    function saveCollapseState(key, isCollapsed) {
-        let collapseStates = JSON.parse(localStorage.getItem('dictation_collapse_states')) || {
-            practice: true,
-            flashcard: true,
-            exam: true,
-            cardExam: true,
-            speakPractice: true,
-            listening_score_chart: false,
-            listening_top_wrong: false,
-            listening_history_list: false,
-            card_score_chart: false,
-            card_top_wrong: false,
-            card_history_list: false
-        };
-        collapseStates[key] = isCollapsed;
-        localStorage.setItem('dictation_collapse_states', JSON.stringify(collapseStates));
-    }
-
-    function toggleSubCard(contentId, btnId, stateKey) {
-        const content = document.getElementById(contentId);
-        const btn = document.getElementById(btnId);
-        if (content && btn) {
-            content.classList.toggle('collapsed');
-            btn.classList.toggle('collapsed');
-            let isCollapsed = content.classList.contains('collapsed');
-            saveCollapseState(stateKey, isCollapsed);
-            
-            if (!isCollapsed && (stateKey === 'listening_score_chart' || stateKey === 'card_score_chart')) {
-                setTimeout(() => {
-                    if (stateKey === 'listening_score_chart') renderScoreChart('listeningScoreCanvas', filterHistoryByLang(examHistory));
-                    else renderScoreChart('cardScoreCanvas', filterHistoryByLang(cardExamHistory));
-                }, 100);
-            }
-        }
-    }
-
-    function toggleAccordion(listId) {
-        const target = document.getElementById(listId);
-        if (!target) return;
-        const willExpand = !target.classList.contains('expanded');
-        ['practiceList', 'examList', 'funList'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.remove('expanded');
-        });
-        if (willExpand) target.classList.add('expanded');
-    }
-
-    function initFlashcardTouchListeners() {
-        const cardEl = document.getElementById('flashcardCardEl');
-        if (!cardEl) return;
-
-        cardEl.addEventListener('touchstart', e => { 
-            touchStartX = e.changedTouches[0].screenX;
-            isSwipeAction = false;
-        }, { passive: true });
-
-        cardEl.addEventListener('touchend', e => { 
-            touchEndX = e.changedTouches[0].screenX;
-            let diffX = touchEndX - touchStartX;
-            
-            if (Math.abs(diffX) > 40) {
-                isSwipeAction = true;
-                if (diffX < -40) nextFlashcard();
-                else if (diffX > 40) prevFlashcard();
-            } else {
-                cardEl.classList.toggle('flipped');
-            }
-        }, false);
-
-        cardEl.addEventListener('click', e => {
-            if (!('ontouchstart' in window)) {
-                cardEl.classList.toggle('flipped');
-            }
-        });
-    }
-
-    function hideInAppBrowserWarning() {
-        document.getElementById('inAppBrowserWarning').style.display = 'none';
-    }
-
-    // 判斷目前是不是在「App 內嵌瀏覽器」（LINE、Facebook、Instagram…）或 iOS 主畫面模式
-    function getBrowserEnv() {
-        const ua = navigator.userAgent || navigator.vendor || window.opera || '';
-        const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        const standalone = window.navigator.standalone === true || !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-        const knownInApp = /FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|\bLine\/|Twitter|TikTok|musical_ly|BytedanceWebview|Snapchat|KAKAOTALK|NAVER\(inapp|Pinterest|LinkedInApp|GSA\//i.test(ua);
-        // iOS 的 Safari 和 Chrome/Edge/Firefox 的 UA 都含 "Safari/"；內嵌 WebView 通常沒有（主畫面模式除外）
-        const iosWebview = isIOS && !standalone && !/Safari\//i.test(ua);
-        return { ua, isIOS, standalone, isAndroid: /Android/i.test(ua), isLine: /\bLine\//i.test(ua), isInApp: knownInApp || iosWebview };
-    }
-
-    function getCleanAppUrl() {
-        return window.location.href.replace(/([?&])openExternalBrowser=1&?/, '$1').replace(/[?&]$/, '');
-    }
-
-    function copyAppUrl() {
-        const url = getCleanAppUrl();
-        const fallback = () => window.prompt('請長按選取並複製下面的網址，再貼到 Safari：', url);
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(() => alert('✅ 已複製網址，請打開 Safari 貼上。'), fallback);
-        } else {
-            fallback();
-        }
-    }
-
-    function checkAndRedirectInAppBrowser() {
-        const env = getBrowserEnv();
-        if (!env.isInApp) return;
-        const currentUrl = window.location.href;
-
-        // LINE：官方支援網址加 ?openExternalBrowser=1 → 自動改用手機預設瀏覽器（iOS 是 Safari）
-        if (env.isLine) {
-            if (!/[?&]openExternalBrowser=1/.test(currentUrl)) {
-                const sep = currentUrl.indexOf('?') === -1 ? '?' : '&';
-                const hashIdx = currentUrl.indexOf('#');
-                const base = hashIdx === -1 ? currentUrl : currentUrl.slice(0, hashIdx);
-                const hash = hashIdx === -1 ? '' : currentUrl.slice(hashIdx);
-                window.location.replace(base + sep + 'openExternalBrowser=1' + hash);
-                return;
-            }
-        }
-        if (env.isAndroid) {
-            const intentUrl = 'intent://' + currentUrl.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
-            window.location.href = intentUrl;
-            return;
-        }
-        // iOS 其他 App（Facebook、Instagram…）：Apple 不允許網頁自動跳到 Safari，只能提示使用者手動開啟
-        document.getElementById('inAppBrowserWarning').style.display = 'block';
-    }
-
-    // ── Google 雲端狀態：首頁雲朵 + 系統設定區塊 ──
-    //   ok：已登入同步中　bad：登入過但權杖失效（點一下重新連線）　off：這台裝置從沒登入過
-    let cloudLastText = '', cloudHighlight = false;
-    const CLOUD_SEEN_KEY = 'chicky_cloud_seen';     // 看過「未登入」提醒後，紅色驚嘆號就不再出現
-    function cloudSeen() { try { return localStorage.getItem(CLOUD_SEEN_KEY) === '1'; } catch (e) { return false; } }
-    const GOOGLE_EMAIL_KEY = 'chicky_google_email';
-    function cloudState() {
-        if (accessToken) return 'ok';
-        let linked = false;
-        try { linked = localStorage.getItem(GOOGLE_LINKED_FLAG) === '1'; } catch (e) {}
-        if (!linked) return 'off';
-        return /重新連線 Google 雲端中|同步中/.test(cloudLastText) ? 'busy' : 'bad';
-    }
-    function cloudRender() {
-        let st = cloudState();
-        let tip = document.getElementById('cloudTip'), seen = cloudSeen();
-        let gd = document.getElementById('gearDot');
-        if (gd) gd.style.display = ((st === 'off' && !seen) || st === 'bad') ? '' : 'none';
-        document.querySelectorAll('.cloud-st-btn').forEach(btn => {
-            btn.className = 'cloud-st-btn st-' + st + (st === 'off' && seen ? ' seen' : '') + (btn.classList.contains('in-nav') ? ' in-nav' : '');
-            btn.setAttribute('aria-label', 'Google 雲端：' + ({ ok: '已連線', bad: '連線中斷', off: '未登入', busy: '連線中' })[st]);
-            let dot = btn.querySelector('.cloud-st-dot');
-            if (dot) dot.textContent = st === 'ok' ? '✓' : '!';
-        });
-        if (tip) tip.style.display = st === 'bad' ? '' : 'none';
-        let box = document.getElementById('cloudSettingsBox');
-        if (!box) return;
-        let email = '';
-        try { email = localStorage.getItem(GOOGLE_EMAIL_KEY) || ''; } catch (e) {}
-        let html;
-        if (st === 'ok') {
-            let syncing = /同步中/.test(cloudLastText);
-            html = `<div class="row"><div><b>☁️ Google 雲端</b><small>${email ? '已連結：' + escapeHTML(email) : '已連結 Google 帳號'}</small></div><span class="st">${syncing ? '🔄 同步中…' : '✅ 同步中'}</span></div>
-                <div class="row" style="margin-top:10px"><small>題庫、測驗紀錄、大冒險進度會自動備份</small><button type="button" id="cloudAuthBtn" class="gbtn out" data-on-click='[["handleLogout",[]]]'>登出</button></div>`;
-        } else if (st === 'off') {
-            html = `<div class="row"><div><b>☁️ Google 雲端</b><small>💻 未登入（資料只存在這台裝置）</small></div><button type="button" id="cloudAuthBtn" class="gbtn" data-on-click='[["handleAuthClick",[]]]'>登入 Google 雲端${seen ? '' : '<span class="adv-alert" aria-label="尚未登入">!</span>'}</button></div>
-                <div class="note">💡 登入後，題庫、測驗紀錄和大冒險進度會自動同步到雲端，換手機也不會不見。</div>`;
-        } else {
-            html = `<div class="row"><div><b>☁️ Google 雲端</b><small>${email ? escapeHTML(email) + '｜' : ''}${st === 'busy' ? '重新連線中…' : '雲端連線已中斷'}</small></div><span class="st bad">${st === 'busy' ? '🔄 連線中' : '⚠️ 已中斷'}</span></div>
-                <div class="row" style="margin-top:10px"><button type="button" class="gbtn" data-on-click='[["cloudReconnect",[]]]'>重新連線</button><button type="button" id="cloudAuthBtn" class="gbtn out" data-on-click='[["handleLogout",[]]]'>登出</button></div>`;
-        }
-        box.innerHTML = html;
-        box.classList.toggle('hl', cloudHighlight && st !== 'ok');
-    }
-    function openCloudSettings() {
-        cloudHighlight = cloudState() === 'off';
-        openSystemSettingsModal();
-        cloudRender();
-        let m = document.querySelector('#systemSettingsModal .modal-content'); if (m) m.scrollTop = 0;
-    }
-    function cloudReconnect() {
-        if (getBrowserEnv().isInApp) { handleAuthClick(); return; }
-        trySilentReconnect(true);
-        cloudRender();
-    }
-    // 取得登入的 Google 帳號 email（只用來顯示在設定頁）
-    async function cloudFetchEmail() {
-        if (!accessToken) return;
-        try {
-            let r = await fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)', { headers: { 'Authorization': `Bearer ${accessToken}` } });
-            if (!r.ok) return;
-            let j = await r.json();
-            let em = j && j.user && j.user.emailAddress;
-            if (em) { localStorage.setItem(GOOGLE_EMAIL_KEY, em); cloudRender(); }
-        } catch (e) {}
-    }
-    function updateCloudStatusText(text) {
-        cloudLastText = String(text || '');
-        cloudRender();
-    }
-
-    function updateSliderProgress(slider) {
-        let min = parseFloat(slider.min) || 0;
-        let max = parseFloat(slider.max) || 100;
-        let val = parseFloat(slider.value);
-        let percentage = ((val - min) / (max - min)) * 100;
-        slider.style.background = `linear-gradient(to right, #818CF8 ${percentage}%, #E2E8F0 ${percentage}%)`;
-    }
-
-    function loadVoices() { voices = synth.getVoices(); }
-
-    function getLearningLanguage() {
-        let langSelect = document.getElementById('learningLanguage');
-        return langSelect ? langSelect.value : 'en';
-    }
-
-    // ═══════════ 多語言：題庫標籤 / 過濾 / 驗證 ═══════════
-    const LANG_NAME = { en: '英文', ko: '韓文' };
-    const OTHER_LANG = { en: 'ko', ko: 'en' };
-    const RE_LATIN  = /[A-Za-z]/;
-    const RE_HANGUL = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
-
-    function getLangName(lang) { return LANG_NAME[lang] || LANG_NAME.en; }
-
-    // 題庫的語言標籤；舊題庫沒有 lang 欄位時視為英文
-    function getListLang(list) { return (list && list.lang === 'ko') ? 'ko' : 'en'; }
-    function isListInCurrentLang(list) { return getListLang(list) === getLearningLanguage(); }
-
-    // 此題庫在「同語言題庫」中的順位（顯示用編號 1,2,3…）
-    function getLangSeq(idx) {
-        let lang = getListLang(wordLists[idx]), seq = 0;
-        for (let i = 0; i <= idx; i++) if (getListLang(wordLists[i]) === lang) seq++;
-        return seq;
-    }
-
-    function countListsByLang() {
-        let c = { en: 0, ko: 0 };
-        wordLists.forEach(l => { if (!isPackList(l)) c[getListLang(l)]++; });
-        return c;
-    }
-
-    // 題庫頁上方：英文 4 ｜ 韓文 6 ｜ 剩餘 0
-    function updateListQuotaBar() {
-        let bar = document.getElementById('listQuotaBar');
-        if (!bar) return;
-        let remain = Math.max(0, getMaxLists() - countUserLists());
-        bar.textContent = `還可新增 ${remain} 本`;
-    }
-
-    // 單字行的「外語部分」：第一個中文字之前的內容（與 parseWordsRaw 的切法一致）
-    // 中文意思從哪裡開始：第一個中文字；如果前面緊貼著數字（例如「5號」「10元」），數字也算中文意思的一部分
-    function meaningStart(s) {
-        let i = s.search(/[一-龥]/);
-        if (i <= 0) return i;
-        let j = i;
-        while (j > 0 && /[0-9０-９.,％%~～\-]/.test(s[j - 1])) j--;
-        if (j < i && (j === 0 || /\s/.test(s[j - 1]))) return j;   // 數字前面要是空白，才不會把英文單字裡的數字拆走
-        return i;
-    }
-    function getForeignPart(line) {
-        let t = line.trim();
-        if (t.startsWith('*')) t = t.substring(1).trim();
-        let i = meaningStart(t);
-        return (i !== -1 ? t.substring(0, i) : t).trim();
-    }
-
-    // 依題庫語言把內容分成「保留」與「語言不符、要刪除」的行
-    function splitLinesByLanguage(content, lang) {
-        let kept = [], removed = [];
-        (content || '').split('\n').forEach(line => {
-            if (!line.trim()) { kept.push(line); return; }
-            let foreign = getForeignPart(line);
-            let wrong = (lang === 'ko') ? RE_LATIN.test(foreign) : RE_HANGUL.test(foreign);
-            (wrong ? removed : kept).push(line);
-        });
-        return { kept, removed };
-    }
-
-    function formatRemovedLines(removed) {
-        let show = removed.slice(0, 8).map(l => '• ' + l.trim()).join('\n');
-        return removed.length > 8 ? show + `\n…等共 ${removed.length} 行` : show;
-    }
-
-    // 檢查並移除與題庫語言不符的單字（有刪除時彈出警告）；回傳刪除行數
-    function enforceListLanguage(idx) {
-        let list = wordLists[idx];
-        if (!list || !list.content) return 0;
-        let lang = getListLang(list);
-        let r = splitLinesByLanguage(list.content, lang);
-        if (r.removed.length === 0) return 0;
-        list.content = r.kept.join('\n');
-        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        triggerAutoSaveToCloud();
-        let ta = document.getElementById('editorWordList');
-        if (ta && lastSelectedList === idx && document.getElementById('editorDetailView').classList.contains('active')) {
-            ta.value = list.content;
-            handleEditorSearch();
-        }
-        alert(`⚠️ 「${list.title}」是${getLangName(lang)}題庫，偵測到 ${r.removed.length} 行含有${getLangName(OTHER_LANG[lang])}的單字，已自動刪除：\n\n${formatRemovedLines(r.removed)}`);
-        return r.removed.length;
-    }
-
-    // 編輯框離開焦點時檢查（打字中不干擾）
-    function enforceCurrentEditorLanguage() {
-        if (!wordLists[lastSelectedList]) return;
-        enforceListLanguage(lastSelectedList);   // 語言不符的單字
-        enforceListWordCap(lastSelectedList);    // 超過單字上限的部分
-    }
-
-    // 單字數超過上限時，移除超出的行（舊題庫本來就超過時，不會刪掉原有的，只是不能再增加）
-    function enforceListWordCap(idx) {
-        let list = wordLists[idx];
-        if (!list || !list.content) return 0;
-        let limit = Math.max(getListWordCap(list), idx === lastSelectedList ? editorOpenCount : 0);
-        let kept = [], n = 0, removed = 0;
-        list.content.split('\n').forEach(line => {
-            if (!line.trim()) { kept.push(line); return; }
-            if (n < limit) { kept.push(line); n++; } else { removed++; }
-        });
-        if (removed === 0) return 0;
-        list.content = kept.join('\n');
-        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        triggerAutoSaveToCloud();
-        let ta = document.getElementById('editorWordList');
-        if (ta && lastSelectedList === idx && document.getElementById('editorDetailView').classList.contains('active')) {
-            ta.value = list.content;
-            handleEditorSearch();
-        }
-        alert(`⚠️ 「${list.title}」最多只能放 ${limit} 個單字，超出的 ${removed} 行已移除。\n可到「雞塊補給站」兌換單字上限 +50。`);
-        return removed;
-    }
-
-    // 題庫選單：更換語言（內容中語言不符的行會被刪除，先確認）
-    function changeListLanguageFromMenu(idx) {
-        let list = wordLists[idx];
-        if (!list) return;
-        if (isPackList(list)) { alert('🔒 官方單字庫無法更換語言。'); return; }
-        let from = getListLang(list), to = OTHER_LANG[from];
-        let r = splitLinesByLanguage(list.content, to);
-        let msg = `要把「${list.title}」從${getLangName(from)}題庫改成${getLangName(to)}題庫嗎？`;
-        if (r.removed.length > 0) msg += `\n\n⚠️ 其中 ${r.removed.length} 行含有${getLangName(from)}單字，更換後會被刪除：\n${formatRemovedLines(r.removed)}`;
-        if (!confirm(msg)) return;
-        list.lang = to;
-        list.content = r.kept.join('\n');
-        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        triggerAutoSaveToCloud();
-        refreshAllListViews();
-        alert(`✅ 已改為${getLangName(to)}題庫。切換到「${getLangName(to)}」學習語言即可看到它。`);
-    }
-
-    // 歷史紀錄：舊紀錄沒有 lang 欄位時視為英文
-    function historyLang(h) {
-        if (!h) return 'en';
-        if ((h.results || []).some(r => RE_HANGUL.test(String(r.english || '')))) return 'ko';
-        if ((h.results || []).length && (h.results || []).every(r => !RE_HANGUL.test(String(r.english || '')))) return 'en';
-        return h.lang === 'ko' ? 'ko' : 'en';
-    }
-    function filterHistoryByLang(arr) {
-        let cur = getLearningLanguage();
-        return (arr || []).filter(h => historyLang(h) === cur);
-    }
-    // 每種語言各保留最近 10 筆
-    function trimHistoryPerLang(arr) {
-        let cnt = { en: 0, ko: 0 };
-        return (arr || []).filter(h => {
-            let l = historyLang(h);
-            return ++cnt[l] <= 10;
-        });
-    }
-
-    function refreshAllListViews() {
-        initPracticeCardGrid();
-        initExamCardGrid();
-        initFlashcardGrid();
-        initCardExamGrid();
-        initSpeakPracticeGrid();
-        initEditorListCards();
-    }
-
-    // 依學習語言切換介面文字（data-t-en / data-t-ko、data-p-en / data-p-ko）
-    function applyLanguageUI() {
-        let lang = getLearningLanguage();
-        document.querySelectorAll('[data-t-en]').forEach(el => { el.textContent = el.getAttribute('data-t-' + lang); });
-        document.querySelectorAll('[data-p-en]').forEach(el => { el.placeholder = el.getAttribute('data-p-' + lang); });
-        document.documentElement.setAttribute('data-learning-lang', lang);
-    }
-
-    // 設定中切換學習語言：只換「顯示哪個語言」，不動每日任務與雞塊
-    function onLearningLanguageChange() {
-        saveSystemSettings();
-        applyLanguageUI();
-        refreshAllListViews();
-        updateListQuotaBar();
-        try { updateChickenShopUI(); } catch (e) {}
-        let hm = document.getElementById('historyModal');
-        if (hm && hm.style.display === 'block') openHistoryModalContent();
-    }
-
-    function getSelectedVoiceForLearning() {
-        let lang = getLearningLanguage();
-        let langCode = (lang === 'ko') ? 'ko-KR' : 'en-US';
-        if (voices.length === 0) voices = synth.getVoices();
-        let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
-        return standardVoice || null;
-    }    
-
-    function getSelectedVoice(langCode) {
-        if (voices.length === 0) voices = synth.getVoices();
-        let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
-        return standardVoice || null;
-    }
-
-    // ── 重新整理後自動重新連線 ──
-    // Google 給的存取權杖只存在記憶體，重新整理就消失（也會在約 1 小時後過期）。
-    // 所以登入成功後在本機記一個「已連結」旗標；之後開啟網頁時用「不跳同意畫面」的方式悄悄重新取得權杖。
-    // 瀏覽器可能因為「不是使用者點擊」而擋掉彈出視窗，這時改成：使用者點畫面任何地方就自動重新連線。
-    const GOOGLE_LINKED_FLAG = 'chicky_google_linked';
-    let tokenRefreshTimer = null, reconnectClickArmed = false, autoReconnecting = false;
-
-    function armReconnectOnNextClick() {
-        if (reconnectClickArmed) return;
-        reconnectClickArmed = true;
-        updateCloudStatusText('🔑 雲端連線已中斷，點一下畫面任何地方即可重新連線');
-        const h = () => {
-            document.removeEventListener('pointerdown', h, true);
-            reconnectClickArmed = false;
-            trySilentReconnect(true);
-        };
-        document.addEventListener('pointerdown', h, true);
-    }
-
-    function trySilentReconnect(force) {
-        if (!tokenClient || localStorage.getItem(GOOGLE_LINKED_FLAG) !== '1') return;
-        if (accessToken && !force) return;
-        if (getBrowserEnv().isInApp) return;
-        autoReconnecting = true;
-        updateCloudStatusText('☁️ 重新連線 Google 雲端中...');
-        try { tokenClient.requestAccessToken({ prompt: '' }); }
-        catch (e) { autoReconnecting = false; armReconnectOnNextClick(); }
-    }
-
-    function scheduleTokenRefresh(expiresInSec) {
-        clearTimeout(tokenRefreshTimer);
-        let ms = Math.max(60, (Number(expiresInSec) || 3600) - 120) * 1000;   // 到期前 2 分鐘換新
-        tokenRefreshTimer = setTimeout(() => trySilentReconnect(true), ms);
-    }
-
-    // Google Drive 回 401 = 權杖已失效
-    function handleDriveUnauthorized() {
-        accessToken = null; isCloudSyncActive = false;
-        cloudRender();
-        if (localStorage.getItem(GOOGLE_LINKED_FLAG) === '1') armReconnectOnNextClick();
-        else updateCloudStatusText('💻 未登入');
-    }
-
-    let authBusyUntil = 0;
-    function handleAuthClick() {
-        const env = getBrowserEnv();
-        // Google 不允許在 App 內嵌瀏覽器登入（會出現 400 / 403），先請使用者改用 Safari
-        if (env.isInApp) { document.getElementById('inAppBrowserWarning').style.display = 'block'; return; }
-        if (!tokenClient) {
-            alert('⚠️ Google 登入元件還沒載入完成（可能是網路較慢或被擋住），請稍等幾秒或重新整理頁面後再試。');
-            return;
-        }
-        // 連點兩下會開出兩個登入視窗，其中一個容易出現 Google 的 400 錯誤
-        if (Date.now() < authBusyUntil) return;
-        authBusyUntil = Date.now() + 3000;
-        if (env.isIOS && env.standalone) updateCloudStatusText('⚠️ 主畫面模式的 Google 登入可能失敗，建議改用 Safari 開啟');
-        tokenClient.requestAccessToken({ prompt: 'consent' });
-    }
-    async function handleLogout() {
-        // 登出前先把還沒上傳的大冒險進度送上雲端
-        if (accessToken && advCloudReady && advDirty) { clearTimeout(advCloudTimer); try { await triggerAutoSaveToCloud(); } catch (e) {} }
-        localStorage.removeItem(GOOGLE_LINKED_FLAG);       // 不再自動重新連線
-        if (!advDirty) { try { localStorage.removeItem(ADV_STORE_G); } catch (e) {} }   // 已經上傳完：清掉本機暫存（下次登入從雲端載入，也避免換帳號時混在一起）
-        advSwitchStore();                                  // 換回離線進度（Google 進度留在雲端，不會被刪）
-        clearTimeout(tokenRefreshTimer);
-        if (!accessToken) {                                // 權杖已失效（等待重新連線）時，也要能登出
-            try { localStorage.removeItem(GOOGLE_EMAIL_KEY); } catch (e) {}
-            updateCloudStatusText(`💻 未登入`);
-            return;
-        }
-        const tokenToRevoke = accessToken;
-        // 登出只是「不再同步 Google 雲端」。錢包綁定不會解除，登出後的領取／購買仍進同一個錢包，不會回溯。
-        cloudWalletKey = null; walletBoundThisLogin = false;
-        // 先在本機完成登出（不依賴網路），再盡力通知 Google 撤銷授權
-        accessToken = null; isCloudSyncActive = false;
-        try { localStorage.removeItem(GOOGLE_EMAIL_KEY); } catch (e) {}
-        updateCloudStatusText(`💻 未登入`);
-        try { google.accounts.oauth2.revoke(tokenToRevoke, () => {}); } catch (e) { console.warn('撤銷授權失敗（本機已登出）', e); }
-        alert("🔒 已登出 Google 帳號。");
-    }
-
-    async function loadDataFromGoogleDrive() {
-        if (!accessToken) return;
-        updateCloudStatusText(`☁️ 雲端資料同步中...`);
-        let advNeedUpload = false;
-        try {
-            let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
-            let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            if (res.status === 401) { handleDriveUnauthorized(); return; }
-            let data = await res.json();
-            if (data.files && data.files.length > 0) {
-                let fileId = data.files[0].id;
-                let fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-                let cloudData = await fileRes.json();
-                if (cloudData) {
-                    if (isValidWalletKey(cloudData.walletKey)) cloudWalletKey = cloudData.walletKey;
-                    if (Array.isArray(cloudData.wordLists)) {
-                        wordLists = cloudData.wordLists;
-                        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-                        setTimeout(() => { try { ensureWordPacks(); } catch (e) {} }, 0);   // 雲端舊資料沒有免費單字庫：補上
-                        if (ensureListIds()) setTimeout(triggerAutoSaveToCloud, 0);   // 雲端舊資料沒有識別碼：補上並回傳
-                    }
-                    if (cloudData.examHistory) {
-                        examHistory = trimHistoryPerLang(cloudData.examHistory);
-                        localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
-                    }
-                    if (cloudData.cardExamHistory) {
-                        cardExamHistory = trimHistoryPerLang(cloudData.cardExamHistory);
-                        localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
-                    }
-                    if (cloudData.chickenData && cloudData.chickenData.tasks && cloudData.chickenData.lastDate === chickenData.lastDate) {
-                        // 雞塊數量與領取紀錄在後端；這裡只合併「今天的任務完成進度」
-                        CHICKEN_TASK_KEYS.forEach(k => {
-                            if (cloudData.chickenData.tasks[k] && cloudData.chickenData.tasks[k].done) chickenData.tasks[k].done = true;
-                        });
-                        saveChickenData();
-                    }
-                    initPracticeCardGrid();
-                    initExamCardGrid();
-                    initFlashcardGrid();
-                    initCardExamGrid();
-                    initSpeakPracticeGrid();
-                    initEditorListCards();
-                    initExamCheckboxes();
-                    // 大冒險進度：Google 進度和離線進度分開，這裡只處理 Google 進度
-                    advNeedUpload = advMergeFromCloud(cloudData.advData, isValidWalletKey(cloudData.walletKey) ? cloudData.walletKey : '');
-                } else advNeedUpload = advMergeFromCloud(null, '');
-            } else advNeedUpload = advMergeFromCloud(null, '');
-            advCloudReady = true;
-            // 登入後第一次同步：把這台裝置的錢包和 Google 雲端的錢包綁在一起
-            if (!walletBoundThisLogin) {
-                walletBoundThisLogin = true;
-                let usedKey = await bindWalletAfterLogin(cloudWalletKey);
-                if (usedKey) {
-                    let needUpload = usedKey !== cloudWalletKey;
-                    cloudWalletKey = usedKey;
-                    if (!advData.owner) { advData.owner = usedKey; advSave(); }
-                    if (needUpload) { advNeedUpload = false; await triggerAutoSaveToCloud(); }
-                } else {
-                    walletBoundThisLogin = false;   // 連線失敗：下次同步時再試
-                }
-            }
-            if (advNeedUpload) await triggerAutoSaveToCloud();
-            updateCloudStatusText(`✅ 已連結 Google 雲端`);
-        } catch (err) { 
-            console.error("雲端載入失敗", err); 
-            updateCloudStatusText(`⚠️ 雲端同步失敗`);
-        }
-    }
-
-    async function triggerAutoSaveToCloud() {
-        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        if (!accessToken || !isCloudSyncActive) return;
-        if (!advCloudReady) return;      // 雲端資料還沒載入完就上傳，會蓋掉雲端的大冒險進度
-        updateCloudStatusText(`☁️ 上傳備份中...`);
-        const tok = accessToken, sentTs = advData.ts;
-        try {
-            let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
-            let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
-                headers: { 'Authorization': `Bearer ${tok}` }
-            });
-            if (res.status === 401) { handleDriveUnauthorized(); return; }
-            let data = await res.json();
-            let fileId = (data.files && data.files.length > 0) ? data.files[0].id : null;
-            // 另一台裝置如果存了比較新的大冒險進度，先採用它，避免用舊進度蓋掉
-            if (fileId && advIsGoogleMode()) {
-                try {
-                    let cr = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { 'Authorization': `Bearer ${tok}` } });
-                    let cj = await cr.json();
-                    if (cj && cj.advData && (parseInt(cj.advData.ts) || 0) > advData.ts) advMergeFromCloud(cj.advData, '');
-                } catch (e) { /* 讀不到就照原本流程上傳 */ }
-            }
-            let cloudData = { 
-                activeDeviceId: myDeviceId, 
-                wordLists, 
-                examHistory: trimHistoryPerLang(examHistory), 
-                cardExamHistory: trimHistoryPerLang(cardExamHistory), 
-                walletKey: cloudWalletKey || undefined,
-                chickenData,
-                advData: advIsGoogleMode() ? advData : undefined,     // 只上傳 Google 進度；離線進度不會上傳
-                appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}') 
-            };
-            let fileContent = JSON.stringify(cloudData);
-
-            let wr;
-            if (fileId) {
-                wr = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-                    method: 'PATCH',
-                    headers: { 'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json' },
-                    body: fileContent
-                });
-            } else {
-                let metadata = { name: FILENAME, parents: ['appDataFolder'] };
-                let form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', new Blob([fileContent], { type: 'application/json' }));
-                wr = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST', headers: { 'Authorization': `Bearer ${tok}` }, body: form
-                });
-            }
-            if (wr && wr.ok === false) throw new Error('上傳失敗 ' + wr.status);
-            if (advIsGoogleMode() && advData.ts === sentTs) advDirty = false;
-            updateCloudStatusText(`✅ 已連結 Google 雲端`);
-        } catch(e) { 
-            console.error("雲端存檔失敗", e); 
-            updateCloudStatusText(`⚠️ 雲端同步失敗`);
-        }
-    }
-
-    function switchView(viewId) {
-        // 戰鬥中打字：鍵盤蓋在畫面上，不要把整個遊戲畫面往上推
-        try { if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = (viewId === 'adventureBattleView'); } catch (e) {}
-        document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
-        document.getElementById(viewId).classList.add('active');
-        if (viewId === 'homeDashboardView') { try { homeAdvBadge(); } catch (e) {} }
-        try { syncHomeChrome(viewId); } catch (e) {}
-        try { setTimeout(updateStickyBar, 0); } catch (e) {}
-        
-        let wrapper = document.getElementById('mainScaleWrapper');
-        if (['practiceView', 'examView', 'flashcardPlayView', 'flashcardSetupView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'speakPracticePlayView', 'homeDashboardView', 'editorListView', 'editorDetailView', 'historyView'].includes(viewId)) {
-            wrapper.className = 'scale-wrapper-practice';
-        } else {
-            wrapper.className = 'scale-wrapper';
-        }
-    }
-
-    function goToPracticePage() {
-        initPracticeCardGrid();
-        switchView('practiceView');
-    }
-
-    function goToFlashcardPage() {
-        initFlashcardGrid();
-        switchView('flashcardSetupView');
-    }
-
-    function goToCardExamPage() {
-        initCardExamGrid();
-        initSpeakPracticeGrid();
-        switchView('cardExamSetupView');
-    }
-
-    function goToExamPage() {
-        initExamCardGrid();
-        switchView('examView');
-    }
-
-    // 先用手機裡的資料馬上顯示，雲端在背景同步，同步完再更新畫面（30 秒內不重複同步）
-    let lastDriveSync = 0;
-    function syncDriveInBackground(after) {
-        if (!(accessToken && isCloudSyncActive) || Date.now() - lastDriveSync < 30000) return;
-        lastDriveSync = Date.now();
-        showSyncChick(true);
-        Promise.resolve().then(() => loadDataFromGoogleDrive()).catch(() => {}).finally(() => { showSyncChick(false); try { after && after(); } catch (e) {} });
-    }
-    function showSyncChick(on) {
-        let el = document.getElementById('syncChick');
-        if (!el) {
-            if (!on) return;
-            document.body.insertAdjacentHTML('beforeend', `<div id="syncChick" class="sync-chick" role="status"><span class="ck">${advChickenSVG()}</span>雲端同步中…</div>`);
-            el = document.getElementById('syncChick');
-        }
-        el.classList.toggle('show', !!on);
-    }
-    function goToEditorPage() {
-        initEditorListCards();
-        switchView('editorListView');
-        syncDriveInBackground(() => { if (document.getElementById('editorListView').classList.contains('active')) initEditorListCards(); });
-    }
-
-    // ── 首頁分頁：練習／測驗／題庫／樂園（手機在底部、電腦在上方）──
-    let homeTab = 'practice';
-    const HOME_TAB_VIEWS = ['homeDashboardView', 'editorListView'];
-    function setHomeTab(t) {
-        homeTab = ['practice', 'exam', 'lists', 'fun'].includes(t) ? t : 'practice';
-        if (homeTab === 'lists') { goToEditorPage(); return; }
-        if (!document.getElementById('homeDashboardView').classList.contains('active')) switchView('homeDashboardView');
-        else syncHomeChrome('homeDashboardView');
-        window.scrollTo(0, 0);
-    }
-    function syncHomeChrome(viewId) {
-        let on = HOME_TAB_VIEWS.includes(viewId);
-        if (viewId === 'editorListView') homeTab = 'lists';
-        else if (viewId === 'homeDashboardView' && homeTab === 'lists') homeTab = 'practice';
-        let chrome = document.getElementById('appChrome');
-        if (chrome) chrome.style.display = on ? '' : 'none';
-        document.body.classList.toggle('home-tabbed', on);
-        let bar = document.getElementById('acTabs');      // 手機：卡片往下延伸到底部分頁列
-        if (on && bar) requestAnimationFrame(() => { if (bar.offsetHeight) document.documentElement.style.setProperty('--tabh', bar.offsetHeight + 'px'); });
-        document.querySelectorAll('#acTabs .ac-tab').forEach(b => { let me = b.getAttribute('data-tab') === homeTab; b.classList.toggle('on', me); b.setAttribute('aria-selected', me ? 'true' : 'false'); });
-        document.querySelectorAll('#acMascot .m').forEach(m => m.classList.toggle('on', m.getAttribute('data-tab') === homeTab));
-        document.querySelectorAll('#homeDashboardView .hm-pane').forEach(p => p.style.display = p.getAttribute('data-pane') === homeTab ? '' : 'none');
-        if (on) renderHomeToday();
-    }
-    setTimeout(() => { try { let v = document.querySelector('.app-view.active'); syncHomeChrome(v ? v.id : 'homeDashboardView'); } catch (e) {} }, 0);
-    // ── 有返回鍵的頁面：往下捲時，頂部縮成和卡片同寬的細長條（返回鍵＋標題）──
-    function stickyBarEl() {
-        let el = document.getElementById('stickyNavBar');
-        if (!el) {
-            document.body.insertAdjacentHTML('beforeend', `<div id="stickyNavBar" aria-hidden="true"><button type="button" class="sb-back" aria-label="返回"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><b class="sb-title"></b></div>`);
-            el = document.getElementById('stickyNavBar');
-            el.querySelector('.sb-back').addEventListener('click', () => { let b = activeBackBtn(); if (b) b.click(); });
-        }
-        return el;
-    }
-    function activeBackBtn() {
-        let v = document.querySelector('.app-view.active');
-        if (!v) return null;
-        return [...v.querySelectorAll('.top-nav-bar .back-home-btn, .adv-topbar .back-home-btn')].find(b => b.offsetParent !== null) || null;
-    }
-    function updateStickyBar() {
-        let el = stickyBarEl();
-        let v = document.querySelector('.app-view.active'), nav = v && v.querySelector('.top-nav-bar');
-        let back = activeBackBtn();
-        let show = !!(nav && back && !HOME_TAB_VIEWS.includes(v.id) && v.id !== 'adventureBattleView' && nav.getBoundingClientRect().bottom < 0);
-        if (show) {
-            let card = document.querySelector('.paper-card-container').getBoundingClientRect();
-            el.style.left = card.left + 'px'; el.style.width = card.width + 'px';
-            let t = nav.querySelector('.current-mode-indicator');
-            el.querySelector('.sb-title').textContent = t ? t.textContent.replace(/^[^\w一-鿿가-힯]+/, '').trim() : '';
-        }
-        el.classList.toggle('show', show);
-    }
-    window.addEventListener('scroll', () => { try { updateStickyBar(); } catch (e) {} }, { passive: true });
-    window.addEventListener('resize', () => { try { updateStickyBar(); } catch (e) {} });
-    // ── 手機的返回手勢／Android 返回鍵：回到 App 的上一頁，而不是離開網頁 ──
-    let backGuard = false;
-    function armBackGuard() {
-        if (backGuard) return;
-        try { history.pushState({ chicky: 1 }, ''); backGuard = true; } catch (e) {}
-    }
-    window.addEventListener('popstate', () => {
-        backGuard = false;
-        let v = document.querySelector('.app-view.active');
-        let openModal = [...document.querySelectorAll('.modal')].find(m => m.style.display === 'block');
-        if (openModal) {
-            let x = openModal.querySelector('.close-modal, .modal-back-btn');
-            if (x) x.click(); else openModal.style.display = 'none';
-            armBackGuard(); return;
-        }
-        if (v && !HOME_TAB_VIEWS.includes(v.id)) {
-            let b = activeBackBtn();
-            if (b) b.click();
-            armBackGuard(); return;
-        }
-        if (homeTab !== 'practice') { setHomeTab('practice'); armBackGuard(); return; }
-        // 已經在首頁「練習」：再按一次返回就照瀏覽器原本的行為
-    });
-    document.addEventListener('click', () => { if (!backGuard) armBackGuard(); }, true);
-
-    // 練習分頁最上面：今日任務
-    function renderHomeToday() {
-        if (typeof chickenData === 'undefined') return;
-        try {   // 右上角的雞塊：外圈是今日任務進度，有可以領的就亮紅點
-            let n0 = CHICKEN_TASK_KEYS.length, d0 = CHICKEN_TASK_KEYS.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done).length;
-            let ring = document.getElementById('acTaskRing'), dot = document.getElementById('acTaskDot');
-            if (ring) ring.setAttribute('stroke-dasharray', `${(d0 / n0 * 106.8).toFixed(1)} 106.8`);
-            if (dot) dot.style.display = CHICKEN_TASK_KEYS.some(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)) ? '' : 'none';
-        } catch (e) {}
-        let box = document.getElementById('homeToday');
-        if (!box) return;
-        let keys = CHICKEN_TASK_KEYS, n = keys.length;
-        let done = keys.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done).length;
-        let unclaimed = keys.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)).length;
-        let sub = unclaimed ? `有 ${unclaimed} 項可以領雞塊！` : done >= n ? '今天的任務全部完成了！' : `再完成 ${n - done} 項，就能多領雞塊`;
-        box.innerHTML = `<div class="tx"><b>今日任務 ${done} / ${n}</b><small>${sub}</small><div class="bar"><i style="width:${(done / n * 100).toFixed(0)}%"></i></div></div>
-            <button type="button" class="go${unclaimed ? ' hot' : ''}" data-on-click='[["openChickenRewardModal",[]]]'>${unclaimed ? '領取' : '查看'}</button>`;
-    }
-
-    function backToHome() {
-        stopDictation();
-        stopCardExamSession();
-        stopSpeakPracticeSession();
-        advAbort();
-        releaseWakeLock();
-        switchView('homeDashboardView');
-    }
-
-    function backToHomeFromExam() {
-        if (isExamRunning) {
-            alert("⚠️ 目前正在考試中，請先結束考試！");
-            return;
-        }
-        stopExamMode();
-        releaseWakeLock();
-        switchView('homeDashboardView');
-    }
-
-    // ── 題庫清單：上面「精選／自訂」切換，下面精簡清單 ──
-    let listSeg = 'custom';
-    function setListSeg(k) { listSeg = k === 'pack' ? 'pack' : 'custom'; initEditorListCards(); }
-    function initEditorListCards() {
-        let container = document.getElementById('editorListCardContainer');
-        if (!container) return;
-        document.querySelectorAll('body > .dropdown-menu').forEach(m => m.remove()); // 清掉搬到最外層的舊選單
-        updateListQuotaBar();
-        let cur = getLearningLanguage();
-        let items = wordLists.map((l, idx) => ({ l, idx })).filter(x => getListLang(x.l) === cur);
-        let packs = items.filter(x => isPackList(x.l)), mine = items.filter(x => !isPackList(x.l));
-        let seg = document.getElementById('listSeg');
-        if (seg) seg.innerHTML = `<button type="button" class="${listSeg === 'pack' ? 'on' : ''}" data-on-click='[["setListSeg",["pack"]]]'>精選單字庫<small>${packs.length}</small></button><button type="button" class="${listSeg === 'custom' ? 'on' : ''}" data-on-click='[["setListSeg",["custom"]]]'>自訂單字庫<small>${mine.length}</small></button>`;
-        let bar = document.getElementById('listBar');
-        if (bar) bar.style.display = listSeg === 'custom' ? '' : 'none';
-        let tag = lang => `<span class="lang-tag lang-tag-${lang}">${getLangName(lang)}</span>`;
-        let html;
-        if (listSeg === 'pack') {
-            html = packs.map(({ l, idx }) => `<div class="lst-row" data-on-click='[["openEditorDetail",[${idx}]]]'><span class="lst-no pk">${packIconHTML(l.pack, 30)}</span><span class="lst-tx"><b>${escapeHTML(l.title)}</b> ${tag(getListLang(l))}<small>${getListWordCount(l.content)} 字</small></span><span class="lst-ar">›</span></div>`).join('')
-                + `<div class="lst-row lst-shop" data-on-click='[["openChickenShopModal",[]]]'><span class="lst-no">🛒</span><span class="lst-tx"><b>到雞塊補給站看更多</b></span><span class="lst-ar">›</span></div>`;
-            container.classList.remove('two');
-        } else if (!mine.length) {
-            html = `<div class="lst-empty">目前還沒有${getLangName(cur)}題庫，按右上角「＋ 新增」開始建立</div>`;
-            container.classList.remove('two');
-        } else {
-            html = mine.map(({ l, idx }, k) => {
-                let count = getListWordCount(l.content), cap = getListWordCap(l);
-                return `<div class="lst-row" data-on-click='[["openEditorDetail",[${idx}]]]'><span class="lst-no">${k + 1}</span><span class="lst-tx"><b>${escapeHTML(l.title)}</b> ${tag(getListLang(l))}<small><span class="${count >= cap * 0.9 ? 'warn' : ''}">${count}</span> / ${cap} 字</small></span>
-                    <span class="lst-menu"><button class="list-card-menu-btn" data-on-click='[["$stop",[]],["toggleDropdownMenu",[${idx},"$event"]]]'>⋮</button>
-                        <div class="dropdown-menu" id="dropdownMenu_${idx}">
-                            <button class="dropdown-item" data-on-click='[["$stop",[]],["renameListTitleFromMenu",[${idx}]]]'>修改</button>
-                            <button class="dropdown-item" data-on-click='[["$stop",[]],["changeListLanguageFromMenu",[${idx}]]]'>更換語言</button>
-                            <button class="dropdown-item" data-on-click='[["$stop",[]],["clearListContentFromMenu",[${idx}]]]'>清空</button>
-                            <button class="dropdown-item danger" data-on-click='[["$stop",[]],["deleteListFromMenu",[${idx}]]]'>刪除</button>
-                        </div></span></div>`;
-            }).join('');
-            container.classList.add('two');
-        }
-        container.innerHTML = html;
-    }
-
-    function toggleDropdownMenu(idx, event) {
-        document.querySelectorAll('.dropdown-menu').forEach(m => {
-            if (m.id !== `dropdownMenu_${idx}`) m.classList.remove('show');
-            });
-
-        let menu = document.getElementById(`dropdownMenu_${idx}`);
-        if (!menu) return;
-
-        if (menu.classList.contains('show')) {
-            menu.classList.remove('show');
-            return;
-        }
-
-        let btnRect = event.currentTarget.getBoundingClientRect();
-
-        // 搬到 <body> 最外層：避開外層容器的 overflow 裁切，以及桌面版整體放大(transform)造成的定位錯誤
-        if (menu.parentElement !== document.body) document.body.appendChild(menu);
-        let wrap = document.querySelector('.scale-wrapper');
-        let scale = (wrap && wrap.offsetWidth) ? (wrap.getBoundingClientRect().width / wrap.offsetWidth) : 1;
-        menu.style.transformOrigin = 'top left';
-        menu.style.transform = (Math.abs(scale - 1) > 0.01) ? `scale(${scale})` : '';
-
-        menu.classList.remove('drop-up');
-        menu.classList.add('show');                       // 先顯示才量得到選單大小
-
-        let menuH = menu.offsetHeight * scale, menuW = menu.offsetWidth * scale, gap = 4, edge = 8;
-        let spaceBelow = window.innerHeight - btnRect.bottom;
-        let spaceAbove = btnRect.top;
-        let top;
-        if (spaceBelow >= menuH + gap + edge || spaceBelow >= spaceAbove) {
-            top = btnRect.bottom + gap;                   // 下方放得下（或下方空間較大）→ 往下展開
-        } else {
-            top = btnRect.top - menuH - gap;              // 否則往上展開
-        }
-        top = Math.max(edge, Math.min(top, window.innerHeight - menuH - edge));
-        let left = Math.max(edge, Math.min(btnRect.right - menuW, window.innerWidth - menuW - edge));
-        menu.style.top = top + 'px';
-        menu.style.left = left + 'px';
-    }
-
-    // 選單是固定定位，捲動或改變視窗大小時直接關閉，避免懸在錯的位置
-    function closeAllDropdownMenus() {
-        document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
-    }
-    document.addEventListener('scroll', closeAllDropdownMenus, true);
-    window.addEventListener('resize', closeAllDropdownMenus);
-
-    function openEditorDetail(idx) {
-        lastSelectedList = idx;
-        localStorage.setItem('dictation_last_selected_list', idx);
-        let list = wordLists[idx];
-        if (!list) return;
-
-        let pack = isPackList(list);
-        let ti = document.getElementById('editorDetailTitleIndicator');
-        if (pack) ti.innerHTML = `${packIconHTML(list.pack, 18)} ${escapeHTML(list.title)}`; else ti.innerText = `📁 ${list.title}`;
-        editorOpenCount = getListWordCount(list.content);
-        document.getElementById('editorWordList').value = list.content || '';
-        document.getElementById('wordSearchInput').value = '';
-        document.getElementById('searchNotFoundTip').style.display = 'none';
-        document.getElementById('editorDetailView').classList.toggle('ed-pack', pack);   // 精選單字庫：只能加星號
-        if (pack) renderPackStarList();
-        else document.getElementById('packStarList').innerHTML = '';
-        handleEditorSearch();
-        switchView('editorDetailView');
-    }
-
-    function backToListFromDetail() {
-        enforceCurrentEditorLanguage();
-        initEditorListCards();
-        switchView('editorListView');
-    }
-
-    function renameListTitleFromMenu(idx) {
-        let list = wordLists[idx];
-        let newTitle = prompt("請輸入新的題庫標題：", list.title);
-        if (newTitle && newTitle.trim()) {
-            list.title = newTitle.trim();
-            triggerAutoSaveToCloud();
-            initEditorListCards();
-            alert("✅ 標題修改成功並已自動儲存至本機與雲端！");
-        }
-    }
-
-    function clearListContentFromMenu(idx) {
-        if (!wordLists[idx]) return;
-        if (isPackList(wordLists[idx])) { alert('🔒 官方單字庫無法清空。'); return; }
-        if (confirm(`確定要清空「${wordLists[idx].title}」裡的所有單字嗎？`)) {
-            wordLists[idx].content = "";
-            triggerAutoSaveToCloud();
-            initEditorListCards();
-            alert("🧹 題庫已清空並自動儲存！");
-        }
-    }
-
-    function deleteListFromMenu(idx) {
-        if (!wordLists[idx]) return;
-        if (isPackList(wordLists[idx])) { alert('🔒 官方單字庫無法刪除。'); return; }
-        if (countUserLists() <= 1) {
-            alert("⚠️ 至少必須保留一組題庫本！");
-            return;
-        }
-        let upgraded = Number((wallet.listCaps || {})[wordLists[idx].id]) || 0;
-        let upgradeWarn = upgraded > 0 ? `\n\n⚠️ 這本題庫已兌換 ${upgraded * WORD_CAP_STEP} 字的單字上限，刪除後不會退還雞塊。` : '';
-        if (confirm(`確定要刪除題庫「${wordLists[idx].title}」嗎？${upgradeWarn}`)) {
-            wordLists.splice(idx, 1);
-            triggerAutoSaveToCloud();
-            initEditorListCards();
-            refreshAllListViews();
-            alert("🗑️ 題庫已刪除並自動儲存！");
-        }
-    }
-
-    function addNewWordList() {
-        let curLang = getLearningLanguage();
-        if (countUserLists() >= getMaxLists()) {
-            let c = countListsByLang();
-            alert(`⚠️ 目前題庫數量已達上限 ${getMaxLists()} 組！（英文 ${c.en} ｜ 韓文 ${c.ko}）\n可刪除不用的題庫，或到「雞塊補給站」兌換題庫數量 +1。`);
-            return;
-        }
-        let title = prompt(`請輸入新${getLangName(curLang)}題庫本標題：`, `unit ${countListsByLang()[curLang] + 1}`);
-        if (!title || !title.trim()) return;
-
-        wordLists.push({ id: newListId(), title: title.trim(), content: "", createdAt: Date.now(), lang: curLang });
-        triggerAutoSaveToCloud();
-        initEditorListCards();
-        initPracticeCardGrid();
-        initExamCardGrid();
-        initFlashcardGrid();
-        initCardExamGrid();
-        initSpeakPracticeGrid();
-        alert(`✅ 已新增${getLangName(curLang)}題庫！`);
-    }
-
-    function handleEditorTextareaInput() {
-        let idx = lastSelectedList;
-        if (!wordLists[idx] || isPackList(wordLists[idx])) return;
-        let text = document.getElementById('editorWordList').value;
-        wordLists[idx].content = text;
-        triggerAutoSaveToCloud();
-    }
-
-    function getListWordCount(content) {
-        if (!content) return 0;
-        return content.split('\n').map(l => l.trim()).filter(l => l.length > 0).length;
-    }
-
-    function initPracticeCardGrid() {
-        let grid = document.getElementById('cardGrid');
-        if (!grid) return;
-        grid.innerHTML = '';
-        
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
-        let savedPracticeSelected = JSON.parse(localStorage.getItem('dictation_practice_selected')) || [0];
-        
-        activeLists.forEach((list, displayIdx) => {
-            let count = getListWordCount(list.content);
-            let isSelected = savedPracticeSelected.includes(list.originalIdx) ? 'selected' : '';
-            let cardHtml = pickRowHTML(list, count, isSelected, 'togglePracticeCard');
-            grid.insertAdjacentHTML('beforeend', cardHtml);
-        });
-        loadPracticeSelectedContent();
-    }
-
-    // ── 選題庫頁共用：每一列、精選／自訂切換、已選幾本、全選 ──
-    function pickRowHTML(list, count, isSelected, fn) {
-        let pack = isPackList(list);
-        return `<div class="select-card pk-row ${isSelected}" data-kind="${pack ? 'pack' : 'custom'}" data-on-click='[["${fn}",[${list.originalIdx},"$this"]]]'>
-                    <div class="select-card-info">
-                        <div class="select-card-title">${pack ? packIconHTML(list.pack, 20) + ' ' : ''}${escapeHTML(list.title)}</div>
-                        <div class="select-card-count">${count} 字</div>
+            </div>
+            <div class="hm-pane" data-pane="exam">
+                <div class="hm-title" data-t-en="英文測驗" data-t-ko="韓文測驗">英文測驗</div>
+                <div class="hm-list">
+                        <div class="list-item" data-on-click='[["goToExamPage",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">聽力測驗</div>
+                                <div class="item-desc">聽音打字，檢驗成效</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+
+                        <div class="list-item" data-on-click='[["goToCardExamPage",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">字卡測驗</div>
+                                <div class="item-desc">翻字卡自我評量</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+
+                        <div class="list-item" data-on-click='[["openHistoryModal",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">測驗紀錄</div>
+                                <div class="item-desc">看成績和常錯的單字</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
                     </div>
-                    <div class="checkmark-badge">✓</div>
-                </div>`;
-    }
-    let pickSeg = {};
-    const PICK_STATS = { cardGrid: 'practiceStatsText', flashcardGrid: 'flashcardStatsText', cardExamGrid: 'cardExamStatsText', speakPracticeGrid: 'speakPracticeStatsText', examCardGrid: 'examStatsText' };
-    function pickFns(gid) {
-        return ({ cardGrid: [savePracticeSelectionState, loadPracticeSelectedContent], flashcardGrid: [saveFlashcardSelectionState, loadFlashcardSelectedContent],
-                  cardExamGrid: [saveCardExamSelectionState, loadCardExamSelectedContent], speakPracticeGrid: [saveSpeakPracticeSelectionState, loadSpeakPracticeSelectedContent],
-                  examCardGrid: [saveExamSelectionState, loadExamSelectedContent], advGrid: [advSyncSelFromGrid, advRenderLevelPage] })[gid];
-    }
-    // 大冒險：依畫面上勾選的列更新 advSelected（其他語言的題庫保留原本的選擇）
-    function advSyncSelFromGrid() {
-        let grid = document.getElementById('advGrid');
-        if (!grid) return;
-        let inGrid = [], on = [];
-        grid.querySelectorAll('.select-card').forEach(c => {
-            let m = (c.getAttribute('data-on-click') || '').match(/"toggleAdvCard",\[(\d+),/);
-            if (!m) return;
-            let i = parseInt(m[1]); inGrid.push(i); if (c.classList.contains('selected')) on.push(i);
-        });
-        advSelected = advSelected.filter(i => !inGrid.includes(i)).concat(on);
-        try { localStorage.setItem(ADV_SEL_KEY, JSON.stringify(advSelected)); } catch (e) {}
-    }
-    function setPickSummary(statsId, gid, words, stars) {
-        let grid = document.getElementById(gid);
-        if (!grid) return;
-        let rows = [...grid.querySelectorAll('.select-card')];
-        let cnt = k => rows.filter(r => r.dataset.kind === k).length;
-        let sel = k => rows.filter(r => r.dataset.kind === k && r.classList.contains('selected')).length;
-        let cur = pickSeg[gid] || (cnt('custom') ? 'custom' : 'pack');
-        grid.classList.toggle('seg-pack', cur === 'pack');
-        grid.classList.toggle('seg-custom', cur === 'custom');
-        rows.filter(r => r.dataset.kind === cur).forEach((r, i) => { r.classList.toggle('pk-first', i === 0); r.classList.toggle('pk-odd', i % 2 === 0); r.classList.toggle('pk-r2', i >= 2); });
-        let seg = document.querySelector(`.pk-seg[data-grid="${gid}"]`);
-        let badge = n => n ? `<em>已選 ${n}</em>` : '';
-        if (seg) seg.innerHTML = `<button type="button" class="${cur === 'pack' ? 'on' : ''}" data-on-click='[["setPickSeg",["${gid}","pack"]]]'>精選單字庫${badge(sel('pack'))}</button><button type="button" class="${cur === 'custom' ? 'on' : ''}" data-on-click='[["setPickSeg",["${gid}","custom"]]]'>自訂單字庫${badge(sel('custom'))}</button>`;
-        let empty = grid.querySelector('.pk-empty');
-        if (!cnt(cur)) { if (!empty) grid.insertAdjacentHTML('beforeend', '<div class="pk-empty"></div>'); grid.querySelector('.pk-empty').textContent = cur === 'pack' ? '還沒有精選單字庫' : '還沒有放了單字的自訂題庫'; }
-        else if (empty) empty.remove();
-        let st = document.getElementById(statsId);
-        if (st) st.innerHTML = `已選 <b>${sel('pack') + sel('custom')} 本</b>・<b>${words}</b> 字・星號 <b>${stars}</b> 個`;
-    }
-    function setPickSeg(gid, k) {
-        pickSeg[gid] = k === 'pack' ? 'pack' : 'custom';
-        let f = pickFns(gid); if (f) f[1]();
-    }
-    function pickSelectAll(gid) {
-        let grid = document.getElementById(gid), f = pickFns(gid);
-        if (!grid || !f) return;
-        let cur = grid.classList.contains('seg-pack') ? 'pack' : 'custom';
-        let rows = [...grid.querySelectorAll(`.select-card[data-kind="${cur}"]`)];
-        let all = rows.length && rows.every(r => r.classList.contains('selected'));
-        rows.forEach(r => r.classList.toggle('selected', !all));
-        f[0](); f[1]();
-    }
-
-    function togglePracticeCard(originalIdx, cardEl) {
-        cardEl.classList.toggle('selected');
-        savePracticeSelectionState();
-        loadPracticeSelectedContent();
-    }
-
-    function savePracticeSelectionState() {
-        let selectedIndices = [];
-        document.querySelectorAll('#cardGrid .select-card').forEach((card) => {
-            if (card.classList.contains('selected')) {
-                let onclickAttr = card.getAttribute('data-on-click');
-                let match = onclickAttr.match(/"togglePracticeCard",\[(\d+),/);
-                if (match) selectedIndices.push(parseInt(match[1]));
-            }
-        });
-        localStorage.setItem('dictation_practice_selected', JSON.stringify(selectedIndices));
-    }
-
-    function loadPracticeSelectedContent() {
-        let combinedText = '';
-        let selectedCards = document.querySelectorAll('#cardGrid .select-card.selected');
-        
-        selectedCards.forEach(card => {
-            let onclickAttr = card.getAttribute('data-on-click');
-            let match = onclickAttr.match(/"togglePracticeCard",\[(\d+),/);
-            if (match) {
-                let idx = parseInt(match[1]);
-                if (wordLists[idx] && wordLists[idx].content) {
-                    combinedText += wordLists[idx].content + '\n';
-                }
-            }
-        });
-
-        document.getElementById('wordList').value = combinedText.trim();
-        
-        let allWords = parseWordsRaw(combinedText);
-        let totalWords = allWords.length;
-        let starCount = allWords.filter(w => w.starred).length;
-        setPickSummary('practiceStatsText', 'cardGrid', totalWords, starCount);
-    }
-
-    function initFlashcardGrid() {
-        let grid = document.getElementById('flashcardGrid');
-        if (!grid) return;
-        grid.innerHTML = '';
-        
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
-        let savedSelected = JSON.parse(localStorage.getItem('dictation_flashcard_selected')) || [0];
-        
-        activeLists.forEach((list, displayIdx) => {
-            let count = getListWordCount(list.content);
-            let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
-            let cardHtml = pickRowHTML(list, count, isSelected, 'toggleFlashcardCard');
-            grid.insertAdjacentHTML('beforeend', cardHtml);
-        });
-        loadFlashcardSelectedContent();
-    }
-
-    function toggleFlashcardCard(originalIdx, cardEl) {
-        cardEl.classList.toggle('selected');
-        saveFlashcardSelectionState();
-        loadFlashcardSelectedContent();
-    }
-
-    function saveFlashcardSelectionState() {
-        let selectedIndices = [];
-        document.querySelectorAll('#flashcardGrid .select-card').forEach((card) => {
-            if (card.classList.contains('selected')) {
-                let onclickAttr = card.getAttribute('data-on-click');
-                let match = onclickAttr.match(/"toggleFlashcardCard",\[(\d+),/);
-                if (match) selectedIndices.push(parseInt(match[1]));
-            }
-        });
-        localStorage.setItem('dictation_flashcard_selected', JSON.stringify(selectedIndices));
-    }
-
-    function loadFlashcardSelectedContent() {
-        let combinedText = '';
-        let selectedCards = document.querySelectorAll('#flashcardGrid .select-card.selected');
-        
-        selectedCards.forEach(card => {
-            let onclickAttr = card.getAttribute('data-on-click');
-            let match = onclickAttr.match(/"toggleFlashcardCard",\[(\d+),/);
-            if (match) {
-                let idx = parseInt(match[1]);
-                if (wordLists[idx] && wordLists[idx].content) {
-                    combinedText += wordLists[idx].content + '\n';
-                }
-            }
-        });
-
-        document.getElementById('flashcardPreviewTextarea').value = combinedText.trim();
-        let allWords = parseWordsRaw(combinedText);
-        let starCount = allWords.filter(w => w.starred).length;
-        setPickSummary('flashcardStatsText', 'flashcardGrid', allWords.length, starCount);
-    }
-
-    function toggleFlashcardPreview() {
-        let container = document.getElementById('fcPreviewContainer');
-        let btn = document.getElementById('fcCollapseBtn');
-        container.classList.toggle('collapsed');
-        btn.classList.toggle('collapsed');
-        saveCollapseState('flashcard', container.classList.contains('collapsed'));
-    }
-
-    function sortFlashcardPreview(sortType) {
-        if (!sortType) return;
-        let textarea = document.getElementById('flashcardPreviewTextarea');
-        let words = parseWordsRaw(textarea.value);
-        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
-        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
-        textarea.value = words.map(w => w.rawLine).join('\n');
-        setTimeout(() => document.getElementById('flashcardSortSelector').selectedIndex = 0, 200);
-    }
-
-    function openFlashcardSettingsModal() { document.getElementById('flashcardSettingsModal').style.display = 'block'; }
-    function closeFlashcardSettingsModal() { document.getElementById('flashcardSettingsModal').style.display = 'none'; }
-    
-    function saveFlashcardSettings() {
-        let settings = {
-            fcOnlyStarred: document.getElementById('fcSettingStarred').checked,
-            fcEnableShuffle: document.getElementById('fcSettingShuffle').checked,
-            fcSpeakRate: document.getElementById('fcSpeakRate').value
-        };
-        localStorage.setItem('dictation_flashcard_app_settings', JSON.stringify(settings));
-        closeFlashcardSettingsModal();
-    }
-
-    function loadFlashcardAppSettings() {
-        let saved = localStorage.getItem('dictation_flashcard_app_settings');
-        if (saved) {
-            let s = JSON.parse(saved);
-            if (s.fcOnlyStarred !== undefined) document.getElementById('fcSettingStarred').checked = s.fcOnlyStarred;
-            if (s.fcEnableShuffle !== undefined) document.getElementById('fcSettingShuffle').checked = s.fcEnableShuffle;
-            if (s.fcSpeakRate !== undefined) {
-                let slider = document.getElementById('fcSpeakRate');
-                slider.value = s.fcSpeakRate;
-                updateSpeedDisplay('fcSpeakRate', 'fcSpeedValue');
-                updateSliderProgress(slider);
-            }
-        }
-    }
-
-    function startFlashcardSession() {
-        let text = document.getElementById('flashcardPreviewTextarea').value.trim();
-        let words = parseWordsRaw(text);
-
-        if (document.getElementById('fcSettingStarred').checked) {
-            words = words.filter(w => w.starred);
-        }
-        if (document.getElementById('fcSettingShuffle').checked) {
-            words = words.sort(() => Math.random() - 0.5);
-        }
-
-        if (words.length === 0) {
-            alert('⚠️ 範圍內沒有符合條件的單字，請重新勾選！');
-            return;
-        }
-
-        requestWakeLock();
-
-        flashcardActiveList = words;
-        currentFcIndex = 0;
-        switchView('flashcardPlayView');
-        updateFlashcardView();
-    }
-
-    function backToFlashcardSetup() {
-        releaseWakeLock();
-        switchView('flashcardSetupView');
-    }
-
-    function resetFlashcardFlipState() {
-        const cardEl = document.getElementById('flashcardCardEl');
-        if (cardEl) {
-            cardEl.classList.remove('flipped');
-        }
-    }
-
-    function updateFlashcardView() {
-        if (flashcardActiveList.length === 0) return;
-        
-        resetFlashcardFlipState();
-
-        let card = flashcardActiveList[currentFcIndex];
-        document.getElementById('fcCardEng').innerText = card.english;
-        if (card.senses && card.senses.length > 1) {
-            document.getElementById('fcCardChi').innerText = card.senses.map(s => s.m.join('、')).join(' ／ ');
-            document.getElementById('fcCardPos').innerText = card.senses.map(s => s.p.join('、') || '—').join(' ／ ');
-        } else {
-            document.getElementById('fcCardChi').innerText = card.chinese || '(無中文)';
-            document.getElementById('fcCardPos').innerText = card.pos || '單字';
-        }
-        document.getElementById('fcProgressText').innerText = `${currentFcIndex + 1} / ${flashcardActiveList.length} 題`;
-        
-        let percent = ((currentFcIndex + 1) / flashcardActiveList.length) * 100;
-        document.getElementById('fcProgressBar').style.width = `${percent}%`;
-
-        let starBtn = document.getElementById('fcStarBtn');
-        if (card.starred) {
-            starBtn.classList.add('starred');
-            starBtn.innerText = '⭐';
-        } else {
-            starBtn.classList.remove('starred');
-            starBtn.innerText = '☆';
-        }
-
-        let prevBtn = document.getElementById('fcPrevBtn');
-        if (currentFcIndex === 0) {
-            prevBtn.disabled = true;
-        } else {
-            prevBtn.disabled = false;
-        }
-
-        let nextBtn = document.getElementById('fcNextBtn');
-        if (currentFcIndex === flashcardActiveList.length - 1) {
-            nextBtn.innerHTML = '結束 🏁';
-        } else {
-            nextBtn.innerHTML = '下一張 ▶';
-        }
-    }
-
-    function nextFlashcard() {
-        if (currentFcIndex < flashcardActiveList.length - 1) {
-            currentFcIndex++;
-            updateFlashcardView();
-        } else {
-            backToFlashcardSetup();
-        }
-    }
-
-    function prevFlashcard() {
-        if (currentFcIndex > 0) {
-            currentFcIndex--;
-            updateFlashcardView();
-        }
-    }
-
-    function toggleCurrentCardStar() {
-        let card = flashcardActiveList[currentFcIndex];
-        card.starred = !card.starred;
-        
-        updateDatabaseWithStarredState(card.english, card.starred);
-
-        updateFlashcardView();
-        initFlashcardGrid();
-        initPracticeCardGrid();
-        initExamCardGrid();
-        initCardExamGrid();
-        initSpeakPracticeGrid();
-    }
-
-    function initCardExamGrid() {
-        let grid = document.getElementById('cardExamGrid');
-        if (!grid) return;
-        grid.innerHTML = '';
-        
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
-        let savedSelected = JSON.parse(localStorage.getItem('dictation_card_exam_selected')) || [0];
-        
-        activeLists.forEach((list, displayIdx) => {
-            let count = getListWordCount(list.content);
-            let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
-            let cardHtml = pickRowHTML(list, count, isSelected, 'toggleCardExamCard');
-            grid.insertAdjacentHTML('beforeend', cardHtml);
-        });
-        loadCardExamSelectedContent();
-    }
-
-    function toggleCardExamCard(originalIdx, cardEl) {
-        cardEl.classList.toggle('selected');
-        saveCardExamSelectionState();
-        loadCardExamSelectedContent();
-    }
-
-    function saveCardExamSelectionState() {
-        let selectedIndices = [];
-        document.querySelectorAll('#cardExamGrid .select-card').forEach((card) => {
-            if (card.classList.contains('selected')) {
-                let onclickAttr = card.getAttribute('data-on-click');
-                let match = onclickAttr.match(/"toggleCardExamCard",\[(\d+),/);
-                if (match) selectedIndices.push(parseInt(match[1]));
-            }
-        });
-        localStorage.setItem('dictation_card_exam_selected', JSON.stringify(selectedIndices));
-    }
-
-    function loadCardExamSelectedContent() {
-        let combinedText = '';
-        let selectedCards = document.querySelectorAll('#cardExamGrid .select-card.selected');
-        let selectedTitles = [];
-        
-        selectedCards.forEach((card, displayIdx) => {
-            let onclickAttr = card.getAttribute('data-on-click');
-            let match = onclickAttr.match(/"toggleCardExamCard",\[(\d+),/);
-            if (match) {
-                let idx = parseInt(match[1]);
-                if (wordLists[idx] && wordLists[idx].content) {
-                    combinedText += wordLists[idx].content + '\n';
-                    selectedTitles.push(`${displayIdx + 1}: ${wordLists[idx].title}`);
-                }
-            }
-        });
-        currentCardExamRanges = selectedTitles.join(', ');
-
-        document.getElementById('cardExamPreviewTextarea').value = combinedText.trim();
-        let allWords = parseWordsRaw(combinedText);
-        let starCount = allWords.filter(w => w.starred).length;
-        setPickSummary('cardExamStatsText', 'cardExamGrid', allWords.length, starCount);
-    }
-
-    function toggleCardExamPreview() {
-        let container = document.getElementById('cardExamPreviewContainer');
-        let btn = document.getElementById('cardExamCollapseBtn');
-        container.classList.toggle('collapsed');
-        btn.classList.toggle('collapsed');
-        saveCollapseState('cardExam', container.classList.contains('collapsed'));
-    }
-
-    function sortCardExamPreview(sortType) {
-        if (!sortType) return;
-        let textarea = document.getElementById('cardExamPreviewTextarea');
-        let words = parseWordsRaw(textarea.value);
-        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
-        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
-        textarea.value = words.map(w => w.rawLine).join('\n');
-        setTimeout(() => document.getElementById('cardExamSortSelector').selectedIndex = 0, 200);
-    }
-
-    function openCardExamSettingsModal() { document.getElementById('cardExamSettingsModal').style.display = 'block'; }
-    function closeCardExamSettingsModal() { document.getElementById('cardExamSettingsModal').style.display = 'none'; }
-    
-    function saveCardExamSettings() {
-        let settings = {
-            cardExamOnlyStarred: document.getElementById('cardExamSettingStarred').checked,
-            cardExamQuestionCount: document.getElementById('cardExamQuestionCount').value,
-            cardExamAnswerTime: document.getElementById('cardExamAnswerTime').value,
-            cardExamVoiceChi: document.getElementById('cardExamVoiceChi').checked
-        };
-        localStorage.setItem('dictation_card_exam_app_settings', JSON.stringify(settings));
-        closeCardExamSettingsModal();
-    }
-
-    function loadCardExamAppSettings() {
-        let saved = localStorage.getItem('dictation_card_exam_app_settings');
-        if (saved) {
-            let s = JSON.parse(saved);
-            if (s.cardExamOnlyStarred !== undefined) document.getElementById('cardExamSettingStarred').checked = s.cardExamOnlyStarred;
-            if (s.cardExamQuestionCount !== undefined) document.getElementById('cardExamQuestionCount').value = s.cardExamQuestionCount;
-            if (s.cardExamAnswerTime !== undefined) document.getElementById('cardExamAnswerTime').value = s.cardExamAnswerTime;
-            if (s.cardExamVoiceChi !== undefined) document.getElementById('cardExamVoiceChi').checked = !!s.cardExamVoiceChi;
-        }
-    }
-
-    function initSpeakPracticeGrid() {
-        let grid = document.getElementById('speakPracticeGrid');
-        if (!grid) return;
-        grid.innerHTML = '';
-        
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
-        let savedSelected = JSON.parse(localStorage.getItem('dictation_speak_practice_selected')) || [0];
-        
-        activeLists.forEach((list, displayIdx) => {
-            let count = getListWordCount(list.content);
-            let isSelected = savedSelected.includes(list.originalIdx) ? 'selected' : '';
-            let cardHtml = pickRowHTML(list, count, isSelected, 'toggleSpeakPracticeCard');
-            grid.insertAdjacentHTML('beforeend', cardHtml);
-        });
-        loadSpeakPracticeSelectedContent();
-    }
-
-    function toggleSpeakPracticeCard(originalIdx, cardEl) {
-        cardEl.classList.toggle('selected');
-        saveSpeakPracticeSelectionState();
-        loadSpeakPracticeSelectedContent();
-    }
-
-    function saveSpeakPracticeSelectionState() {
-        let selectedIndices = [];
-        document.querySelectorAll('#speakPracticeGrid .select-card').forEach((card) => {
-            if (card.classList.contains('selected')) {
-                let onclickAttr = card.getAttribute('data-on-click');
-                let match = onclickAttr.match(/"toggleSpeakPracticeCard",\[(\d+),/);
-                if (match) selectedIndices.push(parseInt(match[1]));
-            }
-        });
-        localStorage.setItem('dictation_speak_practice_selected', JSON.stringify(selectedIndices));
-    }
-
-    function loadSpeakPracticeSelectedContent() {
-        let combinedText = '';
-        let selectedCards = document.querySelectorAll('#speakPracticeGrid .select-card.selected');
-        let selectedTitles = [];
-        
-        selectedCards.forEach((card, displayIdx) => {
-            let onclickAttr = card.getAttribute('data-on-click');
-            let match = onclickAttr.match(/"toggleSpeakPracticeCard",\[(\d+),/);
-            if (match) {
-                let idx = parseInt(match[1]);
-                if (wordLists[idx] && wordLists[idx].content) {
-                    combinedText += wordLists[idx].content + '\n';
-                    selectedTitles.push(`${displayIdx + 1}: ${wordLists[idx].title}`);
-                }
-            }
-        });
-        currentSpeakPracticeRanges = selectedTitles.join(', ');
-
-        document.getElementById('speakPracticePreviewTextarea').value = combinedText.trim();
-        let allWords = parseWordsRaw(combinedText);
-        let starCount = allWords.filter(w => w.starred).length;
-        setPickSummary('speakPracticeStatsText', 'speakPracticeGrid', allWords.length, starCount);
-    }
-
-    function toggleSpeakPracticePreview() {
-        let container = document.getElementById('speakPracticePreviewContainer');
-        let btn = document.getElementById('speakPracticeCollapseBtn');
-        container.classList.toggle('collapsed');
-        btn.classList.toggle('collapsed');
-        saveCollapseState('speakPractice', container.classList.contains('collapsed'));
-    }
-
-    function sortSpeakPracticePreview(sortType) {
-        if (!sortType) return;
-        let textarea = document.getElementById('speakPracticePreviewTextarea');
-        let words = parseWordsRaw(textarea.value);
-        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
-        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
-        textarea.value = words.map(w => w.rawLine).join('\n');
-        setTimeout(() => document.getElementById('speakPracticeSortSelector').selectedIndex = 0, 200);
-    }
-
-    function openSpeakPracticeSettingsModal() { document.getElementById('speakPracticeSettingsModal').style.display = 'block'; }
-    function closeSpeakPracticeSettingsModal() { document.getElementById('speakPracticeSettingsModal').style.display = 'none'; }
-    
-    function saveSpeakPracticeSettings() {
-        let settings = {
-            speakPracticeOnlyStarred: document.getElementById('speakPracticeSettingStarred').checked,
-            speakPracticeQuestionCount: document.getElementById('speakPracticeQuestionCount').value,
-            speakPracticePassScore: getSpeakPassScore()
-        };
-        document.getElementById('speakPracticePassScore').value = settings.speakPracticePassScore;   // 超出範圍的數字會被修正回 60~100
-        localStorage.setItem('dictation_speak_practice_app_settings', JSON.stringify(settings));
-        closeSpeakPracticeSettingsModal();
-    }
-
-    function loadSpeakPracticeAppSettings() {
-        let saved = localStorage.getItem('dictation_speak_practice_app_settings');
-        if (saved) {
-            let s = JSON.parse(saved);
-            if (s.speakPracticeOnlyStarred !== undefined) document.getElementById('speakPracticeSettingStarred').checked = s.speakPracticeOnlyStarred;
-            if (s.speakPracticeQuestionCount !== undefined) document.getElementById('speakPracticeQuestionCount').value = s.speakPracticeQuestionCount;
-            if (s.speakPracticePassScore !== undefined) {
-                document.getElementById('speakPracticePassScore').value = s.speakPracticePassScore;
-                document.getElementById('speakPracticePassScore').value = getSpeakPassScore();
-            }
-        }
-    }
-
-    async function startCardExamSession() {
-        let text = document.getElementById('cardExamPreviewTextarea').value.trim();
-        let words = parseWordsRaw(text);
-        if (words.length && !voiceChiChecking) {
-            voiceChiChecking = true;
-            let micOk = await voiceChiPrepare('cardExamInputChi');
-            voiceChiChecking = false;
-            if (!micOk) return;
-        } else if (voiceChiChecking) return;
-        applyVoiceChiButtons();
-
-        if (document.getElementById('cardExamSettingStarred').checked) {
-            words = words.filter(w => w.starred);
-        }
-
-        for (let i = words.length - 1; i > 0; i--) {
-            let j = Math.floor(Math.random() * (i + 1));
-            [words[i], words[j]] = [words[j], words[i]];
-        }
-
-        let qCount = parseInt(document.getElementById('cardExamQuestionCount').value) || 0;
-        if (qCount > 0 && words.length > qCount) {
-            words = words.slice(0, qCount);
-        }
-
-        if (words.length === 0) {
-            alert('⚠️ 範圍內沒有符合條件的單字，請重新勾選！');
-            return;
-        }
-
-        requestWakeLock();
-
-        cardExamActiveList = words;
-        currentCardExamIndex = 0;
-        cardExamResults = [];
-        switchView('cardExamPlayView');
-        playCurrentCardExamQuestion();
-    }
-
-    function backToCardExamSetup() {
-        stopCardExamSession();
-        releaseWakeLock();
-        switchView('cardExamSetupView');
-    }
-
-    function stopCardExamSession() {
-        if (cardExamTimerId) clearInterval(cardExamTimerId);
-        releaseWakeLock();
-    }
-
-    function playCurrentCardExamQuestion() {
-        if (currentCardExamIndex >= cardExamActiveList.length) {
-            finishCardExamSession();
-            return;
-        }
-
-        let card = cardExamActiveList[currentCardExamIndex];
-        document.getElementById('cardExamCardEng').innerText = card.english;
-        document.getElementById('cardExamProgressText').innerText = `${currentCardExamIndex + 1} / ${cardExamActiveList.length} 題`;
-        
-        let percent = ((currentCardExamIndex + 1) / cardExamActiveList.length) * 100;
-        document.getElementById('cardExamProgressBar').style.width = `${percent}%`;
-
-        voiceChiStop();
-        setupChiInputs('cardExamInputChi', card);
-        document.querySelectorAll('.card-exam-pos-chk').forEach(c => c.checked = false);
-
-        let posGroup = document.getElementById('cardExamPosCheckboxGroup');
-        let posLabel = document.getElementById('cardExamPosLabel');
-        if (!card.pos || card.pos.trim() === '') {
-            posGroup.style.opacity = '0.4';
-            posGroup.style.pointerEvents = 'none';
-            if (posLabel) posLabel.innerText = '詞性選擇（此單字無詞性，略過）：';
-        } else {
-            posGroup.style.opacity = '1';
-            posGroup.style.pointerEvents = 'auto';
-            if (posLabel) posLabel.innerText = '詞性選擇（可複選）：';
-        }
-
-        try { document.getElementById('cardExamInputChi').focus(); } catch (e) {}
-
-        if (cardExamTimerId) clearInterval(cardExamTimerId);
-        cardExamTimeLeft = parseInt(document.getElementById('cardExamAnswerTime').value) || 20;
-        document.getElementById('cardExamTimeLeft').innerText = cardExamTimeLeft;
-        cardExamTimerId = setInterval(() => {
-            cardExamTimeLeft--;
-            document.getElementById('cardExamTimeLeft').innerText = cardExamTimeLeft;
-            if (cardExamTimeLeft <= 0) {
-                clearInterval(cardExamTimerId);
-                submitCardExamAnswer();
-            }
-        }, 1000);
-    }
-
-    function submitCardExamAnswer() {
-        if (cardExamTimerId) clearInterval(cardExamTimerId);
-        let userChiArr = readChiInputs('cardExamInputChi');
-        let userChi = userChiArr.filter(Boolean).join('、');
-        let userPosArr = [];
-        document.querySelectorAll('.card-exam-pos-chk:checked').forEach(chk => userPosArr.push(normPos(chk.value.trim())));
-
-        let currentItem = cardExamActiveList[currentCardExamIndex];
-        let chiMatch = matchChineseAnswers(userChiArr, currentItem);
-
-        let correctPosArr = (currentItem.posList || (currentItem.pos ? currentItem.pos.split(/\s+/) : [])).map(s => normPos(s.trim())).filter(s => s.length > 0);
-        correctPosArr = correctPosArr.filter((p, i) => correctPosArr.indexOf(p) === i);
-        let posMatch = true;
-        if (correctPosArr.length > 0 || userPosArr.length > 0) {
-            if (correctPosArr.length !== userPosArr.length) {
-                posMatch = false;
-            } else {
-                let setCorrect = new Set(correctPosArr);
-                let setUser = new Set(userPosArr);
-                if (setCorrect.size !== setUser.size) {
-                    posMatch = false;
-                } else {
-                    for (let p of setCorrect) {
-                        if (!setUser.has(p)) { posMatch = false; break; }
-                    }
-                }
-            }
-        }
-
-        let isCorrect = chiMatch && posMatch;
-
-        cardExamResults.push({
-            english: currentItem.english,
-            chinese: currentItem.chinese,
-            pos: currentItem.pos,
-            senseText: currentItem.senseText || '',
-            line: currentItem.line || '',
-            userChi,
-            userPos: userPosArr.join(' '),
-            isCorrect,
-            chiMatch,
-            posMatch
-        });
-
-        currentCardExamIndex++;
-        playCurrentCardExamQuestion();
-    }
-
-    function handleCardExamKeyDown(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            submitCardExamAnswer();
-        }
-    }
-
-    function finishCardExamSession() {
-        if (cardExamTimerId) clearInterval(cardExamTimerId);
-        releaseWakeLock();
-        
-        let total = cardExamResults.length;
-        if (total === 0) {
-            backToCardExamSetup();
-            return;
-        }
-
-        let correct = cardExamResults.filter(r => r.isCorrect).length;
-        let score = total > 0 ? Math.round((correct / total) * 100) : 0;
-
-        // 觸發字卡測驗雞塊任務檢查
-        triggerTaskCheck('card_exam_done', { total, score });
-
-        let newRecord = { date: new Date().toLocaleString(), range: currentCardExamRanges || '預設範圍', total, score, results: cardExamResults, lang: getLearningLanguage() };
-        cardExamHistory.unshift(newRecord);
-        cardExamHistory = trimHistoryPerLang(cardExamHistory);
-
-        localStorage.setItem('dictation_card_exam_history', JSON.stringify(cardExamHistory));
-        triggerAutoSaveToCloud();
-
-        let html = `<div class="result-box">
-            <div style="font-weight:700; margin-bottom:12px; font-size:15px; color:var(--text-main);">※ 字卡測驗結束！以下為您的測驗結果：</div>
-            <div style="font-weight:600; margin-bottom:14px; color:var(--primary);">📊 成績統計：得分 ${score} 分 (總題數 ${total} 題，完全答對 ${correct} 題)</div>`;
-        
-        cardExamResults.forEach((r, i) => {
-            let titleColor = r.isCorrect ? '#10B981' : '#EF4444';
-            let icon = r.isCorrect ? '✅' : '❌';
-            let correctInfo = r.senseText ? `${escapeHTML(r.english)} (${escapeHTML(r.senseText)})` : `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')}) ${r.pos ? '/ ' + escapeHTML(r.pos) : ''}`;
-
-            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '[(未填)]')}</span>`;
-            let posDisplay = r.posMatch ? `<span style="color:#10B981;">${escapeHTML(r.userPos || '[(未選)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userPos || '[(未選)]')}</span>`;
-            let userAnsInfo = `${chiDisplay} ${r.pos ? '/ ' + posDisplay : ''}`;
-
-            html += `<div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
-                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${escapeHTML(r.english)} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
-                <div style="font-size:13.5px; color:var(--text-muted);">您的回答：${userAnsInfo}</div>
-            </div>`;
-        });
-        html += `</div>`;
-        
-        document.getElementById('modalResultBody').innerHTML = html;
-        document.getElementById('examResultModal').style.display = 'block';
-
-        backToCardExamSetup();
-    }
-
-
-    // ═════════════════════════════════════════════════════════════
-    // 🎤 朗讀練習：按住麥克風朗讀單字 → 瀏覽器語音辨識 → 和目標單字比對相似度 → 70 分以上通過
-    // 注意：這是「文字相似度」評分（辨識出來的字 vs 目標單字），不是專業的音素發音評測。
-    // ═════════════════════════════════════════════════════════════
-    function getSpeechRecognitionCtor() {
-        return window.SpeechRecognition || window.webkitSpeechRecognition || null;
-    }
-
-    function goToSpeakPracticePage() {
-        initSpeakPracticeGrid();
-        switchView('speakPracticeSetupView');
-    }
-
-    function levenshtein(a, b) {
-        if (a === b) return 0;
-        if (!a.length) return b.length;
-        if (!b.length) return a.length;
-        let prev = new Array(b.length + 1), cur = new Array(b.length + 1);
-        for (let j = 0; j <= b.length; j++) prev[j] = j;
-        for (let i = 1; i <= a.length; i++) {
-            cur[0] = i;
-            for (let j = 1; j <= b.length; j++) {
-                let cost = a[i - 1] === b[j - 1] ? 0 : 1;
-                cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
-            }
-            let tmp = prev; prev = cur; cur = tmp;
-        }
-        return prev[b.length];
-    }
-    function similarity(a, b) {
-        if (!a.length || !b.length) return 0;
-        return Math.max(0, 1 - levenshtein(a, b) / Math.max(a.length, b.length));
-    }
-
-    // ── 英文：同音字、數字、發音相近的拼法都視為同一個字 ──
-    // 語音辨識只會回傳「它猜的字」，唸得再標準也可能被寫成同音字（right/write、to/two…），所以先把這些統一。
-    const EN_HOMOPHONES = [
-        ['right','write','rite'],['2','to','too'],['their','there','theyre'],['buy','by','bye'],['see','sea'],['know','no'],
-        ['hear','here'],['1','won'],['flower','flour'],['blue','blew'],['son','sun'],['sale','sail'],['meet','meat'],['week','weak'],
-        ['road','rode'],['night','knight'],['wait','weight'],['pair','pear','pare'],['tail','tale'],['plane','plain'],['piece','peace'],
-        ['hour','our'],['whole','hole'],['4','for','fore'],['eye','i','aye'],['be','bee'],['you','ewe','u'],['are','r'],['8','ate'],
-        ['new','knew'],['red','read'],['would','wood'],['which','witch'],['where','wear','ware'],['weather','whether'],['bear','bare'],
-        ['dear','deer'],['die','dye'],['fair','fare'],['flew','flu'],['hair','hare'],['heal','heel'],['mail','male'],['main','mane'],
-        ['pain','pane'],['rain','reign','rein'],['steal','steel'],['sweet','suite'],['cell','sell'],['cent','scent','sent'],
-        ['great','grate'],['pray','prey'],['sight','site','cite'],['tide','tied'],['toe','tow'],['waist','waste'],['way','weigh'],
-        ['wine','whine'],['allowed','aloud'],['bored','board'],['break','brake'],['coarse','course'],['hi','high'],['lead','led'],
-        ['might','mite'],['not','knot'],['oh','owe'],['ok','okay'],['color','colour'],['favorite','favourite'],['center','centre'],
-        ['theater','theatre'],['gray','grey'],['organize','organise'],['realize','realise'],['program','programme'],['neighbor','neighbour']
-    ];
-    const EN_HOMO_MAP = (function () {
-        let m = {};
-        EN_HOMOPHONES.forEach(g => g.forEach(w => { m[w] = g[0]; }));
-        return m;
-    })();
-    const EN_NUMBERS = { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
-        thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20 };
-
-    function enTokens(str) {
-        let t = String(str || '').toLowerCase().replace(/\([^)]*\)|（[^）]*）/g, ' ')
-            .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['’]/g, '');
-        return t.split(/[^a-z0-9]+/).filter(Boolean).map(w => {
-            if (Object.prototype.hasOwnProperty.call(EN_NUMBERS, w)) return String(EN_NUMBERS[w]);
-            return EN_HOMO_MAP[w] || w;
-        });
-    }
-    // 簡化的「拼字 → 發音」：處理不發音的字母與同音的拼法（ph=f、ck=k、kn=n、ght=t…），保留母音
-    function enPhoneticLite(w) {
-        return w.replace(/^kn/, 'n').replace(/^gn/, 'n').replace(/^wr/, 'r').replace(/^ps/, 's').replace(/^wh/, 'w')
-            .replace(/ph/g, 'f').replace(/ght/g, 't').replace(/ck/g, 'k').replace(/tch/g, 'ch').replace(/dge/g, 'j')
-            .replace(/mb$/, 'm').replace(/c(?=[eiy])/g, 's').replace(/c/g, 'k').replace(/q/g, 'k').replace(/x/g, 'ks')
-            .replace(/z/g, 's').replace(/(.)\1+/g, '$1');
-    }
-
-    // ── 韓文：拆成字母 (jamo) 比對，並把「發音相同」的字母視為一樣 ──
-    function koCanon(str) {
-        let t = String(str || '').toLowerCase().replace(/\([^)]*\)|（[^）]*）/g, ' ').normalize('NFD');
-        let out = '';
-        for (const ch of t) {
-            let c = ch.codePointAt(0);
-            if (c < 0x1100 || c > 0x11FF) continue;       // 只留韓文字母
-            if (c === 0x110B) continue;                   // 開頭的 ㅇ 不發音
-            if (c === 0x1166) c = 0x1162;                 // ㅔ ≈ ㅐ
-            else if (c === 0x1168) c = 0x1164;            // ㅖ ≈ ㅒ
-            else if (c === 0x116B || c === 0x116C) c = 0x116F;   // ㅙ ㅚ ≈ ㅞ
-            else if (c === 0x11A9 || c === 0x11BF) c = 0x11A8;   // 尾音 ㄲ ㅋ → ㄱ
-            else if (c === 0x11BA || c === 0x11BB || c === 0x11BD || c === 0x11BE || c === 0x11C0) c = 0x11AE; // 尾音 ㅅ ㅆ ㅈ ㅊ ㅌ → ㄷ
-            else if (c === 0x11C1) c = 0x11B8;            // 尾音 ㅍ → ㅂ
-            out += String.fromCodePoint(c);
-        }
-        return out;
-    }
-
-    // 單一辨識結果 vs 目標單字 → 0~100
-    function speakScoreOne(target, heard, lang) {
-        if (lang === 'ko') {
-            const t = koCanon(target), h = koCanon(heard);
-            if (!t || !h) return 0;
-            if (t === h) return 100;
-            if (h.indexOf(t) !== -1) return 90;           // 多說了其他字，但目標有說到
-            return Math.round(similarity(t, h) * 100);
-        }
-        const tt = enTokens(target), ht = enTokens(heard);
-        if (!tt.length || !ht.length) return 0;
-        const ts = tt.join(''), hs = ht.join('');
-        if (ts === hs) return 100;
-        let best = similarity(ts, hs) * 100;
-        const tp = tt.map(enPhoneticLite).join(''), hp = ht.map(enPhoneticLite).join('');
-        best = Math.max(best, tp === hp ? 92 : similarity(tp, hp) * 95);
-        if (ht.length > tt.length) {                      // 例如目標 apple、辨識成 "an apple"
-            const key = tt.join(' ');
-            for (let i = 0; i + tt.length <= ht.length; i++) {
-                if (ht.slice(i, i + tt.length).join(' ') === key) { best = Math.max(best, 90); break; }
-            }
-        }
-        return Math.round(best);
-    }
-
-    // 回傳 { score: 0~100, heard: 分數最高的那個辨識結果 }（瀏覽器會給好幾個候選，取最高分）
-    function scoreSpeakAttempt(target, alts, lang) {
-        let best = { score: 0, heard: (alts[0] && alts[0].transcript || '').trim() };
-        let found = false;
-        alts.forEach(a => {
-            let sc = speakScoreOne(target, a.transcript, lang);
-            if (!found || sc > best.score) { best = { score: sc, heard: String(a.transcript).trim() }; found = true; }
-        });
-        return best;
-    }
-
-    function setSpeakHint(text, warn) {
-        let el = document.getElementById('speakMicHint');
-        if (!el) return;
-        el.textContent = text;
-        el.classList.toggle('warn', !!warn);
-    }
-
-    function speakErrorMessage(code) {
-        switch (code) {
-            case 'not-allowed':
-            case 'service-not-allowed': return '麥克風權限被拒絕。請到瀏覽器的網站設定允許使用麥克風，然後重新整理頁面。';
-            case 'no-speech': return '沒有聽到聲音，請靠近麥克風，按住後再開口。';
-            case 'audio-capture': return '找不到麥克風，請確認裝置有麥克風且沒有被其他程式占用。';
-            case 'network': return '語音辨識需要網路連線，請檢查網路後再試。';
-            case 'language-not-supported': return '這個瀏覽器不支援這個語言的語音辨識。';
-            default: return '沒有辨識到內容，請再按住說一次。';
-        }
-    }
-
-    // 開始測驗前先確認麥克風權限（會跳出瀏覽器的「允許使用麥克風」詢問）
-    async function ensureMicPermission(silent) {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return { ok: true };
-        if (location.protocol === 'file:' && !silent) return { ok: true };   // 檔案模式瀏覽器不會記住權限，預先詢問只會多問一次   // 無法預先詢問，改由辨識器自己詢問
-        try {
-            let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach(tr => tr.stop());   // 立刻釋放，避免和語音辨識搶麥克風
-            return { ok: true };
-        } catch (e) {
-            let name = (e && e.name) || '';
-            if (name === 'NotAllowedError' || name === 'SecurityError') {
-                return { ok: false, denied: true };
-            }
-            if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
-                return { ok: false, message: '⚠️ 找不到麥克風，請確認裝置有麥克風。' };
-            }
-            return { ok: true };   // 其他錯誤：讓辨識器自己再試一次
-        }
-    }
-
-    // 網頁沒辦法直接打開系統/瀏覽器的設定頁（瀏覽器的安全限制），所以改成依裝置顯示「照著點就到」的步驟
-    function micHelpHTML(status) {
-        const env = getBrowserEnv();
-        const host = escapeHTML(location.protocol === 'file:' ? '（本機檔案）' : location.host);
-        const steps = {
-            android: '<b>🤖 Android（Chrome）</b><ol><li>Chrome 右上角 <b>⋮ → 設定 → 網站設定 → 麥克風</b></li><li>最上面的開關要是開的（顯示「詢問」）；往下找到 <b>' + host + '</b>，如果在「已封鎖」裡就點進去改成 <b>「允許」</b></li><li>回到網頁，<b>重新整理</b>後再按麥克風</li></ol>另一個常見原因：手機本身沒讓 Chrome 用麥克風 → <b>手機「設定」→ 應用程式 → Chrome → 權限 → 麥克風 → 允許</b>。<br>也可以點網址列左邊的圖示 → 權限（<b>麥克風只有在被詢問過之後才會出現在這裡</b>，沒看到是正常的）。',
-            ios: '<b>📱 iPhone / iPad（Safari）</b><ol><li>點網址列左邊的 <b>「AA」</b> → <b>網站設定</b> → <b>麥克風</b> → <b>允許</b></li><li>回到網頁，重新整理後再按麥克風</li></ol>若找不到：<b>設定 → App → Safari → 麥克風</b>（舊版 iOS：設定 → Safari → 麥克風）改成「詢問」或「允許」。<br>語音辨識還需要開啟：<b>設定 → 一般 → 鍵盤 → 啟用聽寫</b>。',
-            desktop: '<b>💻 電腦（Chrome / Edge）</b><ol><li>點網址列左邊的 <b>鎖頭 / 調整圖示</b></li><li><b>麥克風</b> 切換成 <b>「允許」</b>（或按「重設權限」）</li><li>重新整理頁面後再試</li></ol>'
-        };
-        const order = env.isIOS ? ['ios', 'android', 'desktop'] : env.isAndroid ? ['android', 'ios', 'desktop'] : ['desktop', 'android', 'ios'];
-        let html = '<div class="mic-help-note">網頁不能直接打開系統的設定頁（瀏覽器基於安全限制不允許），請照下面的步驟操作：</div>';
-        if (location.protocol === 'file:') {
-            html += '<div class="mic-help-block main">ℹ️ 你現在是用「檔案」方式開啟網頁。這種方式瀏覽器<b>不會記住</b>麥克風權限，每次都會再問。<br>請改用網站網址（https）開啟；真的要用檔案開啟時，按麥克風後<b>點一下就好、不用按住</b>，按瀏覽器的「允許」後直接說話。</div>';
-        }
-        if (status === 'denied') {
-            html += '<div class="mic-help-status">❌ 目前狀態：本網站的麥克風被封鎖了，要手動改回「允許」：</div>';
-            order.forEach((k, i) => { html += '<div class="mic-help-block' + (i === 0 ? ' main' : '') + '">' + steps[k] + '</div>'; });
-        } else {
-            html += '<div class="mic-help-status">❔ 目前狀態：瀏覽器還沒有得到你的回答</div>' +
-                '<div class="mic-help-block main"><b>先按下面的「再詢問一次」</b>，瀏覽器會跳出詢問視窗，請選 <b>「允許」</b>（或「造訪這個網站時允許」）。<br>' +
-                '<b>這個時候在網址列的權限清單裡看不到麥克風是正常的</b>——要被詢問並回答過，才會出現在清單裡。</div>' +
-                '<div class="mic-help-note">如果按了沒有跳出詢問視窗，或之前選過「不允許」，才需要照下面的步驟手動開啟：</div>';
-            order.forEach((k) => { html += '<div class="mic-help-block">' + steps[k] + '</div>'; });
-        }
-        return html;
-    }
-
-    async function openMicHelpModal() {
-        let status = '';
-        try {
-            if (navigator.permissions && navigator.permissions.query) {
-                let p = await navigator.permissions.query({ name: 'microphone' });
-                status = p.state;
-            }
-        } catch (e) {}
-        document.getElementById('micHelpBody').innerHTML = micHelpHTML(status);
-        document.getElementById('micHelpModal').style.display = 'block';
-    }
-    function closeMicHelpModal() { document.getElementById('micHelpModal').style.display = 'none'; }
-
-    async function recheckMicPermission() {
-        let mic = await ensureMicPermission(true);
-        if (mic.ok) {
-            closeMicHelpModal();
-            setSpeakHint('✅ 麥克風已可使用，請按住麥克風說話');
-        } else {
-            await openMicHelpModal();
-        }
-    }
-
-    async function startSpeakPracticeSession() {
-        if (speakStarting) return;
-        let text = document.getElementById('speakPracticePreviewTextarea').value.trim();
-        let words = parseWordsRaw(text);
-        if (document.getElementById('speakPracticeSettingStarred').checked) words = words.filter(w => w.starred);
-        for (let i = words.length - 1; i > 0; i--) {
-            let j = Math.floor(Math.random() * (i + 1));
-            [words[i], words[j]] = [words[j], words[i]];
-        }
-        let qCount = parseInt(document.getElementById('speakPracticeQuestionCount').value) || 0;
-        if (qCount > 0 && words.length > qCount) words = words.slice(0, qCount);
-        if (words.length === 0) {
-            alert('⚠️ 範圍內沒有符合條件的單字，請重新勾選！');
-            return;
-        }
-
-        let env = getBrowserEnv();
-        if (env.isInApp) { document.getElementById('inAppBrowserWarning').style.display = 'block'; return; }
-        if (location.protocol === 'file:' && !sessionStorage.getItem('speak_file_warned')) {
-            sessionStorage.setItem('speak_file_warned', '1');
-            alert('ℹ️ 你目前是用「檔案」方式（file://）開啟網頁，瀏覽器不會記住麥克風權限，每次按住說話都會再問一次。\n\n把網頁放到網站（https）上開啟，並在詢問時選「造訪這個網站時允許」，之後就只會問一次。');
-        }
-        if (!getSpeechRecognitionCtor()) {
-            alert('⚠️ 這個瀏覽器不支援語音辨識，無法進行朗讀練習。\n\n請改用 Safari（iPhone / iPad）或 Chrome / Edge（電腦、Android）開啟。');
-            return;
-        }
-
-        speakStarting = true;
-        try {
-            let mic = await ensureMicPermission();
-            if (!mic.ok) { if (mic.denied) openMicHelpModal(); else alert(mic.message); return; }
-        } finally {
-            speakStarting = false;
-        }
-
-        requestWakeLock();
-        speakPracticeActiveList = words;
-        currentSpeakPracticeIndex = 0;
-        speakPracticeResults = [];
-        switchView('speakPracticePlayView');
-        showSpeakPracticeQuestion();
-    }
-
-    function stopSpeakPracticeSession() {
-        abortSpeakListening();
-        releaseWakeLock();
-    }
-
-    function backToSpeakPracticeSetup() {
-        stopSpeakPracticeSession();
-        switchView('speakPracticeSetupView');
-    }
-
-    function updateSpeakNextBtn() {
-        let btn = document.getElementById('speakPracticeNextBtn');
-        if (!btn) return;
-        let isLast = currentSpeakPracticeIndex >= speakPracticeActiveList.length - 1;
-        if (speakQuestion.attempts === 0) btn.innerText = isLast ? '略過並結束 🏁' : '略過此題 ⏭';
-        else btn.innerText = isLast ? '完成 🏁' : '下一題 ▶';
-    }
-
-    function showSpeakPracticeQuestion() {
-        if (currentSpeakPracticeIndex >= speakPracticeActiveList.length) {
-            finishSpeakPracticeSession();
-            return;
-        }
-        let card = speakPracticeActiveList[currentSpeakPracticeIndex];
-        document.getElementById('speakPracticeCardEng').innerText = card.english;
-        document.getElementById('speakPracticeCardChi').innerText = wordMeaningLine(card);
-        document.getElementById('speakPracticeProgressText').innerText = `${currentSpeakPracticeIndex + 1} / ${speakPracticeActiveList.length} 題`;
-        document.getElementById('speakPracticeProgressBar').style.width = `${((currentSpeakPracticeIndex + 1) / speakPracticeActiveList.length) * 100}%`;
-
-        speakQuestion = { attempts: 0, best: null, last: null };
-        let box = document.getElementById('speakResultBox');
-        box.classList.remove('show');
-        box.innerHTML = '';
-        let env = getBrowserEnv();
-        let note = (currentSpeakPracticeIndex === 0 && env.isIOS && env.standalone) ? '（主畫面模式的語音辨識可能無法使用，沒反應請改用 Safari 開啟）' : '';
-        setSpeakHint('按住麥克風朗讀上面的單字，說完再放開 ' + note, !!note);
-        updateSpeakNextBtn();
-    }
-
-    function renderSpeakResult() {
-        let r = speakQuestion.last, best = speakQuestion.best;
-        if (!r) return;
-        let pass = r.score >= getSpeakPassScore();
-        let box = document.getElementById('speakResultBox');
-        box.innerHTML = `
-            <div class="speak-score ${pass ? 'pass' : 'fail'}">${r.score}<small>分</small></div>
-            <div style="font-weight:700; margin-top:4px;">${pass ? '✅ 通過！' : `❌ 未通過（需 ${getSpeakPassScore()} 分以上）`}</div>
-            <div class="speak-sub">辨識到：<b>${escapeHTML(r.heard || '(沒有內容)')}</b></div>
-            <div class="speak-sub">已嘗試 ${speakQuestion.attempts} 次 ｜ 本題最高 ${best.score} 分</div>`;
-        box.classList.add('show');
-    }
-
-    function abortSpeakListening() {
-        speakIgnoreResult = true;
-        clearTimeout(speakWatchdog);
-        if (speakRec && speakListening) { try { speakRec.abort(); } catch (e) {} }
-        speakListening = false;
-        let btn = document.getElementById('speakMicBtn');
-        if (btn) btn.classList.remove('recording');
-    }
-
-    function startSpeakListening() {
-        if (speakListening || speakStarting) return;
-        let playView = document.getElementById('speakPracticePlayView');
-        if (!playView || !playView.classList.contains('active')) return;
-        const SR = getSpeechRecognitionCtor();
-        if (!SR) { setSpeakHint('這個瀏覽器不支援語音辨識', true); return; }
-        try { window.speechSynthesis.cancel(); } catch (e) {}
-
-        // 每次按住都建立新的辨識物件（iOS 重複使用同一個物件容易卡住）
-        let rec = new SR();
-        rec.lang = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
-        rec.interimResults = true;
-        rec.continuous = false;
-        rec.maxAlternatives = 10;
-        speakHeardAlts = []; speakLastError = ''; speakShortTap = false; speakIgnoreResult = false;
-        speakPressAt = Date.now();
-        speakStarted = false; speakLatched = false; speakSkipUp = false;
-        rec.onaudiostart = () => { speakStarted = true; if (speakRec === rec && speakListening && speakLatched) setSpeakHint(SPEAK_LATCH_HINT); };
-
-        rec.onresult = (ev) => {
-            let alts = [];
-            for (let i = 0; i < ev.results.length; i++) {
-                let res = ev.results[i];
-                for (let j = 0; j < res.length; j++) alts.push({ transcript: res[j].transcript, confidence: res[j].confidence });
-            }
-            speakHeardAlts = alts;
-            if (speakListening && alts.length && !speakIgnoreResult) setSpeakHint('🎙️ ' + alts[0].transcript);
-        };
-        rec.onerror = (ev) => { speakLastError = (ev && ev.error) || 'error'; };
-        rec.onend = () => finishSpeakListening(rec, false);
-
-        speakRec = rec;
-        speakListening = true;
-        document.getElementById('speakMicBtn').classList.add('recording');
-        setSpeakHint('🎙️ 聆聽中…說完請放開');
-        try {
-            rec.start();
-        } catch (e) {
-            speakListening = false;
-            document.getElementById('speakMicBtn').classList.remove('recording');
-            setSpeakHint('無法啟動語音辨識，請再按一次', true);
-        }
-    }
-
-    const SPEAK_TAIL_MS = 1200;   // 放開後再多收音的時間
-
-    const SPEAK_LATCH_HINT = '🎙️ 聆聽中…說完會自動結束，或再點一下麥克風結束';
-
-    // 放開手指時：
-    //  ‧ 還沒真正開始收音（通常是瀏覽器正在跳出「允許麥克風」的詢問，使用者得放開手去按「允許」），或只是輕點一下
-    //    → 改成「點一下模式」：不中斷，等授權後直接說話，說完會自動結束（也可以再點一下結束）
-    //  ‧ 否則照原本「按住說話、放開評分」
-    function stopSpeakListening() {
-        if (!speakListening || !speakRec) return;
-        let rec = speakRec;
-        if (!speakStarted || Date.now() - speakPressAt < 350) {
-            speakLatched = true;
-            setSpeakHint(speakStarted ? SPEAK_LATCH_HINT : '⏳ 等待麥克風授權…請按瀏覽器的「允許」，然後直接說話');
-            clearTimeout(speakWatchdog);
-            speakWatchdog = setTimeout(() => {
-                if (speakListening && speakRec === rec) { try { rec.abort(); } catch (e) {} finishSpeakListening(rec, true); }
-            }, 25000);
-            return;
-        }
-        speakFinishHold(rec, SPEAK_TAIL_MS);
-    }
-
-    function speakFinishHold(rec, tailMs) {
-        let btn = document.getElementById('speakMicBtn');
-        if (btn) btn.classList.remove('recording');
-        // 再多收一小段，避免單字最後一個音被切掉（切掉會被辨識成別的字）
-        setSpeakHint('🎙️ 收音中…');
-        setTimeout(() => { if (speakRec === rec && speakListening) { try { rec.stop(); } catch (e) {} } }, tailMs);
-        // 保險：有些瀏覽器偶爾不會觸發 onend，8 秒後強制收尾
-        clearTimeout(speakWatchdog);
-        speakWatchdog = setTimeout(() => {
-            if (speakListening && speakRec === rec) { try { rec.abort(); } catch (e) {} finishSpeakListening(rec, true); }
-        }, 8000 + tailMs);
-    }
-
-    function finishSpeakListening(rec, forced) {
-        if (speakRec !== rec || !speakListening) return;     // 已處理過（或已被中止）
-        speakListening = false;
-        clearTimeout(speakWatchdog);
-        document.getElementById('speakMicBtn').classList.remove('recording');
-        if (speakShortTap) { setSpeakHint('請「按住」麥克風說話，說完再放開', true); return; }
-        if (speakIgnoreResult) return;
-
-        let alts = speakHeardAlts.filter(a => a.transcript && a.transcript.trim());
-        if (alts.length === 0) {
-            setSpeakHint(forced ? '辨識逾時，請再按住說話一次' : speakErrorMessage(speakLastError), true);
-            if (speakLastError === 'not-allowed' || speakLastError === 'service-not-allowed') openMicHelpModal();
-            return;
-        }
-        let card = speakPracticeActiveList[currentSpeakPracticeIndex];
-        if (!card) return;
-        let res = scoreSpeakAttempt(card.english, alts, getLearningLanguage());
-        speakQuestion.attempts++;
-        speakQuestion.last = res;
-        if (!speakQuestion.best || res.score > speakQuestion.best.score) speakQuestion.best = res;
-        renderSpeakResult();
-        updateSpeakNextBtn();
-        setSpeakHint('可以再按住麥克風重說一次，或按「下一題」');
-    }
-
-    function playSpeakPracticeSample() {
-        let card = speakPracticeActiveList[currentSpeakPracticeIndex];
-        if (!card) return;
-        abortSpeakListening();
-        let utterance = new SpeechSynthesisUtterance(card.english);
-        let langCode = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
-        let chosenVoice = getSelectedVoiceForLearning();
-        if (chosenVoice) utterance.voice = chosenVoice;
-        utterance.lang = langCode;
-        utterance.rate = 0.8;
-        let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
-        utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
-        try { window.speechSynthesis.cancel(); } catch (e) {}
-        window.speechSynthesis.speak(utterance);
-    }
-
-    function initSpeakMicButton() {
-        const btn = document.getElementById('speakMicBtn');
-        if (!btn) return;
-        const down = () => {
-            if (speakListening && speakLatched) {          // 點一下模式中再點 = 結束
-                speakLatched = false; speakSkipUp = true;
-                speakFinishHold(speakRec, 500);
-                return;
-            }
-            startSpeakListening();
-        };
-        const up = () => { if (speakSkipUp) { speakSkipUp = false; return; } stopSpeakListening(); };
-        btn.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            try { if (btn.setPointerCapture && e.pointerId !== undefined) btn.setPointerCapture(e.pointerId); } catch (err) {}
-            down();
-        });
-        ['pointerup', 'pointercancel'].forEach(t => btn.addEventListener(t, (e) => { e.preventDefault(); up(); }));
-        btn.addEventListener('contextmenu', (e) => e.preventDefault());
-        // 鍵盤：按住空白鍵說話（電腦測試用）
-        btn.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); down(); } });
-        btn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); up(); } });
-    }
-
-    function pushCurrentSpeakResult() {
-        let card = speakPracticeActiveList[currentSpeakPracticeIndex];
-        if (!card) return;
-        let best = speakQuestion.best;
-        speakPracticeResults.push({
-            english: card.english,
-            chinese: card.chinese,
-            pos: card.pos,
-            heard: best ? best.heard : '',
-            score: best ? best.score : 0,
-            isCorrect: !!best && best.score >= getSpeakPassScore(),
-            attempts: speakQuestion.attempts,
-            skipped: !best
-        });
-    }
-
-    function nextSpeakPracticeQuestion() {
-        abortSpeakListening();
-        if (currentSpeakPracticeIndex >= speakPracticeActiveList.length) return;
-        pushCurrentSpeakResult();
-        currentSpeakPracticeIndex++;
-        showSpeakPracticeQuestion();
-    }
-
-    function finishSpeakPracticeSession() {
-        abortSpeakListening();
-        releaseWakeLock();
-        // 已經說過、但還沒按「下一題」就結束：這一題也要算進成績
-        if (currentSpeakPracticeIndex < speakPracticeActiveList.length && speakQuestion.attempts > 0 && speakPracticeResults.length === currentSpeakPracticeIndex) {
-            pushCurrentSpeakResult();
-        }
-        let total = speakPracticeResults.length;
-        if (total === 0) {
-            backToSpeakPracticeSetup();
-            return;
-        }
-        let passed = speakPracticeResults.filter(r => r.isCorrect).length;
-        let score = Math.round((passed / total) * 100);
-        let avg = Math.round(speakPracticeResults.reduce((sum, r) => sum + r.score, 0) / total);
-
-        let html = `<div class="result-box">
-            <div style="font-weight:700; margin-bottom:12px; font-size:15px; color:var(--text-main);">※ 朗讀練習結束！以下為您的練習結果：</div>
-            <div style="font-weight:600; margin-bottom:14px; color:var(--primary);">📊 練習統計：通過率 ${score}%（通過 ${passed} / ${total} 題，平均發音 ${avg} 分，${getSpeakPassScore()} 分以上算通過）</div>`;
-        speakPracticeResults.forEach((r, i) => {
-            let titleColor = r.isCorrect ? '#10B981' : '#EF4444';
-            let icon = r.isCorrect ? '✅' : '❌';
-            html += `<div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
-                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i + 1} 題：${escapeHTML(r.english)}${r.chinese ? ' (' + escapeHTML(r.chinese) + ')' : ''} — ${r.score} 分</div>
-                <div style="font-size:13.5px; color:var(--text-muted);">${r.skipped ? '您略過了這一題' : '辨識到：' + escapeHTML(r.heard || '(沒有內容)') + '（嘗試 ' + r.attempts + ' 次，取最高分）'}</div>
-            </div>`;
-        });
-        html += `</div>`;
-
-        document.getElementById('modalResultBody').innerHTML = html;
-        document.getElementById('examResultModal').style.display = 'block';
-
-        backToSpeakPracticeSetup();
-    }
-
-    function updateDatabaseWithStarredState(targetEng, isStarred) {
-        wordLists.forEach(list => {
-            if (!list.content) return;
-            let lines = list.content.split('\n');
-            let updated = false;
-            let newLines = lines.map(line => {
-                let trimmed = line.trim();
-                if (!trimmed) return line;
-                let curStarred = trimmed.startsWith('*');
-                let cleanLine = curStarred ? trimmed.substring(1).trim() : trimmed;
-                let firstChiIndex = meaningStart(cleanLine);
-                let engPart = firstChiIndex !== -1 ? cleanLine.substring(0, firstChiIndex).trim() : cleanLine.trim();
+            </div>
+            <div class="hm-pane" data-pane="fun">
+                <div class="hm-title">雞塊樂園</div>
+                <div class="hm-list">
+                        <div class="list-item" data-on-click='[["goToAdventurePage",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"></path><path d="M4 4h13l-2 4 2 4H4"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">雞塊大冒險</div>
+                                <div class="item-desc">打敗敵人賺雞塊</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+
+                        <div class="list-item" data-on-click='[["openChickenShopModal",[]]]'>
+                            <div class="item-icon-box">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">雞塊補給站</div>
+                                <div class="item-desc">用雞塊兌換題庫和道具</div>
+                            </div>
+                            <div class="item-arrow">›</div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+
+        <!-- ================= 🎴 字卡練習：範圍與設定頁面 ================= -->
+        <div id="flashcardSetupView" class="app-view">
+            <div class="top-nav-bar">
+                <button class="back-home-btn" data-on-click='[["backToHome",[]]]' title="返回首頁">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator" data-t-en="🗂️ 英文字卡練習" data-t-ko="🗂️ 韓文字卡練習">🗂️ 英文字卡練習</div>
+                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openFlashcardSettingsModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+            </div>
+
+            <div>
+                <div class="pk-seg" data-grid="flashcardGrid"></div>
+                <div class="pk-bar"><span>請勾選練習範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["flashcardGrid"]]]'>全選</button></div>
+                <div class="select-card-grid pk-grid seg-custom" id="flashcardGrid"></div>
+            </div>
+
+            <div class="stats-status-bar">
+                <span id="flashcardStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
+            </div>
+
+            <div class="pk-hide">
+                <div class="textarea-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="collapse-toggle-btn collapsed" id="fcCollapseBtn" data-on-click='[["toggleFlashcardPreview",[]]]' title="展開/摺疊預覽">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <label style="margin:0;" data-t-en="英文題庫預覽：" data-t-ko="韓文題庫預覽：">英文題庫預覽：</label>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 14px;">☰</span>
+                        <select id="flashcardSortSelector" style="width: auto; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortFlashcardPreview",["$value"]]]'>
+                            <option value="" disabled selected>排序方式</option>
+                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
+                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
+                        </select>
+                    </div>
+                </div>
                 
-                if (engPart.toLowerCase() === targetEng.toLowerCase()) {
-                    updated = true;
-                    return isStarred ? `*${cleanLine}` : cleanLine;
-                }
-                return line;
-            });
-            if (updated) {
-                list.content = newLines.join('\n');
-            }
-        });
-        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        triggerAutoSaveToCloud();
-    }
-
-    function playCurrentFlashcardAudio() {
-        let word = flashcardActiveList[currentFcIndex].english;
-        let utterance = new SpeechSynthesisUtterance(word);
-        let lang = getLearningLanguage();
-        let langCode = (lang === 'ko') ? 'ko-KR' : 'en-US';
-        let chosenVoice = getSelectedVoiceForLearning();
-        if (chosenVoice) utterance.voice = chosenVoice;
-        utterance.lang = langCode;
-        utterance.rate = parseFloat(document.getElementById('fcSpeakRate').value) || 0.8;
-    
-        let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
-        utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
-
-        window.speechSynthesis.speak(utterance);
-    }
-
-    function initExamCardGrid() {
-        let grid = document.getElementById('examCardGrid');
-        if (!grid) return;
-        grid.innerHTML = '';
-        
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
-        let savedExamSelected = JSON.parse(localStorage.getItem('dictation_exam_selected')) || [0];
-
-        activeLists.forEach((list, displayIdx) => {
-            let count = getListWordCount(list.content);
-            let isSelected = savedExamSelected.includes(list.originalIdx) ? 'selected' : '';
-            let cardHtml = pickRowHTML(list, count, isSelected, 'toggleExamCard');
-            grid.insertAdjacentHTML('beforeend', cardHtml);
-        });
-        loadExamSelectedContent();
-    }
-
-    function toggleExamCard(originalIdx, cardEl) {
-        cardEl.classList.toggle('selected');
-        saveExamSelectionState();
-        loadExamSelectedContent();
-    }
-
-    function saveExamSelectionState() {
-        let selectedIndices = [];
-        document.querySelectorAll('#examCardGrid .select-card').forEach((card) => {
-            if (card.classList.contains('selected')) {
-                let onclickAttr = card.getAttribute('data-on-click');
-                let match = onclickAttr.match(/"toggleExamCard",\[(\d+),/);
-                if (match) selectedIndices.push(parseInt(match[1]));
-            }
-        });
-        localStorage.setItem('dictation_exam_selected', JSON.stringify(selectedIndices));
-    }
-
-    function loadExamSelectedContent() {
-        let combinedText = '';
-        let selectedCards = document.querySelectorAll('#examCardGrid .select-card.selected');
-        
-        selectedCards.forEach(card => {
-            let onclickAttr = card.getAttribute('data-on-click');
-            let match = onclickAttr.match(/"toggleExamCard",\[(\d+),/);
-            if (match) {
-                let idx = parseInt(match[1]);
-                if (wordLists[idx] && wordLists[idx].content) {
-                    combinedText += wordLists[idx].content + '\n';
-                }
-            }
-        });
-
-        document.getElementById('examWordList').value = combinedText.trim();
-        
-        let allWords = parseWordsRaw(combinedText);
-        let totalWords = allWords.length;
-        let starCount = allWords.filter(w => w.starred).length;
-        setPickSummary('examStatsText', 'examCardGrid', totalWords, starCount);
-    }
-
-    function toggleExamPreview() {
-        let container = document.getElementById('examPreviewCollapseContainer');
-        let btn = document.getElementById('examCollapseBtn');
-        container.classList.toggle('collapsed');
-        btn.classList.toggle('collapsed');
-        saveCollapseState('exam', container.classList.contains('collapsed'));
-    }
-
-    function sortExamWordListContent(sortType) {
-        if (!sortType) return;
-        let textarea = document.getElementById('examWordList');
-        let words = parseWordsRaw(textarea.value);
-        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
-        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
-        textarea.value = words.map(w => w.rawLine).join('\n');
-        setTimeout(() => document.getElementById('examWordSortSelector').selectedIndex = 0, 200);
-    }
-
-    function togglePreview() {
-        let container = document.getElementById('previewContainer');
-        let btn = document.getElementById('collapseBtn');
-        container.classList.toggle('collapsed');
-        btn.classList.toggle('collapsed');
-        saveCollapseState('practice', container.classList.contains('collapsed'));
-    }
-
-    function sortWordListContent(sortType) {
-        if (!sortType) return;
-        let textarea = document.getElementById('wordList');
-        let words = parseWordsRaw(textarea.value);
-        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
-        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
-        textarea.value = words.map(w => w.rawLine).join('\n');
-        setTimeout(() => document.getElementById('wordSortSelector').selectedIndex = 0, 200);
-    }
-
-    function sortEditorContent(sortType) {
-        if (!sortType) return;
-        let textarea = document.getElementById('editorWordList');
-        let words = parseWordsRaw(textarea.value);
-        if (sortType === 'az') words.sort((a, b) => a.english.toLowerCase().localeCompare(b.english.toLowerCase(), getLearningLanguage()));
-        else if (sortType === 'za') words.sort((a, b) => b.english.toLowerCase().localeCompare(a.english.toLowerCase(), getLearningLanguage()));
-        textarea.value = words.map(w => w.rawLine).join('\n');
-        handleEditorTextareaInput();
-        handleEditorSearch();
-    }
-
-    function syncEditorScroll() {
-        const textarea = document.getElementById('editorWordList');
-        const backdrop = document.getElementById('editorBackdrop');
-        if (textarea && backdrop) {
-            backdrop.scrollTop = textarea.scrollTop;
-            backdrop.scrollLeft = textarea.scrollLeft;
-        }
-    }
-
-    // 編輯頁右上角：目前單字數 / 這本題庫的上限（接近上限變橘色、達到上限變紅色）
-    function updateEditorWordCounter() {
-        let el = document.getElementById('editorWordCounter');
-        let list = wordLists[lastSelectedList];
-        let ta = document.getElementById('editorWordList');
-        if (!el || !list || !ta) return;
-        let count = getListWordCount(ta.value);
-        let cap = getListWordCap(list);
-        if (isPackList(list)) {
-            let stars = (list.content || '').split('\n').filter(l => l.trim().startsWith('*')).length;
-            el.innerHTML = `${count} 字・<span class="star">★</span> ${stars}`;
-            el.classList.remove('is-full', 'is-near');
-            el.title = '';
-            return;
-        }
-        el.innerHTML = `<b>${count}</b> / ${cap} 字`;
-        el.classList.toggle('is-full', count >= cap);
-        el.classList.toggle('is-near', count < cap && count >= cap * 0.9);
-        el.title = count >= cap
-            ? '已達單字上限，可到「雞塊補給站」兌換單字上限 +50'
-            : `還可以再放 ${cap - count} 個單字`;
-    }
-
-    // ── 單字編輯頁的搜尋：打字時只列出找到的單字；點一列就回到那一行 ──
-    function editorBackdropPlain() {
-        let ta = document.getElementById('editorWordList'), bd = document.getElementById('editorBackdrop');
-        if (ta && bd) bd.innerHTML = escapeHTML(ta.value);
-        syncEditorScroll();
-    }
-    function editorSearchHL(s, q) {
-        let i = s.toLowerCase().indexOf(q.toLowerCase());
-        if (i < 0) return escapeHTML(s);
-        return escapeHTML(s.slice(0, i)) + '<span class="hit">' + escapeHTML(s.slice(i, i + q.length)) + '</span>' + escapeHTML(s.slice(i + q.length));
-    }
-    function editorWordRowHTML(line, q) {
-        let starred = line.trim().startsWith('*'), clean = line.trim().replace(/^\*\s*/, '');
-        let fi = getForeignPart(clean).length, en = clean.slice(0, fi).trim(), rest = clean.slice(fi).trim();
-        return `${starred ? '<span class="star">*</span>' : ''}<b>${q ? editorSearchHL(en, q) : escapeHTML(en)}</b> <span class="mut">${q ? editorSearchHL(rest, q) : escapeHTML(rest)}</span>`;
-    }
-    function handleEditorSearch() {
-        updateEditorWordCounter();
-        const ta = document.getElementById('editorWordList');
-        const input = document.getElementById('wordSearchInput');
-        const res = document.getElementById('edSearchResults'), main = document.getElementById('edMain');
-        if (!ta || !input || !res || !main) return;
-        editorBackdropPlain();
-        const q = input.value.trim();
-        document.getElementById('edSearchBox').classList.toggle('has-q', !!q);
-        const pack = document.getElementById('editorDetailView').classList.contains('ed-pack');
-        if (pack) {           // 精選單字庫：直接篩選下面的星號清單
-            res.style.display = 'none'; main.style.display = '';
-            let n = 0;
-            document.querySelectorAll('#packStarList .ed-srow').forEach(r => {
-                let on = !q || r.getAttribute('data-text').toLowerCase().includes(q.toLowerCase());
-                r.style.display = on ? '' : 'none'; if (on) n++;
-            });
-            let empty = document.getElementById('packStarEmpty');
-            if (empty) { empty.style.display = q && !n ? '' : 'none'; empty.textContent = `找不到「${q}」`; }
-            return;
-        }
-        if (!q) { res.style.display = 'none'; main.style.display = ''; return; }
-        let hits = [];
-        ta.value.split('\n').forEach((line, i) => { if (line.trim() && line.toLowerCase().includes(q.toLowerCase())) hits.push(i); });
-        main.style.display = 'none'; res.style.display = '';
-        if (!hits.length) { res.innerHTML = `<div class="ed-empty">找不到「${escapeHTML(q)}」</div>`; return; }
-        let lines = ta.value.split('\n');
-        res.innerHTML = `<div class="ed-found">找到 <b>${hits.length}</b> 個</div><div class="ed-list">${hits.map(i =>
-            `<div class="ed-row" data-on-click='[["jumpToEditorLine",[${i}]]]'><span class="t">${editorWordRowHTML(lines[i], q)}</span><span class="ar">›</span></div>`).join('')}</div>`;
-    }
-    function clearEditorSearch() {
-        let input = document.getElementById('wordSearchInput');
-        if (input) input.value = '';
-        handleEditorSearch();
-    }
-    // 點搜尋結果：回到完整的編輯框，捲到那一行並選起來
-    function jumpToEditorLine(i) {
-        i = parseInt(i) || 0;
-        clearEditorSearch();
-        let ta = document.getElementById('editorWordList');
-        if (!ta) return;
-        let lines = ta.value.split('\n'), start = 0;
-        for (let k = 0; k < i && k < lines.length; k++) start += lines[k].length + 1;
-        let lh = parseFloat(getComputedStyle(ta).lineHeight) || 22;
-        try { ta.focus({ preventScroll: true }); } catch (e) { ta.focus(); }
-        ta.setSelectionRange(start, start + (lines[i] || '').length);
-        ta.scrollTop = Math.max(0, (i - 1) * lh);
-        syncEditorScroll();
-    }
-    let editorSortDir = 'az';
-    function toggleEditorSort() {
-        sortEditorContent(editorSortDir);
-        editorSortDir = editorSortDir === 'az' ? 'za' : 'az';
-        let b = document.getElementById('edSortBtn');
-        if (b) b.textContent = (editorSortDir === 'az' ? 'A-Z' : 'Z-A') + ' ⇅';
-    }
-    // ── 精選單字庫：不能編輯，只能點單字加／取消星號 ──
-    function renderPackStarList() {
-        let box = document.getElementById('packStarList'), list = wordLists[lastSelectedList];
-        if (!box || !list) return;
-        let lines = (list.content || '').split('\n');
-        box.innerHTML = `<div class="ed-list">${lines.map((line, i) => line.trim() ? `<div class="ed-srow${line.trim().startsWith('*') ? ' on' : ''}" data-line="${i}" data-text="${escapeHTML(line.replace(/^\s*\*\s*/, ''))}" data-on-click='[["togglePackStar",[${i}]]]'><span class="st">${line.trim().startsWith('*') ? '★' : '☆'}</span><span class="t">${editorWordRowHTML(line.replace(/^\s*\*\s*/, ''), '')}</span></div>` : '').join('')}</div><div class="ed-empty" id="packStarEmpty" style="display:none"></div>`;
-    }
-    function togglePackStar(i) {
-        let list = wordLists[lastSelectedList];
-        if (!list || !isPackList(list)) return;
-        i = parseInt(i);
-        let lines = (list.content || '').split('\n');
-        if (!lines[i] || !lines[i].trim()) return;
-        let on = lines[i].trim().startsWith('*');
-        lines[i] = on ? lines[i].replace(/^\s*\*\s*/, '') : '*' + lines[i].trim();
-        list.content = lines.join('\n');
-        document.getElementById('editorWordList').value = list.content;
-        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        triggerAutoSaveToCloud();
-        refreshListViewsSoon();
-        let row = document.querySelector(`#packStarList .ed-srow[data-line="${i}"]`);
-        if (row) { row.classList.toggle('on', !on); row.querySelector('.st').textContent = on ? '☆' : '★'; }
-        updateEditorWordCounter();
-    }
-    function refreshListViewsSoon() { clearTimeout(refreshListViewsSoon.t); refreshListViewsSoon.t = setTimeout(() => { try { refreshAllListViews(); } catch (e) {} }, 300); }
-
-    function saveAndStayInEditor() {
-        handleEditorTextareaInput();
-        let idx = lastSelectedList;
-        if (!wordLists[idx] || isPackList(wordLists[idx])) return;
-
-        let content = wordLists[idx].content || '';
-        let lines = content.split('\n');
-
-        let seenKeys = new Set();
-        let cleanLines = [];
-        let duplicates = [];
-
-        lines.forEach(line => {
-            let trimmed = line.trim();
-            if (!trimmed) return;
-            let isStarred = trimmed.startsWith('*');
-            let cleanLine = isStarred ? trimmed.substring(1).trim() : trimmed;
-            let firstChiIndex = meaningStart(cleanLine);
-            let engPart = firstChiIndex !== -1 ? cleanLine.substring(0, firstChiIndex).trim() : cleanLine.trim();
-            let key = engPart.toLowerCase();
-
-            if (key) {
-                if (seenKeys.has(key)) {
-                    duplicates.push(engPart);
-                } else {
-                    seenKeys.add(key);
-                    cleanLines.push(trimmed);
-                }
-            }
-        });
-
-        wordLists[idx].content = cleanLines.join('\n');
-        document.getElementById('editorWordList').value = wordLists[idx].content;
-
-        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        triggerAutoSaveToCloud();
-        initPracticeCardGrid();
-        initExamCardGrid();
-        initFlashcardGrid();
-        initCardExamGrid();
-        initSpeakPracticeGrid();
-
-        if (duplicates.length > 0) {
-            let msg = `發現重複單字，已自動過濾重複部分：\n` + duplicates.map((d, i) => `${i + 1}. ${d}`).join('\n');
-            alert(msg);
-        } else {
-            alert('✅ 題庫儲存成功並已同步至雲端！');
-        }
-        backToListFromDetail();
-    }
-
-    // ── 單字格式 ──
-    //   apple 蘋果 名詞                 → 1 個意思、1 個詞性
-    //   mature 成熟 動詞 形容詞          → 1 個意思、2 個詞性
-    //   Perform 執行 表現 動詞           → 2 個意思、1 個詞性
-    //   Star 星星 名詞 出演 動詞         → 2 組「意思＋詞性」
-    // 中文部分用空白分開；詞性以外的字都當成「意思」，意思出現在詞性後面就開始新的一組
-    const WORD_POS_LIST = ['名詞', '動詞', '形容詞', '副詞', '介係詞', '介系詞', '介詞', '連接詞', '連詞', '代名詞', '代詞', '感嘆詞', '感歎詞', '助動詞', '冠詞', '數詞', '量詞', '片語', '及物動詞', '不及物動詞', '動詞片語', '名詞片語', '形容詞片語', '副詞片語', '介係詞片語', '慣用語', '縮寫'];
-    const WORD_POS_SET = new Set(WORD_POS_LIST);
-    const WORD_POS_ALIAS = { '介系詞': '介係詞', '介詞': '介係詞', '連詞': '連接詞', '代詞': '代名詞', '感歎詞': '感嘆詞' };
-    function isPosToken(t) {
-        if (WORD_POS_SET.has(t)) return true;
-        return /^(n|v|vt|vi|adj|adv|prep|conj|pron|int|interj|aux|phr|det|art|num)\.?$/i.test(t);
-    }
-    function normPos(p) { return WORD_POS_ALIAS[p] || p; }
-    function parseMeaningPart(rest) {
-        let tokens = String(rest || '').split(/\s+/).filter(Boolean);
-        let senses = [], cur = null;
-        tokens.forEach(t => {
-            if (isPosToken(t)) {
-                if (!cur) { cur = { m: [], p: [] }; senses.push(cur); }
-                if (cur.p.indexOf(t) === -1) cur.p.push(t);
-            } else {
-                if (!cur || cur.p.length) { cur = { m: [], p: [] }; senses.push(cur); }
-                cur.m.push(t);
-            }
-        });
-        let meanings = [], posList = [];
-        senses.forEach(s => {
-            s.m.forEach(m => { if (meanings.indexOf(m) === -1) meanings.push(m); });
-            s.p.forEach(p => { if (posList.indexOf(p) === -1) posList.push(p); });
-        });
-        return { senses: senses.filter(s => s.m.length || s.p.length), meanings, posList };
-    }
-    // 多組「意思＋詞性」時的顯示文字：星星（名詞）；出演（動詞）
-    function wordSenseText(senses) {
-        if (!senses || senses.length < 2) return '';
-        return senses.map(s => s.m.join('、') + (s.p.length ? `（${s.p.join('、')}）` : '')).join('；');
-    }
-    // 給練習畫面用的一行說明：「詞性 意思」或多組時的「意思（詞性）；…」
-    function wordMeaningLine(w) {
-        if (!w) return '';
-        if (w.senseText) return w.senseText;
-        return w.chinese ? ((w.pos ? w.pos + ' ' : '') + w.chinese) : '';
-    }
-
-    function parseWordsRaw(text) {
-        let lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        let allWords = [], seen = new Set();
-        lines.forEach((line) => {
-            let isStarred = line.startsWith('*');
-            let cleanLine = isStarred ? line.substring(1).trim() : line;
-            let firstChiIndex = meaningStart(cleanLine);
-            let engPart = firstChiIndex !== -1 ? cleanLine.substring(0, firstChiIndex).trim() : cleanLine.trim();
-            let restPart = firstChiIndex !== -1 ? cleanLine.substring(firstChiIndex).trim() : "";
-            let pm = parseMeaningPart(restPart);
-            let key = engPart.toLowerCase();
-            if (key && !seen.has(key)) {
-                seen.add(key);
-                allWords.push({
-                    english: engPart,
-                    chinese: pm.meanings.join('、'),      // 顯示用（多個意思用「、」連接）
-                    pos: pm.posList.join(' '),
-                    meanings: pm.meanings,
-                    posList: pm.posList,
-                    senses: pm.senses,
-                    senseText: wordSenseText(pm.senses),
-                    starred: isStarred,
-                    rawLine: line,
-                    line: cleanLine
-                });
-            }
-        });
-        return allWords;
-    }
-
-    // ── 測驗的中文作答欄：有幾個意思就顯示幾格（最多 3 格）──
-    function chiBoxCount(item) { return Math.max(1, Math.min(3, ((item && item.meanings) || []).length || 1)); }
-    function chiInputIds(prefix) { return [prefix, prefix + '2', prefix + '3']; }
-    function setupChiInputs(prefix, item) {
-        let n = chiBoxCount(item);
-        chiInputIds(prefix).forEach((id, i) => {
-            let el = document.getElementById(id);
-            if (!el) return;
-            el.value = '';
-            el.style.display = i < n ? '' : 'none';
-            el.placeholder = n > 1 ? `意思 ${i + 1}` : '輸入中文...';
-        });
-        let tip = document.getElementById(prefix + 'Tip');
-        if (tip) tip.textContent = n > 1 ? `（這個單字有 ${n} 個意思，請各填一個，順序不拘）` : '';
-    }
-    function readChiInputs(prefix) {
-        return chiInputIds(prefix).map(id => document.getElementById(id))
-            .filter(el => el && el.style.display !== 'none')
-            .map(el => el.value.trim());
-    }
-    function setChiInputsDisabled(prefix, disabled) {
-        chiInputIds(prefix).forEach(id => { let el = document.getElementById(id); if (el) el.disabled = disabled; });
-    }
-    function engAnswerNorm(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC').trim().toLowerCase(); }
-    function chiNorm(s) { return String(s || '').normalize('NFC').replace(/[（(][^）)]*[）)]/g, '').replace(/[\s　，,、；;。.！!？?\/／…~～]/g, ''); }
-    // 每一格都要對到一個「還沒用過」的意思（順序不拘）；沒有中文的單字直接算對
-    function matchChineseAnswers(userArr, item) {
-        let meanings = (item && item.meanings) || [];
-        if (!meanings.length) return true;
-        let pool = meanings.map(chiNorm);
-        let whole = chiNorm(meanings.join(''));
-        for (let u of userArr) {
-            let nu = chiNorm(u);
-            if (!nu) return false;
-            let i = pool.indexOf(nu);
-            if (i === -1 && userArr.length === 1 && nu === whole) return true;
-            if (i === -1) return false;
-            pool.splice(i, 1);
-        }
-        return true;
-    }
-    function handleChiKeyDown(e, which, i) {
-        if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
-        e.preventDefault();
-        let prefix = which === 'card' ? 'cardExamInputChi' : 'examInputChi';
-        let next = document.getElementById(prefix + (i + 2));
-        if (next && next.style.display !== 'none' && !next.disabled) next.focus();
-        else if (which === 'card') submitCardExamAnswer();
-        else submitExamAnswer();
-    }
-
-    // ── 題庫編輯頁的「F」：格式說明 ──
-    function openWordFormatModal() { document.getElementById('wordFormatModal').style.display = 'block'; }
-    function closeWordFormatModal() { document.getElementById('wordFormatModal').style.display = 'none'; }
-
-    function toggleDictation() { isPlaying ? stopDictation() : checkAndStartDictation(); }
-    
-    function checkAndStartDictation() {
-        let text = document.getElementById('wordList').value.trim();
-        let words = parseWordsRaw(text);
-        
-        if (words.length === 0) {
-            alert("⚠️ 目前勾選的範圍單字數為 0，無法開始聽力練習！請至題庫新增單字。");
-            return;
-        }
-        startDictation();
-    }
-
-    function startDictation() {
-        let text = document.getElementById('wordList').value.trim();
-        wordsData = parseWordsRaw(text);
-        
-        if (document.getElementById('onlyStarred').checked) {
-            wordsData = wordsData.filter(w => w.starred);
-        }
-        if (document.getElementById('enableShuffle').checked) {
-            wordsData = wordsData.sort(() => Math.random() - 0.5);
-        }
-
-        if (wordsData.length === 0) { alert('找不到有效單字或無符合條件的單字！'); return; }
-        
-        requestWakeLock();
-
-        currentWordIndex = 0; isPlaying = true; isPaused = false;
-        
-        document.getElementById('practiceRangeContainer').style.display = 'none';
-        document.getElementById('practiceStatsBar').style.display = 'none';
-        document.getElementById('practicePreviewContainer').style.display = 'none';
-        document.getElementById('advancedBtnContainer').style.display = 'none';
-        document.getElementById('practiceBackBtn').style.display = 'none';
-
-        document.getElementById('status').style.display = 'flex';
-        
-        let toggleBtn = document.getElementById('toggleDictationBtn');
-        toggleBtn.innerText = '⏹ 停止練習'; toggleBtn.className = 'action-btn btn-stop';
-        document.getElementById('pauseDictationBtn').style.display = 'block';
-        
-        playNextWord();
-    }
-
-    function playNextWord() {
-        if (!isPlaying || isPaused) return;
-        
-        if (currentWordIndex >= wordsData.length) {
-            let isLoop = document.getElementById('enableLoop').checked;
-            if (isLoop) {
-                currentWordIndex = 0;
-            } else {
-                stopDictation();
-                document.getElementById('status').style.display = 'flex';
-                document.getElementById('status').innerHTML = `<span>🎉 練習結束！</span>`;
-                return;
-            }
-        }
-
-        let item = wordsData[currentWordIndex];
-        let rate = parseFloat(document.getElementById('speakRate').value) || 0.8;
-        let isLoop = document.getElementById('enableLoop').checked;
-        let targetRepeat = parseInt(document.getElementById('repeatCount').value) || 1;
-        if (targetRepeat < 1) targetRepeat = 1;
-
-        let loopSymbolHtml = isLoop ? `<span style="color:#3B82F6; font-size:17px; margin-left:6px; font-weight:bold;">∞</span>` : '';
-        let leftPart = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${escapeHTML(item.english)}</strong> <span style="font-weight:600; color:#475569;">(第 1/${targetRepeat} 次)</span>`;
-        let rightPart = `<span style="color:#4F46E5; font-weight:700;">(${currentWordIndex + 1}/${wordsData.length})</span>${loopSymbolHtml}`;
-        
-        document.getElementById('status').innerHTML = `<div>${leftPart}</div><div style="display:flex; align-items:center;">${rightPart}</div>`;
-
-        let queue = [];
-        for (let r = 1; r <= targetRepeat; r++) {
-            queue.push({
-                text: item.english,
-                isEng: true,
-                onPlay: () => {
-                    let newLeft = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${escapeHTML(item.english)}</strong> <span style="font-weight:600; color:#475569;">(第 ${r}/${targetRepeat} 次)</span>`;
-                    document.getElementById('status').children[0].innerHTML = newLeft;
-                }
-            });
-        }
-
-        if (document.getElementById('enableSpell').checked && item.english) {
-            let letters = (getLearningLanguage() === 'ko')
-                ? Array.from(item.english.replace(/\s+/g, '')).join(' - ')
-                : item.english.replace(/[^a-zA-Z]/g, '').toLowerCase().split('').join(' - ');
-            if (letters) queue.push({ text: letters, isEng: true });
-        }
-        let sayChi = document.getElementById('enableChinese').checked && item.chinese;
-        let sayPos = document.getElementById('enablePOS').checked && item.pos;
-        if (sayChi && sayPos && item.senses && item.senses.length > 1) {
-            // 多組「意思＋詞性」：照順序一組一組念
-            item.senses.forEach(s => { let t = [s.m.join('，'), s.p.join('，')].filter(Boolean).join('，'); if (t) queue.push({ text: t, isEng: false }); });
-        } else {
-            if (sayChi) queue.push({ text: (item.meanings && item.meanings.length ? item.meanings.join('，') : item.chinese), isEng: false });
-            if (sayPos) queue.push({ text: item.pos, isEng: false });
-        }
-
-        playQueue(queue, rate, () => {
-            if (!isPlaying || isPaused) return;
-            currentWordIndex++;
-            let pauseSec = parseInt(document.getElementById('pauseTime').value);
-            if (isNaN(pauseSec)) pauseSec = 2;
-            timeoutId = setTimeout(playNextWord, pauseSec * 1000);
-        });
-    }
-
-    function playQueue(queueItems, rate, onComplete) {
-        if (queueItems.length === 0) {
-            if (onComplete) onComplete();
-            return;
-        }
-        let item = queueItems.shift();
-        if (item.onPlay) item.onPlay();
-
-        let utterance = new SpeechSynthesisUtterance(item.text);
-        let learningLang = getLearningLanguage();
-        let langCode = item.isEng ? ((learningLang === 'ko') ? 'ko-KR' : 'en-US') : 'zh-TW';
-        let chosenVoice = item.isEng ? getSelectedVoiceForLearning() : getSelectedVoice('zh-TW');
-
-        if (chosenVoice) utterance.voice = chosenVoice;
-        utterance.lang = langCode;
-        utterance.rate = rate;
-
-        let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
-        let baseVol = (parseInt(sysVol) || 100) / 100;
-        utterance.volume = Math.max(0, Math.min(1.0, baseVol));
-
-        utterance.onend = () => {
-            if (!isPlaying || isPaused) return;
-            setTimeout(() => {
-                playQueue(queueItems, rate, onComplete);
-            }, 1000);
-        };
-        synth.speak(utterance);
-    }
-
-    function stopDictation() {
-        isPlaying = false; isPaused = false; synth.cancel(); clearTimeout(timeoutId);
-        releaseWakeLock();
-        
-        document.getElementById('practiceRangeContainer').style.display = 'block';
-        document.getElementById('practiceStatsBar').style.display = 'flex';
-        document.getElementById('practicePreviewContainer').style.display = 'block';
-        document.getElementById('advancedBtnContainer').style.display = 'block';
-        document.getElementById('practiceBackBtn').style.display = 'inline-flex';
-
-        document.getElementById('status').innerText = '準備就緒 🔥';
-        document.getElementById('status').style.display = 'none';
-        
-        let toggleBtn = document.getElementById('toggleDictationBtn');
-        toggleBtn.innerText = '▶ 開始聽力練習'; toggleBtn.className = 'action-btn btn-start';
-        
-        let pauseBtn = document.getElementById('pauseDictationBtn');
-        pauseBtn.innerText = '⏸ 暫停'; pauseBtn.className = 'action-btn btn-pause';
-        pauseBtn.style.display = 'none';
-    }
-
-    function togglePauseDictation() {
-        let btn = document.getElementById('pauseDictationBtn');
-        if (!isPaused) {
-            isPaused = true; synth.cancel(); clearTimeout(timeoutId);
-            btn.innerText = '▶ 繼續'; btn.className = 'action-btn btn-resume';
-        } else {
-            isPaused = false;
-            btn.innerText = '⏸ 暫停'; btn.className = 'action-btn btn-pause';
-            playNextWord();
-        }
-    }
-
-    function initExamCheckboxes() {}
-
-    function getSelectedExamWords() {
-        let combinedText = '';
-        let selectedTitles = [];
-        document.querySelectorAll('#examCardGrid .select-card.selected').forEach((card, displayIdx) => {
-            let onclickAttr = card.getAttribute('data-on-click');
-            let match = onclickAttr.match(/"toggleExamCard",\[(\d+),/);
-            if (match) {
-                let idx = parseInt(match[1]);
-                if (wordLists[idx] && wordLists[idx].content) {
-                    combinedText += wordLists[idx].content + '\n';
-                    selectedTitles.push(`${displayIdx + 1}: ${wordLists[idx].title}`);
-                }
-            }
-        });
-        currentExamRanges = selectedTitles.join(', ');
-        let words = parseWordsRaw(combinedText);
-        
-        if (document.getElementById('examOnlyStarred') && document.getElementById('examOnlyStarred').checked) {
-            words = words.filter(w => w.starred);
-        }
-        
-        for (let i = words.length - 1; i > 0; i--) {
-            let j = Math.floor(Math.random() * (i + 1));
-            [words[i], words[j]] = [words[j], words[i]];
-        }
-
-        let qCount = parseInt(document.getElementById('examQuestionCount').value) || 0;
-        if (qCount > 0 && words.length > qCount) {
-            words = words.slice(0, qCount);
-        }
-        return words;
-    }
-
-    let voiceChiChecking = false;
-    async function startExamMode() {
-        let words = getSelectedExamWords();
-        if (words.length === 0) { alert('⚠️ 請至少勾選一個考試範圍或確認範圍內有符合條件的單字！'); return; }
-        if (voiceChiChecking) return;
-        voiceChiChecking = true;
-        let micOk = await voiceChiPrepare('examInputChi');
-        voiceChiChecking = false;
-        if (!micOk) return;
-        applyVoiceChiButtons();
-
-        let resultContainerEl = document.getElementById('resultContainer');
-        if (resultContainerEl) {
-            resultContainerEl.innerHTML = '';
-            resultContainerEl.style.display = 'none';
-        }
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        requestWakeLock();
-
-        wordsData = words;
-        currentWordIndex = 0; isPlaying = true; isExamRunning = true; examResults = [];
-        clearExamInputs();
-        
-        document.getElementById('examRangeContainer').style.display = 'none';
-        document.getElementById('examStatsBar').style.display = 'none';
-        document.getElementById('examPreviewContainer').style.display = 'none';
-        document.getElementById('examAdvancedBtnContainer').style.display = 'none';
-        document.getElementById('startExamBtn').style.display = 'none';
-        document.getElementById('examBackBtn').style.display = 'none';
-        document.getElementById('examArea').style.display = 'block';
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        playExamQuestion();
-    }
-
-    function playExamQuestion() {
-        if (!isPlaying || currentWordIndex >= wordsData.length) { finishExam(); return; }
-        
-        document.getElementById('examProgressStatus').innerText = `🎧 正在進行考試... 請聆聽並於下方作答 (${currentWordIndex + 1}/${wordsData.length})`;
-
-        let item = wordsData[currentWordIndex];
-        voiceChiStop();
-        setupChiInputs('examInputChi', item);
-        setExamInputsDisabled(true);
-        let rate = parseFloat(document.getElementById('examSpeakRate').value) || 0.8;
-        let repeatCount = parseInt(document.getElementById('examRepeatCount').value) || 1;
-
-        let utteranceCount = 0;
-        function speakSingle() {
-            let utterance = new SpeechSynthesisUtterance(item.english);
-            let learningLang = getLearningLanguage();
-            let langCode = (learningLang === 'ko') ? 'ko-KR' : 'en-US';
-            let chosenVoice = getSelectedVoiceForLearning();
-            if (chosenVoice) utterance.voice = chosenVoice;
-            utterance.lang = langCode;
-            
-            utterance.rate = rate;
-            let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
-            utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
-
-            utterance.onend = () => {
-                utteranceCount++;
-                if (utteranceCount < repeatCount) {
-                    setTimeout(speakSingle, 1000);
-                } else {
-                    setExamInputsDisabled(false);
-                    document.getElementById('examInputEng').focus();
-                    
-                    examTimeLeft = parseInt(document.getElementById('examAnswerTime').value) || 26;
-                    document.getElementById('timeLeft').innerText = examTimeLeft;
-                    examTimerId = setInterval(() => {
-                        examTimeLeft--;
-                        document.getElementById('timeLeft').innerText = examTimeLeft;
-                        if (examTimeLeft <= 0) { clearInterval(examTimerId); submitExamAnswer(); }
-                    }, 1000);
-                }
-            };
-            synth.speak(utterance);
-        }
-        speakSingle();
-    }
-
-    function submitExamAnswer() {
-        if (examTimerId) clearInterval(examTimerId);
-        let userEng = document.getElementById('examInputEng').value.trim();
-        let userChiArr = readChiInputs('examInputChi');
-        let userChi = userChiArr.filter(Boolean).join('、');
-
-        let currentItem = wordsData[currentWordIndex];
-        if (!currentItem) return;
-
-        let engMatch = (engAnswerNorm(userEng) === engAnswerNorm(currentItem.english));
-        let chiMatch = matchChineseAnswers(userChiArr, currentItem);
-
-        let isCorrect = engMatch && chiMatch;
-
-        examResults.push({
-            english: currentItem.english,
-            chinese: currentItem.chinese,
-            senseText: currentItem.senseText || '',
-            line: currentItem.line || '', 
-            userEng, 
-            userChi, 
-            isCorrect,
-            engMatch,
-            chiMatch
-        });
-
-        currentWordIndex++;
-
-        document.getElementById('examInputEng').value = '';
-        chiInputIds('examInputChi').forEach(id => { let el = document.getElementById(id); if (el) el.value = ''; });
-        setExamInputsDisabled(true);
-        
-        let pauseSec = parseInt(document.getElementById('examPauseTime').value);
-        if (isNaN(pauseSec)) pauseSec = 1;
-        setTimeout(playExamQuestion, pauseSec * 1000);
-    }
-
-    // 清掉上一次（或中途離開時）留在輸入框的字
-    function clearExamInputs() {
-        let e = document.getElementById('examInputEng'); if (e) e.value = '';
-        chiInputIds('examInputChi').forEach(id => { let el = document.getElementById(id); if (el) el.value = ''; });
-        voiceChiStop();
-    }
-    // ── 語音輸入中文（聽力測驗、字卡測驗） ──
-    let voiceChiRec = null, voiceChiPrefix = '', voiceChiLastFocus = {};
-    function voiceChiOn(prefix) {
-        let el = document.getElementById(prefix === 'cardExamInputChi' ? 'cardExamVoiceChi' : 'examVoiceChi');
-        return !!(el && el.checked && getSpeechRecognitionCtor());
-    }
-    function applyVoiceChiButtons() {
-        [['examInputChi', 'examVoiceBtn'], ['cardExamInputChi', 'cardExamVoiceBtn']].forEach(([p, b]) => {
-            let btn = document.getElementById(b);
-            if (btn) btn.style.display = voiceChiOn(p) ? '' : 'none';
-        });
-    }
-    // 記住最後點的是哪一格中文欄位（語音結果會填進那一格）
-    document.addEventListener('focusin', (e) => {
-        let id = e.target && e.target.id;
-        if (id && /^(examInputChi|cardExamInputChi)\d?$/.test(id)) voiceChiLastFocus[id.replace(/\d$/, '')] = id;
-    });
-    function voiceChiTarget(prefix) {
-        let ids = chiInputIds(prefix).filter(id => { let el = document.getElementById(id); return el && el.style.display !== 'none'; });
-        let last = voiceChiLastFocus[prefix];
-        if (last && ids.includes(last) && !document.getElementById(last).value.trim()) return document.getElementById(last);
-        let empty = ids.find(id => !document.getElementById(id).value.trim());
-        return document.getElementById(empty || (last && ids.includes(last) ? last : ids[0]));
-    }
-    function voiceChiStop() {
-        if (voiceChiRec) { try { voiceChiRec.abort(); } catch (e) {} }
-        voiceChiRec = null;
-        document.querySelectorAll('.voice-chi-btn.recording').forEach(b => b.classList.remove('recording'));
-    }
-    function voiceChiToggle(prefix) {
-        if (voiceChiRec) { voiceChiStop(); return; }
-        let Ctor = getSpeechRecognitionCtor();
-        if (!Ctor) { alert('此瀏覽器不支援語音辨識'); return; }
-        let target = voiceChiTarget(prefix);
-        if (!target || target.disabled) return;
-        let btn = document.getElementById(prefix === 'cardExamInputChi' ? 'cardExamVoiceBtn' : 'examVoiceBtn');
-        let rec = new Ctor();
-        rec.lang = 'zh-TW';
-        rec.interimResults = false;
-        rec.maxAlternatives = 1;
-        rec.onresult = (ev) => {
-            let t = '';
-            try { t = ev.results[0][0].transcript || ''; } catch (e) {}
-            t = t.replace(/[。，,.！!？?\s]/g, '');
-            if (t && !target.disabled) { target.value = t; target.dispatchEvent(new Event('input', { bubbles: true })); }
-        };
-        rec.onerror = (ev) => { if (ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) { try { openMicHelpModal(); } catch (e) {} } };
-        rec.onend = () => { if (voiceChiRec === rec) voiceChiStop(); };
-        voiceChiRec = rec; voiceChiPrefix = prefix;
-        if (btn) btn.classList.add('recording');
-        try { rec.start(); } catch (e) { voiceChiStop(); }
-    }
-    // 開始考試前：有開語音輸入就先確認麥克風權限，避免第一題作答時間被開麥克風耽誤
-    async function voiceChiPrepare(prefix) {
-        if (!voiceChiOn(prefix)) return true;
-        alert('🎙️ 已開啟「語音輸入中文」\n\n接下來會確認麥克風權限，允許後才會開始考試。');
-        let mic = await ensureMicPermission(true);
-        if (!mic.ok) { if (mic.denied) openMicHelpModal(); else alert(mic.message || '⚠️ 無法使用麥克風'); return false; }
-        return true;
-    }
-    function setExamInputsDisabled(disabled) {
-        document.getElementById('examInputEng').disabled = disabled;
-        setChiInputsDisabled('examInputChi', disabled);
-        document.getElementById('examSubmitBtn').disabled = disabled;
-    }
-
-    function stopExamMode() {
-        isPlaying = false; isExamRunning = false; synth.cancel();
-        clearExamInputs();
-        if (examTimerId) clearInterval(examTimerId);
-        releaseWakeLock();
-        document.getElementById('examArea').style.display = 'none';
-        document.getElementById('examRangeContainer').style.display = 'block';
-        document.getElementById('examStatsBar').style.display = 'flex';
-        document.getElementById('examPreviewContainer').style.display = 'block';
-        document.getElementById('examAdvancedBtnContainer').style.display = 'block';
-        document.getElementById('startExamBtn').style.display = 'block';
-        document.getElementById('examBackBtn').style.display = 'inline-flex';
-    }
-
-    function finishExam() {
-        isPlaying = false; isExamRunning = false; synth.cancel();
-        if (examTimerId) clearInterval(examTimerId);
-        releaseWakeLock();
-        document.getElementById('examArea').style.display = 'none';
-        document.getElementById('examRangeContainer').style.display = 'block';
-        document.getElementById('examStatsBar').style.display = 'flex';
-        document.getElementById('examPreviewContainer').style.display = 'block';
-        document.getElementById('examAdvancedBtnContainer').style.display = 'block';
-        document.getElementById('startExamBtn').style.display = 'block';
-        document.getElementById('examBackBtn').style.display = 'inline-flex';
-        
-        let total = examResults.length;
-        if (total === 0) return;
-
-        let correct = examResults.filter(r => r.isCorrect).length;
-        let score = total > 0 ? Math.round((correct / total) * 100) : 0;
-        
-        // 觸發聽力測驗雞塊任務檢查
-        triggerTaskCheck('listening_exam_done', { total, score });
-
-        let newRecord = { date: new Date().toLocaleString(), range: currentExamRanges, total, score, results: examResults, lang: getLearningLanguage() };
-        examHistory.unshift(newRecord);
-        examHistory = trimHistoryPerLang(examHistory);
-
-        localStorage.setItem('dictation_exam_history', JSON.stringify(examHistory));
-        triggerAutoSaveToCloud();
-
-        let html = `<div class="result-box">
-            <div style="font-weight:700; margin-bottom:12px; font-size:15px; color:var(--text-main);">※ 聽力測驗結束！以下為您的測驗結果：</div>
-            <div style="font-weight:600; margin-bottom:14px; color:var(--primary);">📊 成績統計：得分 ${score} 分 (總題數 ${total} 題，完全答對 ${correct} 題)</div>`;
-        
-        examResults.forEach((r, i) => {
-            let titleColor = r.isCorrect ? '#10B981' : '#EF4444';
-            let icon = r.isCorrect ? '✅' : '❌';
-            let correctInfo = `${escapeHTML(r.english)} (${escapeHTML(r.senseText || r.chinese || '')})`;
-
-            let engDisplay = r.engMatch ? `<span style="color:#10B981;">${escapeHTML(r.userEng || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userEng || '[(未填)]')}</span>`;
-            let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '[(未填)]')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '[(未填)]')}</span>`;
-            let userAnsInfo = `${engDisplay} / ${chiDisplay}`;
-
-            html += `<div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
-                <div style="font-weight:700; color:${titleColor}; margin-bottom:4px;">${icon} 第 ${i+1} 題：${escapeHTML(r.english)} — ${r.isCorrect ? '' : '正確答案是 '}${correctInfo}</div>
-                <div style="font-size:13.5px; color:var(--text-muted);">您的回答：${userAnsInfo}</div>
-            </div>`;
-        });
-        html += `</div>`;
-        
-        document.getElementById('modalResultBody').innerHTML = html;
-        document.getElementById('examResultModal').style.display = 'block';
-    }
-
-    function handleInputKeyDown(e, type) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (type === 'eng') document.getElementById('examInputChi').focus();
-            else submitExamAnswer();
-        }
-    }
-
-    function openSystemSettingsModal() { 
-        document.getElementById('systemSettingsModal').style.display = 'block'; 
-        let volSlider = document.getElementById('systemVolume');
-        if (volSlider) updateSliderProgress(volSlider);
-    }
-    function closeSystemSettingsModal() {
-        document.getElementById('systemSettingsModal').style.display = 'none'; cloudHighlight = false;
-        if (cloudState() === 'off') { try { localStorage.setItem(CLOUD_SEEN_KEY, '1'); } catch (e) {} }   // 看過了 → 紅色驚嘆號消失
-        cloudRender();
-    }
-    function openAboutModal() { document.getElementById('aboutModal').style.display = 'block'; }
-    function closeAboutModal() { document.getElementById('aboutModal').style.display = 'none'; }
-    function openExportModal() { 
-        let group = document.getElementById('exportListsCheckboxGroup');
-        if (group) {
-            group.innerHTML = '';
-            wordLists.forEach((l, idx) => {
-                if (!isListInCurrentLang(l)) return;
-                group.innerHTML += `<label class="checkbox-item-row"><input type="checkbox" value="${idx}" checked> ${getLangSeq(idx)}: ${escapeHTML(l.title)}</label>`;
-            });
-        }
-        document.getElementById('exportModal').style.display = 'block'; 
-    }
-    function closeExportModal() { document.getElementById('exportModal').style.display = 'none'; }
-    function toggleAllExportCheckboxes(check) {
-        document.querySelectorAll('#exportListsCheckboxGroup input[type="checkbox"]').forEach(c => c.checked = check);
-    }
-    function confirmExportTxtFiles() {
-        let chks = document.querySelectorAll('#exportListsCheckboxGroup input[type="checkbox"]:checked');
-        if (chks.length === 0) { alert('⚠️ 請至少勾選一個題庫！'); return; }
-        chks.forEach(chk => {
-            let idx = parseInt(chk.value);
-            let l = wordLists[idx];
-            if (l && l.content) {
-                let blob = new Blob([l.content], { type: 'text/plain;charset=utf-8' });
-                let url = URL.createObjectURL(blob);
-                let a = document.createElement('a');
-                a.href = url;
-                a.download = `${l.title || ('Database_' + (idx + 1))}.txt`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
-        });
-        closeExportModal();
-    }
-    
-    // ── 測驗紀錄（一般頁面）──
-    let hist = { type: 'listening', mode: 'main', idx: 0, onlyWrong: false, sel: new Set() };
-    function histData() { return filterHistoryByLang(hist.type === 'listening' ? examHistory : cardExamHistory); }
-    function histDate(s) {
-        let m = String(s || '').match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})\D+?(上午|下午|AM|PM)?\s*(\d{1,2}):(\d{2})/i);
-        if (!m) return String(s || '');
-        let hr = parseInt(m[5]); if (/下午|PM/i.test(m[4] || '') && hr < 12) hr += 12; if (/上午|AM/i.test(m[4] || '') && hr === 12) hr = 0;
-        return `${parseInt(m[2])}/${parseInt(m[3])} ${String(hr).padStart(2, '0')}:${m[6]}`;
-    }
-    function histWrongList() {
-        let map = {};
-        histData().forEach(h => (h.results || []).forEach(r => {
-            if (r.isCorrect || !r.english) return;
-            let key = r.english.toLowerCase();
-            if (!map[key]) map[key] = { english: r.english, chinese: r.senseText || r.chinese || '', line: r.line || '', count: 0 };
-            map[key].count++;
-        }));
-        return Object.values(map).sort((x, y) => y.count - x.count).slice(0, 20);
-    }
-    function histChartSVG(list) {
-        let sc = list.slice(0, 10).reverse().map(h => Number(h.score) || 0);
-        if (!sc.length) return '';
-        let bw = (document.getElementById('histBody') || {}).clientWidth || 360;
-        let w = Math.max(300, Math.min(760, bw - 24)), hgt = 120, px = 18, py = 20, n = sc.length;   // 寬度跟著畫面，高度固定
-        let xs = sc.map((s, i) => n === 1 ? w / 2 : px + i * (w - 2 * px) / (n - 1));
-        let y = s => hgt - py - Math.max(0, Math.min(100, s)) / 100 * (hgt - 2 * py);
-        let pts = sc.map((s, i) => `${xs[i].toFixed(0)},${y(s).toFixed(0)}`).join(' ');
-        let dots = sc.map((s, i) => `<circle cx="${xs[i].toFixed(0)}" cy="${y(s).toFixed(0)}" r="${i === n - 1 ? 5 : 3.5}" class="${i === n - 1 ? 'last' : ''}"/>`).join('');
-        let dates = list.slice(0, 10).reverse().map(h => histDate(h.date).split(' ')[0]);
-        return `<div class="hs-chart"><svg viewBox="0 0 ${w} ${hgt}" width="100%" aria-label="成績曲線"><line class="ref" x1="${px}" x2="${w - px}" y1="${y(60).toFixed(0)}" y2="${y(60).toFixed(0)}"/><text class="ref" x="${w - px}" y="${(y(60) - 5).toFixed(0)}" text-anchor="end">60</text>
-            ${n > 1 ? `<polyline points="${pts}"/>` : ''}${dots}<text class="val" x="${xs[n - 1].toFixed(0)}" y="${(y(sc[n - 1]) - 10).toFixed(0)}" text-anchor="middle">${sc[n - 1]}</text></svg>
-            <div class="dates">${dates.map(d => `<span>${escapeHTML(d)}</span>`).join('')}</div></div>`;
-    }
-    function renderHistoryPage() {
-        let body = document.getElementById('histBody'), title = document.getElementById('historyTitle');
-        if (!body) return;
-        let list = histData(), name = hist.type === 'listening' ? '聽力測驗' : '字卡測驗';
-        let wordRow = (e, c, right) => `<span class="t"><b>${escapeHTML(e)}</b> <span class="mut">${escapeHTML(c || '')}</span></span>${right || ''}`;
-        if (hist.mode === 'detail' && list[hist.idx]) {
-            let h = list[hist.idx], rs = h.results || [], wrong = rs.filter(r => !r.isCorrect).length;
-            title.textContent = `📊 ${histDate(h.date).split(' ')[0]} ${name}`;
-            let rows = rs.map(r => {
-                if (hist.onlyWrong && r.isCorrect) return '';
-                let yours = hist.type === 'listening' ? [r.userEng || '未填', r.userChi || '未填'].join('／') : [r.userChi || '未填', r.pos ? (r.userPos || '未選') : ''].filter(Boolean).join('／');
-                return `<div class="hs-row"><span class="${r.isCorrect ? 'ok' : 'no'}">${r.isCorrect ? '✓' : '✕'}</span><span class="t"><b>${escapeHTML(r.english || '')}</b> <span class="mut">${escapeHTML(r.senseText || r.chinese || '')}</span>${r.isCorrect ? '' : `<small class="yours">你的答案：${escapeHTML(yours)}</small>`}</span></div>`;
-            }).join('');
-            body.innerHTML = `<div class="hs-dhead"><span><b>${escapeHTML(histDate(h.date))}</b>　<span class="mut">${escapeHTML(h.range || '')}</span></span><span class="hs-big">${escapeHTML(h.score)}<small> 分</small></span></div>
-                <div class="pk-bar"><span>${escapeHTML(h.total)} 題・答錯 <b class="warn">${wrong}</b> 題</span><button type="button" class="addb${hist.onlyWrong ? ' on' : ''}" data-on-click='[["histToggleWrong",[]]]'>${hist.onlyWrong ? '顯示全部' : '只看錯的'}</button></div>
-                <div class="hs-list">${rows || '<div class="hs-empty">這次全部答對！</div>'}</div>`;
-            return;
-        }
-        if (hist.mode === 'save') {
-            title.textContent = '📥 存到題庫';
-            let wl = histWrongList();
-            let opts = wordLists.map((l, i) => ({ l, i })).filter(x => isListInCurrentLang(x.l) && !isPackList(x.l))
-                .map(x => `<option value="${x.i}">${escapeHTML(x.l.title)}（${getListWordCount(x.l.content)}/${getListWordCap(x.l)}）</option>`).join('');
-            body.innerHTML = `<div class="pk-bar"><span>選要存的單字・已選 <b>${hist.sel.size}</b> 個</span><button type="button" class="addb" data-on-click='[["histSelectAll",[]]]'>全選</button></div>
-                <div class="hs-list">${wl.map((w, i) => `<div class="hs-row pick${hist.sel.has(i) ? ' on' : ''}" data-on-click='[["histToggleSel",[${i}]]]'>${wordRow(w.english, w.chinese, `<span class="cnt">錯 ${w.count} 次</span><span class="ck">${hist.sel.has(i) ? '✓' : ''}</span>`)}</div>`).join('') || '<div class="hs-empty">目前沒有錯題</div>'}</div>
-                <div class="hs-save"><select id="histTarget">${opts || '<option value="">（還沒有自訂題庫）</option>'}</select><button type="button" data-on-click='[["histSaveWords",[]]]'>存入</button></div>`;
-            return;
-        }
-        title.textContent = '📊 測驗紀錄';
-        let avg = list.length ? Math.round(list.reduce((s, h) => s + (Number(h.score) || 0), 0) / list.length) : 0;
-        let best = list.length ? Math.max(...list.map(h => Number(h.score) || 0)) : 0;
-        let wl = histWrongList().slice(0, 5);
-        body.innerHTML = `<div class="pk-seg"><button type="button" class="${hist.type === 'listening' ? 'on' : ''}" data-on-click='[["histSetType",["listening"]]]'>聽力測驗</button><button type="button" class="${hist.type === 'card' ? 'on' : ''}" data-on-click='[["histSetType",["card"]]]'>字卡測驗</button></div>
-            ${list.length ? `<div class="hs-sum">共 <b>${list.length}</b> 次・平均 <b>${avg}</b> 分・最高 <b>${best}</b> 分</div>${histChartSVG(list)}
-            <div class="hs-sec"><b>常錯單字</b>${wl.length ? `<button type="button" class="hs-link" data-on-click='[["histOpenSave",[]]]'>存到題庫 ›</button>` : ''}</div>
-            <div class="hs-list">${wl.map(w => `<div class="hs-row">${wordRow(w.english, w.chinese, `<span class="cnt">錯 ${w.count} 次</span>`)}</div>`).join('') || '<div class="hs-empty">目前沒有錯題，太厲害了！</div>'}</div>
-            <div class="hs-sec"><b>歷史紀錄</b></div>
-            <div class="hs-list">${list.map((h, i) => `<div class="hs-row link" data-on-click='[["histOpenDetail",[${i}]]]'><span class="t"><b>${escapeHTML(histDate(h.date))}</b><small>${escapeHTML(h.range || '')}・${escapeHTML(h.total)} 題</small></span><span class="sc${Number(h.score) < 60 ? ' low' : ''}">${escapeHTML(h.score)}</span><span class="ar">›</span></div>`).join('')}</div>`
-            : `<div class="hs-empty" style="margin-top:4px">還沒有${getLangName(getLearningLanguage())}${name}紀錄，去考一次吧！</div>`}`;
-    }
-    function histSetType(t) { hist.type = t === 'card' ? 'card' : 'listening'; hist.mode = 'main'; renderHistoryPage(); }
-    function histOpenDetail(i) { hist.mode = 'detail'; hist.idx = parseInt(i) || 0; hist.onlyWrong = false; renderHistoryPage(); window.scrollTo(0, 0); }
-    function histToggleWrong() { hist.onlyWrong = !hist.onlyWrong; renderHistoryPage(); }
-    function histOpenSave() { hist.mode = 'save'; hist.sel = new Set([0, 1, 2].filter(i => i < histWrongList().length)); renderHistoryPage(); window.scrollTo(0, 0); }
-    function histToggleSel(i) { i = parseInt(i); hist.sel.has(i) ? hist.sel.delete(i) : hist.sel.add(i); renderHistoryPage(); }
-    function histSelectAll() { let n = histWrongList().length; hist.sel = hist.sel.size === n ? new Set() : new Set([...Array(n).keys()]); renderHistoryPage(); }
-    function histSaveWords() {
-        let sel = document.getElementById('histTarget'), idx = sel ? parseInt(sel.value) : NaN;
-        if (isNaN(idx) || !wordLists[idx]) { alert(`⚠️ 目前沒有可儲存的${getLangName(getLearningLanguage())}題庫，請先到「題庫」新增。`); return; }
-        let wl = histWrongList().filter((w, i) => hist.sel.has(i));
-        if (!wl.length) { alert('⚠️ 請至少選一個單字！'); return; }
-        let added = 0, full = 0;
-        wl.forEach(w => {
-            let cur = wordLists[idx].content || '';
-            if (parseWordsRaw(cur).some(x => x.english.toLowerCase() === w.english.toLowerCase())) return;
-            if (getListWordCount(cur) >= getListWordCap(wordLists[idx])) { full++; return; }
-            wordLists[idx].content = cur + (cur ? '\n' : '') + ((w.line || '').trim() || `${w.english} ${w.chinese}`.trim());
-            added++;
-        });
-        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        triggerAutoSaveToCloud();
-        try { refreshAllListViews(); } catch (e) {}
-        alert(`✅ 已將 ${added} 個單字存到「${wordLists[idx].title}」！${full ? `\n⚠️ 題庫已達上限，有 ${full} 個沒有加入。` : ''}`);
-        hist.mode = 'main'; renderHistoryPage();
-    }
-    function historyBack() {
-        if (hist.mode !== 'main') { hist.mode = 'main'; renderHistoryPage(); window.scrollTo(0, 0); return; }
-        backToHome();
-    }
-    async function openHistoryModal() {
-        hist.mode = 'main';
-        switchView('historyView');
-        renderHistoryPage();
-        syncDriveInBackground(() => { if (document.getElementById('historyView').classList.contains('active')) renderHistoryPage(); });
-        window.scrollTo(0, 0);
-        return;
-        openHistoryModalContent(); 
-        document.getElementById('historyModal').style.display = 'block'; 
-        setTimeout(() => {
-            renderScoreChart('listeningScoreCanvas', filterHistoryByLang(examHistory));
-            renderScoreChart('cardScoreCanvas', filterHistoryByLang(cardExamHistory));
-        }, 80);
-    }
-    function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
-
-    function openAdvancedModal() { document.getElementById('advancedModal').style.display = 'block'; }
-    function closeAdvancedModal() { document.getElementById('advancedModal').style.display = 'none'; }
-    function openExamAdvancedModal() { document.getElementById('examAdvancedModal').style.display = 'block'; }
-    function closeExamAdvancedModal() { document.getElementById('examAdvancedModal').style.display = 'none'; }
-    function closeExamResultModal() { document.getElementById('examResultModal').style.display = 'none'; }
-
-    function switchHistoryTab(tabName) {
-        const tabs = {
-            listening: { tab: 'cardListeningTab', panel: 'panelListeningHistory', canvas: 'listeningScoreCanvas', data: () => examHistory },
-            word:      { tab: 'cardWordTab',      panel: 'panelWordHistory',      canvas: 'cardScoreCanvas',      data: () => cardExamHistory }
-        };
-        if (!tabs[tabName]) tabName = 'listening';
-        Object.keys(tabs).forEach(k => {
-            const on = (k === tabName);
-            const tabEl = document.getElementById(tabs[k].tab);
-            const panelEl = document.getElementById(tabs[k].panel);
-            if (tabEl) tabEl.classList.toggle('active', on);
-            if (panelEl) panelEl.classList.toggle('active', on);
-        });
-        setTimeout(() => {
-            renderScoreChart(tabs[tabName].canvas, filterHistoryByLang(tabs[tabName].data()));
-        }, 50);
-    }
-
-    function openHistoryModalContent() {
-        const examHistoryView = filterHistoryByLang(examHistory);
-        const cardExamHistoryView = filterHistoryByLang(cardExamHistory);
-        let targetSelectOptions = '';
-        wordLists.forEach((l, idx) => {
-            if (!isListInCurrentLang(l) || isPackList(l)) return;
-            targetSelectOptions += `<option value="${idx}">${getLangSeq(idx)}: ${escapeHTML(l.title)} (${getListWordCount(l.content)}/${getListWordCap(wordLists[idx])})</option>`;
-        });
-        let targetSelLis = document.getElementById('targetListSelectorListening');
-        let targetSelCard = document.getElementById('targetListSelectorCard');
-        if (targetSelLis) targetSelLis.innerHTML = targetSelectOptions;
-        if (targetSelCard) targetSelCard.innerHTML = targetSelectOptions;
-
-        let listeningHistoryHtml = '';
-        if (examHistoryView.length === 0) {
-            listeningHistoryHtml = `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 13px;">尚無${getLangName(getLearningLanguage())}聽力測驗紀錄</div>`;
-        } else {
-            examHistoryView.forEach((h, hIdx) => {
-                let wrongCount = h.results ? h.results.filter(r => !r.isCorrect).length : 0;
-                listeningHistoryHtml += `
-                    <div class="history-card">
-                        <div class="history-header" data-on-click='[["toggleHistoryDetail",[${hIdx}]]]'>
-                            <span>📅 ${escapeHTML(h.date)} ｜ 範圍: ${escapeHTML(h.range || '預設範圍')}</span>
-                            <span style="color:var(--primary); font-weight:700;">🎯 ${escapeHTML(h.score)}分 (共${escapeHTML(h.total)}題/錯${wrongCount}題) <span id="arrow_${hIdx}">▼</span></span>
+                <div class="preview-collapse-container collapsed" id="fcPreviewContainer">
+                    <textarea id="flashcardPreviewTextarea" readonly placeholder="點選上方範圍卡片即可預覽單字..."></textarea>
+                </div>
+            </div>
+
+            <button class="btn-advanced pk-hide" data-on-click='[["openFlashcardSettingsModal",[]]]'>⚙️ 進階設定</button>
+
+            <button class="action-btn-primary" data-on-click='[["startFlashcardSession",[]]]' style="margin-top: 12px;">
+                ▶ 開始字卡練習
+            </button>
+        </div>
+
+        <!-- ================= 🎴 字卡練習：執行介面 ================= -->
+        <div id="flashcardPlayView" class="app-view">
+            <div class="top-nav-bar">
+                <button class="back-home-btn" data-on-click='[["backToFlashcardSetup",[]]]' title="返回設定">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="progress-indicator" id="fcProgressText" style="font-size: 13.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 4px 12px; border-radius: 20px;">1 / 1 題</div>
+            </div>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="fcProgressBar"></div>
+            </div>
+
+            <div class="flashcard-perspective">
+                <div class="flashcard" id="flashcardCardEl">
+                    <div class="card-face card-front">
+                        <div class="card-english" id="fcCardEng">Biography</div>
+                    </div>
+
+                    <div class="card-face card-back">
+                        <div class="card-footer-info">
+                            <div class="card-chinese" id="fcCardChi">自傳</div>
+                            <div class="card-pos" id="fcCardPos">單字</div>
                         </div>
-                        <div class="history-detail" id="detail_${hIdx}">
-                `;
-                if (h.results) {
-                    h.results.forEach((r, rIdx) => {
-                        let icon = r.isCorrect ? '✅' : '❌';
-                        let color = r.isCorrect ? '#10B981' : '#EF4444';
-                        
-                        let engDisplay = r.engMatch ? `<span style="color:#10B981;">${escapeHTML(r.userEng || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userEng || '未填')}</span>`;
-                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '未填')}</span>`;
+                    </div>
+                </div>
+            </div>
 
-                        let correctStr = `${escapeHTML(r.english)} (${escapeHTML(r.senseText || r.chinese || '')})`;
-                        let userStr = `${engDisplay} / ${chiDisplay}`;
+            <div class="swipe-hint">💡 提示：點擊卡片即可翻轉看中文，左右滑動切換卡片</div>
 
-                        let ansText = r.isCorrect ? correctStr : `正確答案 ${correctStr} ｜ 您的回答: ${userStr}`;
-                        listeningHistoryHtml += `<div style="color:${color}; margin-bottom:6px;">${icon} 第${rIdx+1}題：${ansText}</div>`;
-                    });
-                }
-                listeningHistoryHtml += `</div></div>`;
-            });
-        }
-        let examHistoryListEl = document.getElementById('examHistoryList');
-        if (examHistoryListEl) examHistoryListEl.innerHTML = listeningHistoryHtml;
+            <div class="card-nav-controls">
+                <button class="external-card-audio-btn" data-on-click='[["playCurrentFlashcardAudio",[]]]' title="播放發音">🔊</button>
+                <button class="ctrl-btn" id="fcPrevBtn" data-on-click='[["prevFlashcard",[]]]'>◀ 上一張</button>
+                <button class="ctrl-btn primary" id="fcNextBtn" data-on-click='[["nextFlashcard",[]]]'>下一張 ▶</button>
+                <button class="external-card-star-btn starred" id="fcStarBtn" data-on-click='[["toggleCurrentCardStar",[]]]' title="標記不熟 (*)">⭐</button>
+            </div>
+        </div>
 
-        let cardHistoryHtml = '';
-        if (cardExamHistoryView.length === 0) {
-            cardHistoryHtml = `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 13px;">尚無${getLangName(getLearningLanguage())}字卡測驗紀錄</div>`;
-        } else {
-            cardExamHistoryView.forEach((h, hIdx) => {
-                let wrongCount = h.results ? h.results.filter(r => !r.isCorrect).length : 0;
-                cardHistoryHtml += `
-                    <div class="history-card">
-                        <div class="history-header" data-on-click='[["toggleCardHistoryDetail",[${hIdx}]]]'>
-                            <span>📅 ${escapeHTML(h.date)} ｜ 範圍: ${escapeHTML(h.range || '預設範圍')}</span>
-                            <span style="color:#10B981; font-weight:700;">🎯 ${escapeHTML(h.score)}分 (共${escapeHTML(h.total)}題/錯${wrongCount}題) <span id="cardArrow_${hIdx}">▼</span></span>
-                        </div>
-                        <div class="history-detail" id="cardDetail_${hIdx}">
-                `;
-                if (h.results) {
-                    h.results.forEach((r, rIdx) => {
-                        let icon = r.isCorrect ? '✅' : '❌';
-                        let color = r.isCorrect ? '#10B981' : '#EF4444';
-                        let chiDisplay = r.chiMatch ? `<span style="color:#10B981;">${escapeHTML(r.userChi || '未填')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userChi || '未填')}</span>`;
-                        let posDisplay = r.posMatch ? `<span style="color:#10B981;">${escapeHTML(r.userPos || '未選')}</span>` : `<span style="color:#EF4444;">${escapeHTML(r.userPos || '未選')}</span>`;
-                        let correctStr = r.senseText ? `${escapeHTML(r.english)} (${escapeHTML(r.senseText)})` : `${escapeHTML(r.english)} (${escapeHTML(r.chinese || '')}) ${r.pos ? '/ ' + escapeHTML(r.pos) : ''}`;
-                        let userStr = `${chiDisplay} ${r.pos ? '/ ' + posDisplay : ''}`;
-                        let ansText = r.isCorrect ? correctStr : `正確答案 ${correctStr} ｜ 您的回答: ${userStr}`;
-                        cardHistoryHtml += `<div style="color:${color}; margin-bottom:4px;">${icon} 第${rIdx+1}題：${ansText}</div>`;
-                    });
-                }
-                cardHistoryHtml += `</div></div>`;
-            });
-        }
-        let cardExamHistoryListEl = document.getElementById('cardExamHistoryList');
-        if (cardExamHistoryListEl) cardExamHistoryListEl.innerHTML = cardHistoryHtml;
+        <!-- ================= 📋 字卡測驗：範圍與設定頁面 ================= -->
+        <div id="cardExamSetupView" class="app-view">
+            <div class="top-nav-bar">
+                <button class="back-home-btn" data-on-click='[["backToHome",[]]]' title="返回首頁">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator" data-t-en="📋 英文字卡測驗" data-t-ko="📋 韓文字卡測驗">📋 英文字卡測驗</div>
+                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openCardExamSettingsModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+            </div>
 
-        let listeningWrongMap = {};
-        examHistoryView.forEach(h => {
-            if (h.results) {
-                h.results.forEach(r => {
-                    if (!r.isCorrect) {
-                        let key = r.english.toLowerCase();
-                        if (!listeningWrongMap[key]) {
-                            listeningWrongMap[key] = { english: r.english, chinese: r.senseText || r.chinese, line: r.line || '', count: 0 };
-                        }
-                        listeningWrongMap[key].count++;
-                    }
-                });
-            }
-        });
-        let listeningWrongArr = Object.values(listeningWrongMap).sort((a, b) => b.count - a.count).slice(0, 20);
-        let listeningWrongHtml = '';
-        if (listeningWrongArr.length === 0) {
-            listeningWrongHtml = `<div style="text-align: center; color: var(--text-muted); padding: 10px; font-size: 12.5px;">目前沒有聽力錯題紀錄</div>`;
-        } else {
-            listeningWrongArr.forEach((w, idx) => {
-                listeningWrongHtml += `<div class="error-word-item">
-                    <input type="checkbox" checked value="${escapeHTML(w.english)}" data-line="${escapeHTML(w.line || '')}"> 
-                    <span>${idx + 1}. <b>${escapeHTML(w.english)}</b> (${escapeHTML(w.chinese || '')}) — <span class="error-count">錯誤 ${escapeHTML(w.count)} 次</span></span>
-                </div>`;
-            });
-        }
-        let listeningTopWrongWordsEl = document.getElementById('listeningTopWrongWords');
-        if (listeningTopWrongWordsEl) listeningTopWrongWordsEl.innerHTML = listeningWrongHtml;
+            <div>
+                <div class="pk-seg" data-grid="cardExamGrid"></div>
+                <div class="pk-bar"><span>請勾選測驗範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["cardExamGrid"]]]'>全選</button></div>
+                <div class="select-card-grid pk-grid seg-custom" id="cardExamGrid"></div>
+            </div>
 
-        let cardWrongMap = {};
-        cardExamHistoryView.forEach(h => {
-            if (h.results) {
-                h.results.forEach(r => {
-                    if (!r.isCorrect) {
-                        let key = r.english.toLowerCase();
-                        if (!cardWrongMap[key]) {
-                            cardWrongMap[key] = { english: r.english, chinese: r.senseText || r.chinese, line: r.line || '', count: 0 };
-                        }
-                        cardWrongMap[key].count++;
-                    }
-                });
-            }
-        });
-        let cardWrongArr = Object.values(cardWrongMap).sort((a, b) => b.count - a.count).slice(0, 20);
-        let cardWrongHtml = '';
-        if (cardWrongArr.length === 0) {
-            cardWrongHtml = `<div style="text-align: center; color: var(--text-muted); padding: 10px; font-size: 12.5px;">目前沒有字卡測驗錯題紀錄</div>`;
-        } else {
-            cardWrongArr.forEach((w, idx) => {
-                cardWrongHtml += `<div class="error-word-item">
-                    <input type="checkbox" checked value="${escapeHTML(w.english)}" data-line="${escapeHTML(w.line || '')}"> 
-                    <span>${idx + 1}. <b>${escapeHTML(w.english)}</b> (${escapeHTML(w.chinese || '')}) — <span class="error-count">錯誤 ${escapeHTML(w.count)} 次</span></span>
-                </div>`;
-            });
-        }
-        let cardTopWrongWordsEl = document.getElementById('cardTopWrongWords');
-        if (cardTopWrongWordsEl) cardTopWrongWordsEl.innerHTML = cardWrongHtml;
+            <div class="stats-status-bar">
+                <span id="cardExamStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
+            </div>
 
-    }
+            <div class="pk-hide">
+                <div class="textarea-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="collapse-toggle-btn collapsed" id="cardExamCollapseBtn" data-on-click='[["toggleCardExamPreview",[]]]' title="展開/摺疊預覽">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <label style="margin:0;" data-t-en="英文題庫預覽：" data-t-ko="韓文題庫預覽：">英文題庫預覽：</label>
+                    </div>
 
-    function toggleHistoryDetail(idx) {
-        let detail = document.getElementById(`detail_${idx}`);
-        let arrow = document.getElementById(`arrow_${idx}`);
-        if (detail.style.display === 'block') {
-            detail.style.display = 'none';
-            arrow.innerText = '▼';
-        } else {
-            detail.style.display = 'block';
-            arrow.innerText = '▲';
-        }
-    }
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 14px;">☰</span>
+                        <select id="cardExamSortSelector" style="width: auto; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortCardExamPreview",["$value"]]]'>
+                            <option value="" disabled selected>排序方式</option>
+                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
+                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="preview-collapse-container collapsed" id="cardExamPreviewContainer">
+                    <textarea id="cardExamPreviewTextarea" readonly placeholder="點選上方範圍卡片即可預覽單字..."></textarea>
+                </div>
+            </div>
 
-    function toggleCardHistoryDetail(idx) {
-        let detail = document.getElementById(`cardDetail_${idx}`);
-        let arrow = document.getElementById(`cardArrow_${idx}`);
-        if (detail.style.display === 'block') {
-            detail.style.display = 'none';
-            arrow.innerText = '▼';
-        } else {
-            detail.style.display = 'block';
-            arrow.innerText = '▲';
-        }
-    }
+            <button class="btn-advanced pk-hide" data-on-click='[["openCardExamSettingsModal",[]]]'>⚙️ 字卡測驗進階設定</button>
 
-    function renderScoreChart(canvasId, dataList) {
-        const canvas = document.getElementById(canvasId);
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * window.devicePixelRatio;
-        canvas.height = rect.height * window.devicePixelRatio;
-        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            <button class="action-btn-primary" data-on-click='[["startCardExamSession",[]]]' style="margin-top: 12px;">
+                ▶ 開始字卡測驗
+            </button>
+        </div>
 
-        const width = rect.width;
-        const height = rect.height;
+        <!-- ================= 📋 字卡測驗：執行介面 ================= -->
+        <div id="cardExamPlayView" class="app-view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div class="progress-indicator" id="cardExamProgressText" style="font-size: 13.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 3px 12px; border-radius: 20px;">1 / 1 題</div>
+            </div>
 
-        ctx.clearRect(0, 0, width, height);
+            <div class="progress-bar-container" style="margin-bottom: 8px; height: 5px;">
+                <div class="progress-bar-fill" id="cardExamProgressBar"></div>
+            </div>
 
-        if (!dataList || dataList.length === 0) {
-            ctx.fillStyle = "#94A3B8";
-            ctx.font = "13px Inter, sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText("尚無歷史成績資料", width / 2, height / 2);
-            return;
-        }
+            <div class="flashcard-perspective" style="margin-bottom: 2px;">
+                <div class="flashcard" style="transform: none !important; transition: none !important; min-height: 120px;">
+                    <div class="card-face card-front" style="position: relative; transform: none !important; padding: 16px 16px;">
+                        <div class="card-english" id="cardExamCardEng">Introduce</div>
+                    </div>
+                </div>
+            </div>
 
-        const scores = dataList.slice(0, 10).reverse().map(d => d.score);
-        const padding = 28;
-        const chartWidth = width - padding * 2;
-        const chartHeight = height - padding * 2;
-
-        ctx.strokeStyle = "#E2E8F0";
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 3]);
-
-        [0, 50, 100].forEach(scoreVal => {
-            let y = height - padding - (scoreVal / 100) * chartHeight;
-            ctx.beginPath();
-            ctx.moveTo(padding, y);
-            ctx.lineTo(width - padding, y);
-            ctx.stroke();
-        });
-
-        ctx.setLineDash([]);
-
-        const points = scores.map((score, index) => {
-            const x = scores.length === 1 ? width / 2 : padding + (index / (scores.length - 1)) * chartWidth;
-            const y = height - padding - (score / 100) * chartHeight;
-            return { x, y, score };
-        });
-
-        if (points.length > 1) {
-            ctx.beginPath();
-            ctx.strokeStyle = "#6366F1";
-            ctx.lineWidth = 3;
-            points.forEach((p, idx) => {
-                if (idx === 0) ctx.moveTo(p.x, p.y);
-                else ctx.lineTo(p.x, p.y);
-            });
-            ctx.stroke();
-        }
-
-        points.forEach(p => {
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-            ctx.fillStyle = "#6366F1";
-            ctx.fill();
-            ctx.strokeStyle = "#FFFFFF";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            const isPowerSaving = document.body.classList.contains('power-saving-mode');
-            ctx.fillStyle = isPowerSaving ? "#C7D2FE" : "#4F46E5";
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0px; margin-bottom: 4px;">
+                <label style="margin: 0;">請輸入中文意思：</label>
+                <div id="cardExamTimer">作答剩餘時間：<span id="cardExamTimeLeft">17</span> 秒</div>
+            </div>
             
-            ctx.font = "bold 15px Inter, sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText(p.score, p.x, p.y - 12);
-        });
-    }
+            <div class="chi-input-row">
+                <input type="text" id="cardExamInputChi" placeholder="輸入中文..." autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",0]]]' style="padding: 8px 12px;">
+                <input type="text" id="cardExamInputChi2" placeholder="意思 2" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",1]]]' style="padding: 8px 12px; display: none;">
+                <input type="text" id="cardExamInputChi3" placeholder="意思 3" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",2]]]' style="padding: 8px 12px; display: none;">
+                <button type="button" class="voice-chi-btn" id="cardExamVoiceBtn" title="語音輸入中文" aria-label="語音輸入中文" style="display: none;" data-on-click='[["voiceChiToggle",["cardExamInputChi"]]]'><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
+            </div>
+            <div class="chi-input-tip" id="cardExamInputChiTip"></div>
 
-    function saveSelectedWrongWords(type) {
-        let selectorId = type === 'listening' ? 'targetListSelectorListening' : 'targetListSelectorCard';
-        let containerId = type === 'listening' ? 'listeningTopWrongWords' : 'cardTopWrongWords';
+            <label style="margin-top: 6px; margin-bottom: 4px;" id="cardExamPosLabel">詞性選擇（此單字無詞性，略過）：</label>
+            <div class="pos-checkbox-group" id="cardExamPosCheckboxGroup" style="padding: 6px 12px;">
+                <label><input type="checkbox" value="動詞" class="card-exam-pos-chk"> 動詞</label>
+                <label><input type="checkbox" value="名詞" class="card-exam-pos-chk"> 名詞</label>
+                <label><input type="checkbox" value="形容詞" class="card-exam-pos-chk"> 形容詞</label>
+                <label><input type="checkbox" value="副詞" class="card-exam-pos-chk"> 副詞</label>
+                <label><input type="checkbox" value="連接詞" class="card-exam-pos-chk"> 連接詞</label>
+                <label><input type="checkbox" value="介係詞" class="card-exam-pos-chk"> 介係詞</label>
+                <label><input type="checkbox" value="片語" class="card-exam-pos-chk"> 片語</label>
+                <label><input type="checkbox" value="代名詞" class="card-exam-pos-chk"> 代名詞</label>
+                <label><input type="checkbox" value="感嘆詞" class="card-exam-pos-chk"> 感嘆詞</label>
+            </div>
+
+            <button class="action-btn-primary" id="cardExamSubmitBtn" data-on-click='[["submitCardExamAnswer",[]]]' style="margin-top: 10px; padding: 11px;">
+                送出答案 (Enter)
+            </button>
+            <button class="action-btn btn-stop" style="margin-top: 6px; width: 100%; padding: 11px;" data-on-click='[["finishCardExamSession",[]]]'>
+                ■ 結束並停止測驗
+            </button>
+        </div>
+
+        <!-- ================= 🎤 朗讀練習：範圍與設定頁面 ================= -->
+        <div id="speakPracticeSetupView" class="app-view">
+            <div class="top-nav-bar">
+                <button class="back-home-btn" data-on-click='[["backToHome",[]]]' title="返回首頁">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator" data-t-en="🎤 英文朗讀練習" data-t-ko="🎤 韓文朗讀練習">🎤 英文朗讀練習</div>
+                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+            </div>
+
+            <div>
+                <div class="pk-seg" data-grid="speakPracticeGrid"></div>
+                <div class="pk-bar"><span>請勾選練習範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["speakPracticeGrid"]]]'>全選</button></div>
+                <div class="select-card-grid pk-grid seg-custom" id="speakPracticeGrid"></div>
+            </div>
+
+            <div class="stats-status-bar">
+                <span id="speakPracticeStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
+            </div>
+
+            <div class="pk-hide">
+                <div class="textarea-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="collapse-toggle-btn collapsed" id="speakPracticeCollapseBtn" data-on-click='[["toggleSpeakPracticePreview",[]]]' title="展開/摺疊預覽">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <label style="margin:0;" data-t-en="英文題庫預覽：" data-t-ko="韓文題庫預覽：">英文題庫預覽：</label>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 14px;">☰</span>
+                        <select id="speakPracticeSortSelector" style="width: auto; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortSpeakPracticePreview",["$value"]]]'>
+                            <option value="" disabled selected>排序方式</option>
+                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
+                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="preview-collapse-container collapsed" id="speakPracticePreviewContainer">
+                    <textarea id="speakPracticePreviewTextarea" readonly placeholder="點選上方範圍卡片即可預覽單字..."></textarea>
+                </div>
+            </div>
+
+            <button class="btn-advanced pk-hide" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'>⚙️ 朗讀練習進階設定</button>
+
+            <button class="action-btn-primary" data-on-click='[["startSpeakPracticeSession",[]]]' style="margin-top: 12px;">
+                ▶ 開始朗讀練習
+            </button>
+        </div>
+
+        <!-- ================= 🎤 朗讀練習：執行介面 ================= -->
+        <div id="speakPracticePlayView" class="app-view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div class="progress-indicator" id="speakPracticeProgressText" style="font-size: 13.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 3px 12px; border-radius: 20px;">1 / 1 題</div>
+                <button type="button" id="speakSampleBtn" style="width: auto; border: none; border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 700; background: #EEF2FF; color: var(--primary); cursor: pointer;" data-on-click='[["playSpeakPracticeSample",[]]]'>🔊 聽標準發音</button>
+            </div>
+
+            <div class="progress-bar-container" style="margin-bottom: 8px; height: 5px;">
+                <div class="progress-bar-fill" id="speakPracticeProgressBar"></div>
+            </div>
+
+            <div class="flashcard-perspective" style="margin-bottom: 2px;">
+                <div class="flashcard" style="transform: none !important; transition: none !important; min-height: 120px;">
+                    <div class="card-face card-front" style="position: relative; transform: none !important; padding: 16px 16px;">
+                        <div class="card-english" id="speakPracticeCardEng">Introduce</div>
+                        <div id="speakPracticeCardChi" style="margin-top: 6px; font-size: 14px; color: var(--text-muted); text-align: center; min-height: 20px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="speak-mic-wrap">
+                <button type="button" class="speak-mic-btn" id="speakMicBtn" aria-label="按住麥克風說話" title="按住說話，放開後評分">
+                    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+                </button>
+                <div id="speakMicHint">按住麥克風朗讀上面的單字，說完再放開</div>
+                <div id="speakTip">💡 小技巧：說完單字後，<b>再多按住約 2 秒</b>才放開，辨識通常更準、分數也更高。</div>
+            </div>
+
+            <div class="speak-result-box" id="speakResultBox"></div>
+
+            <button class="action-btn-primary" id="speakPracticeNextBtn" data-on-click='[["nextSpeakPracticeQuestion",[]]]' style="margin-top: 10px; padding: 11px;">
+                略過此題 ⏭
+            </button>
+            <button class="action-btn btn-stop" style="margin-top: 6px; width: 100%; padding: 11px;" data-on-click='[["finishSpeakPracticeSession",[]]]'>
+                ■ 結束並停止練習
+            </button>
+        </div>
+
+        <!-- ================= 🏰 雞塊大冒險 第 1 頁：關卡地圖 ================= -->
+        <div id="adventureView" class="app-view">
+            <div class="top-nav-bar adv-nav">
+                <button class="back-home-btn" data-on-click='[["backToHome",[]]]' title="返回首頁">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator">🏰 雞塊大冒險</div>
+                <span></span>
+            </div>
+            <div class="adv-map-title">
+                <button type="button" class="adv-map-arrow" id="advMapPrev" aria-label="上一張地圖" data-on-click='[["advMapStep",[-1]]]'><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M17 3 L5 12 L17 21 Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg></button>
+                <span>關卡選擇</span>
+                <button type="button" class="adv-map-arrow" id="advMapNext" aria-label="下一張地圖" data-on-click='[["advMapStep",[1]]]'><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M7 3 L19 12 L7 21 Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg></button>
+            </div>
+            <div class="adv-map-sub" id="advMapSub"></div>
+            <div class="adv-map" id="advMap"></div>
+        </div>
+
+        <!-- ================= 🏰 雞塊大冒險 第 2 頁：關卡內容 ================= -->
+        <div id="advLevelView" class="app-view">
+            <div class="top-nav-bar adv-nav">
+                <button class="back-home-btn" data-on-click='[["goToAdventurePage",[true]]]' title="回關卡地圖">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator">🏰 雞塊大冒險</div>
+                <button type="button" class="adv-btn-sm" data-on-click='[["goToAdvStats",[]]]'>💪 能力值</button>
+            </div>
+
+            <div class="adv-level-wrap">
+                <div id="advLevelCard"></div>
+
+                <div style="margin-top: 14px;">
+                    <div class="pk-seg" data-grid="advGrid"></div>
+                    <div class="pk-bar"><span>請勾選出題範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["advGrid"]]]'>全選</button></div>
+                    <div class="select-card-grid pk-grid seg-custom" id="advGrid"></div>
+                </div>
+                <div class="stats-status-bar" style="margin-top: 10px;">
+                    <span id="advStatsText">📊 範圍統計：0 個單字</span>
+                </div>
+                <div class="adv-go-bar" id="advGoBar"></div>
+            </div>
+        </div>
+
+        <!-- ================= 🏰 雞塊大冒險 第 3 頁：雞塊能力值 ================= -->
+        <div id="advStatsView" class="app-view">
+            <div class="top-nav-bar adv-nav">
+                <button class="back-home-btn" data-on-click='[["advBackToLevel",[]]]' title="返回">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator">💪 雞塊能力值</div>
+                <span id="advNavCounts" class="adv-nav-counts"></span>
+            </div>
+            <div class="adv-stats-wrap" id="advStatsBox"></div>
+        </div>
+
+        <!-- ================= ⚔️ 雞塊大冒險：戰鬥畫面（整體高度只用手機上方 60%，下方留給鍵盤） ================= -->
+        <div id="adventureBattleView" class="app-view">
+            <div class="adv-battle">
+                <div class="adv-topbar">
+                    <button class="back-home-btn" data-on-click='[["advQuit",[]]]' title="離開戰鬥">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                    </button>
+                    <div class="adv-topinfo" id="advTopInfo">第 1 關</div>
+                </div>
+                <div class="adv-stage" id="advStage"></div>
+                <div class="adv-panel" id="advPanel"></div>
+            </div>
+        </div>
+
+        <!-- ================= 🎧 聽力練習頁面 ================= -->
+        <div id="practiceView" class="app-view">
+            <div class="top-nav-bar" id="practiceNavBar">
+                <button class="back-home-btn" id="practiceBackBtn" data-on-click='[["backToHome",[]]]' title="返回首頁">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator" data-t-en="🎧 英文聽力練習" data-t-ko="🎧 韓文聽力練習">🎧 英文聽力練習</div>
+                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openAdvancedModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+            </div>
+
+            <div id="practiceRangeContainer">
+                <div class="pk-seg" data-grid="cardGrid"></div>
+                <div class="pk-bar"><span>請勾選練習範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["cardGrid"]]]'>全選</button></div>
+                <div class="select-card-grid pk-grid seg-custom" id="cardGrid"></div>
+            </div>
+
+            <div class="stats-status-bar" id="practiceStatsBar">
+                <span id="practiceStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
+            </div>
+
+            <div id="practicePreviewContainer" class="pk-hide">
+                <div class="textarea-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="collapse-toggle-btn collapsed" id="collapseBtn" data-on-click='[["togglePreview",[]]]' title="展開/摺疊預覽">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <label style="margin:0;" data-t-en="英文題庫預覽：" data-t-ko="韓文題庫預覽：">英文題庫預覽：</label>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 14px;" title="排序方式">☰</span>
+                        <select id="wordSortSelector" style="width: auto !important; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortWordListContent",["$value"]]]'>
+                            <option value="" disabled selected>排序方式</option>
+                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
+                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="preview-collapse-container collapsed" id="previewContainer">
+                    <textarea id="wordList" readonly placeholder="此處為唯讀預覽，請至「題庫清單」修改單字..."></textarea>
+                </div>
+            </div>
+
+            <div id="advancedBtnContainer" class="pk-hide">
+                <button class="btn-advanced" data-on-click='[["openAdvancedModal",[]]]'>⚙️ 聽力練習設定</button>
+            </div>
+
+            <div class="btn-group">
+                <button id="toggleDictationBtn" class="action-btn btn-start" data-on-click='[["toggleDictation",[]]]'>▶ 開始聽力練習</button>
+                <button id="pauseDictationBtn" class="action-btn btn-pause" data-on-click='[["togglePauseDictation",[]]]'>⏸ 暫停</button>
+            </div>
+            
+            <div id="status">準備就緒 🔥</div>
+        </div>
+
+        <!-- ================= 🎓 聽力測驗模式 ================= -->
+        <div id="examView" class="app-view">
+            <div class="top-nav-bar" id="examNavBar">
+                <button class="back-home-btn" id="examBackBtn" data-on-click='[["backToHomeFromExam",[]]]' title="返回首頁">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                    <span data-t-en="英文聽力測驗" data-t-ko="韓文聽力測驗">英文聽力測驗</span>
+                </div>
+                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openExamAdvancedModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+            </div>
+
+            <div id="examRangeContainer">
+                <div class="pk-seg" data-grid="examCardGrid"></div>
+                <div class="pk-bar"><span>請勾選測驗範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["examCardGrid"]]]'>全選</button></div>
+                <div class="select-card-grid pk-grid seg-custom" id="examCardGrid"></div>
+            </div>
+
+            <div class="stats-status-bar" id="examStatsBar">
+                <span id="examStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
+            </div>
+
+            <div id="examPreviewContainer" class="pk-hide">
+                <div class="textarea-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="collapse-toggle-btn collapsed" id="examCollapseBtn" data-on-click='[["toggleExamPreview",[]]]' title="展開/摺疊預覽">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <label style="margin:0;" data-t-en="英文題庫預覽：" data-t-ko="韓文題庫預覽：">英文題庫預覽：</label>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 14px;" title="排序方式">☰</span>
+                        <select id="examWordSortSelector" style="width: auto !important; padding: 4px 8px; font-size: 12px; border-radius: 8px; border: 1px solid var(--border-color);" data-on-change='[["sortExamWordListContent",["$value"]]]'>
+                            <option value="" disabled selected>排序方式</option>
+                            <option value="az" data-t-en="A-Z 排序" data-t-ko="ㄱ-ㅎ 排序">A-Z 排序</option>
+                            <option value="za" data-t-en="Z-A 排序" data-t-ko="ㅎ-ㄱ 排序">Z-A 排序</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="preview-collapse-container collapsed" id="examPreviewCollapseContainer">
+                    <textarea id="examWordList" readonly placeholder="此處為唯讀預覽，請至「題庫清單」修改單字..."></textarea>
+                </div>
+            </div>
+
+            <div id="examAdvancedBtnContainer" class="pk-hide" style="margin-top: 12px;">
+                <button class="btn-advanced" data-on-click='[["openExamAdvancedModal",[]]]'>⚙️ 聽力測驗設定</button>
+            </div>
+
+            <div class="btn-group" style="margin-top: 14px;">
+                <button class="action-btn btn-start" id="startExamBtn" data-on-click='[["startExamMode",[]]]'>▶ 開始聽力測驗</button>
+            </div>
+
+            <div id="examArea" style="display: none; margin-top: 0;">
+                <h3 style="margin-top:0; color:var(--primary); font-size:16.5px;">✍️ 考試作答中</h3>
+                <div id="examProgressStatus" style="font-weight: 600; color: var(--primary); margin-bottom: 8px; font-size: 14.3px;">🎧 正在進行考試... 請聆聽並於下方作答</div>
+                <div id="examTimer">作答剩餘時間：<span id="timeLeft">0</span> 秒</div>
+                
+                <label data-t-en="請輸入聽到的英文：" data-t-ko="請輸入聽到的韓文：">請輸入聽到的英文：</label>
+                <input type="text" id="examInputEng" placeholder="輸入英文..." data-p-en="輸入英文..." data-p-ko="輸入韓文..." autocomplete="off" data-on-keydown='[["handleInputKeyDown",["$event","eng"]]]' disabled>
+                
+                <label style="margin-top: 10px;">請輸入中文意思：</label>
+                <div class="chi-input-row">
+                    <input type="text" id="examInputChi" placeholder="輸入中文..." autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",0]]]' disabled>
+                    <input type="text" id="examInputChi2" placeholder="意思 2" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",1]]]' style="display: none;" disabled>
+                    <input type="text" id="examInputChi3" placeholder="意思 3" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",2]]]' style="display: none;" disabled>
+                    <button type="button" class="voice-chi-btn" id="examVoiceBtn" title="語音輸入中文" aria-label="語音輸入中文" style="display: none;" data-on-click='[["voiceChiToggle",["examInputChi"]]]'><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
+                </div>
+                <div class="chi-input-tip" id="examInputChiTip"></div>
+
+                <button id="examSubmitBtn" class="action-btn btn-start" style="margin-top: 20px; width: 100%;" data-on-click='[["submitExamAnswer",[]]]' disabled>送出答案 (Enter)</button>
+                <button class="action-btn btn-stop" style="margin-top: 10px; width: 100%;" data-on-click='[["finishExam",[]]]'>⏹ 結束並停止考試</button>
+            </div>
+
+            <div id="resultContainer" style="display: none;"></div>
+        </div>
+
+        <!-- ================= 📁 題庫清單頁面 ================= -->
+        <div id="editorListView" class="app-view">
+            
+
+            <div class="pk-seg" id="listSeg"></div>
+            <div class="pk-bar" id="listBar"><span id="listQuotaBar"></span><button type="button" class="addb" data-on-click='[["addNewWordList",[]]]'>＋ 新增</button></div>
+            <div class="lst-list" id="editorListCardContainer"></div>
+        </div>
+
+        <!-- ================= 📊 測驗紀錄 ================= -->
+        <div id="historyView" class="app-view">
+            <div class="top-nav-bar">
+                <button class="back-home-btn" data-on-click='[["historyBack",[]]]' title="返回"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+                <div class="current-mode-indicator" id="historyTitle">📊 測驗紀錄</div>
+            </div>
+            <div id="histBody"></div>
+        </div>
+
+        <!-- ================= 📝 單字編輯內頁 ================= -->
+        <div id="editorDetailView" class="app-view">
+            <div class="top-nav-bar">
+                <button class="back-home-btn" data-on-click='[["backToListFromDetail",[]]]' title="返回清單">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <div class="current-mode-indicator" id="editorDetailTitleIndicator">📁 unit 1-1</div>
+            </div>
+
+            <div class="ed-search" id="edSearchBox">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+                <input type="text" class="search-input" id="wordSearchInput" placeholder="搜尋單字…" autocomplete="off" data-on-input='[["handleEditorSearch",[]]]'>
+                <button type="button" class="ed-search-x" id="edSearchClear" aria-label="清除搜尋" data-on-click='[["clearEditorSearch",[]]]'>✕</button>
+            </div>
+            <div id="searchNotFoundTip" style="display: none;"></div>
+            <div id="edSearchResults" class="ed-results" style="display: none;"></div>
+
+            <div id="edMain">
+                <div class="ed-bar">
+                    <span id="editorWordCounter" class="editor-word-counter"></span>
+                    <span class="ed-tools">
+                        <button type="button" class="ed-chip ed-edit-only" data-on-click='[["openWordFormatModal",[]]]'>格式說明</button>
+                        <button type="button" class="ed-chip ed-edit-only" id="edSortBtn" data-on-click='[["toggleEditorSort",[]]]'>A-Z ⇅</button>
+                        <span class="ed-pack-hint">點單字加星號</span>
+                    </span>
+                </div>
+
+                <div class="editor-wrapper ed-edit-only" id="editorWrapperBox">
+                    <div class="highlight-backdrop" id="editorBackdrop"></div>
+                    <textarea id="editorWordList" data-on-input='[["handleEditorTextareaInput",[]],["handleEditorSearch",[]]]' data-on-scroll='[["syncEditorScroll",[]]]' data-on-change='[["enforceCurrentEditorLanguage",[]]]' placeholder="例如：apple 蘋果 名詞" data-p-en="例如：apple 蘋果 名詞" data-p-ko="例如：사과 蘋果 名詞"></textarea>
+                </div>
+                <div id="packStarList" class="ed-starlist"></div>
+
+                <button class="action-btn-primary ed-edit-only" id="editorSaveBtn" data-on-click='[["saveAndStayInEditor",[]]]'>
+                    儲存
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ================= 彈窗區塊 ================= -->
+
+<!-- 雞塊獎勵中心彈窗 -->
+<div id="chickenRewardModal" class="modal">
+    <div class="modal-content" style="max-width: 520px; position: relative;">
+        <div style="display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 20px; margin-top: 10px;">
+            <div class="current-mode-indicator" style="position: static; transform: none; display: flex; align-items: center; gap: 6px; padding: 8px 20px; font-size: 16px;">
+                 今日任務
+            </div>
+            <div class="shop-pills">
+            <div class="shop-pill shop-pill-chicken">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='10 10 80 80'><path d='M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z' fill='%23F3A63B' stroke='%23C27803' stroke-width='3'/><path d='M 38 42 Q 43 45 40 50' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M 58 52 Q 62 58 56 64' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><circle cx='46' cy='38' r='2' fill='%23C27803'/><circle cx='54' cy='68' r='2' fill='%23C27803'/><circle cx='64' cy='42' r='2.5' fill='%23C27803'/><circle cx='34' cy='58' r='2' fill='%23C27803'/><circle cx='48' cy='52' r='2.5' fill='%23C27803'/></svg>" style="width: 20px; height: 20px; object-fit: contain;" alt="雞塊">
+                <span id="chickenCountDisplay">0</span>
+            </div>
+            <div class="shop-pill shop-pill-shard" title="糖醋醬碎片">
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 1.5 L21 8 L17.5 22 L5 18 L3.5 8 Z" fill="#EE8F78" stroke="#B8553F" stroke-width="1.8" stroke-linejoin="round"/><path d="M13 1.5 L11 11 L3.5 8 M11 11 L17.5 22" stroke="#FFE4DC" stroke-width="1.4" fill="none" stroke-linejoin="round" opacity="0.95"/></svg>
+                <span id="rewardShardCount">0</span>
+            </div>
+            </div>
+        </div>
+
+        <p class="tk-note">每天 00:00 更新</p>
+        <div id="walletNoteReward" class="wallet-note"></div>
+
+        <div id="rewardTasksContainer">
+            <!-- 任務項目將由 JS 動態生成 -->
+        </div>
+
+        <button class="action-btn btn-start" style="margin-top: 16px; width: 100%;" data-on-click='[["closeChickenRewardModal",[]]]'>關閉視窗</button>
+    </div>
+</div>
+
+<!-- 雞塊補給站彈窗 -->
+<div id="chickenShopModal" class="modal">
+    <div class="modal-content" style="max-width: 520px; position: relative;">
+        <div style="display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 20px; margin-top: 10px;">
+            <button class="back-home-btn modal-back-btn" title="返回" aria-label="返回" data-on-click='[["closeChickenShopModal",[]]]'><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+            <div class="current-mode-indicator" style="position: static; transform: none; display: flex; align-items: center; gap: 6px; padding: 8px 20px; font-size: 16px;">
+                 雞塊補給站
+            </div>
+            <div class="shop-pills">
+            <div class="shop-pill shop-pill-chicken">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='10 10 80 80'><path d='M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z' fill='%23F3A63B' stroke='%23C27803' stroke-width='3'/><path d='M 38 42 Q 43 45 40 50' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><path d='M 58 52 Q 62 58 56 64' stroke='%23D97706' stroke-width='3' stroke-linecap='round' fill='none'/><circle cx='46' cy='38' r='2' fill='%23C27803'/><circle cx='54' cy='68' r='2' fill='%23C27803'/><circle cx='64' cy='42' r='2.5' fill='%23C27803'/><circle cx='34' cy='58' r='2' fill='%23C27803'/><circle cx='48' cy='52' r='2.5' fill='%23C27803'/></svg>" style="width: 20px; height: 20px; object-fit: contain;" alt="雞塊">
+                <span id="chickenShopCountDisplay">0</span>
+            </div>
+            <div class="shop-pill shop-pill-shard" title="糖醋醬碎片">
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 1.5 L21 8 L17.5 22 L5 18 L3.5 8 Z" fill="#EE8F78" stroke="#B8553F" stroke-width="1.8" stroke-linejoin="round"/><path d="M13 1.5 L11 11 L3.5 8 M11 11 L17.5 22" stroke="#FFE4DC" stroke-width="1.4" fill="none" stroke-linejoin="round" opacity="0.95"/></svg>
+                <span id="advShopShardCount">0</span>
+            </div>
+            </div>
+        </div>
+
+        <div id="walletNoteShop" class="wallet-note"></div>
+        <div class="shop-tabs" id="shopTabs" role="tablist">
+            <button type="button" id="shopTab0" class="shop-tab active" role="tab" data-on-click='[["setShopTab",[0]]]'>單字庫</button>
+            <button type="button" id="shopTab1" class="shop-tab" role="tab" data-on-click='[["setShopTab",[1]]]'>雞塊大冒險</button>
+            <button type="button" id="shopTab2" class="shop-tab" role="tab" data-on-click='[["setShopTab",[2]]]'>其他</button>
+        </div>
+        <div class="shop-filter-row"><select id="shopFilter" class="shop-filter" aria-label="篩選商品" data-on-change='[["advSetShopFilter",["$value"]]]'><option value="all">全部</option></select></div>
+
+        <div class="shop-grid" id="shopPane0">
+            <button type="button" id="shopItem_word_cap_50" class="shop-cell shop-item" data-on-click='[["buyShopItem",["word_cap_50"]]]'>
+                <img class="shop-icon" src="data:image/webp;base64,UklGRjYmAABXRUJQVlA4WAoAAAAQAAAAvwAAvwAAQUxQSCUPAAABAViSZLdtaoMjVvc/MMD3CDj7K6L/E4Afvrb4lqjy+jqlwJ6ApAJbQl1qvCgdtCzVyIxR6nLZIfmPBbnFKNot3YKybScV5AaUbUNSdsCVwAYg6SpJ1Gn29hvzSevzvoFc2CcwKwnexSQAGcxKbHLLGOPK4OU+kgDMA5IxEwB8BBAm4zGxuonkA+BhtiHJr4akPWsbgGQDOKN+3neaobhtG0faf+20q++ImABONQTDggJuTfMHPpX6fuxwtttIkhRp5vjOf1eZVn1K+SMmYAK0Ydt2TJJsXffzRkSqjNZ0tTm2jWXbNra9969l27Zta9jH1DF7rMZabSNLmRnxvc/943sjMju/zvy5d0RMQAz/4AoBahiMByQECIMMxk9xknCyfUnG3mWSsM32Q9h+ipKSflk7cXQ0Ga8eifNnNjanjzxY6Sts7xJJafqj40dXxuOlyCptnJs+tj6jH/mbzOj6Z9x81eXHjxxbUSkC6Gpdv+/u++94z+33bgGh9JMlKQ0cvOF5pw6fuvrig6MSIVt0s7q+fubW+29/+wfQbzr2zZ944yEWtSXmP3r/B977llu2ILCfhFAF1l7wohe/4PIldvzCO7/vz36QdPj3nwdOEGoI3LNRANR3v/nv3voEFOdrFGnimW94wQuvDyAN0jYMRkF+8w/C/4lZksKrjU0B7vjDPzg9RbEDigrXfPpnCyAtiR13HT16jeMpRvXilxXEm22H8Ht/9/c+YmIbisrKq7/mDUBaEk9yLZ+MnmIiX4TYlekC5/70lZhYQFE5+AXf8GxIVNiFNV5GPoUIEKfI3QE2wXd/76uw1CqVo1/wdc+EVGF3Zlw6Igx+KlCkoWP9KLvYWZj+2vNIATLxiV//TJJg12acfuUWQBQNTUpYKZPDs5Psbmfhsz/zMCjgFV/8DJJgF1v3venu1dm5KaYMzBz/2M8+NVnWUhK7Cpwc/LibsA9+8qtIgt1+59bS1iPrt332ITSsI//xi69msFG54Zm88J0rEAz2sQ99LhpO+NTrr8aJgYjdh0T9mxeerGKInREoueliYigifoqZCyEGK0GKAbuY6cuJgYSf8X1FqJy79a71s694rjUAnCEGufWXD6ydPHHZZQL+xBrMp3+6gT//LoAXflnGEIaacfrlM1g59p9wxp3H0TDgCpx6//eBRpmIvfSCS2Hz3h9dF1o9NJw1bH6bcZdZk701qIni7OOY0ZiBmhGIR1QBpnsMApxdB0hDgTUEyxvqbewx46A/mgAxGc4YQDQbmFIaMUKMV4ZjMKO9KQSIEFCWhiOAw7i3wJQeqNdtDqf2guYmJEqXDWdvY2AF9bS1VQLI2VDMcm+C96KiVgHwUEA9sTcv5MGIc71sVTDT2ohejIYCFYNaDwxu2IA9FHMYwah1wUxGja7rMdyABVqYUWlgQDGwaGlH0VAAMTS3Nhi7EQLMcGe9aauCqdlQjxzOuDe3h+kWkodTeuMWOnpoOLWnVsLYjeURoBiKON/LljZbowLEaCgQvdJ6YCIa0wqgoZhxb4J7BWZcGrMEPBiY9ZJmC1OiUQKIMhSRvWhdMFKjJlCnQzHj3twThlwku6HAUm+KejXMrJU9D8aMeyOaHUxXG01pKHML7iVMqFGiF0MRs17SLDDVjXEB0HDO9irqaWd1kRgMqGeaF0yJRpeAGVjXqmCWx400wGg40160JqGglGg0Y0Bdb9w6hUSRGmkgZ8NRr2stgtVudB3gbjjubbYqmM1pQwHg4Yx641YNMyqNTMA5FDPpqZVMrgAeipj1cm+adQ0FoBgKrdoqMHZj2gHO4az1Rq0HZlQamUB6ONlTqxEKitQQQIyHs9lzqxKs6ZZ6k+G4V1uzkChz04C7gV1oPYK1ZsPG1AF1GKLVwnS1sTRBKIezimDSumFKNCSeOk+Yp8qNXm3dMLPakICIoQhjGLVWRaIkza4CmUMxSwiOYDDrU7thuyf1EhDSUGwvJqFGqrZwj+EaQNC74zZ1WZHETjqRtLucKNjJNKiObyEqIIAyHk7Xmzbi7HczjgJs3P/Qww88du6xRztYvvTI0VOnTpxYBkgrdodtQgBn77//oUcfn4HXDiyvHLn0ouNjmnf9MW0BiuG4VxGQ+tUv+sdb/vKjt959z11PdCy+cvSyy254+TOuXAKq4slyKgAe+/B7P3Drvfc+zsJrJy8+dunlV15/9O7vQLVhwDmcimHGXDOZ0lQgN4TT9I/e+MKXveh6cPrJSBe4cPtH3v2hD97W0Q+pYWzT1IGzzI0AGIzYAsh5paKQbcziQlImcPwln/rqmyiZO+QM8fg7//LNHz0LUGQbs6AQQq4Qi0lDgYJgNA+B2XlJTjj6ys9/nELuRC3w/t/44w8CKrbNjgs8p+sAM3AtsAsVTvj2H/wIYW8npfzj3/i7J6DYZtdmAorhTDHMdhOgSHPyC2+j5ELJiD/7caDYZvearvYYbiCIXQaEKr//5xuE5yW8+Ue2UKTZ5dNNTOZwmqvybgMFd//eW5AbNnd97+1QumTXlzFghrvZcER4F5m+g3f8zn1gqOhXr4SSHYBA3jXi4GFEdsM5Z8SzX7rOrg4EkKh7y62QxNnTd1PSAIqO3Zy8/pBh49xwHpKCm37rZx8+d6aCR0Aimai4piWMAMlEqOZ0arIHDu7+239/klveY9n0VVMHV0q1cZA2mVWjhIpTJRxyV5OJq5LJK14C+L4H8TDMmx9VAt7YOFtTOcHKQM5RR63VIshiCBwRMc3zT9z5B8y1OX/9a87/CTJNceirPvGwIp3kiHSqdrPRpDM1XVka1RI5nc5iLbdi5pUOZJ2exUAybv+pXga72592CPXAkQBm7hWfxq4WmCxnforBirXXoCowYDTH6rkhcEPzQpeL+SHSzD1+DbXWChjNMQhwQ4B7woBQTvgveDDIJ01hd6dIzmzNW3wWUFQKu1M0tf7fEAMWD/3uP506UGZdMNNyiC2XrpuMpdzq6FgtUrfJLFeXCM3i6BIWTK0deHyGgO7+2TQqk5Uw05lms+XlwNNpVK0V8AbqRstBZrL+wOk/Qwz8/I8ePjCazgpTrZTwhsezbrKkqBc6qpbH0myDmsvLAuKST/1PKwDntizjOUI8+gAG3vXlL6lT7PHqyGxtaVYnKyFvzpRaHVt5ASCAlEdA1IEp0uzuz/w1A5xbZpvLZxGQ737gYXazwsnwJdwQ4IYANwRuCDCh7uuWE4Jnve5DObW6mRkduuSzr6J/6gAjtQS4JXBDgHsCDJi9V1GvRGA+9qE6S3XTZHz45LX0L30Jabf2r4JVMNut2HQXsS8WbEBFXkDgwrkH2T//2/95Gtue/c1H2U9f/QWvuvLA0sSWwmbrwbf91j+xj3ZUOLY8WbKhODV75Cz77FBlm6HcX4FAi9j8PxjHjuQ2JAHG3p88+aHK3KL9iK66qCqcY7tEB6HoLiwtICXHr754tXRP3Hkrdf8R+eI/OJ6SXUyoglBOX0lpyTznCz798hUg19/ycwXtN0r9gl9nJ4/Tlif/6f+sgQEBX3EJ+88V1wJ4GxdaEs9eo6Z7djXXH9rDJEDpbV3OjnatmD5IjVABKKhU6rr2rB021zd8BiGEAM3ONyL/IQUwe/MtG8+8DwG8/T7lHnXyJjtHH3hMXkQZJ3r5jX80EVaxpJr1FiqIlXeFgUe/968N//EtgGPrp9GeFPy3T8hi/fAflLoIHLgEmbP/zJTtl/rVgMhvIgLz+ElMxr8n9yQoCDHZYptrx8A8dDjkhbKn8rdRydEfZekSgle9yuHycU9zmM6vWlayuDh0AMEjE1isH/nSfywu5rfAgOrRHxsZX/RpyDSir1wMjqyB2dBOlPq/v83A2X/F9OVvvb5G9ZvIRIoWi4sTEwu2VFq25yVPx5h3f1TZ4p8JpJsPO5C1I3AMA/eQpl00x7oWYd6bomnu2pTFycMkUjS6bV3ROnnzpScOLG08euvpjapG8LRTCHE3c+CJDYDlVaxqiHEjNce95Bqg8Lr/NaGZ7/i5FeZcdgIQd7HgtAOxfBkJItxAARg8R4A8vhbRtLEI+PzrGrBSwHB2njm/gUldglXuVUb0VwAFiekfuYq+k37INs9aIkAcLIDYnAcXztBf2UMir/rOS2awOeL8iwkK/+G2GhFM47ZVJCYTBM7SoBYw9/2bBSxjATM8b7rZWN1DSn3NP7GgEFe9kaC/eQOCkwdrrVWcOX3Xw0evecmaBfCWxoj+9AIL2o3xHmIusGQ1QgBOQFg+DKqv+wf6v/1d7wb0on8GcJx9fgYUDHTTRWptlD0ElME2RdsdpI9/49XLK/qjX4SQ7XeNMGR8KgIQMJ4sggEz2lNyDS2mmLMsMPMjAUa8+NUWNV4aKbbol9EiJQDR7SHmrvdek5KrOXWs98D9cpSlHJ95BEDClpKmqr51OZXlhhOGTWSICZo3WaG/tYcAZVUWjvw1KrV825+POzNWZGC2L/9fQKysARumv8qCKwcbe7OZ0t+iw5UdF4/Qn0yA8x3ITOaJtVUEbO0takWqISJZtPSc8+AxxNz1DfoH58HKBBAP7C3brjzZSX9rC3PvA5jk6u1Ymx+ggC0uDn3BcZelO395AR3DmM0LmDN3YeBZZEu6fNWYex7Yo6KxslD4uveuAHwiMccX059OceEDgHjFxaiBn6sU3Hsec2kUvACsve0ZGXX8x7TlpVcg7DvWBdziQL7sdY6efPCzEeZ9joLkRrKw/CtflMVsvSnHYVHy81/iAL3b4eQvbiVlvnk1RxExys94loOY/ToKJgPeRvHnfLEL1j13MwN4310ykf/upbUY8S0nLME7LtB/911KcvzDk7pHpYwVi5GH/h0GoTc9/5G4+OPGgHL1izEQec3lgMUlv/yvOvJ6IaK+6JMRYvkeRoy4Zxvyzc9BYK79nvU4PKHHay9z0Hz8sEGCx7R2CpD1GfLelPzSGz710z/z4/+aXAi4fgkDCZBgc/GVpine/VhgqAVIY3HjxRb7TJ0lUvRlFx4tqAXpB6Eimi7cM8Ls1Ypeent88J0suvGrd2MW3Xz/t1zG/CdOP4LYh773Jz71+ZcdHXl29s6//OPTiIXFdZ/9pmtOjJ1n73rzr2yyT52xctFlK93GY/duIrO4o8LFlyx7tn7PlPD+ROGkXZxsO1RpB2bfKgmMzY4K9Wz+/3kBAFZQOCDqFgAAkFIAnQEqwADAAD4xFolDIiEhE5vFiCADBLI3cgwDkTuAGIADMUkZ+5dn9wrwX5D+0XZH7P+K+TCqPyi+Zv+R/evzG+en+i/yXsL/SX+79wD9PP+D/bf7j7YX7Ae5r+t/6z/KfsB8AP5d/cv+P/lveM/0v+39h37TfkB8gH84/vX/w9pL/rew1/Z/9H7CP6wemF/1v9v8D37Tf+//K/AT/Lv7L/x/zy+QD0AP3/9zT+Afvf2mP4W+G/9p/IP9xvXf8Y+hfzP5cZTt9P5kd9/xA/wfUL9Y/6zgQ9V/uPoC+qHyb/Vf3v94f8n6QX+H6M/XT2AP4v/Lf85/YPx0+cf7T4UH2P/W+wB/E/5//mf7T+6/+H+OX+5+6b29flH+B/5P+e/w/7M/YP/Hv51/qP7f/kf/b/l////7vt39lP7a+xV+pJmtKC2m02m0re7mPBcWINYE4gL3nuu3nXOeFRtcp8iol76eznGyRonY/VZB+XNfZ0VVQuX23UwhiYnGSGlOKhRA37mq3DHheAKUEzdWAypUV6iGps8dhqgO1SShi/OHxifhleXDKgMFStmsBMnaSwKisyn0yypvD64nQyQGdV1oORnD+dRBIcA8x/NGvxbokyMNimcAY35Kn96//DAGtBbOWUM4pAv+kM5GBxU3NdWprOSuMqNZFM4H1ZaGNKCCszSZspB7GAenNI6EphzdqAsd3q+47LbsItX3AX8Zhj/vI2y4V7LAMw1y6vEQkYAmRq8Uf4+WOO8eDY+/SzDaKCtn7Z8Xqvb7idt9asNXMNwF6/oPxJDEHQVqF2G19LGLIREa76N+sLT7Sl2u9znONSG/hSxZNkgXTsRiGtLkrLN29zG12g9wCJLyBbfKuNDPWU9hd2H8IO4HdU8AAP7wE4AAHW0MuFw3WjK7jypzac85Tpw5VUCa3bqHwfJchqzhlwfYO6xijVCsRjqP+F5oKwsBAOnkoHQrPJPeFj6r21XCmgnonXuPxE7lIbuYhwOWHEq8Ub0a12OefCU9eDUY4+d/Im4vxs3XP5BMCdAZLTd4Ds2tOiLN7heZX++Jtzj5B/+ktWsfcM66i3XY9767HI8uzt1rkZ6PHSWY9uFCAuwNGltgwke3Zzi0JsW5n0XD6o3z5NA3GEv3wTrVilRTQtpE1Rn4pIwtyGrMlmnQn86PCzzNiRSE/TLRyPQioU3H4SP/cI6HUeKszUUX7jviaRhYmI/SdWW/LHYqnGxK1mpZOhKSP20voNg4arBOPOwliGYDZcoPp+xiyczg6msL6/L+DC66jpWxi1t3PSNMc2MTENnafpGWcvBSiSzenIgTOGxVYBGZ2CX4iUaD0jPvar7hTqdZ15hvpxCN3+bGTS5Qc/oIX51KGgK0PRYT0IjIUS3A1bDBOU+1IqcYTVCm97BOapYBxyfHhNfRs43lN75+Dr/91CIEfNv3BlDfBOpS9tqm3piH45u7ocLZUBZZo82ktw5WJo6yah1lB/Pjv3yqKXBBvu8v4tbNi0aF2K0yFPAUsXtjF6ZIp5kQ+RrG96yup5Zw15EChQzyBrZYDS6Fm/0Au6N22dRGj0PiFYcrXaHe/XyXO1UNHCgKWJM5VrzWRuvJqG8mA8he0O8Hv6P9RKc8UkJkpbREQmyldzOm5OJKjmWwMshmRyx/CwBmXm7LBgro+upECM3KKNz1Ap28cqG4uvGotJ8VjNPbvcyGE0amoboFFlwkTvdftfNtHDaZ+vaUHfZxcaUb0zOH4v530CK/0MR3wbQcGHTrEJ7eBastuEOit5UGjPRLfPYoyEL+HhQueUo8txajwDOIOlSJFEkPByvp7rQo93aTj+9Dgs7afTpsEnsru08zyatuTyKzEuXEG7N4Ipx8fxGMvGqWWQ6mCgTIl03ec9i3u11X37PBvlF9uTtBLSCqzJG4FaXOEHQ9acv1vqizDGjhkwEuA/GEA1j5ISqo5pTR/rvkJI7yf0HenOOH4XmkehHncEceGPb5C2XxSCA0eVTBugzG81tVYdPa27fUBn8DNhWk2wR9Pv99ZMJn7OTnV1JxWWsxRfkPYWTp1VKWlsjydfPkmiVfLDrYewGNv3q9cArYfwaVixdgh0Mg6n8GofilaP9AzssBG4Z3O9dL8v/ajj+QbTHDwhQWUuupXgeMb++SJ+RSkTLCP3sDSf/Q73heyoAqEe2tz6SBXyUXKeNDcaLNFP4vuG4vAXz4/9U+dcNkli7W6wFC/W07I13nxSb6HoLVTxOhdUIkjdgomW7R0tXZr/VTFvDPO4nQxVv97yvJcnXjgy8AAo1kcEvuZ48NWoj+Ozp7RVjuQ3eLIUSit+GZuD8R1fh5Gp8T8VjwwpxSbOaa8udd1FQQFaybte7dhpe+OjmkD2/svZXgDlcqmPXWRYzPJGGqWvTUH+4zDSqik6qObAYYCWOERfbr0g6bl0brcOtBUD0GbYY1K85m591bWZ0eZ2V+o6+yqrk0AwLIWfB39OX0JP3ym47lHR822n34OwrdIILvXC+SgyT6/Zvhe/QOE6rEigl8ZQE0Kr6xcDBSXqwyWOsagVc11hnyVqjq9R4bJexwnStOsoPdkYv9M77ux/bzxVlwIwDV04nFgEc/vM+4nnFLlKZhJKY4jBUILuAMQ8rSpcYvJVvetq8uNJ+0I/UYg/wAn/Ae6JTVC5u748IRPo/Q0YTJzGQxrTDV5YGiZOZvsJAGJ4CwYcyM4W2Fv0AipEd4hg2Lk4MsNnnHOszPKRSdfYztvxk7AwnsDV/Gllie1R9CY/WqpVtMuY4FTu0WV9N1TOv8uDH8HP5z+knZUAmLpz95mAKAUr3qaL8744/r+F40jeoI6YthZE19Q6FzlhTLFk8b3rycT0VWdMXNebX6tVmbKV764kNIxrvAc/5aHFSGE8JcB7GiJaXWu6d/vbqE/o//Y2Z3OXwwhJS/sa2omLNJQpeQuEdRXJwqnDIRg5cZ6ua+vMVoYsZ/QnRitI/Ru6PUxQtngGZH6/VhSFozBUeVUtXTS1drLwk6t5vBrtk+ZPa3fU9huCQfq46GEU0IFDBTi64E88a7aRSSG+9XlqVmNVaUMJJMiD2AqwHBWnVv0C0IodMX69QoQzD9DFRpIZSheVILNOves79+jGwH1Fdd6JdRY9OjA7MwwfdR3soR4qCagecJyLWg7DfkMlbbcj90fLjXigxQgZCeaI6rQQb6/Q0fDKITX4S82a0PEFSxlbmVLJUpHAKKY0oNZjL/H/Gcow3DfBoLqG/v2UQUv4Yg/X5tiAFQaHJxjBzhcD/D1lnwbV6goo5P9/5KrMsUrRclLTq++K3WhjjergdrM8wbRk0SVosH2QPBUh+LI3WrvpDHVJkVfODMrHXePBEWFqTTRiu3iUYWZj0s+qEkcj8QxkEteV6FL1QFdC0Q6TSVwuKFQoIRaILJaHk+cqXymbvS07L8WQegLdpS21sdHWSwgDqq/88ja8YtGCBv/9tfXfN1yRJFfH5XvbPwC/pEBzYtnpkyx1O+q7ATE0/RPufsaCHc9l0I+IuTu91bPZlbGtCz7pxjaI0M8UJA6hesP+MBfVM2lZIJoJsTIlkkV7f9GRo2Ipqw7Dk7pptXr1Za8X35iJC7DveOFV40LQSKru5VKnmAWydUUkQbnXkK3pgN+lQa9TFiFJ5eR2s8SzLajyraEzkuyl3EsaFyc6/NJJtQbZTtY26Td+TCD1iVY00ZsafuZZ9zig4c5GFdkrdRIvfkDFy0sQBSOBX9DTlKZ7jQ1Esg+QUPRZQMejXt/CuK3DlK0e0Yjj20IKySPwFJWnrr72ju3ZTDfxvntLAbXKmztSZmJ6cMVHe3Xg2S4hZh6SjQd5Skf8gHvimwwVFFrnyEs43nn4EaJrOQx1dkKTMm8EQXWMAYQiXrG41fhC5kPa74PJXB02NEKRo8prQLGmlpFKqOMpAetcgZs+6hPQpxd6xIFRtQmtFARekhiZ+PZ70j6qXA5vHqzyfdxWyKacXzYy/lJjSPCNdM3nNr7fpqaUHpISlyI50P8KWKL225gabV2oIxJwNajN0qC8Yjp+aKNwAYUOd4Yb7jlLFrcPt6kSy4Kp/ehJDNYkZ3cYbx7v18+OrB20EL5MivRkrz97wUYEZ5uGj5bgVT4g+MNLOY4fYp59+z6SpPBHeowFFAWIg2Yv1VHZgfH4JAuE2xGEz0SMODSnvkw/8obA5gpCuKKymFTz7RnXBFDiLkJPhl4TkHIPJoTiDXdqcmxf8dFXQfvqGrloH398DaGCx5rI7Q/rU+Ht0SpulC6NCp3PaKaX8YBdFBTKAh10Qvfn32Mz/364qnYYFDJ0kKynBOYn1i4Nl/wy2f6ffqXESbFuqbuy5Y7i5X9rbxwGJIdNj7qzXvVu6kwuQAL5NNSjC6HVQqw0WojHO+BvoVseBl9jGrPhRhZuMG6Fr7FSKLOAcAmHyfOqAGCv8x0I5OHGr+eco2rtkruMvTRalEAETPACmls5nG9GHtuhshbprjeQRmPnNI4SQNF76eqR0B0RCcnCuEOJZj1RDw2phtwaFJBe1b03ZCNu/sEtR4CmhqIImoBc7NuzJ7dpmCxITvPf07T9KXFYLUL3X/OYUiIUnkGOYt7Mxtxog/djqz+me7qBu9sCd+Gq1vS2knWqwb2C8ijX1N7faFyrEhCtHPzQE/zQ39zNUfr0iB3qkAnZpELk6l8s8b0Mlk1sRuGVweDslmIi1sVM0elYKjm6pzr2Ad7MvlnxQM8PCJdmto9+/BalKYZZx9MVrsSWb7QalHa2iZInAP8b1hQs66q/yuWyVGGMxfZnlCBFRZL7+kdUPDnmNHPu7AmLiJUjhzRTzVJI+WSPuMmId2QOhYXJT7jfriZK+jixQASeQTq0vHnzRpVopGOfBmFI3Aq2bpWy35ZaU1wztA6W76Q/6tHbbhnt6OtBWTbvdfPT/8GXpJ72cRcBLxORj5k9PXDfhQGIWYgbIdhWdn2SOe3jywKM3thip2Ut7TaEGNg6A5XoaUejB4IRFlZb0ElA8dybf7ez8mvjl9KjUQdrFRuL9UBQzyLiDTLVNJH9d54gQRhqW//4L5JbfSQK2sHzbNMQy6l4wAAICxydBslazLF2mPcgNjwhUm+I1L6E2G+GVFmwkUP5HuvkVkV92G+EbLnkP9faLD5hkZNg9BmNqwlVWor+FQt5P8LGzYKz5kzrZ0JSdW4eRZSD74kqib6fHdiXqPrqkcsw4zM3IAJBSN9ndl0EcBv691SWTZpv5ntNpFSZWY446AOhEDPHdkCZBf/OB3clY5s/0xnqX9rXEfKJaC/jJ+C+qT6dnBh2zTI8fvTWzutzfs5vILfq9y03qw00VkpGDlnvRa30mf8kL9eoadbZIFwf+029lgNa3GnJa5bWODlSBwu/yVaqdVSBIP0lbE/da2J5PgpvFNaipv0YDT9eMrHsyYkd/zIf83DrcTdekvM79uTgvgUx3KnWxhljR7rrcAAfrOSqgROFdYami7dHPupkx93/Fx/PUZRk1vyno7aw9e6mPqgYpfYwsQMseEKdkG8mi9KeTcj0wizX96j4xCo4+3D5rX6YrTpDzNLaGJmkoqAVtpNIOOb94l+sxfprxY+bWfGwCzhyJ+fUXi0lhji0fi343+9DTOsyldGmXRNDMLRsnv4s9yI/Qt4Xt3CrVLacdslUEDSA+PJ4BjKunQwh+48b06dNfLl0VKw8u9PrGAapqQXkVb3s3QPw0Axj4Xad4D8kA8YBdOfVrBa+4RLaGQ1ILeEXV/C0Gt2LhPima6OWbKNCAQKT/Lsz2hujfi0WvmmcLuET4VsvrrUvEh+HSMbB6R1r0ngJyAzf0z86n1CZMpEW8+wp9xq4uJlCQbkgW4F3umRLHk2BeWabKXt3wMp9syfsON3cpuIAALH/tN/MD+fBMVKtjzmuQMuXJVO376ttRf1oh6iPbH5KB4n1eQ+7U/dssd8xk/yJXY43+aeb494lDcDbeewOgE1ckfJNcdsOot0tuaMjnIlPtkBMeUF4AVKLsMZxrwLzs9XtqRBXiv20HnKP57ye5+kVDLLmNtZ3Np7GIsopVLY3fPJkCb26S/Qp94AN93S4GVCXn08frcLvrOOrH41dj9pIML3pFUMhJNuzJ8JEEe8F8YCTBsFqLrY6wtXv1DK26cJfc0wec/4I5ISAaKBL/rfNmowAsfYgvoqjR5z9RPj4aoEh/Lr93mEsH9OX7lUVHys2jYon94FUk49C4uhK2ghzzj9a5Ug3X91AiIIEk/Eiqb79wZCPqSxja12nS3qdIeLm1i/aFRe9KMJ1QkNvIA6F/gusFdupXPdVhRIdCrAyqq2dB2GdKi2jDxoyH1gWREvHxCt1l9IS/hZGanqXw5//pWW/BhzI99EBn7hkZArdAEonWxn6iP2AchGG4VfdmJlNhpiC1xPawGpNyxEj9NIAm+TlJedvESTZnAZwttfsFUHgZ/JfF/BL/pryTOAiZjEUUcZd+Nu2784JeX7dGhlWaMZt1i+SCnm92Oz7hN4a2os7VBN3xSaO6QSedwjAd/BNE/jjzKs1ihFatKluMrFRz0fOVi6s+mbPT7kGGfFJHhJuQCu+zZm0PexfvdifdjcA/0Q8hezPeuVsH66h57Y8db2pL6NBwnMtqDYVnoHM6LjbvF94D+LcVnPD+L9IUp+KTmBAIacgDqlM+yr2aXm57IbEZbK7Os8vbaezKM77Bx3MSrDzSC/LCTi4sNksBzuCWm8J1C932ddgV+CTBc6bEzuYEnhquiXfASriv0o4FAe802MiiZ/vfTvbT1HBfi5f8bJQENGVNePhhJbNTRRIKRhLdOreYnbQnojwY14cMFRg/KIJ1PF8Pna9mQnVrTT7AcyK6JHPp7LwvWgPD8x2HaW6gIInatefl1VICQGJXxX6qoBF7m+Kplev6yzVuPDfHIeeReAYHAG3A2PQjElG+TlUBxw8e6rDQRsbn7EDjv2EUXne7CB9cytsL2Kg5piRsIiGi4m336+o0/VGBkt6fo2sfTHynW/vT2aYY0TgIkLDzGFbuj6KC+vej9AbTwAqiDCfBfgTBuRRMIyEx8lxkNuRpFI+qd3pZ5NBCZ9nPVrgU75BFDWrVGv+ugy2EbmlZE7tX4+HqHW1Whi/zMKzGUeejO3tIwHoRWqFXYwcVbQUosvI1utt26X/vxrXjIDoWvOuxlqmZxAr6cxcRXK6iZMZ/TeuYnw+Ym46X+k4DqKZ21c68yFoq9NuyfY3iR3a/1vNpUne/0LFCmdmH+4VU+a3+pvhanPlLkJq2WVptYzfrAir/Jrm3tznA6fQK0HRbrWHT1+ht+xgpvFoANKUqRfpIk9gE+vLeDxLwgcwr0RGAUCZgohQmVVI0N1yDDXtHGasWHtablhsHlj2iQfvjBj9EESU5gVzMkco8sv8zxz/Iooz6yoeDUJl15zuaTd0BB9WXeIGF/uLDlpcS6kyuaYwIMhi/ZMhw5ANXMdqN3VAuODx3wiKJ1u6hREjXCMgn+z9cIcbIIs5rEXznu/2dyexNnuYRZREXf5oO+ufPbj2ZZyF5nIod+6O/c69aKxRiBQZeuPFUemZep5Az0srT1o3FX+V6OjoX5d6ggxaMo0THU2fkceZb8OKyxGRjYmysdFLfbmjma9DJX5qkfFCZmMyrN7dP7z1QggRHlltSBBGkd5PqQGrEwRq0Ax1fRuLcWD3coD2ksn7BJDaYLfm7edZCQepphp8AykA90fU0l1fitw90pV5kLRvnXef7mgyanu24idN76WA5bvWQ1ZzMTJhY/aEhb1UAS1vgmdTyAuHAdBNpgXqnYAAAAAAAAAAAAAA==" alt="單字上限 +50">
+                <div class="shop-name">單字上限 +50</div>
+                <div class="shop-sub" id="shopSub_word_cap_50">指定一本題庫</div>
+                <div class="shop-price" id="shopPrice_word_cap_50"><span class="chicken-mini"></span><b>30</b></div>
+            </button>
+            <button type="button" id="shopItem_list_slot_1" class="shop-cell shop-item" data-on-click='[["buyShopItem",["list_slot_1"]]]'>
+                <img class="shop-icon" src="data:image/webp;base64,UklGRuIfAABXRUJQVlA4WAoAAAAQAAAAvwAAvwAAQUxQSLwMAAABDMVt2zjS/mOnXf1HxATwf+OSe12ki2w5ZRWraLeoVaBiZeCPqmuutYf//yE50uf7qx7Htm07WduIvd5NsrZt297g1ohubduOc8Hs7CCjrt/380dXV6Oq+nwXERNAA9s+z6320s/GfjQ2NjQ2Nja0thZaq8VCsVgoFquFasdKtWOxQ7VaqVb/vrzQ+bO7ST0iJgD/9/9/oBbjxDwdIzmYIGWRnMoAkE77nvXoiytXvPD49dPaItFIriSADLr398paJq0v//nx/ZoDgBHJgQQYclMFE9Vaa5WJ9oOzJjQBAJGcB/2u/JlUpW9VkltevGJy53wAkuPs9DbpKlO3LsmyL+7cv70DACK5iUHJ1E/pukyvjVuSZS+ftXd7ADAmBzFocPYWWmX61ZLklueuntevGHAck2MImp1XRmWGVUnyj0/v2rcDAJGcAgOWVlKZhWotqVtXnrh3VwAQyREEgz4ilVmqrpL1G1+9fKdiAHBM9ImRw7+lVa5XrZKMr1l15sgWBshzIk4czN5MZZarKsm6P7+5cY/mQCxmIkyAIzdTGURVkoy/dvoQRLmg+IodtAyoqlol16+8dFSxASAikSMousLSMsjquiTL1zxzSHskGokUQbsbq6kMunWZ+OHZu7UAACPRIei5TKkMQ1UlufX5yyZ3zgdEogI9FtMqQ1Ndktvfu3R8M0SkYODz1irDVOOWdH97eN6wIkAk5CSG0a+RypBVa0lWf/rAsV0Q8mIw8VMqw1iVJCveOKyRhNzh39CGU6IqWXoZwv2U7bQMc3X5bUtIWBnkn1tOZbirXT8mtAxa3FlPy7DjutASNLyDVIbfd83DCh1urVZl2Kvq9QhlAfqvVCrDj4ubhBPyJq4mlaGv/Gt7mFAqOfsnRqHypR4IY4GcW0uNAGXVBJgQMihcVEHLSNje3Uj4OGh4WTkto2FbJ4QQml9dTcuoaBs+gmHP1lIZFVvbhI5B3/epjErltvDB/p/RRsm6FuEikOkbaRmNr4Wfm4WKwExdS8tIvO62D0hgZmygMhKvYcyFX0IF+Yu20DIS38T4WFjbPExaX7uDlpG49QBMYX2YDHySVEaiBwBNpRZhYTDiDSqjMeCnhMK65iFh0Op52oiIKJrS5rahIMCYJ+uV0WhdR2mfMBDgkK8ZlUFR8YWqnWECJ2h40iZG5IcGtFF5J4wTMEGj2+LUaPhUi7qWbPWFBhIoQccHXWsZiV9o1viDSj63S5DEYPz7VGUkfuc2SQUquWYXSHAw/FuqMhI/J9dmcomqejGcwBQe/iVVGYnPuwGdrkLy1uAUnFZKZTS6LK4ntNwcEEHLc0tpGY2TQbe+1LRiOkwQBB3urqIyGi8W3T6z6vKxhghm/hU1VEbjaNGrbmLV5erOCKQ4MzbTMhK/Bd1uPLxVLD/sgYDu/Ctv/BX/WfSPPJXeSr7UFSYYje6h5a94HdBtZSS9Ve3SVnAQRMHEUuqv8J1tl6ZAb7X2zoYIav7NVP6GL+i3YUtvpftoawTUYMTaaDihWzTtWVbW3NEaEhDBeern43FtnXS5Yceysuau1jAIpgBLGKf3FAaP8THtPfrtnmVl/KF2MAhM01eTJVhAgw+XxzNZ2yc7lpVVd3dBcA0GfU/rhaqoxgczYMY+V9JbWXFOM0hwBLtuSRJrPyVsH8iAGc3Z9FbWnFIAgyDvX0H1QK9spq8HsUG3WPdCb8s/TohBEGCDw+vSBfg8nB/B5LvsLrPqsnwmAi44tDZ9ANzw9O/OvhK6ZTeyqvx9hogEy2D/yoxAcwj7e/pM6BVEx6ry/bGAIGh7ltJmAlDrvTvcyyWjW2Ng4yfDIYKAC8asydRPDbr7vocjTJekyLJad+UwhKCg15d0PYJdoJguq9sYdGtcQG9VruoKEwpNX2XcI0ddCM4Nf1Z1sOje2Ik+3x0PB6EgTyY5j24p8VHT83pGj27Ne3or9dlhCEcBbqXrwf1gFwKgxoz57zqSka7oL2x8tgfCc88tVI/DFJeDGBijTysYPbo1vrGsWnZdD4SmoOGTTJqdWa7uLwupoHuw7ywreW4ewlQmVyf5CFivtelwXUADup1hVVl9ayM4ISLosEq1wBzXA3E+7c9zOYtuwWfFct2cEghCVc6i9eIgyGrKJr3O8Kro92BSlxUzEb7936Z6McFYmUHmA0R3Pe+Y0VomVf55WkwkbATDf6T1IjcABMa0LWuy3V9bztAu8Y6N6+cYCIIokhETuyKumoTkHpKjN2uBwEGnl/cvvp4ug0G3pJFV5dp5gCDbReAtaYMxXZ73Rx4t0mTWUlQDERHMGGJmWS2/3AcBFABN27Zv37YYGTTo9YJVXySzqFvTkhNr/OVQBFCQN2DB3UuefGrJBUMkfQC6PEmqP/LJefcAEqsaf3avfEj2oduFH9YwsXZJe8h8Bp0Xx0m9NZEXZyD3ZROrlk82R/YLnPHP1JFqrbpcv0cm4KDlpeuVdK0vktcBcNneiSLQW13+PASQLBODvIPetrRKkla3HJYRGBSNO/+jStKNqy+Sbz7kZEXuAGd6a5wrRosgy0XQ6bRvlEpPy21TMpOY13ne4rUkXfVHckw56h2c2Ph6F2S9ALu/UE6fyrLZGTMAinc6/S/VJFX9kccwBlnbO8vKqjv6I+sFDY7/gVRfFfMzBhgAaDp80Xckravqh/yYgnPZmrVYnFh2WXZKATIoRkTSYNBzWQVVmW2AiABofOT7f5K09tby8xDy4O0qFN8sW7pXFUDSZwDAmJQEnV4mlaRa9TEvKxIFAHa5bsVWkrdbG/lso1NZgWVj+aUlMMhg4x7tS5BGeYCqJJXJlVVHZg0AA6Bwp/O+/o/krY1kDMMoS1k2Vl+SD0H6C49e/cV7K+7crygFQceNqkzctvKZLUmqj0NWO3kAep65ep2SquqLPHVk9G6JrExqWXVrIwjSHsNupUx8fwBMCiOrSCX129O7D32T1qP2+OwCJAagaKcbPrMk1foiPwZEmS06Vi1LL2oAg/Q7uETrXLfeLZua0rBKtXTXLt63GC1fSbYg2wAIAAw5Z+XGatJVXySPIeTByAxiWLXcdFY+DNIvKHqCllTWnu6I+BtYSdaumtIWIgO/S+KeEoBEATpPWvT8NlLVH8knM0aVrsiq8uVJRTDIoEHzl7zilxUihfY/7/jw6gGAODi8WjVBeW5AYASQVtOXbCJJVV/k0ScLbTOsKt/rhQwbNHvRy15X7A9w5p80oAgicHA8bQJdXhoUwDgAmux911ol6aovkqdBY4tlVfnyCMQkUy1WJJD21kapeAoAg5N9XAlIQAAYAE0GTVm2nmS96498NqIixghEWFbLJd0hyLBBl7e99N7maRCBx1k+rg5U0uI+F7xeR7r/t5EcQghqoCzfyKc7IvNGRnzpxSfaSWregnN8XB88AYAmk6//iqSqP/LDcvq0rL+3A9IvyYDDNlBJKl8ejHQbnJYkzluCB4gAQIfJL9eTqqp+fKvWXVeCbJReD8WVHlsv65YuBwt83G5CAIA4BijYY+VmkqqaDqV7TxOY9EmPYy667Iprb777zgc/qqO3suzlO66+/Nobb7ntit3yUpmjmuSOkABgAGDsTas2kLSaktJd3BEG6TYY+Doz/OkkiL9D65PdgNAAIAI02v2Sr6pJqj/LHTe2h0HaYziyWq0m9aXeVsuPFfiNYe8qeri8AuFqYgD6nvnqGpKqqtREcuMpxRBk4rQ4M1yx0Elhl7KwAiQGmGa73PqTS5/lz+4rMMjIyfWZKj8WKexc6mV5SegAMADyJp3xxqZKV+M1FVs/O6EZIMjMsTtc16pqSuppXd0yOZWdtnuo5XlhlLT72BnX3HrpiYdO6IeMOziolJ7WWqvJVJl8VW9ICn94qZ4eWgIARSUFDrJR0Pac939Zt70yzlRrSkvL/ty+4Zsluxr4djBhqxfjp4QWYBx4OiZzAGK9x++87+SFtzyy9MXv4l669okFBx5w2KH77zayrSCV0RuSnRRiAEREkN3FjZu12e1dWlLp3tQG6fZVuyDcslk8kRh72KtyLkQEkpjaqHW0HlVH5wo+BcVLvLYfBIM0Oxi5NknlfEjO0WCZ15YDMjFqfZKqI5FrCooezoYRa5MdlYM4N1ETNu+bieFrklTMzz0MzreqVP40MRPj/0Ylabl9KiTHgIOTXLVq+eWI9MWw0/YkWw/NPWKYVsHEl7qnz8G4TckOyz0M+j71628///TytEJI+katp/XYfFDuAcQ6jthp/NieRUi/g8E/qlWlq2t2y0Wy0EG3VUy0/LhnTiJGRCQTIvlnbq6tq3N3/HpuYU6yQkG3WTOnzjl66oAS/ONeRCCSy/3f//+RGFZQOCAAEwAAEFQAnQEqwADAAD4pEodCoaEKHKKuDAFCU3bq+GEV/AdpVk3vf5If1L9pflyrb9b++n5B9MSbnrU/Zf3L8ovmN/vf9h7Kv0R/yPcC/Sj+5/2j21+nLzDf0D/I/sz7w3+b9V/9i/wf65fAZ/Q/7f//+wt/ZT2HP2Z9Wz/m/tf8Gn7V/tR8Av8r/t3/f/P/uAOFo/mH4Ufq78sfBz69/V/1o/art/vQvsD+4f9q+Jqua+UfNJ91/yPmf37+rL1CPxf+R/4b+p8BDYn/heoF69fQ/9X/WvyN9Mf+g9I/gz+AL+Wf1H/bes/9h8H37F/m/YA/j/9F/1n+E/qv7O/Sv/Rf8z/L/kp7Tfy3+//8j/O/vJ9AX8b/nP+h/uv70/5H////f7qvYJ+5PsVfqcaM9JMUKNfTfZKMcur8A0g9WIXL9Ugo1eQGnxw9pKd+NuGPd2oSFQbDmCZ85WEKHNLQ8LReerdDfs01VqttwEdJDZMYRJ6bMq4avZAvDXoPEXwqw9PT/p7jSPfq4mc+cTfmaJ/VS5GuPSIYq9hHbOvSa3Hi+j14IcTmmBcWbd/lG9zVkN6g0ttRSGN8n8uNkvUEwWLJs/4xRZuDrSd+PhqSBR0P8pZcSQNR1HkEVwtufNPK+ZBfGrQZYx603dcq9hVY8xThEbLAiOWrEZFGVzIOlPouJByDQERRoJ/GRQ26J6aL5gXOyCoecEui6d84gd6NsRfewnDAumJxCpHaghqCFIpMFXiKjuzoQdhu9qivErDfjgqc14IOAJhYds5Ft3KY0QA70oG3LAELNJweiS9xE/W6UxePp6QWizWOJr1f+M8AzLkMcn660Xecqi/wd3AmISltSvsLL8rPsPnxQ7g7d3Q4sJOKGrgt9mIKpNMtaMTbicQz4F6pBRr6b5gAAP7/YBgAAEX+MPk1Uxo9/LVQLg26YaT4aOygDjWOBujYIX6t0UL3VtzLGSYEOQwl3ikIsdr+zyugLmCF4DAcOaXR7Cw6XqqKX07LjFDL/h7MufwnK/p39n//Y9b0ri9wzYC2vt2g+WkQbP9uBYefoJ5mFnVVgeh0ysR0Un7NPjgdG8QSQ24FsvADAPpsIAyfd6vz6Lf/x5n8m2a/dMPGA/fi+k/zRFAiFL7jXp0hMcyra7fJTogyRP65d/Ce06u+DAf0xEyl/Ru0YsnZOeOfLuYleUptSMVLl/3RRPTNLj9RpbcA0IO9Olbbnhf6Xmh3FHy6vv8BtYzLswWs/4p2Hlpn/O5Xetc4koiNQEcDWb9LmfUG2LzfojEe7OzDufinYro34nN+n1+QIZiQXx+YIkqid/rjMM/yk/I63pL9CfOuJQrBM7lH5bN526YabtIVhjztuv44a4gOn1gaUr6XRjulZT71fiMijYsXmCzEJaRPlP26nEad339CmVeEIFUy9UNzkSoq+q2OpP15fG+kCPDemPGfSzxH40cz/d1hdLjIv9KW0uLsRLtwYiclesmPR5chaprc6SyHRuLLL+EKQIE9dz72BxwXrm/dADiY7hzYPVAIJfyQ1DHxYdHz5WRh1pFVRWOm91BdmP9Yg274hINxQV6ruQUtmkS5rJX9XPsTTckeTS0Obaen5GpGoxWIK415m6aFcZuv2wit0/8/TcGwv6/VTpLhDj9rgQbA3hpO/ZMok5DTkoThwjhTSWkD5W0LprFpB+8lQgxoiEZ55OWNYyqdcatZe7EaTp6UeaXoe9I5HRtuHFRzKB5aX3WZr+RT91JRefEEfS5A0f4mKwlz53s7S4NgZrVd+05PwpxwiclWjLQYcWAAGiSu+SPUA4yaRjnlHZuk8ON4xGj2I/kyWWw7zDgAhfRcwfLVX9GFWAA5gGea55GMe7dEADESF2r2fozMWSnXoANNGgR063YhwtUlXWTNA9F4x3M0or09f95f4oimbKx/NUv1lDcL+4NLrobAO3ul3w69QCkE1+eZcfAdJLqak+oOu9z340I4JqFYaDz+jAWPd3drdPHXx8hNIreYS/wtUoXx2zR8OnWHLyS8LXV7bRWy5c2B9G5IYI0zofmBuUzjHamt9duTd5MxdNqhujfBAFDfvYt0ijl+4COXu8WxKkcSsftZRpbeB6eAYgLqf9RiMjbF764k5Tq3p9wZDHZPbPnD6CmyQtZ2ecY8Y2u1WWl+Xzbbd7DhVnZhB+9hVK+QrZ/MrXMhRUGkocnn0M4vEPATgLP92w5DMIhjXX/FPrhCuEWOjtm+C9zI5HdvD6kiqjtc8d+a+8tDcb4c9EIMJ3tzT9IYl8YKdiQluG4DdKcFNPXcy/KWA1CZiK5eoIedWR7FF66lWFVwSRzT8yVljoHNxWAU/Ld2FaLite9TBKbaDOqKB0UY7jTUe4JcHR8H4104ZlcBifXoRTNECrkwM521/mouWwDPb7Qfulu3EtpFyH6dm1F9x8k11/Tr+ug4iBabLLqrBgPnEHVk32t+e7jN9BHBxjGc3/GIVxZbyztQbBfYy724FGMigz0dTSxoolKOQv2f9aqeBMGaPnMzqC5xa/J11rEpY86MHkJCDo7GjFMNHJ9xv2cMZ8vRvd+6zwqf03ohjfiC5koMwOaS2pqUFfz0Dx3HaluXRvL7GEaVa/ZUebzIEx9a6E4DrwfElJDixuBJJH1cnXyQxwFKcGpCTtmGuVHHcp8pVLqe5rOXjIru8l9nFVxx5KWPlUxikxWKMqYXSH9Z71vLEZXGlrJ654wwnCvwOsrl1RPg4C+DLRKccQCGFcHKDFjqqemsD5oHOKonOhKkQVxwQtG1kbB37s6AB1NZmQJwjWXZEDFAt1YWHsgUHGU110wKWqoNtg1L/eWFc2sMYFv6G41by3c5h/BaAjyAWBtD+pMh9BtUZgTxVRFsJxY6marMbDrzEbpT7iaCYW1Rmi/fBZ//6YKNR5YXjWsACzKv8gLcxhkKT6U7dv4m/weZbovTFW5SRcmcIK9l+/sSy//LeL0dYmLcrjl/5iswKPW+ek61amHpwt41TJjBR0RJW6rPG+RkR+N14sFaa5casMwdCQrnD16feIPOwYIgfnjFR3TgztgPcgPlA3ny69VSlFN64z4tg8aNDPH1bDpzqlofpSJlQDh1O2Sqd5Y2UX1UBhr+q8J5FfJo8+Wn70P9JevWCWfExpvhb5SWWFZsDlw3KmkQA1XhcpMopw24j9Dsqe5e9b91cCNChbNLwlqjKHwMqCM6qBMqkyl00vIKsxSCMAPn4XU3Z7AU/H3IBTqLFWzVP5UhpZztFMdlxcWkEPC+RRJ3zkYi8ws4/hAM5JBSQ/u5pFVLQEO5P6YlR3hub77zGNonOWGxb0hM7l98n4+Cc7MAn/lu6qCJOWDVdZJCt4UpaU+pBAt8gilVYUtzIlFiyJhUQljy2JKqWugZSjyrX+mKUL9vTJyJ8QwiTHICWq70hAGdXXv6sZENI9FQs5zDMwo+ubePEnrSVN5Yr2huWoo8ya/G+I0lJ5Xxn7nENa3TMRVvidjVHyW3vZ9vwIVgveW7q2npQyfXfdoKH4E5sUNTntd7EgK/pqQ+RZ31dGWWF263IHxx8DkYs4wBeNIk0nyYFKmzkBXWNefaDHAbEf1GB9WxOI/gI0uTisfsh29MGrcuNDYzAH91tswcFnAeDeVUgv8Ec9X6U+7RWCjaxWxcefnKv+7oHaqblQSAVo8gBbcTweLGMFBaEwN9XO9MBXXlR9RMCUcJo9WWfkc9mFC5S93jjFkrnVbk9yuojDzCeo938PJ60M5qai0tRM8EKVEtgpH/OorFjCodU/hG+o5wlD4O3iZW0hGZ8VL4AqqRMix4qJoxOI/Oqog3fMli+Yirb7597DuSg8ikdy8ebX0ThgqycCireI9XuSZQKb7QuUGWGe5C4UkRwHx7zV6MZltrFPr3ATc4n2js7mHXn6UFLasHnVcF8EwPVYlF5DmBbyaWfpKr2Lzj4WyZl3m+Lwpt215NNCEkGr32IcSZL7UnlQQvK+UYjQrC2KwktRgKBmgvx8iCiFYKhIGphNt8+LUAot/BGYUmIDq81C6sYrsFZafm46A6JmkM3rXyAdabI6Fbr97yUg61P0w7+ZBgEzKL0J275PVIZAnqdy3sDNUSfvh7SEi5633sXfaApctdveFHbv36TPT/7lBIKYDM6McNqiCvY0AULIBM4wv6uhpXeIWYeWpnyuuFmsFmgJAWqn2VHLVxYYMabni/jb+AV9WBKN4qT8KB7KitUZfV4C1Ei3XdhFBok1GJlWLylCoqG6wAGM7MS4d99K1Rh01AnGG39mcH9LKG6qB2tW5kFsM2ytxla7I/DSzJeJTIJ2Zuk3DRMa5eJxOZUzc7qJSkc/qVtwIB6CeL61ThThEkUNmRCb4QzGCnEDAXNI+VdKMaQoqEFk+XtaHfXeAWo9R+T3E72eBEGqOPsekI42UyEnc7B1/bKh0xZv8Qn25ZdHn5Xsr03NdzTkf/E9SFuDG6Dpb9CXobKXBjSGNMDc9O/1eKU/uo5IsyTG/FhiQOPhq6ix//tB62IlusLB9vMWlf8f/b2Fi3MiuemxY+FgPctgRlW7enp8i3nURrubUpb5O2pDq+/V+2BP1VVlW1ZvC2niumNEyEczvKXMkHi+mm3O29wshVKZUIZZZzS12brDXm1AH0Qw2PBYkfiPlr2Fxd+hA9ed11dk6iLT2oH7JquIOBoMfGv0jgSHZkCVFZkLXm1gGfnzPV92geTI5/4tu0XV4tKObnsJ128HAX/lQrWOUC62uShTldVIVNAmBiOU+tJHC3oHq5XmxoIwFUURX2mgTHUZKfJ4oPEGHZ4ATjwf79WrWEKSEInXfhyqX8UXUEdSH335ZUMeAfDzI4POn81c2uNf8jfKL0O3SMMpeENwE+8LYQnTafeGkl1HwyMn7yUZkiDuklmbArP2luqaCgG3W7KjSgCifBWmWgZVbDHvh1gf+vuooO7cNCnZbs7X/w08fvNE99YKW2A6s5YCVrRrXlEUwiAVaHOmlv2NK350MzskcqOsy7Luq/HRQMSX0JhBN3yTdy/yIPRH9N7QZUEc8bLAxJe08ST1yPB0RTh1mUgPJn9IVnllltA1ZyyUg/Lsj49Sb/sSAuuxyn3eLZGbJuVhyPflqQJ5eRUppT1Xpj2Muwnf5gm0rTsj5/v3AG6ow2N7fuw1JzOhLiXyPWRRBxnO/RxxA9QB22t91MX4hbmuiS1yE9zmpqb/fMiLjyUDfFxesMrVb7eZW+38OgZAzJvxzEGVO2NLB417FFxoMJNo9GtGzYgRk8BGB77Sw2DviCNSKNu7tSXJg/kTLK4QoPcVqoR9GjLdhwU+0GdwTY603xcP29XpjmS7n2oerPfs4Xw0JpwQO4wqQWAZoKg/fB9P+K5KEOfJAOaaQLoK6ZzeX8b9X/s9m07n4eYt0EXGhMcGiAwEOzXp6TWVNeLgoEu5uJZ/HeKKQ/CqGGPcbQcG0c9bPrQa41iJ5FEe81KuPHQeFe0d6WB/8EkQGdnaCeKn45ICYqAs7o5uMbERMmRYs5oKDbL4Jyfl1cY9cREOj/FMT+/sQX89CpwVnwwR5vZTbiX/XXadP+KE7bJBcn1ozKW2ytZh7JGndpxT4y/wJCEycOJPS40f5TX3ybg0KnCGh23sd7Qe17WVL1ddM7qjhxCM/o7ag5B3+8HX70edBe3h8eJAt/EtouFcDDt9kyoJsrrrDYYk76sX8f1Vke3GNrpEiGsGGING0DGMQrPqCKYFCby1U95yuMVZaBR+3Fz5I/GevJsTFNmeWVBZRNso/Yi37O7tDSASE+ELq1fpRcjXPz6nqRSS/uCMbv/bz8t6c8Rb5YNrjGDVY29bopBMc3Bjsa4JAhfMQQLRS3OLCaWnnevxGprzeztSJYfXtwXE3w+29UjM95iRhaL4AEF5cWcIMoyLarZBA1C//RgUxwcDXitKjX8I2LksIjYz/6J3odamApQ/uMLDP+Yd/7UNoiiik/6++aR/eRRDulFf2MOK7DVPaq74aAMGldMZh2GSHMbuF5vCh3sOOySqrRHXpdR2jn9oBt2I7WJy88HJGB92eir2R2SvcCny6SBxx6JtRRf48Oe6gP2NlB8CwRTCrSF4pFBFAhRvbBiWqzA1X3BAjyd3nNDx33O62UmzvSmyQAwnEwCy3BU4Pvsu8mOB4ibP1kdzfHE1XZ0sUCrLkjzvcuJ837GFMOuX2IaUysJ5Fn6z66emjHpE5Er1T7/L2v7QCTmwFkmeCeyohNPCFACK/n40J+1tiMnNJb3TxmxOzXgxdnIFb6c9ILX/EserKs/EjkyV3gMyfwiQtRz1jGajgik4WP+4Ow5toFzP/VChujHBjBqKpDeAi+xq53vTBJjcCvDOr7q4NXnljkE1cm++kLg/FifL19BdUYxqwate7VV0dVWDmAAmOJxJJWZjpK2ApAF2Ob0Wi1/A7hwlUogZ19GHCMJSdhoKsIWUEqwrJeqju0zuqMtswgrER8iNAMQjl5mALr4AAAAA==" alt="題庫數量 +1">
+                <div class="shop-name">題庫數量 +1</div>
+                <div class="shop-sub" id="shopSub_list_slot_1">目前上限 10 本</div>
+                <div class="shop-price" id="shopPrice_list_slot_1"><span class="chicken-mini"></span><b>60</b></div>
+            </button>
+            <button type="button" id="shopItem_pack_toeic_job" class="shop-cell shop-item" data-on-click='[["buyShopItem",["pack_toeic_job"]]]'>
+                <div class="shop-emoji" id="shopPackIcon_toeic_job"></div>
+                <div class="shop-name">多益-職場</div>
+                <div class="shop-sub" id="shopSub_pack_toeic_job">300 個職場單字</div>
+                <div class="shop-price" id="shopPrice_pack_toeic_job"><span class="chicken-mini"></span><b>700</b></div>
+            </button>
+            <div class="shop-cell shop-empty" id="shopPackFiller" style="display:none;"></div>
+            <div class="shop-cell shop-empty"></div>
+            <div class="shop-cell shop-empty"></div>
+            <div class="shop-cell shop-empty"></div>
+            <div class="shop-cell shop-empty"></div>
+            <div class="shop-cell shop-empty"></div>
+            <div class="shop-cell shop-empty"></div>
+        </div>
+        <div class="shop-grid" id="shopPane1" style="display:none;"></div>
+        <div class="shop-grid" id="shopPane2" style="display:none;"></div>
+
+
+    </div>
+</div>
+<!-- 選擇要擴增單字上限的題庫 -->
+<div id="shopListPickerModal" class="modal">
+    <div class="modal-content" style="max-width: 460px; position: relative;">
+        <div style="text-align: center; margin: 6px 0 14px;">
+            <div class="current-mode-indicator" style="position: static; transform: none; display: inline-flex; padding: 8px 20px; font-size: 16px;">選擇要擴增的題庫</div>
+        </div>
+        <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px;">只會增加你選的那一本題庫的單字上限 +50。</p>
+        <div id="shopListPickerContainer" class="picker-list"></div>
+        <button class="action-btn picker-back" style="margin-top: 14px; width: 100%;" data-on-click='[["closeShopListPicker",[]]]'>返回</button>
+    </div>
+</div>
+<div id="flashcardSettingsModal" class="modal">
+    <div class="modal-content sm-modal">
+        <div class="sm-head"><b>字卡練習設定</b><span class="close-modal sm-x" data-on-click='[["saveFlashcardSettings",[]]]'>&times;</span></div>
+        <div class="sm-grp">題目</div><div class="sm-list"><div class="sm-row"><span class="t">只選加星號（*）的單字</span><label class="switch"><input type="checkbox" id="fcSettingStarred"><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">隨機出題</span><label class="switch"><input type="checkbox" id="fcSettingShuffle" checked><span class="slider-toggle"></span></label></div></div><div class="sm-grp">朗讀</div><div class="sm-list"><div class="sm-row col"><div class="top"><span class="t">語速</span><span id="fcSpeedValue" class="speed-val">0.80 倍</span></div><input type="range" id="fcSpeakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" data-on-input='[["updateSpeedDisplay",["fcSpeakRate","fcSpeedValue"]],["updateSliderProgress",["$this"]]]'></div></div>
+        <button class="action-btn-primary sm-ok" data-on-click='[["saveFlashcardSettings",[]]]'>確定</button>
+    </div>
+</div>
+
+<div id="cardExamSettingsModal" class="modal">
+    <div class="modal-content sm-modal">
+        <div class="sm-head"><b>字卡測驗設定</b><span class="close-modal sm-x" data-on-click='[["saveCardExamSettings",[]]]'>&times;</span></div>
+        <div class="sm-grp">題目</div><div class="sm-list"><div class="sm-row"><span class="t">只考加星號（*）的單字</span><label class="switch"><input type="checkbox" id="cardExamSettingStarred"><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">題目數量<small>0 為全部</small></span><input type="number" class="sm-num" id="cardExamQuestionCount" value="0" min="0"></div></div><div class="sm-grp">作答</div><div class="sm-list"><div class="sm-row"><span class="t">作答秒數</span><input type="number" class="sm-num" id="cardExamAnswerTime" value="20" min="5" max="120"></div><div class="sm-row"><span class="t">語音輸入中文<small>中文欄位旁會有麥克風按鈕</small></span><label class="switch"><input type="checkbox" id="cardExamVoiceChi" data-on-change='[["applyVoiceChiButtons",[]]]'><span class="slider-toggle"></span></label></div></div>
+        <button class="action-btn-primary sm-ok" data-on-click='[["saveCardExamSettings",[]]]'>確定</button>
+    </div>
+</div>
+
+<div id="advRewardModal" class="modal" style="z-index: 12000;">
+    <div class="modal-content" style="max-width: 320px; text-align: center;">
+        <div id="advRewardBody"></div>
+        <button class="action-btn btn-start" style="margin-top: 14px; width: 100%;" data-on-click='[["advCloseReward",[]]]'>太好了</button>
+    </div>
+</div>
+<div id="wordFormatModal" class="modal">
+    <div class="modal-content" style="max-width: 440px;">
+        <span class="close-modal" data-on-click='[["closeWordFormatModal",[]]]'>&times;</span>
+        <div style="font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 10px;">📝 單字格式範例</div>
+        <div class="word-format-list">
+            <div><code>apple 蘋果 名詞</code><small>1 個意思、1 個詞性</small></div>
+            <div><code>mature 成熟 動詞 形容詞</code><small>1 個意思、2 個詞性</small></div>
+            <div><code>Perform 執行 表現 動詞</code><small>2 個意思、1 個詞性</small></div>
+            <div><code>Star 星星 名詞 出演 動詞</code><small>2 組「意思＋詞性」</small></div>
+        </div>
+        <div class="adv-note" style="margin-top:10px;">・每行一個單字，用空白分開<br>・不熟的單字前面可加 <b>*</b>，例如 <code>*apple 蘋果 名詞</code><br>・有 2 個以上意思時，聽力／字卡測驗會出現對應數量的中文作答欄</div>
+        <button class="action-btn btn-start" style="margin-top: 14px; width: 100%;" data-on-click='[["closeWordFormatModal",[]]]'>知道了</button>
+    </div>
+</div>
+<div id="advHitModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <span class="close-modal" data-on-click='[["advCloseHit",[]]]'>&times;</span>
+        <div id="advHitBody"></div>
+        <button class="action-btn btn-start" style="margin-top: 14px; width: 100%;" data-on-click='[["advCloseHit",[]]]'>關閉</button>
+    </div>
+</div>
+<div id="advBagModal" class="modal">
+    <div class="modal-content" style="max-width: 420px;">
+        <span class="close-modal" data-on-click='[["advCloseBag",[]]]'>&times;</span>
+        <div id="advBagBody"></div>
+    </div>
+</div>
+<div id="micHelpModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" data-on-click='[["closeMicHelpModal",[]]]'>&times;</span>
+        <div style="font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 12px;">🎤 如何開啟麥克風權限</div>
+        <div id="micHelpBody"></div>
+        <button class="action-btn-primary" data-on-click='[["recheckMicPermission",[]]]' style="margin-top: 14px;">再詢問一次 / 我設定好了，重新檢查</button>
+    </div>
+</div>
+
+<div id="speakPracticeSettingsModal" class="modal">
+    <div class="modal-content sm-modal">
+        <div class="sm-head"><b>朗讀練習設定</b><span class="close-modal sm-x" data-on-click='[["saveSpeakPracticeSettings",[]]]'>&times;</span></div>
+        <div class="sm-grp">題目</div><div class="sm-list"><div class="sm-row"><span class="t">只選加星號（*）的單字</span><label class="switch"><input type="checkbox" id="speakPracticeSettingStarred"><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">題目數量<small>0 為全部</small></span><input type="number" class="sm-num" id="speakPracticeQuestionCount" value="0" min="0"></div></div><div class="sm-grp">評分</div><div class="sm-list"><div class="sm-row"><span class="t">及格分數<small>60～100 分，達到才算通過</small></span><input type="number" class="sm-num" id="speakPracticePassScore" value="70" min="60" max="100" step="1"></div></div><div class="sm-note">評分方式：系統把你說的話轉成文字，和目標單字比對相似度（同音字、發音相近的拼法會被視為相同）。</div>
+        <button class="action-btn-primary sm-ok" data-on-click='[["saveSpeakPracticeSettings",[]]]'>確定</button>
+    </div>
+</div>
+
+<div id="examResultModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" data-on-click='[["closeExamResultModal",[]]]'>&times;</span>
+        <div id="modalResultBody"></div>
+        <button class="action-btn btn-start" style="margin-top: 16px; width: 100%; flex-shrink: 0;" data-on-click='[["closeExamResultModal",[]]]'>確定關閉</button>
+    </div>
+</div>
+
+<div id="systemSettingsModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" data-on-click='[["closeSystemSettingsModal",[]]]'>&times;</span>
+        <h3 style="margin-top:0; color:var(--primary); font-size:18px; font-weight:700;">⚙️ 系統設定</h3>
+        <div class="gsec" id="cloudSettingsBox"><button id="cloudAuthBtn" class="gbtn" data-on-click='[["handleAuthClick",[]]]'>登入 Google 雲端</button></div>
         
-        let targetListIdx = parseInt(document.getElementById(selectorId).value);
-        if (isNaN(targetListIdx) || !wordLists[targetListIdx]) {
-            alert(`⚠️ 目前沒有可儲存的${getLangName(getLearningLanguage())}題庫，請先到「題庫清單」新增。`);
-            return;
-        }
-        let checkboxes = document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`);
+        <div class="config-group" style="margin-top: 12px;">
+            <label for="systemVolume" style="margin-top:0;">🔊 音量調整：</label>
+            <div class="slider-container">
+                <input type="range" id="systemVolume" min="0" max="100" value="100" data-on-input='[["updateVolumeDisplay",[]],["saveSystemSettings",[]],["updateSliderProgress",["$this"]]]' class="range-slider">
+                <span id="volumeValue" class="speed-val">100%</span>
+            </div>
+        </div>
+
+        <div class="config-group" style="margin-top: 12px;">
+            <label for="learningLanguage" style="margin-top:0;">🌐 學習語言：</label>
+            <select id="learningLanguage" data-on-change='[["onLearningLanguageChange",[]]]' style="margin-top: 4px;">
+                <option value="en" selected>英文 (English)</option>
+                <option value="ko">韓文 (한국어)</option>
+            </select>
+        </div>
+
+        <div class="config-group">
+            <label style="margin-top:0;" data-t-en="📂 匯出英文題庫 (.txt)：" data-t-ko="📂 匯出韓文題庫 (.txt)：">📂 匯出英文題庫 (.txt)：</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                <span style="font-size: 13.5px; color: var(--text-muted);">下載獨立 txt 檔備份：</span>
+                <button class="cloud-btn" style="background: var(--primary-gradient);" data-on-click='[["openExportModal",[]]]'>匯出 txt</button>
+            </div>
+        </div>
+
+        <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+            <div>
+                <label style="margin-top:0;">🔋 省電模式</label>
+                <span style="font-size: 12.5px; color: var(--text-muted);">背景調暗節省電力</span>
+                <span id="powerSavingSaveStatus" style="font-size: 12.5px; color: var(--primary); margin-left: 6px; font-weight: 600;"></span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="powerSavingToggle" data-on-change='[["togglePowerSavingMode",[]]]'>
+                <span class="slider-toggle"></span>
+            </label>
+        </div>
+
+        <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+            <div>
+                <label style="margin-top:0;">🔄 載入初始設定</label>
+                <span style="font-size: 12.5px; color: var(--text-muted);">一鍵重設所有資料</span>
+            </div>
+            <button class="cloud-btn" style="background: var(--primary-gradient);" data-on-click='[["loadInitialSettings",[]]]'>重設</button>
+        </div>
+
+        <!-- 💬 連絡我們區塊 (改為紫色主題) -->
+        <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+            <div>
+                <label style="margin-top:0;">💬 連絡我們</label>
+                <span style="font-size: 12.5px; color: var(--text-muted);">加入 LINE 官方帳號與我們聯繫</span>
+            </div>
+            <a href="https://lin.ee/QmLDFcC" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+                <button class="cloud-btn" style="background: var(--primary-gradient);">連絡</button>
+            </a>
+        </div>        
+
+        <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+            <div>
+                <label style="margin-top:0;">ℹ️ 關於應用程式</label>
+                <span style="font-size: 12.5px; color: var(--text-muted);">開發者資訊與壓力測試</span>
+            </div>
+            <button class="cloud-btn" style="background: var(--primary-gradient);" data-on-click='[["openAboutModal",[]]]'>關於</button>
+        </div>
+
+        <button class="action-btn btn-start" id="closeSettingsBtn" style="margin-top: 20px; width: 100%;" data-on-click='[["closeSystemSettingsModal",[]]]'>關閉設定</button>
+    </div>
+</div>
+
+<div id="aboutModal" class="modal">
+    <div class="modal-content" style="max-width: 460px; text-align: center;">
+        <span class="close-modal" data-on-click='[["closeAboutModal",[]]]'>&times;</span>
+        <h3 style="margin-top:10px; color:var(--text-main); font-size:18px; font-weight:700;">關於 Chicky Vocab</h3>
+        <div class="author-box" style="margin: 15px 0; padding: 14px; background: #F8FAFC; border-radius: 12px; border: 1px solid var(--border-color); font-size: 15px; font-weight: 600; color: var(--primary);">
+            作者: Fried Chicken Tsai
+        </div>
+        <div class="config-group" style="text-align: left; margin: 12px 0;">
+            <label style="margin-top:0;">🛠️ 開發者介面</label>
+            <div id="devLoginPanel" style="display: flex; gap: 8px; margin-top: 8px;">
+                <input type="password" id="devPasswordInput" placeholder="請輸入開發者密碼..." style="margin-top:0; flex:1;">
+                <button class="cloud-btn" style="background: var(--primary-gradient); white-space: nowrap;" data-on-click='[["verifyDevPassword",[]]]'>解鎖</button>
+            </div>
+            <div id="devContentPanel" style="display: none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px; flex-direction: column; gap: 8px;">
+                <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 13.5px; padding: 10px;" data-on-click='[["runStressTest",[]]]'>🚀 壓力測試</button>
+                <button class="action-btn" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); width: 100%; font-size: 13.5px; padding: 10px;" data-on-click='[["clearAllWordListsData",[]]]'>🧹 清空所有題庫</button>
+                <button class="action-btn" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); width: 100%; font-size: 13.5px; padding: 10px;" data-on-click='[["clearAllExamHistoryData",[]]]'>🗑️ 清空考試紀錄</button>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="devTestCodeInput" placeholder="測試密碼（testreset / testmoney）" style="margin-top:0; flex:1;" autocomplete="off">
+                    <button class="action-btn" style="width: auto; font-size: 13.5px; padding: 8px 14px;" data-on-click='[["advRunTestCodeInput",[]]]'>執行</button>
+                </div>
+            </div>
+        </div>
+        <button class="action-btn btn-start" style="width: 100%; margin-top: 12px;" data-on-click='[["closeAboutModal",[]]]'>確定</button>
+    </div>
+</div>
+
+<div id="exportModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" data-on-click='[["closeExportModal",[]]]'>&times;</span>
+        <h3 style="margin-top:0; color:var(--primary); font-size:18px; font-weight:700;" data-t-en="📂 匯出英文題庫" data-t-ko="📂 匯出韓文題庫">📂 匯出英文題庫</h3>
+        <p style="font-size: 13.5px; color: var(--text-muted);">勾選想要匯出的題庫清單：</p>
+        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+            <button class="btn-advanced" style="padding: 6px 12px; font-size: 12.5px;" data-on-click='[["toggleAllExportCheckboxes",[true]]]'>全選</button>
+            <button class="btn-advanced" style="padding: 6px 12px; font-size: 12.5px;" data-on-click='[["toggleAllExportCheckboxes",[false]]]'>全不選</button>
+        </div>
+        <div class="exam-lists-grid" id="exportListsCheckboxGroup" style="max-height: 220px;"></div>
+        <button class="action-btn btn-start" style="margin-top: 20px; width: 100%;" data-on-click='[["confirmExportTxtFiles",[]]]'>📥 下載 txt 檔</button>
+    </div>
+</div>
+
+<div id="historyModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" data-on-click='[["closeHistoryModal",[]]]'>&times;</span>
         
-        if (checkboxes.length === 0) {
-            alert('⚠️ 請至少勾選一項錯題單字！');
-            return;
-        }
+        <div class="modal-inner-padding">
+            <div class="page-main-title">
+                <span>📊</span> 考試紀錄與學習分析
+            </div>
 
-        let addedCount = 0, skippedFull = 0;
-        checkboxes.forEach(chk => {
-            let wordText = chk.value;
-            let fullLine = (chk.getAttribute('data-line') || '').trim() || wordText;
-            let currentContent = wordLists[targetListIdx].content || '';
-            let exists = parseWordsRaw(currentContent).some(w => w.english.toLowerCase() === wordText.toLowerCase());
-            if (!exists) {
-                if (getListWordCount(currentContent) >= getListWordCap(wordLists[targetListIdx])) { skippedFull++; return; }
-                wordLists[targetListIdx].content = currentContent + (currentContent ? '\n' : '') + fullLine;
-                addedCount++;
-            }
-        });
-
-        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
-        triggerAutoSaveToCloud();
-        let fullNote = skippedFull > 0 ? `\n⚠️ 題庫已達 ${getListWordCap(wordLists[targetListIdx])} 字上限，有 ${skippedFull} 個單字沒有加入（可到「雞塊補給站」兌換單字上限 +50）。` : '';
-        alert(`✅ 成功將 ${addedCount} 個錯題單字儲存至「${wordLists[targetListIdx].title}」！${fullNote}`);
-    }
-
-    function updateVolumeDisplay() {
-        document.getElementById('volumeValue').innerText = document.getElementById('systemVolume').value + '%';
-    }
-
-    function updateSpeedDisplay(sliderId, displayId) {
-        let slider = document.getElementById(sliderId);
-        let val = parseFloat(slider.value).toFixed(2);
-        document.getElementById(displayId).innerText = val + ' 倍';
-        updateSliderProgress(slider);
-    }
-
-    function togglePowerSavingMode() {
-        let isPowerSaving = document.getElementById('powerSavingToggle').checked;
-        document.body.classList.toggle('power-saving-mode', isPowerSaving);
-        saveSystemSettings();
-    }
-
-    function saveSystemSettings() {
-        let settings = {
-            volume: document.getElementById('systemVolume').value,
-            powerSaving: document.getElementById('powerSavingToggle').checked,
-            learningLanguage: document.getElementById('learningLanguage').value
-        };
-        localStorage.setItem('dictation_system_settings', JSON.stringify(settings));
-    }
-
-    function loadSystemSettings() {
-        let saved = localStorage.getItem('dictation_system_settings');
-        if (saved) {
-            let s = JSON.parse(saved);
-            if (s.volume) document.getElementById('systemVolume').value = s.volume;
-            if (s.powerSaving) {
-                document.getElementById('powerSavingToggle').checked = true;
-                document.body.classList.add('power-saving-mode');
-            }
-            if (s.learningLanguage) {
-                let langSel = document.getElementById('learningLanguage');
-                if (langSel) langSel.value = s.learningLanguage;
-            }
-        }
-    }
-
-    function saveAppSettings() {
-        let settings = {
-            onlyStarred: document.getElementById('onlyStarred').checked,
-            enableShuffle: document.getElementById('enableShuffle').checked,
-            enableSpell: document.getElementById('enableSpell').checked,
-            enableChinese: document.getElementById('enableChinese').checked,
-            enablePOS: document.getElementById('enablePOS').checked,
-            enableLoop: document.getElementById('enableLoop').checked,
-            speakRate: document.getElementById('speakRate').value,
-            pauseTime: document.getElementById('pauseTime').value,
-            repeatCount: document.getElementById('repeatCount').value
-        };
-        localStorage.setItem('dictation_app_settings', JSON.stringify(settings));
-    }
-
-    function loadAppSettings() {
-        let saved = localStorage.getItem('dictation_app_settings');
-        if (saved) {
-            let s = JSON.parse(saved);
-            if (s.onlyStarred !== undefined) document.getElementById('onlyStarred').checked = s.onlyStarred;
-            if (s.enableShuffle !== undefined) document.getElementById('enableShuffle').checked = s.enableShuffle;
-            if (s.enableSpell !== undefined) document.getElementById('enableSpell').checked = s.enableSpell;
-            if (s.enableChinese !== undefined) document.getElementById('enableChinese').checked = s.enableChinese;
-            if (s.enablePOS !== undefined) document.getElementById('enablePOS').checked = s.enablePOS;
-            if (s.enableLoop !== undefined) document.getElementById('enableLoop').checked = s.enableLoop;
-            if (s.speakRate !== undefined) {
-                let slider = document.getElementById('speakRate');
-                slider.value = s.speakRate;
-                updateSpeedDisplay('speakRate', 'speedValue');
-                updateSliderProgress(slider);
-            }
-            if (s.pauseTime !== undefined) document.getElementById('pauseTime').value = s.pauseTime;
-            if (s.repeatCount !== undefined) document.getElementById('repeatCount').value = s.repeatCount;
-        }
-    }
-
-    function saveExamAppSettings() {
-        let settings = {
-            examOnlyStarred: document.getElementById('examOnlyStarred').checked,
-            examQuestionCount: document.getElementById('examQuestionCount').value,
-            examSpeakRate: document.getElementById('examSpeakRate').value,
-            examPauseTime: document.getElementById('examPauseTime').value,
-            examAnswerTime: document.getElementById('examAnswerTime').value,
-            examRepeatCount: document.getElementById('examRepeatCount').value,
-            examVoiceChi: document.getElementById('examVoiceChi').checked
-        };
-        localStorage.setItem('dictation_exam_app_settings', JSON.stringify(settings));
-    }
-
-    function loadExamAppSettings() {
-        let saved = localStorage.getItem('dictation_exam_app_settings');
-        if (saved) {
-            let s = JSON.parse(saved);
-            if (s.examOnlyStarred !== undefined) document.getElementById('examOnlyStarred').checked = s.examOnlyStarred;
-            if (s.examVoiceChi !== undefined) document.getElementById('examVoiceChi').checked = !!s.examVoiceChi;
-            if (s.examQuestionCount !== undefined) document.getElementById('examQuestionCount').value = s.examQuestionCount;
-            if (s.examSpeakRate !== undefined) {
-                let slider = document.getElementById('examSpeakRate');
-                slider.value = s.examSpeakRate;
-                updateSpeedDisplay('examSpeakRate', 'examSpeedValue');
-                updateSliderProgress(slider);
-            }
-            if (s.examPauseTime !== undefined) document.getElementById('examPauseTime').value = s.examPauseTime;
-            if (s.examAnswerTime !== undefined) document.getElementById('examAnswerTime').value = s.examAnswerTime;
-            if (s.examRepeatCount !== undefined) document.getElementById('examRepeatCount').value = s.examRepeatCount;
-        }
-    }
-
-    // 測試密碼：testreset 大冒險回到第一次開 App 的狀態；testmoney 送測試用的道具
-    function advRunTestCode(code) {
-        code = String(code || '').trim().toLowerCase();
-        if (code === 'testreset') {
-            if (!confirm('⚠️ 要把雞塊大冒險的進度、道具、裝備、能力全部重設成第一次開 App 的狀態嗎？')) return true;
-            try { localStorage.removeItem(advStoreKey()); } catch (e) {}
-            advData = advLoad();
-            advData.ts = Date.now();
-            advSave();
-            try { advRefreshViews(); } catch (e) {}
-            alert('🔄 雞塊大冒險已重設。');
-            return true;
-        }
-        if (code === 'testmoney') {
-            advData.shards += 500;
-            advData.sauce += 50; advData.tickets += 50; advData.potions += 50; advData.wipes += 50;
-            advSave();
-            try { advRefreshViews(); advRenderShopBox(); } catch (e) {}
-            alert('💰 已送出：糖醋醬碎片 +500、糖醋醬／冒險卷／恢復藥水／濕紙巾各 +50');
-            return true;
-        }
-        return false;
-    }
-    function advRunTestCodeInput() {
-        let el = document.getElementById('devTestCodeInput');
-        if (!el) return;
-        if (!advRunTestCode(el.value)) alert('❌ 沒有這個測試密碼');
-        el.value = '';
-    }
-    function verifyDevPassword() {
-          if (advRunTestCode(document.getElementById('devPasswordInput').value)) { document.getElementById('devPasswordInput').value = ''; return; }
-          if (document.getElementById('devPasswordInput').value === 'freddy116') {
-            sessionStorage.setItem('dev_unlocked', 'true');
-            document.getElementById('devLoginPanel').style.display = 'none';
-            document.getElementById('devContentPanel').style.display = 'flex';
-            alert('🔓 開發者模式解鎖成功！');
-          } else { alert('❌ 密碼錯誤！'); }
-    }
-
-    function runStressTest() { alert('壓力測試執行中'); }
-    function clearAllWordListsData() { wordLists.forEach(l => l.content = ''); alert('題庫已清空'); }
-    function clearAllExamHistoryData() { 
-        examHistory = []; 
-        cardExamHistory = [];
-        localStorage.removeItem('dictation_exam_history'); 
-        localStorage.removeItem('dictation_card_exam_history');
-        alert('所有考試紀錄已清空'); 
-    }
-    function loadInitialSettings() { if(confirm("確定重設？")) location.reload(); }
-
-
-    // ═════════════════════════════════════════════════════════════
-    // 事件委派：取代原本寫在 HTML 裡的 onclick / onchange 等 inline 事件
-    // HTML 以 data-on-click='[["函式名稱",[參數...]]]' 描述要呼叫什麼
-    // 特殊參數："$this" = 觸發的元素、"$event" = 事件物件、"$value" = 元素的 value
-    // ═════════════════════════════════════════════════════════════
-    //  🏰 雞塊大冒險（原型：第 1 關）
-    //  戰鬥流程：選招式 → 發動招式（答題）→ 成功就造成傷害 → 依敏捷決定連續行動次數 → 敵人攻擊
-    // ═════════════════════════════════════════════════════════════
-    const ADV_STORE = 'chicky_adv_data';          // 沒登入 Google：離線進度
-    const ADV_STORE_G = 'chicky_adv_data_g';      // 登入 Google：雲端進度（本機暫存，會同步到 Google 雲端）
-    function advIsGoogleMode() { try { return localStorage.getItem('chicky_google_linked') === '1'; } catch (e) { return false; } }
-    function advStoreKey() { return advIsGoogleMode() ? ADV_STORE_G : ADV_STORE; }
-    const ADV_SEL_KEY = 'chicky_adv_selected';
-    const ADV_BASE_STATS = { hp: 3, atk: 0, agi: 3, def: 0, int: 1, luck: 0 };
-    const ADV_MOVES_SHOWN = 4;               // 招式選擇一開始只顯示幾張，其餘收在「更多招式」
-    let advMovesOpen = false;
-    const ADV_REPLAY_PER_DAY = 3;           // 每天最多重複挑戰「已通關的關卡」幾次（沒通關的關卡不限次數）
-    const ADV_UP_MAX = 10;
-    const ADV_SHARDS_PER_SAUCE = 15;        // 15 個碎片 → 1 瓶糖醋醬
-    const ADV_TOTAL_LEVELS = 20;
-    const ADV_CHAPTERS = [
-        { id: 1, from: 1, to: 10, name: '夜市' },
-        { id: 2, from: 11, to: 20, name: '便利商店' }
-    ];
-    const ADV_WIPE_COST = 5;                // 濕紙巾：5 個碎片
-    const ADV_HIT_N = 20;                   // 命中：看最近 20 題
-    const ADV_HANDS = ['左手', '右手'];      // 兩個裝備欄
-    // 裝備的稀有度（邊框顏色跟招式一樣：灰＝普通、深金＝稀有、亮紫＝傳說）
-    const ADV_ITEM_RARITY = { boba: 'common', tofu: 'common', skewer: 'rare', bill: 'common', bag: 'common', soda: 'common' };
-    function advItemRarityKey(k) { return ADV_ITEM_RARITY[k] || 'common'; }
-    const ADV_SAUCE_COLOR = '#EE8F78';      // 糖醋醬的顏色（碎片圖示也用這個顏色）
-    const ADV_POTION_HEAL = 5, ADV_POTION_COST = 5;     // 恢復藥水：1 個碎片 → HP +5
-    const ADV_WEEKLY_SHARDS = 100, ADV_WEEKLY_CHICKENS = 2;   // 每週一次：100 碎片 → 2 雞塊
-    const ADV_MAX_EQUIP = 4;
-    const ADV_MIN_EQUIP = 3;                // 至少要帶 3 招
-    const ADV_BASE_SECS = 15;               // 每題作答時間（秒）
-    const ADV_LUCK_CAP = 3;                 // 幸運擲幣的加成最多 +3
-
-    // 招式
-    //   type：card 字卡 / listen 聽力 / speak 朗讀（用來決定這招需要什麼條件）
-    //   mode：choice 選擇題 / typeCn 輸入中文 / listenChoice 聽音選英文 / listenCn 聽英文選中文 / listenSpell 聽音拼英文 / speak 朗讀
-    //   power：每一下的威力；hits：打幾下（每一下各自扣掉對方防禦）；q：要連續答對幾題
-    //   buy：free 一開始就有 / shards 用碎片買 / chicken 用雞塊買（item 是商店商品代號）
-    // 招式圖示（SVG，會跟著文字大小縮放）
-    const advSvg = (vb, inner) => `<svg viewBox="${vb}" width="1.2em" height="1.2em" style="vertical-align:-0.22em;overflow:visible" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${inner}</svg>`;
-    // 斬擊、連續斬擊共用的那把劍
-    const advSword = (r) => `<g transform="rotate(${r} 12 12)"><path d="M 12 1 L 14.2 4 V 15 H 9.8 V 4 Z" fill="#E2E8F0" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/><path d="M 12 3 V 14" stroke="#FFFFFF" stroke-width="1"/><rect x="7.5" y="15" width="9" height="2.4" rx="1" fill="#F59E0B" stroke="#92400E" stroke-width="1"/><rect x="10.8" y="17.4" width="2.4" height="4.6" fill="#92400E"/></g>`;
-    const ADV_ICONS = {
-        combo: () => { const c = (x, y, o) => `<g opacity="${o}"><ellipse cx="${x}" cy="${y}" rx="10" ry="10" fill="#F4A236" stroke="#231F20" stroke-width="2.2"/><circle cx="${x - 3.5}" cy="${y - 1.5}" r="1.5" fill="#231F20"/><circle cx="${x + 3.5}" cy="${y - 1.5}" r="1.5" fill="#231F20"/><path d="M ${x - 2.5} ${y + 3} Q ${x} ${y + 5} ${x + 2.5} ${y + 3}" stroke="#231F20" stroke-width="1.5" fill="none" stroke-linecap="round"/></g>`; return advSvg('0 0 52 28', `<path d="M 2 9 H 7 M 0 15 H 6 M 2 21 H 7" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>${c(18, 14, 0.5)}${c(36, 14, 1)}<path d="M 44 4 l 4 -3 M 46 8 l 5 -1" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>`); },
-        slash: () => advSvg('0 0 24 24', advSword(42)),
-        slash2: () => { const sw = advSword; return advSvg('0 0 24 24', sw(-42) + sw(42)); },
-        _old_slash2: () => { const sw = (r) => `<g transform="rotate(${r} 12 12)"><path d="M 12 1 L 14.2 4 V 15 H 9.8 V 4 Z" fill="#E2E8F0" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/><path d="M 12 3 V 14" stroke="#FFFFFF" stroke-width="1"/><rect x="7.5" y="15" width="9" height="2.4" rx="1" fill="#F59E0B" stroke="#92400E" stroke-width="1"/><rect x="10.8" y="17.4" width="2.4" height="4.6" fill="#92400E"/></g>`; return advSvg('0 0 24 24', sw(-42) + sw(42)); },
-        wave2: () => { const cm = (y) => `<path d="M 0 ${y} Q 16 ${y - 6} 36 ${y - 4} L 36 ${y + 4} Q 16 ${y + 6} 0 ${y} Z" fill="#38BDF8" opacity="0.65"/><path d="M 8 ${y} Q 20 ${y - 3} 36 ${y - 2} L 36 ${y + 2} Q 20 ${y + 3} 8 ${y} Z" fill="#E0F2FE"/><circle cx="39" cy="${y}" r="6" fill="#7DD3FC" opacity="0.7"/><circle cx="39" cy="${y}" r="3.6" fill="#FFFFFF"/>`; return advSvg('0 0 48 30', cm(8) + cm(22)); },
-        wave3: () => advSvg('0 0 52 30', '<circle cx="9" cy="15" r="10" fill="#FDE047" opacity="0.55"/><circle cx="9" cy="15" r="6.5" fill="#FACC15" stroke="#F59E0B" stroke-width="1.5"/><circle cx="9" cy="15" r="3" fill="#FFFFFF"/><path d="M 14 8 L 30 9 L 34 5 L 38 9 L 44 8 L 51 15 L 44 22 L 38 21 L 34 25 L 30 21 L 14 22 Z" fill="#FACC15" stroke="#F59E0B" stroke-width="1.3" stroke-linejoin="round"/><path d="M 15 12 H 46 L 49 15 L 46 18 H 15 Z" fill="#FFFFFF" opacity="0.9"/>')
-    };
-    // 招式說明只寫「怎麼答」：類型、題數、威力在畫面上已經有了
-    const ADV_LEGEND_PRICE = 25;            // 傳說招式：補給站 25 個碎片
-    const ADV_MOVES = [
-        { key: 'tackle',  name: '衝撞',         icon: '💥', type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                              desc: '選出正確的中文意思' },
-        { key: 'combo',   name: '連續衝撞',     icon: ADV_ICONS.combo(), type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 3 },                         desc: '選擇題' },
-        { key: 'charge',  name: '衝鋒撞擊',     icon: '🐗', type: 'card',   mode: 'typeCn',      fx: 'charge', power: 3, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_charge' }, desc: '輸入中文意思' },
-        { key: 'slash',   name: '斬擊',         icon: ADV_ICONS.slash(), type: 'listen', mode: 'listenChoice', fx: 'slash',  power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '聽發音，選出正確的單字' },
-        { key: 'slash2',  name: '連續斬擊',     icon: ADV_ICONS.slash2(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 4, item: 'mv_slash2' },       desc: '聽英文，選中文' },
-        { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 3, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_thrust' }, desc: '聽發音，拼出英文單字' },
-        { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 2, buy: { kind: 'free' },                                       desc: '按住麥克風唸出單字' },
-        { key: 'wave2',   name: '雙重衝擊波',   icon: ADV_ICONS.wave2(), type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 2, buy: { kind: 'reward', level: 5, item: 'mv_wave2' },        desc: '按住麥克風唸出單字' },
-        { key: 'wave3',   name: '雞塊氣功波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'speakCn',      fx: 'yellow', power: 3, hits: 1, q: 2, tries: 2, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_wave3' }, desc: '顯示中文，唸英文' }
-    ];
-    const ADV_TYPE_LABEL = { card: '字卡', listen: '聽力', speak: '朗讀' };
-    // 稀有度：普通（灰框，熟練度上限 1）／稀有（深金框，上限 2）／傳說（亮紫框，上限 3）
-    const ADV_RARITY = {
-        common: { label: '普通', color: '#94A3B8', cap: 1 },
-        rare:   { label: '稀有', color: '#B8860B', cap: 2 },
-        legend: { label: '傳說', color: '#C026D3', cap: 3 }
-    };
-    const ADV_MOVE_RARITY = { tackle: 'common', slash: 'common', wave: 'common', combo: 'rare', slash2: 'rare', wave2: 'rare', charge: 'legend', thrust: 'legend', wave3: 'legend' };
-    // 熟練度：累積使用 20 次 → 1、100 次 → 2、300 次 → 3（不超過稀有度上限）；每 1 級這招攻擊 +1
-    const ADV_MASTERY_STEPS = [20, 100, 300];
-    function advRarity(key) { return ADV_RARITY[ADV_MOVE_RARITY[key] || 'common']; }
-    function advRarityKey(key) { return ADV_MOVE_RARITY[key] || 'common'; }
-    function advMasteryInfo(key) {
-        let uses = Math.max(0, parseInt((advData.mastery || {})[key]) || 0);
-        let cap = advRarity(key).cap, lvl = 0;
-        while (lvl < cap && uses >= ADV_MASTERY_STEPS[lvl]) lvl++;
-        let maxed = lvl >= cap;
-        return { uses, lvl, cap, maxed, next: maxed ? null : ADV_MASTERY_STEPS[lvl], prev: lvl ? ADV_MASTERY_STEPS[lvl - 1] : 0 };
-    }
-    function advMastery(key) { return advMasteryInfo(key).lvl; }
-    // 用了一次招式：回傳「升級後的等級」，沒升級回傳 0
-    function advAddMasteryUse(key) {
-        if (!advData.mastery) advData.mastery = {};
-        let before = advMastery(key);
-        advData.mastery[key] = (parseInt(advData.mastery[key]) || 0) + 1;
-        let after = advMastery(key);
-        return after > before ? after : 0;
-    }
-    const ADV_DEFAULT_EQUIP = ['tackle', 'slash', 'wave'];
-    function advMoveByKey(k) { return ADV_MOVES.find(m => m.key === k); }
-
-    // 關卡：firstShards/firstSauce = 第一次通關的獎勵；repeatShards = 之後每次通關的獎勵
-    //   special：stink 發臭（玩家的招式失敗時，無視防禦反擊 1 點）／heal 治癒（敵人攻擊結束時回 1 點體力）
-    const ADV_LEVELS = [
-        { id: 1, name: '貢丸',     sprite: 'meatball', minWords: 10, hp: 3,  atk: 1, agi: 1, def: 0, luck: 0, moveName: '彈跳撞擊', movePower: 0, firstShards: 1, firstSauce: 0, repeatShards: 1, firstMaxHp: 1, firstPotions: 1, firstItem: 'bag', special: '' },
-        { id: 2, name: '烤玉米',   sprite: 'corn',     minWords: 15, hp: 4,  atk: 1, agi: 0, def: 1, luck: 0, moveName: '玉米粒連射', movePower: 0, firstShards: 1, firstSauce: 0, repeatShards: 1, firstMaxHp: 1, firstPotions: 1, special: '' },
-        { id: 3, name: '蚵仔煎',   sprite: 'oyster',   minWords: 20, hp: 5,  atk: 2, agi: 1, def: 0, luck: 0, moveName: '黏稠甩擊', movePower: 0, firstShards: 2, firstSauce: 0, repeatShards: 1, firstMaxHp: 1, firstPotions: 1, special: '' },
-        { id: 4, name: '臭豆腐',   sprite: 'tofu',     minWords: 20, hp: 7,  atk: 1, agi: 0, def: 1, luck: 0, moveName: '酸臭衝撞', movePower: 0, firstShards: 3, firstSauce: 0, repeatShards: 2, firstPotions: 2, firstItem: 'tofu', special: 'stink' },
-        { id: 5, name: '珍珠奶茶', sprite: 'boba',     minWords: 30, hp: 10, atk: 2, agi: 0, def: 1, luck: 0, moveName: '珍珠連射', movePower: 0, firstShards: 0, firstSauce: 1, repeatShards: 2, firstPotions: 2, firstTickets: 1, firstItem: 'boba', special: 'heal' },
-        { id: 6, name: '娃娃機',   sprite: 'claw',     minWords: 30, hp: 12, atk: 2, agi: 0, def: 2, int: 0, luck: 1, moveName: '夾子抓抓', movePower: 0, firstShards: 3, firstSauce: 0, repeatShards: 3, firstPotions: 1, firstTickets: 1, special: 'claw' },
-        { id: 7, name: '射飛鏢',   sprite: 'darts',    minWords: 40, hp: 13, atk: 2, agi: 2, def: 1, int: 0, luck: 1, moveName: '飛鏢連射', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, firstPotions: 1, special: 'darts' },
-        { id: 8, name: '夜市麻將', sprite: 'mahjong',  minWords: 40, hp: 13, atk: 2, agi: 1, def: 2, int: 3, luck: 3, moveName: '自摸', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, firstPotions: 1, special: 'mahjong' },
-        { id: 9, name: '套圈圈',   sprite: 'ring',     minWords: 50, hp: 15, atk: 3, agi: 3, def: 0, int: 0, luck: 1, moveName: '圈圈投擲', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 4, firstPotions: 1, firstTickets: 1, special: 'ring' },
-        { id: 10, name: '彈珠台',  sprite: 'pinball',  minWords: 50, hp: 15, atk: 4, agi: 1, def: 2, int: 1, luck: 6, moveName: '彈珠發射', movePower: 0, firstShards: 0, firstSauce: 1, repeatShards: 5, firstPotions: 2, firstTickets: 2, special: 'pinball' },
-        // ── 第二章：便利商店 ──
-        { id: 11, name: '茶葉蛋',   sprite: 'egg',     minWords: 60, hp: 17, atk: 3, agi: 3, def: 2, int: 6, luck: 2, moveName: '滾燙蛋汁', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 5, firstPotions: 1, special: 'egg' },
-        { id: 12, name: '大亨堡',   sprite: 'bun',     minWords: 60, hp: 8,  atk: 3, agi: 2, def: 3, int: 9, luck: 2, moveName: '麵包夾擊', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 5, firstPotions: 1, firstItem: 'skewer', special: 'bun',
-          phases: [
-              { name: '大亨堡', sprite: 'bun',    hp: 8, atk: 3, agi: 2, def: 3, int: 9, luck: 2, moveName: '麵包夾擊', special: 'bun' },
-              { name: '熱狗',   sprite: 'hotdog', hp: 7, atk: 5, agi: 4, def: 2, int: 3, luck: 4, moveName: '熱油噴射', special: 'hotdog' }
-          ] },
-        { id: 13, name: '御飯糰',   sprite: 'onigiri', minWords: 70, hp: 15, atk: 5, agi: 3, def: 3, int: 9, luck: 3, shield: 12, moveName: '海苔捲擊', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 6, firstPotions: 1, special: 'wrap' },
-        { id: 14, name: '瓶裝無糖茶', sprite: 'tea',   minWords: 70, hp: 18, atk: 5, agi: 3, def: 4, int: 9, luck: 0, moveName: '冰鎮茶柱', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 6, firstPotions: 2, special: 'tea' },
-        { id: 15, name: 'ibon',   sprite: 'ibon',    minWords: 70, hp: 25, atk: 6, agi: 2, def: 7, int: 9, luck: -2, moveName: '列印繳費單', movePower: 0, firstShards: 0, firstSauce: 1, repeatShards: 6, firstPotions: 1, firstTickets: 3, firstItem: 'bill', potionChance: 0.2, special: 'seal' },
-        { id: 16, name: '盒裝沙拉', sprite: 'salad',  minWords: 80, hp: 22, atk: 5, agi: 5, def: 3, int: 10, luck: 3, moveName: '生菜甩擊', movePower: 0, firstShards: 6, firstSauce: 0, repeatShards: 6, firstPotions: 1, firstTickets: 1, special: 'salad' },
-        { id: 17, name: '微波爐',   sprite: 'microwave', minWords: 80, hp: 25, atk: 5, agi: 1, def: 6, int: 1, luck: 1, moveName: '叮！加熱', movePower: 0, firstShards: 6, firstSauce: 0, repeatShards: 6, firstPotions: 1, firstTickets: 1, special: 'microwave' },
-        { id: 18, name: '微波便當', sprite: 'bento',  minWords: 90, hp: 20, atk: 3, agi: 3, def: 3, int: 9, luck: 2, moveName: '便當蓋飛擊', movePower: 0, firstShards: 7, firstSauce: 0, repeatShards: 6, firstPotions: 1, firstTickets: 1, special: 'bento',
-          phases: [
-              { name: '微波便當',   sprite: 'bento',  hp: 20, atk: 3, agi: 3, def: 3, int: 9, luck: 2, moveName: '便當蓋飛擊', special: 'bento' },
-              { name: '愛珍食便當', sprite: 'bento2', hp: 40, atk: 7, agi: 6, def: 2, int: 6, luck: 6, moveName: '即期大反撲', special: 'expire' }
-          ] },
-        { id: 19, name: '美式咖啡', sprite: 'coffee', minWords: 90, hp: 30, atk: 5, agi: 5, def: 3, int: 2, luck: 2, moveName: '滾燙潑灑', movePower: 0, firstShards: 7, firstSauce: 0, repeatShards: 7, firstPotions: 1, firstTickets: 1, special: 'coffee' },
-        { id: 20, name: '全能便利商店員工', sprite: 'clerk', minWords: 100, hp: 40, atk: 6, agi: 4, def: 4, int: 4, luck: 2, moveName: '商品補貨', movePower: 0, firstShards: 0, firstSauce: 2, repeatShards: 8, firstPotions: 2, firstTickets: 2, special: 'clerk' }
-    ];
-    const ADV_COFFEE_BURN = 9;              // 美式咖啡：開戰燙傷 = 9 − 雞塊護盾最大值（直接扣體力）
-    // 全能便利商店員工：每回合換崗位（第一階段），各自免疫一類招式
-    const ADV_CLERK_POSTS = [{ name: '收銀台', immune: 'card' }, { name: '做餐中', immune: 'listen' }, { name: '點貨中', immune: 'speak' }];
-    const ADV_CLERK_SHIFT_HP = 20, ADV_CLERK_CD = 3;        // HP 低於 20 進入交班；下班倒數 3
-    const ADV_STAMP_NEED = 2, ADV_STAMP_ATK = 2, ADV_STAMP_HEAL = 5;   // 集點：任兩種 → 兌換集點卡（攻擊 +2、HP +5）
-    // 這些敵人對某一類招式有抗性：每一下最多只受到 1 點傷害
-    const ADV_RESIST = { darts: 'listen', mahjong: 'card', ring: 'speak', hotdog: 'listen', tea: 'speak' };
-    // 這些敵人完全不受某一類招式的傷害
-    const ADV_IMMUNE = { salad: 'card', microwave: 'listen', coffee: 'speak' };
-    function advImmuneType() {                // 這一刻敵人免疫的招式類型
-        if (adv.enemy && adv.enemy.special === 'clerk' && adv.post) return adv.post.immune;
-        return ADV_IMMUNE[adv.enemy && adv.enemy.special] || '';
-    }
-    const ADV_WEAK_BONUS = { expire: { type: 'speak', bonus: 4 } };   // 愛珍食便當：朗讀類每一下 +4
-    const ADV_MICRO_ATK_UP = 2;             // 微波爐：每次攻擊後攻擊力 +2
-    const ADV_EXPIRE_SELF = 4;              // 愛珍食便當：攻擊完自己扣 4 點體力
-    const ADV_EGG_CARD_BONUS = 2;           // 茶葉蛋：字卡類招式每一下傷害 +2
-    // 裝備道具（裝備欄同時只能放 1 個，沒裝備的道具放在背包）
-    const ADV_ITEMS = {
-        boba: { name: '快喝光的珍珠奶茶', icon: (s) => `<span style="font-size:${s}px;line-height:1">🧋</span>`, desc: '一場戰鬥限用 1 次：HP 剩 3 以下可以喝，HP +1' },
-        tofu: { name: '烤焦臭豆腐', icon: (s) => advTofuIcon(s), desc: '自己的招式失敗時，雙方各扣 1 點體力（無視防禦）' },
-        skewer: { name: '竹籤', icon: (s) => advSkewerIcon(s), desc: '攻擊無視對方的護盾，直接扣體力' },
-        bill: { name: '繁瑣的繳費單', icon: (s) => advBillIcon(s), desc: '？？？' },
-        bag: { name: '夜市塑膠袋', icon: (s) => advPlasticBagIcon(s), desc: '每場戰鬥開始時護盾 +1' },
-        soda: { name: '彈珠汽水', icon: (s) => advSodaIcon(s), desc: '戰鬥勝利後 HP +1' }
-    };
-    const ADV_SODA_PRICE = 2;               // 補給站：彈珠汽水 2 個碎片
-    const ADV_BAG_SHIELD = 1;               // 夜市塑膠袋：護盾 +1
-    function advPlasticBagIcon(size) {
-        size = size || 24;
-        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-4px;overflow:visible"><path d="M9 10 Q9 3 12.5 3 Q15 3 15 10 M17 10 Q17 3 19.5 3 Q23 3 23 10" stroke="#DC2626" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M5 10 H27 L25 28 Q25 30 23 30 H9 Q7 30 7 28 Z" fill="#FFFFFF" stroke="#DC2626" stroke-width="2" stroke-linejoin="round"/><path d="M8 14 H24" stroke="#DC2626" stroke-width="1.6"/><text x="16" y="25" font-size="8" font-weight="900" text-anchor="middle" fill="#DC2626" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">謝謝</text></svg>`;
-    }
-    function advSodaIcon(size) {
-        size = size || 24;
-        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-4px;overflow:visible"><rect x="13" y="1.5" width="6" height="4" rx="1.2" fill="#2563EB" stroke="#1E3A8A" stroke-width="1"/><path d="M13 5.5 H19 V9 Q22 11 22 14 Q22 16 20 17 Q22 18 23 21 V27 Q23 30 20 30 H12 Q9 30 9 27 V21 Q10 18 12 17 Q10 16 10 14 Q10 11 13 9 Z" fill="#7DD3FC" stroke="#0369A1" stroke-width="1.6" stroke-linejoin="round" opacity="0.95"/><circle cx="16" cy="13.5" r="2.6" fill="#E0F2FE" stroke="#0369A1" stroke-width="1"/><circle cx="13" cy="24" r="1" fill="#FFFFFF"/><circle cx="17" cy="26" r="0.8" fill="#FFFFFF"/><circle cx="19" cy="22" r="1.1" fill="#FFFFFF"/><path d="M12 20 Q10.5 23 11 26" stroke="#FFFFFF" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.8"/></svg>`;
-    }
-    function advSkewerIcon(size) {
-        size = size || 24;
-        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-4px;overflow:visible"><path d="M5 28 L26 4" stroke="#B45309" stroke-width="4.2" stroke-linecap="round"/><path d="M5 28 L26 4" stroke="#FCD34D" stroke-width="2" stroke-linecap="round"/><path d="M24.5 5.5 L28 2" stroke="#92400E" stroke-width="2.4" stroke-linecap="round"/><path d="M11 21 l2 2 M16 15.5 l2 2" stroke="#92400E" stroke-width="1.4" stroke-linecap="round"/></svg>`;
-    }
-    function advBillIcon(size) {
-        size = size || 24;
-        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-4px;overflow:visible"><path d="M7 3 H25 V29 L22 27 L19 29 L16 27 L13 29 L10 27 L7 29 Z" fill="#FFFFFF" stroke="#475569" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 8 H22 M10 12 H22 M10 16 H18" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/><path d="M10 20 v4 M12 20 v4 M13.5 20 v4 M16 20 v4 M17.5 20 v4 M20 20 v4 M22 20 v4" stroke="#0F172A" stroke-width="1"/><circle cx="23" cy="9" r="3.6" fill="#EF4444" opacity="0.85"/><text x="23" y="11" font-size="5.5" font-weight="900" text-anchor="middle" fill="#FFFFFF">!</text></svg>`;
-    }
-    function advTicketIcon(size) {
-        size = size || 24;
-        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-4px;overflow:visible"><path d="M3 9 Q3 7 5 7 H27 Q29 7 29 9 V12.5 Q26.5 13 26.5 16 Q26.5 19 29 19.5 V23 Q29 25 27 25 H5 Q3 25 3 23 V19.5 Q5.5 19 5.5 16 Q5.5 13 3 12.5 Z" fill="#F97316" stroke="#9A3412" stroke-width="1.6"/><path d="M21 8 V24" stroke="#FED7AA" stroke-width="1.4" stroke-dasharray="2 2"/><path d="M9 13 L11 16 L9 19 M13 13 L15 16 L13 19" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25" cy="16" r="1.6" fill="#FFFFFF"/></svg>`;
-    }
-    function advWipeIcon(size) {
-        size = size || 24;
-        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-4px;overflow:visible"><rect x="3" y="8" width="26" height="18" rx="5" fill="#38BDF8" stroke="#075985" stroke-width="1.6"/><path d="M9 8 Q9 5 12 5 H20 Q23 5 23 8 V13 Q23 15 21 15 H11 Q9 15 9 13 Z" fill="#0EA5E9" stroke="#075985" stroke-width="1.4"/><path d="M12 10 Q16 7 20 10" stroke="#FFFFFF" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M8 21 Q11 18 14 21 T20 21 T26 21" stroke="#E0F2FE" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="25" cy="11" r="1.4" fill="#FFFFFF"/></svg>`;
-    }
-    function advTofuIcon(size) {
-        size = size || 24;
-        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-4px;overflow:visible"><path d="M9 7 Q7 4 9 1 M16 7 Q14 4 16 1 M23 7 Q21 4 23 1" stroke="#84CC16" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="4" y="9" width="24" height="20" rx="5" fill="#3F2A1D" stroke="#1C1009" stroke-width="2"/><rect x="8" y="13" width="16" height="12" rx="3" fill="#6B3E1F"/><circle cx="11" cy="17" r="1.4" fill="#1C1009"/><circle cx="20" cy="21" r="1.4" fill="#1C1009"/><path d="M13 23 l3 -4 l3 4" stroke="#F97316" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`;
-    }
-    const ADV_SPECIAL_TEXT = {
-        stink: '發臭：你的招式失敗時，會被臭味反擊，無視防禦扣 1 點體力',
-        heal: '治癒：每次攻擊結束後，會回復 1 點體力',
-        claw: '送你娃娃！',
-        darts: '聽力招式只造成 1 點傷害',
-        mahjong: '摸牌！字卡招式只造成 1 點傷害',
-        ring: '朗讀招式只造成 1 點傷害',
-        pinball: '打彈珠！',
-        egg: '請幫我剝殼 ❤️',
-        bun: '熱狗',
-        wrap: '拆不掉的包裝',
-        tea: '現泡就是回甘！',
-        seal: '取票失敗！',
-        salad: '蓋子霧霧的，看不清楚字',
-        microwave: '運轉中..聽不到你在說什麼？',
-        bento: '月底救星！',
-        expire: '我快過期了..',
-        coffee: '太燙，嘴巴張不開！',
-        clerk: '集點卡'
-    };
-
-    function advLoad() {
-        let d = {};
-        try { d = JSON.parse(localStorage.getItem(advStoreKey())) || {}; } catch (e) { d = {}; }
-        let up = d.up || {};
-        let clampUp = v => Math.max(0, Math.min(ADV_UP_MAX, parseInt(v) || 0));
-        let n0 = v => Math.max(0, parseInt(v) || 0);
-        let hasShards = d.shards !== undefined;
-        let hp = parseInt(d.hp);
-        let own = {};
-        if (d.own && typeof d.own === 'object') ADV_MOVES.forEach(m => { if (d.own[m.key] === true) own[m.key] = true; });
-        let eq = Array.isArray(d.eq) ? d.eq.filter(k => !!advMoveByKey(k)) : ADV_DEFAULT_EQUIP.slice();
-        eq = eq.filter((k, i) => eq.indexOf(k) === i).slice(0, ADV_MAX_EQUIP);
-        ADV_MOVES.forEach(m => { if (m.buy.kind === 'reward' && d.cleared && d.cleared[String(m.buy.level)]) own[m.key] = true; });   // 關卡送的招式（舊存檔也補發）
-        let items = {};
-        if (d.items && typeof d.items === 'object') Object.keys(ADV_ITEMS).forEach(k => { if (d.items[k] === true) items[k] = true; });
-        if (d.cleared && d.cleared['1']) items.bag = true;      // 打贏貢丸送夜市塑膠袋（舊存檔也補發）
-        if (d.cleared && d.cleared['4']) items.tofu = true;     // 打贏臭豆腐送烤焦臭豆腐（舊存檔也補發）
-        if (d.cleared && d.cleared['5']) items.boba = true;     // 打贏珍珠奶茶送快喝光的珍珠奶茶
-        if (d.cleared && d.cleared['12']) items.skewer = true;  // 打贏大亨堡（熱狗）送竹籤
-        if (d.cleared && d.cleared['15']) items.bill = true;    // 打贏 IBON 機送繁瑣的繳費單
-        let mastery = {};
-        if (d.mastery && typeof d.mastery === 'object') ADV_MOVES.forEach(m => { let v = parseInt(d.mastery[m.key]); if (v > 0) mastery[m.key] = v; });
-        return {
-            items: items,                                       // 擁有的裝備道具
-            gear: (() => {                                      // 裝備欄：[左手, 右手]
-                let g = Array.isArray(d.gear) ? d.gear : [];
-                g = [0, 1].map(i => (typeof g[i] === 'string' && items[g[i]]) ? g[i] : '');
-                if (!g[0] && !g[1] && typeof d.equip === 'string' && items[d.equip]) g[0] = d.equip;   // 舊版只有一格
-                if (g[0] && g[0] === g[1]) g[1] = '';
-                return g;
-            })(),
-            hits: (() => {                                      // 命中：最近 20 題答對(1)／答錯(0)
-                let hz = (d.hits && typeof d.hits === 'object') ? d.hits : {};
-                const arr = a => Array.isArray(a) ? a.filter(v => v === 0 || v === 1).slice(-ADV_HIT_N) : [];
-                return { card: arr(hz.card), listen: arr(hz.listen), speak: arr(hz.speak), all: arr(hz.all) };
-            })(),
-            hitPrev: Number.isFinite(d.hitPrev) ? d.hitPrev : null,
-            shards: hasShards ? n0(d.shards) : n0(d.sauce),     // 舊版把碎片叫「糖醋醬」，改名後數量轉成碎片
-            sauce: hasShards ? n0(d.sauce) : 0,
-            cleared: (d.cleared && typeof d.cleared === 'object') ? d.cleared : {},
-            up: { hp: clampUp(up.hp), atk: clampUp(up.atk), agi: clampUp(up.agi), def: clampUp(up.def), int: clampUp(up.int), luck: clampUp(up.luck) },
-            hp: Number.isFinite(hp) ? hp : null,
-            hpDay: typeof d.hpDay === 'string' ? d.hpDay : '',
-            own: own,                     // 用碎片買到的招式
-            eq: eq,                       // 目前裝備的招式（最多 4 招）
-            potions: n0(d.potions),
-            tickets: n0(d.tickets),                                        // 冒險卷：今天的重複挑戰次數 +1
-            wipes: n0(d.wipes),                                            // 濕紙巾：把 1 點能力轉到另一項
-            replayBonusDay: typeof d.replayBonusDay === 'string' ? d.replayBonusDay : '',
-            replayBonus: n0(d.replayBonus),                                // 今天用冒險卷多出來的次數
-            mastery: mastery,                                              // 每招累積使用次數（熟練度）
-            weekDone: typeof d.weekDone === 'string' ? d.weekDone : '',    // 最近一次「碎片換雞塊」是哪一週
-            replayDay: typeof d.replayDay === 'string' ? d.replayDay : '', // 重複挑戰次數是哪一天的
-            replays: n0(d.replays),
-            loginShardDay: typeof d.loginShardDay === 'string' ? d.loginShardDay : '',   // 每日登入碎片最後領取日
-            loseTipShown: d.loseTipShown === true,                         // 第一次戰敗時提醒過恢復藥水了
-            ts: n0(d.ts),                                                  // 最後存檔時間（雲端同步用）
-            owner: typeof d.owner === 'string' ? d.owner : ''              // 這份進度屬於哪個 Google 帳號（錢包代號）
-        };
-    }
-    // 更新前就已登入 Google 的人：第一次把原本的進度複製成「Google 進度」，不會憑空消失
-    try {
-        if (advIsGoogleMode() && localStorage.getItem(ADV_STORE_G) === null && localStorage.getItem(ADV_STORE) !== null)
-            localStorage.setItem(ADV_STORE_G, localStorage.getItem(ADV_STORE));
-    } catch (e) {}
-    let advData = advLoad();
-    setTimeout(() => { try { homeAdvBadge(); } catch (e) {} }, 0);
-    let advCloudReady = false, advCloudTimer = null, advDirty = false;   // advDirty：Google 進度有還沒上傳的變更
-    function advSave(keepTs) {      // keepTs：只是每天體力重置這類自動整理，不算「新的進度」，不改存檔時間、也不上傳
-        try { setTimeout(homeAdvBadge, 0); } catch (e) {}
-        if (!keepTs) advData.ts = Date.now();
-        if (advIsGoogleMode() && !advData.owner && typeof cloudWalletKey === 'string' && cloudWalletKey) advData.owner = cloudWalletKey;
-        try { localStorage.setItem(advStoreKey(), JSON.stringify(advData)); } catch (e) {}
-        if (keepTs) return;
-        if (advIsGoogleMode()) advDirty = true;
-        advQueueCloud();
-    }
-    // 登入 Google 時，進度存檔後稍等一下再上傳（連續存檔只上傳一次）
-    function advQueueCloud() {
-        if (!advIsGoogleMode() || !accessToken || !isCloudSyncActive || !advCloudReady) return;
-        clearTimeout(advCloudTimer);
-        advCloudTimer = setTimeout(() => { triggerAutoSaveToCloud(); }, 2500);
-    }
-    // 登入／登出時切換進度：離線一份、Google 一份，互不影響
-    function advSwitchStore() {
-        try { advAbort(); } catch (e) {}
-        advCloudReady = false; advDirty = false;
-        advData = advLoad();
-        advSyncDaily();
-        try { advRefreshViews(); } catch (e) {}
-    }
-    function advRefreshViews() {
-        if (document.getElementById('advStatsBox')) advRenderStatsPage();
-        if (document.getElementById('advLevelCard')) advRenderLevelPage();
-        advRenderShopBox();
-    }
-    // 從 Google 雲端載入進度：以「最後存檔時間」較新的為準；不同 Google 帳號的進度不會混在一起
-    function advMergeFromCloud(c, cloudOwner) {
-        let local = advData;
-        let mismatch = !!(cloudOwner && local.owner && local.owner !== cloudOwner);
-        if (c && typeof c === 'object') {
-            let cts = parseInt(c.ts) || 0;
-            if (mismatch || cts > local.ts) {
-                try { localStorage.setItem(ADV_STORE_G, JSON.stringify(c)); } catch (e) {}
-                advData = advLoad();
-                if (cloudOwner && !advData.owner) advData.owner = cloudOwner;
-                advSyncDaily();
-                advRefreshViews();
-                return false;                    // 不用再上傳
-            }
-            return cts < local.ts;               // 本機比較新 → 要上傳
-        }
-        if (mismatch) {                          // 雲端是另一個帳號、沒有進度：本機暫存不能沿用
-            try { localStorage.removeItem(ADV_STORE_G); } catch (e) {}
-            advData = advLoad(); advSyncDaily(); advRefreshViews();
-            return false;
-        }
-        return true;                             // 雲端還沒有進度：把本機的上傳
-    }
-    // 每天最多重複挑戰已通關關卡 3 次
-    // 首頁「雞塊樂園」標題旁的小標籤：目前要打第幾關
-    function homeAdvBadge() {
-        let el = document.getElementById('funLvBadge');
-        if (!el || typeof advData === 'undefined' || !advData) return;
-        let n = ADV_LEVELS.length, next = 1;
-        while (next <= n && advData.cleared[next]) next++;
-        el.textContent = next > n ? '全破' : `第 ${next} 關`;
-        el.style.display = '';
-    }
-    function advDevDone() { advSave(); try { advRefreshViews(); } catch (e) {} }
-
-    function advReplayCap() { return ADV_REPLAY_PER_DAY + (advData.replayBonusDay === getLocalDateStr() ? advData.replayBonus : 0); }
-    function advReplaysUsed() { return advData.replayDay === getLocalDateStr() ? advData.replays : 0; }
-    function advReplaysLeft() { return Math.max(0, advReplayCap() - advReplaysUsed()); }
-    // 這招有沒有擁有：一開始就有的、用碎片買的、用雞塊買的（雞塊的購買紀錄在後端錢包）
-    function advOwns(key) {
-        let m = advMoveByKey(key);
-        if (!m) return false;
-        if (m.buy.kind === 'free') return true;
-        if (advData.own[key] === true) return true;
-        return !!(m.buy.item && walletQty(m.buy.item) > 0);    // 以前用雞塊買過的
-
-    }
-    // 目前能用的招式：已裝備且確實擁有，最多 4 招，至少保留 1 招
-    function advEquipped() {
-        let list = advData.eq.filter(k => advOwns(k)).slice(0, ADV_MAX_EQUIP);
-        // 舊存檔不到 3 招：自動補上擁有的招式
-        for (let i = 0; i < ADV_MOVES.length && list.length < ADV_MIN_EQUIP; i++) if (advOwns(ADV_MOVES[i].key) && !list.includes(ADV_MOVES[i].key)) list.push(ADV_MOVES[i].key);
-        return list.map(advMoveByKey);
-    }
-    // 第 N 關要先通關第 N−1 關才能挑戰
-    function advUnlocked(id) { return id === 1 || !!advData.cleared[id - 1]; }
-    function advPlayerStats() {
-        return {
-            hp: ADV_BASE_STATS.hp + advData.up.hp,
-            atk: ADV_BASE_STATS.atk + advData.up.atk,
-            agi: ADV_BASE_STATS.agi + advData.up.agi,
-            def: ADV_BASE_STATS.def + advData.up.def,
-            int: ADV_BASE_STATS.int + advData.up.int,
-            luck: ADV_BASE_STATS.luck + advData.up.luck
-        };
-    }
-    function advMaxHp() { return ADV_BASE_STATS.hp + advData.up.hp; }
-    // 體力會繼承到下一場戰鬥；每天 00:00（本機時間）補滿
-    function advSyncDaily() {
-        let today = getLocalDateStr(), max = advMaxHp();
-        if (advData.hp === null || advData.hpDay !== today) { advData.hpDay = today; advData.hp = max; advSave(true); }
-        else if (advData.hp > max) { advData.hp = max; advSave(true); }
-        else if (advData.hp < 0) { advData.hp = 0; advSave(true); }
-    }
-    // 幸運（兩種用途）：擲幣次數 = (自己的幸運 − 對方的幸運) ÷ 2 無條件捨去（最少 0）
-    //   每擲出一次「正面」算一次加成，加成最多 +3
-    //   ① 攻擊時：這次傷害 +加成　② 打贏之後：糖醋醬碎片 +加成
-    function advLuckDice(myLuck, foeLuck) { return Math.max(0, Math.floor((myLuck - foeLuck) / 2)); }
-    function advRollLuck(myLuck, foeLuck) {
-        let flips = [];
-        for (let i = 0; i < advLuckDice(myLuck, foeLuck); i++) flips.push(Math.random() < 0.5);
-        return { flips, bonus: Math.min(ADV_LUCK_CAP, flips.filter(Boolean).length) };
-    }
-    function advCoinText(flips) { return flips.map(f => f ? '正' : '反').join('、'); }
-    // 護盾：智慧 ÷ 2 無條件捨去，最多 5；每場戰鬥開始時補滿，擋掉等量的傷害（敵人也一樣）
-    const ADV_SHIELD_CAP = 5;
-    function advShieldMax(int) { return Math.min(ADV_SHIELD_CAP, Math.floor(Math.max(0, int || 0) / 2)); }
-    // 每題作答秒數：15 秒 + 我方智慧；敵人智慧比我方高時，再扣掉差額（至少 5 秒）
-    function advAnswerSecs(myInt, foeInt) { return Math.max(5, ADV_BASE_SECS + myInt - Math.max(0, foeInt - myInt)); }
-    // 受到傷害：先扣護盾，剩下的才扣體力
-    function advTakeDamage(t, dmg, ignoreShield) {
-        let absorbed = ignoreShield ? 0 : Math.min(t.shield || 0, dmg);
-        t.shield = (t.shield || 0) - absorbed;
-        t.hp = Math.max(0, t.hp - (dmg - absorbed));
-        return { absorbed, loss: dmg - absorbed };
-    }
-    function advHurtLabel(r) { return r.absorbed ? (r.loss ? `🛡️-${r.absorbed} -${r.loss}` : `🛡️-${r.absorbed}`) : '-' + r.loss; }
-    // 連續行動次數：(我方敏捷 − 敵方敏捷) ÷ 2，無條件捨去後 +1，至少 1 次
-    function advActionCount(myAgi, foeAgi) { return Math.max(1, Math.floor((myAgi - foeAgi) / 2) + 1); }
-    // 傷害：攻擊力 + 招式威力 − 對方防禦，至少 1
-    function advDamage(atk, power, def) { return Math.max(1, atk + power - def); }
-
-    // ── 角色圖（雞塊就是首頁那隻）──
-    function advChickenSVG() {
-        return `<svg viewBox="4 22 128 100" xmlns="http://www.w3.org/2000/svg" fill="none">
-            <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
-            <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
-            <circle cx="36" cy="80" r="4" fill="#E2861E"/><circle cx="66" cy="98" r="3.5" fill="#E2861E"/><circle cx="94" cy="74" r="3.5" fill="#E2861E"/>
-            <ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/><ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/>
-            <circle cx="54" cy="64" r="4.5" fill="#231F20"/><circle cx="80" cy="64" r="4.5" fill="#231F20"/>
-            <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round"/>
-            <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
-            <path d="M 108 68 C 118 68, 124 72, 122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
-        </svg>`;
-    }
-    function advFace(cx, cy, mad, extra) {
-        // 共用的表情：眼睛 + 嘴，mad = true 是生氣的眉毛
-        return `<circle cx="${cx - 14}" cy="${cy}" r="4.5" fill="#231F20"/><circle cx="${cx + 14}" cy="${cy}" r="4.5" fill="#231F20"/>
-            ${mad ? `<path d="M ${cx - 24} ${cy - 11} L ${cx - 7} ${cy - 5} M ${cx + 24} ${cy - 11} L ${cx + 7} ${cy - 5}" stroke="#231F20" stroke-width="4.5" stroke-linecap="round"/>` : ''}
-            <path d="M ${cx - 9} ${cy + 18} Q ${cx} ${cy + 10} ${cx + 9} ${cy + 18}" stroke="#231F20" stroke-width="4.5" stroke-linecap="round"/>
-            <ellipse cx="${cx - 22}" cy="${cy + 11}" rx="6.5" ry="4.5" fill="#F87171" opacity="0.7"/><ellipse cx="${cx + 22}" cy="${cy + 11}" rx="6.5" ry="4.5" fill="#F87171" opacity="0.7"/>${extra || ''}`;
-    }
-    function advEnemySVG(kind) {
-        const wrap = (inner) => `<svg viewBox="0 0 120 112" xmlns="http://www.w3.org/2000/svg" fill="none">${inner}</svg>`;
-        const shadow = '<ellipse cx="60" cy="102" rx="32" ry="6" fill="rgba(0,0,0,0.15)"/>';
-        if (kind === 'corn') {
-            let kernels = '';
-            for (let r = 0; r < 6; r++) for (let c = 0; c < 4; c++) kernels += `<circle cx="${44 + c * 11 + (r % 2) * 5}" cy="${24 + r * 12}" r="3.6" fill="#FDE68A"/>`;
-            return wrap(`${shadow}
-                <path d="M 30 96 Q 14 70 22 52 Q 34 70 46 86 Z" fill="#4ADE80" stroke="#231F20" stroke-width="4.5" stroke-linejoin="round"/>
-                <path d="M 90 96 Q 106 70 98 52 Q 86 70 74 86 Z" fill="#4ADE80" stroke="#231F20" stroke-width="4.5" stroke-linejoin="round"/>
-                <ellipse cx="60" cy="54" rx="31" ry="46" fill="#FBBF24" stroke="#231F20" stroke-width="5.5"/>
-                ${kernels}
-                <circle cx="76" cy="28" r="4.5" fill="#92400E" opacity="0.75"/><circle cx="48" cy="86" r="4" fill="#92400E" opacity="0.7"/><circle cx="80" cy="78" r="3.5" fill="#92400E" opacity="0.7"/>
-                ${advFace(60, 54, true)}`);
-        }
-        if (kind === 'oyster') {
-            return wrap(`<ellipse cx="60" cy="100" rx="44" ry="6" fill="rgba(0,0,0,0.15)"/>
-                <ellipse cx="60" cy="64" rx="50" ry="34" fill="#F59E0B" stroke="#231F20" stroke-width="5.5"/>
-                <ellipse cx="60" cy="58" rx="42" ry="27" fill="#FDE68A"/>
-                <path d="M 24 50 Q 40 40 50 52 T 76 48 T 98 56" stroke="#DC2626" stroke-width="7" stroke-linecap="round" fill="none"/>
-                <ellipse cx="30" cy="66" rx="7" ry="4.5" fill="#CBD5E1" stroke="#64748B" stroke-width="2"/><ellipse cx="92" cy="70" rx="7" ry="4.5" fill="#CBD5E1" stroke="#64748B" stroke-width="2"/>
-                <path d="M 20 56 l 6 -3 M 80 40 l 6 3 M 100 62 l 5 -4 M 44 84 l 6 2" stroke="#16A34A" stroke-width="3.5" stroke-linecap="round"/>
-                ${advFace(60, 62, true)}`);
-        }
-        if (kind === 'tofu') {
-            return wrap(`${shadow}
-                <path d="M 38 18 Q 30 8 38 2 M 60 16 Q 52 6 60 -2 M 82 18 Q 74 8 82 2" stroke="#84CC16" stroke-width="4.5" stroke-linecap="round" fill="none" transform="translate(0 6)"/>
-                <rect x="20" y="22" width="80" height="76" rx="16" fill="#B45309" stroke="#231F20" stroke-width="5.5"/>
-                <rect x="28" y="30" width="64" height="60" rx="11" fill="#D97706" opacity="0.55"/>
-                <circle cx="30" cy="40" r="3" fill="#78350F"/><circle cx="92" cy="86" r="3" fill="#78350F"/><circle cx="88" cy="38" r="2.5" fill="#78350F"/>
-                <path d="M 22 92 Q 40 80 62 92 T 100 90" stroke="#84CC16" stroke-width="5" stroke-linecap="round" fill="none"/>
-                ${advFace(60, 56, true)}`);
-        }
-        if (kind === 'boba') {
-            return wrap(`${shadow}
-                <path d="M 66 10 L 78 -4" stroke="#F472B6" stroke-width="7" stroke-linecap="round"/><path d="M 62 24 L 66 8" stroke="#F472B6" stroke-width="7" stroke-linecap="round"/>
-                <path d="M 24 32 Q 60 12 96 32 L 90 98 Q 60 106 30 98 Z" fill="#E7C9A2" stroke="#231F20" stroke-width="5.5" stroke-linejoin="round"/>
-                <path d="M 22 32 Q 60 10 98 32" stroke="#231F20" stroke-width="5.5" fill="#F5F5F4" stroke-linejoin="round"/>
-                <path d="M 28 62 L 92 62" stroke="#C99A6B" stroke-width="3" opacity="0.7"/>
-                ${[[38, 90], [52, 93], [66, 93], [80, 90], [45, 80], [60, 82], [74, 80]].map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="#3F2A1D"/>`).join('')}
-                ${advFace(60, 54, true)}`);
-        }
-        if (kind === 'claw') {
-            return wrap(`${shadow}
-                <rect x="22" y="6" width="76" height="94" rx="10" fill="#F472B6" stroke="#231F20" stroke-width="5"/>
-                <rect x="30" y="14" width="60" height="42" rx="6" fill="#BAE6FD" stroke="#231F20" stroke-width="3"/>
-                <path d="M 60 14 V 26 M 52 34 Q 52 26 60 26 Q 68 26 68 34" stroke="#475569" stroke-width="3" fill="none" stroke-linecap="round"/>
-                <circle cx="42" cy="48" r="7" fill="#FCD34D"/><circle cx="77" cy="48" r="7" fill="#A7F3D0"/><circle cx="59" cy="50" r="6" fill="#FCA5A5"/>
-                ${advFace(60, 72, true)}`);
-        }
-        if (kind === 'darts') {
-            // 夜市射飛鏢：一顆生氣的大氣球（身體）＋後面幾顆小氣球＋插在氣球上的飛鏢
-            const bal = (x, y, r, c, hi) => `<path d="M ${x} ${y + r + 1} q -3 6 1 12 q 3 6 -1 12" stroke="#94A3B8" stroke-width="1.6" fill="none"/>
-                <ellipse cx="${x}" cy="${y}" rx="${r * 0.86}" ry="${r}" fill="${c}" stroke="#231F20" stroke-width="3"/>
-                <path d="M ${x - 3} ${y + r - 1} L ${x + 3} ${y + r - 1} L ${x} ${y + r + 4} Z" fill="${c}" stroke="#231F20" stroke-width="2" stroke-linejoin="round"/>
-                <ellipse cx="${x - r * 0.35}" cy="${y - r * 0.45}" rx="${r * 0.18}" ry="${r * 0.3}" fill="${hi}" opacity="0.8" transform="rotate(-25 ${x - r * 0.35} ${y - r * 0.45})"/>`;
-            const dart = (x1, y1, x2, y2, c) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#334155" stroke-width="3.2" stroke-linecap="round"/>
-                <line x1="${x1}" y1="${y1}" x2="${x1 + (x1 - x2) * 0.18}" y2="${y1 + (y1 - y2) * 0.18}" stroke="#CBD5E1" stroke-width="2.4" stroke-linecap="round"/>
-                <path d="M ${x2} ${y2} l 6 -9 l 3 7 Z M ${x2} ${y2} l 9 -4 l -2 8 Z" fill="${c}" stroke="#231F20" stroke-width="1.4" stroke-linejoin="round"/>`;
-            return wrap(`<ellipse cx="60" cy="108" rx="26" ry="4" fill="rgba(0,0,0,0.15)"/>
-                ${bal(20, 26, 13, '#FACC15', '#FEF9C3')}${bal(101, 30, 12, '#3B82F6', '#DBEAFE')}${bal(16, 70, 11, '#22C55E', '#DCFCE7')}${bal(104, 72, 11, '#A855F7', '#F3E8FF')}
-                <path d="M 60 92 q -5 6 0 12 q 4 5 -1 8" stroke="#94A3B8" stroke-width="2" fill="none"/>
-                <ellipse cx="60" cy="52" rx="34" ry="39" fill="#EF4444" stroke="#231F20" stroke-width="5"/>
-                <path d="M 55 90 L 65 90 L 60 97 Z" fill="#EF4444" stroke="#231F20" stroke-width="3" stroke-linejoin="round"/>
-                <ellipse cx="44" cy="28" rx="6" ry="10" fill="#FECACA" opacity="0.85" transform="rotate(-28 44 28)"/>
-                ${advFace(60, 54, true)}
-                ${dart(86, 26, 108, 6, '#10B981')}
-                ${dart(23, 64, 4, 50, '#F59E0B')}
-                <path d="M 26 58 l -4 -5 M 30 56 l 1 -6 M 21 62 l -6 0" stroke="#FDE047" stroke-width="2" stroke-linecap="round"/>`);
-        }
-        if (kind === 'mahjong') {
-            return wrap(`${shadow}
-                <rect x="28" y="10" width="72" height="90" rx="12" fill="#16A34A" stroke="#231F20" stroke-width="5"/>
-                <rect x="22" y="6" width="72" height="88" rx="12" fill="#FFFBEB" stroke="#231F20" stroke-width="5"/>
-                <text x="58" y="42" text-anchor="middle" font-size="28" font-weight="900" fill="#DC2626">中</text>
-                ${advFace(58, 60, true)}`);
-        }
-        if (kind === 'ring') {
-            return wrap(`<ellipse cx="60" cy="102" rx="34" ry="6" fill="rgba(0,0,0,0.15)"/>
-                <circle cx="60" cy="54" r="40" fill="none" stroke="#231F20" stroke-width="27"/>
-                <circle cx="60" cy="54" r="40" fill="none" stroke="#F97316" stroke-width="18"/>
-                <path d="M 30 30 A 40 40 0 0 1 58 14" stroke="#FED7AA" stroke-width="5" fill="none" stroke-linecap="round"/>
-                ${advFace(60, 50, true)}`);
-        }
-        if (kind === 'pinball') {
-            return wrap(`${shadow}
-                <path d="M 24 100 L 32 8 L 88 8 L 96 100 Z" fill="#7C3AED" stroke="#231F20" stroke-width="5" stroke-linejoin="round"/>
-                <rect x="38" y="15" width="44" height="34" rx="6" fill="#1E1B4B" stroke="#231F20" stroke-width="3"/>
-                ${[[46, 23], [60, 23], [74, 23], [53, 32], [67, 32], [46, 41], [60, 41], [74, 41]].map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="2" fill="#FCD34D"/>`).join('')}
-                <circle cx="56" cy="36" r="3.6" fill="#E2E8F0" stroke="#64748B" stroke-width="1"/>
-                ${advFace(60, 68, true)}`);
-        }
-        if (kind === 'egg') {
-            return wrap(`${shadow}
-                <ellipse cx="60" cy="56" rx="35" ry="45" fill="#9A5B2E" stroke="#231F20" stroke-width="5"/>
-                <path d="M 30 38 l 8 6 l 7 -6 l 7 7 l 8 -7 l 7 6 l 8 -5 l 6 4 M 27 72 l 9 -5 l 7 6 l 8 -6 l 9 6 l 8 -5 l 8 5 l 6 -3 M 40 20 l 6 5 l 8 -4 l 7 5 l 9 -3" stroke="#4A2710" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                <ellipse cx="44" cy="28" rx="6" ry="11" fill="#C98E5C" opacity="0.55" transform="rotate(-18 44 28)"/>
-                <path d="M 92 16 c -3 -5 -10 -3 -9 3 c 1 4 9 9 9 9 c 0 0 8 -5 9 -9 c 1 -6 -6 -8 -9 -3 z" fill="#F43F5E" stroke="#231F20" stroke-width="2"/>
-                ${advFace(60, 54, true)}`);
-        }
-        if (kind === 'bun') {
-            return wrap(`${shadow}
-                <path d="M 14 54 Q 14 26 60 24 Q 106 26 106 54 Z" fill="#E39A45" stroke="#231F20" stroke-width="5" stroke-linejoin="round"/>
-                <rect x="3" y="42" width="114" height="24" rx="12" fill="#C2410C" stroke="#231F20" stroke-width="5"/>
-                <path d="M 16 54 l 8 -6 l 8 6 l 8 -6 l 8 6 l 8 -6 l 8 6 l 8 -6 l 8 6 l 8 -6 l 8 6 l 8 -6" stroke="#FACC15" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M 10 58 Q 10 94 60 94 Q 110 94 110 58 Z" fill="#F2B865" stroke="#231F20" stroke-width="5" stroke-linejoin="round"/>
-                <path d="M 30 32 Q 40 28 50 30" stroke="#F8D2A0" stroke-width="3.5" stroke-linecap="round"/>
-                ${advFace(60, 68, true)}`);
-        }
-        if (kind === 'hotdog') {
-            return wrap(`<ellipse cx="60" cy="104" rx="22" ry="5" fill="rgba(0,0,0,0.15)"/>
-                <rect x="56" y="80" width="8" height="26" rx="3" fill="#E7C58C" stroke="#231F20" stroke-width="3"/>
-                <rect x="32" y="4" width="56" height="86" rx="28" fill="#C2410C" stroke="#231F20" stroke-width="5"/>
-                <path d="M 40 28 l 40 -8 M 40 72 l 40 -8" stroke="#7C2D12" stroke-width="3.5" stroke-linecap="round"/>
-                <path d="M 44 14 Q 50 9 57 12" stroke="#FDBA74" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
-                ${advFace(60, 44, true)}`);
-        }
-        if (kind === 'onigiri') {
-            return wrap(`${shadow}
-                <path d="M 60 1 L 117 99 H 3 Z" fill="rgba(186,230,253,0.28)" stroke="#7DD3FC" stroke-width="2.4" stroke-dasharray="7 4" stroke-linejoin="round"/>
-                <path d="M 60 8 Q 66 8 70 14 L 106 82 Q 110 95 97 95 H 23 Q 10 95 14 82 L 50 14 Q 54 8 60 8 Z" fill="#FFFFFF" stroke="#231F20" stroke-width="5" stroke-linejoin="round"/>
-                <rect x="40" y="70" width="40" height="25" fill="#1F2937"/>
-                <rect x="56" y="0" width="8" height="20" rx="2" fill="#EF4444" stroke="#7F1D1D" stroke-width="1.5"/>
-                <circle cx="40" cy="62" r="1.6" fill="#CBD5E1"/><circle cx="82" cy="58" r="1.6" fill="#CBD5E1"/><circle cx="62" cy="28" r="1.6" fill="#CBD5E1"/>
-                ${advFace(60, 46, true)}`);
-        }
-        if (kind === 'tea') {
-            return wrap(`<ellipse cx="60" cy="106" rx="30" ry="5" fill="rgba(0,0,0,0.15)"/>
-                <rect x="47" y="1" width="26" height="13" rx="3" fill="#16A34A" stroke="#231F20" stroke-width="4"/>
-                <path d="M 50 14 H 70 L 72 22 Q 88 28 88 44 V 96 Q 88 104 80 104 H 40 Q 32 104 32 96 V 44 Q 32 28 48 22 Z" fill="#E7F7C1" stroke="#231F20" stroke-width="5" stroke-linejoin="round"/>
-                <rect x="34.5" y="62" width="51" height="24" fill="#15803D"/>
-                <text x="60" y="79" text-anchor="middle" font-size="14" font-weight="900" fill="#FFFFFF" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">無糖</text>
-                <path d="M 40 34 Q 42 28 48 26" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" opacity="0.9"/>
-                ${advFace(60, 38, true)}`);
-        }
-        if (kind === 'ibon') {
-            return wrap(`${shadow}
-                <rect x="24" y="3" width="72" height="98" rx="9" fill="#F8FAFC" stroke="#231F20" stroke-width="5"/>
-                <path d="M 26.5 12 Q 26.5 5.5 33 5.5 H 87 Q 93.5 5.5 93.5 12 V 18 H 26.5 Z" fill="#F97316"/>
-                <rect x="32" y="24" width="56" height="38" rx="4" fill="#1E3A8A" stroke="#231F20" stroke-width="3"/>
-                <circle cx="48" cy="44" r="4.5" fill="#FFFFFF"/><circle cx="72" cy="44" r="4.5" fill="#FFFFFF"/>
-                <path d="M 38 33 L 54 39 M 82 33 L 66 39" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"/>
-                <path d="M 52 57 Q 60 51 68 57" stroke="#FFFFFF" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-                <rect x="38" y="70" width="44" height="7" rx="2.5" fill="#334155"/>
-                <path d="M 43 75 H 77 V 97 L 73 94 L 69 97 L 65 94 L 61 97 L 57 94 L 53 97 L 49 94 L 45 97 L 43 95 Z" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
-                <path d="M 48 81 H 72 M 48 86 H 66" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/>
-                <circle cx="88" cy="74" r="3" fill="#22C55E"/>`);
-        }
-        if (kind === 'salad') {
-            return wrap(`<ellipse cx="60" cy="104" rx="42" ry="6" fill="rgba(0,0,0,0.15)"/>
-                <path d="M 14 50 H 106 L 98 98 Q 97 102 92 102 H 28 Q 23 102 22 98 Z" fill="#F1F5F9" stroke="#231F20" stroke-width="5" stroke-linejoin="round"/>
-                <path d="M 20 52 Q 26 30 40 38 Q 44 22 58 32 Q 66 18 78 32 Q 92 24 96 40 Q 108 40 102 52 Z" fill="#4ADE80" stroke="#166534" stroke-width="3" stroke-linejoin="round"/>
-                <circle cx="38" cy="44" r="7" fill="#EF4444" stroke="#7F1D1D" stroke-width="2"/><circle cx="84" cy="42" r="6" fill="#FB923C" stroke="#9A3412" stroke-width="2"/>
-                <path d="M 54 40 l 10 -6 M 60 44 l 9 -5" stroke="#FDE047" stroke-width="3.5" stroke-linecap="round"/>
-                <path d="M 8 50 Q 60 34 112 50" stroke="#94A3B8" stroke-width="3" fill="none" stroke-dasharray="4 4" opacity="0.8"/>
-                <path d="M 30 92 H 46" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
-                ${advFace(60, 74, true)}`);
-        }
-        if (kind === 'microwave') {
-            return wrap(`${shadow}
-                <rect x="6" y="20" width="108" height="76" rx="9" fill="#E2E8F0" stroke="#231F20" stroke-width="5"/>
-                <rect x="14" y="28" width="68" height="60" rx="5" fill="#1E293B" stroke="#231F20" stroke-width="3"/>
-                <ellipse cx="48" cy="72" rx="22" ry="5" fill="#FDE68A" opacity="0.35"/>
-                <rect x="88" y="30" width="18" height="12" rx="2" fill="#0F172A"/><text x="97" y="40" font-size="9" font-weight="900" text-anchor="middle" fill="#22C55E" font-family="monospace">0:30</text>
-                <circle cx="97" cy="56" r="5" fill="#94A3B8" stroke="#231F20" stroke-width="2"/><circle cx="97" cy="74" r="5" fill="#94A3B8" stroke="#231F20" stroke-width="2"/>
-                <circle cx="38" cy="54" r="4.5" fill="#FDE68A"/><circle cx="58" cy="54" r="4.5" fill="#FDE68A"/>
-                <path d="M 30 44 L 42 49 M 66 44 L 54 49" stroke="#FDE68A" stroke-width="3.5" stroke-linecap="round"/>
-                <path d="M 40 68 Q 48 62 56 68" stroke="#FDE68A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-                <path d="M 20 10 q -4 -5 0 -9 M 60 12 q -4 -5 0 -9 M 100 10 q -4 -5 0 -9" stroke="#F97316" stroke-width="2.5" fill="none" stroke-linecap="round"/>`);
-        }
-        if (kind === 'coffee') {
-            return wrap(`${shadow}
-                <path d="M 44 14 q -5 -6 0 -12 M 60 12 q -5 -6 0 -12 M 76 14 q -5 -6 0 -12" stroke="#CBD5E1" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-                <path d="M 26 28 H 94 L 86 96 Q 85 100 80 100 H 40 Q 35 100 34 96 Z" fill="#FFFFFF" stroke="#231F20" stroke-width="5" stroke-linejoin="round"/>
-                <rect x="22" y="20" width="76" height="12" rx="5" fill="#57534E" stroke="#231F20" stroke-width="4.5"/>
-                <path d="M 30 50 H 90 L 87 74 H 33 Z" fill="#92400E"/>
-                <text x="60" y="67" font-size="12" font-weight="900" text-anchor="middle" fill="#FEF3C7" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">美式</text>
-                <circle cx="48" cy="84" r="4" fill="#231F20"/><circle cx="72" cy="84" r="4" fill="#231F20"/>
-                <path d="M 42 76 L 52 79 M 78 76 L 68 79" stroke="#231F20" stroke-width="3.5" stroke-linecap="round"/>
-                <path d="M 53 93 Q 60 89 67 93" stroke="#231F20" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-                <ellipse cx="38" cy="90" rx="5" ry="3" fill="#F87171" opacity="0.7"/><ellipse cx="82" cy="90" rx="5" ry="3" fill="#F87171" opacity="0.7"/>`);
-        }
-        if (kind === 'clerk') {
-            return wrap(`${shadow}
-                <path d="M 30 100 Q 30 66 60 66 Q 90 66 90 100 Z" fill="#16A34A" stroke="#231F20" stroke-width="5" stroke-linejoin="round"/>
-                <path d="M 46 68 L 60 84 L 74 68" fill="#FFFFFF" stroke="#231F20" stroke-width="4" stroke-linejoin="round"/>
-                <rect x="44" y="84" width="32" height="12" rx="3" fill="#F97316" stroke="#231F20" stroke-width="3"/>
-                <text x="60" y="93.5" font-size="8" font-weight="900" text-anchor="middle" fill="#FFFFFF" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">店員</text>
-                <circle cx="60" cy="40" r="26" fill="#FCD9B6" stroke="#231F20" stroke-width="5"/>
-                <path d="M 34 34 Q 36 12 60 12 Q 84 12 86 34 Q 72 26 60 28 Q 48 26 34 34 Z" fill="#3F2A1D" stroke="#231F20" stroke-width="4" stroke-linejoin="round"/>
-                <path d="M 32 32 Q 60 18 88 32 L 88 36 Q 60 24 32 36 Z" fill="#16A34A" stroke="#231F20" stroke-width="3.5" stroke-linejoin="round"/>
-                <circle cx="50" cy="42" r="4" fill="#231F20"/><circle cx="70" cy="42" r="4" fill="#231F20"/>
-                <path d="M 50 52 Q 60 59 70 52" stroke="#231F20" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-                <ellipse cx="42" cy="50" rx="5" ry="3" fill="#F87171" opacity="0.7"/><ellipse cx="78" cy="50" rx="5" ry="3" fill="#F87171" opacity="0.7"/>`);
-        }
-        if (kind === 'bento' || kind === 'bento2') {
-            let old = kind === 'bento2';
-            return wrap(`${shadow}
-                <rect x="8" y="30" width="104" height="68" rx="8" fill="${old ? '#A16207' : '#1F2937'}" stroke="#231F20" stroke-width="5"/>
-                <rect x="15" y="37" width="44" height="54" rx="4" fill="${old ? '#E7E5E4' : '#FFFFFF'}"/>
-                <rect x="63" y="37" width="42" height="25" rx="4" fill="${old ? '#92400E' : '#B45309'}"/><rect x="63" y="66" width="42" height="25" rx="4" fill="${old ? '#65A30D' : '#22C55E'}"/>
-                <circle cx="72" cy="78" r="4" fill="#FDE047"/><circle cx="88" cy="47" r="4" fill="#EF4444"/>
-                <path d="M 4 28 Q 60 ${old ? 18 : 22} 116 28" stroke="#CBD5E1" stroke-width="3" fill="none" opacity="0.9"/>
-                ${old ? `<g transform="rotate(-12 92 22)"><circle cx="92" cy="22" r="17" fill="#EF4444" stroke="#7F1D1D" stroke-width="2.5"/><text x="92" y="20" font-size="9" font-weight="900" text-anchor="middle" fill="#FFFFFF" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">愛珍食</text><text x="92" y="30" font-size="8" font-weight="900" text-anchor="middle" fill="#FEF08A" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">35折</text></g>` : ''}
-                <circle cx="30" cy="60" r="4.5" fill="#231F20"/><circle cx="46" cy="60" r="4.5" fill="#231F20"/>
-                ${old ? '<path d="M 24 52 L 34 55 M 52 52 L 42 55" stroke="#231F20" stroke-width="3.5" stroke-linecap="round"/><path d="M 30 77 Q 38 70 46 77" stroke="#231F20" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M 52 64 q 3 5 0 9" stroke="#38BDF8" stroke-width="3" fill="none" stroke-linecap="round"/>' : '<path d="M 30 72 Q 38 79 46 72" stroke="#231F20" stroke-width="3.5" fill="none" stroke-linecap="round"/><ellipse cx="24" cy="70" rx="5" ry="3.5" fill="#F87171" opacity="0.7"/><ellipse cx="52" cy="70" rx="5" ry="3.5" fill="#F87171" opacity="0.7"/>'}`);
-        }
-        // 貢丸（預設）
-        return wrap(`${shadow}
-            <circle cx="60" cy="56" r="42" fill="#E9C7A0" stroke="#231F20" stroke-width="5.5"/>
-            <circle cx="36" cy="76" r="3" fill="#C99A6B"/><circle cx="82" cy="80" r="3" fill="#C99A6B"/><circle cx="66" cy="90" r="2.5" fill="#C99A6B"/><circle cx="90" cy="58" r="2.5" fill="#C99A6B"/>
-            <ellipse cx="42" cy="32" rx="9" ry="5" fill="#FFFFFF" opacity="0.5" transform="rotate(-25 42 32)"/>
-            <ellipse cx="38" cy="66" rx="6.5" ry="4.5" fill="#F87171" opacity="0.7"/><ellipse cx="82" cy="66" rx="6.5" ry="4.5" fill="#F87171" opacity="0.7"/>
-            <circle cx="46" cy="54" r="4.5" fill="#231F20"/><circle cx="74" cy="54" r="4.5" fill="#231F20"/>
-            <path d="M 36 43 L 53 49 M 84 43 L 67 49" stroke="#231F20" stroke-width="4.5" stroke-linecap="round"/>
-            <path d="M 51 72 Q 60 64 69 72" stroke="#231F20" stroke-width="4.5" stroke-linecap="round"/>`);
-    }
-
-    // ── 地圖（第 1 頁）：夜市(1~4) → 過橋(5) → 城市(6~7) → 速食店(8~10) ──
-    const ADV_MAP_W = 340, ADV_MAP_H = 700;
-    const ADV_MAP_PTS = [[90, 640], [236, 588], [108, 520], [238, 452], [170, 372], [98, 300], [238, 240], [106, 176], [236, 122], [150, 58]];
-    function advSpline(pts) {
-        let d = `M ${pts[0][0]} ${pts[0][1]}`;
-        for (let i = 0; i < pts.length - 1; i++) {
-            let p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
-            let c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
-            let c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
-            d += ` C ${c1[0].toFixed(1)} ${c1[1].toFixed(1)}, ${c2[0].toFixed(1)} ${c2[1].toFixed(1)}, ${p2[0]} ${p2[1]}`;
-        }
-        return d;
-    }
-    function advStall(x, y, w, label, emoji) {
-        let stripes = '';
-        let n = 6, sw = w / n;
-        for (let i = 0; i < n; i++) stripes += `<rect x="${(x + i * sw).toFixed(1)}" y="${y}" width="${sw.toFixed(1)}" height="14" fill="${i % 2 ? '#FFF7ED' : '#F97316'}"/>`;
-        return `<g>
-            <rect x="${x + 3}" y="${y + 14}" width="${w - 6}" height="30" fill="#4C1D95" stroke="#2E1065" stroke-width="2"/>
-            ${stripes}<rect x="${x}" y="${y}" width="${w}" height="14" fill="none" stroke="#2E1065" stroke-width="2" rx="3"/>
-            <text x="${x + w / 2}" y="${y + 37}" font-size="17" text-anchor="middle">${emoji}</text>
-            <rect x="${x + 6}" y="${y - 16}" width="${w - 12}" height="14" rx="4" fill="#FDE047"/>
-            <text x="${x + w / 2}" y="${y - 5.5}" font-size="10.5" font-weight="800" text-anchor="middle" fill="#7C2D12">${label}</text>
-        </g>`;
-    }
-    function advStringLights(y, sag) {
-        let d = `M 0 ${y} Q 170 ${y + sag} 340 ${y}`;
-        let bulbs = '';
-        for (let i = 0; i <= 16; i++) {
-            let t = i / 16, x = 340 * t, yy = (1 - t) * (1 - t) * y + 2 * (1 - t) * t * (y + sag) + t * t * y;
-            bulbs += `<circle cx="${x.toFixed(1)}" cy="${(yy + 4).toFixed(1)}" r="3.4" fill="${i % 2 ? '#FDE047' : '#FB923C'}"/>`;
-        }
-        return `<path d="${d}" fill="none" stroke="#1E1B4B" stroke-width="1.6"/>${bulbs}`;
-    }
-    function advLantern(x, y) {
-        return `<g><line x1="${x}" y1="${y - 10}" x2="${x}" y2="${y}" stroke="#1E1B4B" stroke-width="1.5"/><ellipse cx="${x}" cy="${y + 9}" rx="7.5" ry="9.5" fill="#EF4444" stroke="#7F1D1D" stroke-width="1.5"/><rect x="${x - 4}" y="${y - 1}" width="8" height="3" fill="#FDE047"/><rect x="${x - 4}" y="${y + 17}" width="8" height="3" fill="#FDE047"/><line x1="${x}" y1="${y + 20}" x2="${x}" y2="${y + 26}" stroke="#FDE047" stroke-width="1.5"/></g>`;
-    }
-    function advBuildings(baseY, rows) {
-        let out = '', seed = 7;
-        const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-        rows.forEach(r => {
-            let x = r.x0 - 10;
-            while (x < 340) {
-                let w = 20 + rnd() * 16, h = r.h0 + rnd() * r.hv;
-                out += `<rect x="${x.toFixed(1)}" y="${(baseY - h).toFixed(1)}" width="${w.toFixed(1)}" height="${(h + 8).toFixed(1)}" fill="${r.fill}"/>`;
-                for (let wy = baseY - h + 6; wy < baseY - 4; wy += 9) for (let wx = x + 4; wx < x + w - 5; wx += 8) if (rnd() > 0.35) out += `<rect x="${wx.toFixed(1)}" y="${wy.toFixed(1)}" width="3.6" height="4.6" fill="${r.win}" opacity="${(0.6 + rnd() * 0.4).toFixed(2)}"/>`;
-                x += w + 2;
-            }
-        });
-        return out;
-    }
-    // 地圖會依手機畫面的可用高度調整（K = 縱向縮放比例）；圖上的攤位、櫃子只移動位置、稍微縮小，不會被壓扁
-    let advMapK = 1;
-    function advMapH() { return Math.round(ADV_MAP_H * advMapK); }
-    function advMapObj(cx, y0, inner, bottom) {
-        // 以 (cx, y0) 為錨點：位置跟著地圖縮放，大小只縮到 K（最多不放大）
-        let s = Math.min(1, advMapK), ny = bottom ? y0 + (advMapH() - ADV_MAP_H) : y0 * advMapK;
-        return `<g transform="translate(${cx} ${ny.toFixed(1)}) scale(${s.toFixed(3)}) translate(${-cx} ${-y0})">${inner}</g>`;
-    }
-    function advMapPath() { return advSpline([[60, ADV_MAP_H], ...ADV_MAP_PTS].map(p => [p[0], +(p[1] * advMapK).toFixed(1)])); }
-    function advMapRoad(path, c) {
-        return `<path d="${path}" fill="none" stroke="${c[0]}" stroke-width="38" stroke-linecap="round" stroke-linejoin="round" transform="translate(0,3)"/>
-        <path d="${path}" fill="none" stroke="${c[1]}" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="${path}" fill="none" stroke="${c[2]}" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="${path}" fill="none" stroke="${c[3]}" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 10"/>`;
-    }
-    function advMapSVG() {
-        const K = advMapK, H = advMapH();
-        let seed = 11, stars = '';
-        const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-        for (let i = 0; i < 40; i++) stars += `<circle cx="${(rnd() * 340).toFixed(1)}" cy="${(rnd() * H).toFixed(1)}" r="${(0.8 + rnd() * 1.2).toFixed(1)}" fill="#E0E7FF" opacity="${(0.4 + rnd() * 0.5).toFixed(2)}"/>`;
-        const glow = (x, y, r, c) => `<circle cx="${x}" cy="${(y * K).toFixed(1)}" r="${r}" fill="${c}" opacity="0.18"/>`;
-        const lan = (x, y) => advMapObj(x, y, advLantern(x, y));
-        const stall = (x, y, w, label, emoji) => advMapObj(x + w / 2, y, advStall(x, y, w, label, emoji));
-        return `<svg class="adv-map-svg" viewBox="0 0 ${ADV_MAP_W} ${H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-            <linearGradient id="mgNight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#140F36"/><stop offset="0.5" stop-color="#2E1F5E"/><stop offset="1" stop-color="#1E1B4B"/></linearGradient>
-        </defs>
-        <rect width="340" height="${H}" fill="url(#mgNight)"/>
-        ${stars}
-        ${glow(36, 130, 60, '#FDE047')}${glow(304, 200, 60, '#FB923C')}${glow(36, 400, 60, '#F472B6')}${glow(304, 330, 60, '#FDE047')}${glow(36, 640, 60, '#FB923C')}${glow(304, 560, 60, '#F472B6')}
-        ${advStringLights(150 * K, 16 * K)}${advStringLights(282 * K, 18 * K)}${advStringLights(432 * K, 18 * K)}${advStringLights(566 * K, 16 * K)}
-        ${lan(24, 560)}${lan(24, 430)}${lan(24, 220)}${lan(316, 380)}${lan(316, 278)}${lan(316, 165)}
-        <!-- 攤位：每一關的攤位放在那一關的旁邊（攤位中心 ≈ 關卡的高度） -->
-        ${stall(8, 620, 56, '貢丸', '🍡')}
-        ${stall(276, 574, 56, '烤玉米', '🌽')}
-        ${stall(276, 506, 56, '麵線', '🍜')}
-        ${stall(8, 506, 56, '蚵仔煎', '🍳')}
-        ${stall(276, 438, 56, '臭豆腐', '🧆')}
-        ${stall(8, 358, 56, '珍奶', '🧋')}
-        ${stall(276, 330, 56, '雞排', '🍗')}
-        ${stall(8, 286, 56, '娃娃機', '🧸')}
-        ${stall(276, 226, 56, '射飛鏢', '🎯')}
-        ${stall(8, 162, 56, '麻將', '🀄')}
-        ${stall(276, 108, 56, '套圈圈', '⭕')}
-        ${stall(8, 44, 56, '彈珠台', '🎱')}
-        ${stall(276, 40, 56, '滷味', '🍢')}
-        ${advMapRoad(advMapPath(), ['rgba(15,23,42,0.35)', '#F3D49B', '#FFF1D0', '#E7B96E'])}
-        </svg>`;
-    }
-    // 第二章：便利商店（由外到內：最下面是店門口，越往上越裡面）
-    function advStoreMapSVG() {
-        const K = advMapK, H = advMapH(), dyB = H - ADV_MAP_H;      // dyB：貼齊下緣的東西要移動的量
-        const FONT = `font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif"`;
-        const tag = (x, y, w, t) => `<g><rect x="${x}" y="${y}" width="${w}" height="15" rx="4" fill="#FDE047" stroke="#A16207" stroke-width="1"/><text x="${x + w / 2}" y="${y + 11}" font-size="10.5" font-weight="800" text-anchor="middle" fill="#7C2D12" ${FONT}>${t}</text></g>`;
-        const O = advMapObj;
-        let s = '';
-        // 店內地板（白色地磚）
-        let floorH = 652 + dyB;
-        s += `<rect width="340" height="${floorH}" fill="#EEF2F7"/>`;
-        for (let x = 0; x <= 340; x += 34) s += `<line x1="${x}" y1="0" x2="${x}" y2="${floorH}" stroke="#DCE3EC" stroke-width="1"/>`;
-        for (let y = 0; y <= floorH; y += 34) s += `<line x1="0" y1="${y}" x2="340" y2="${y}" stroke="#DCE3EC" stroke-width="1"/>`;
-        [[90, 470], [250, 330], [100, 200], [250, 80], [170, 560]].forEach(p => { s += `<ellipse cx="${p[0]}" cy="${(p[1] * K).toFixed(1)}" rx="70" ry="${(40 * K).toFixed(1)}" fill="#FFFFFF" opacity="0.55"/>`; });
-        // ── 店門口（第 11 關）：人行道 + 招牌 + 自動門（貼齊下緣，不縮放）──
-        let front = `<rect x="0" y="664" width="340" height="36" fill="#475569"/>`;
-        for (let x = 0; x <= 340; x += 20) front += `<line x1="${x}" y1="664" x2="${x}" y2="700" stroke="#3B4757" stroke-width="1"/>`;
-        front += `<line x1="0" y1="682" x2="340" y2="682" stroke="#3B4757" stroke-width="1"/>`;
-        front += `<rect x="0" y="648" width="340" height="16" fill="#1E3A8A"/><rect x="0" y="648" width="340" height="3" fill="#F97316"/><rect x="0" y="661" width="340" height="3" fill="#22C55E"/>`;
-        front += `<text x="262" y="660" font-size="10" font-weight="900" text-anchor="middle" fill="#FFFFFF" ${FONT}>便利商店　24H</text>`;
-        front += `<rect x="40" y="646" width="78" height="20" fill="#CBD5E1"/><rect x="40" y="646" width="10" height="20" fill="#BAE6FD" stroke="#64748B" stroke-width="1"/><rect x="108" y="646" width="10" height="20" fill="#BAE6FD" stroke="#64748B" stroke-width="1"/>`;
-        s += `<g transform="translate(0 ${dyB})">${front}</g>`;
-        // ── 第 12 關：熱食櫃（大亨堡）──
-        s += O(302, 538, `<g><rect x="268" y="556" width="68" height="58" rx="5" fill="#E2E8F0" stroke="#64748B" stroke-width="2"/>
-            <rect x="273" y="562" width="58" height="36" rx="3" fill="#FDE68A" opacity="0.6"/>
-            ${[0, 1, 2, 3, 4].map(i => `<line x1="276" y1="${566 + i * 7}" x2="328" y2="${566 + i * 7}" stroke="#94A3B8" stroke-width="2"/>`).join('')}
-            ${[0, 1, 2].map(i => `<rect x="${280 + i * 16}" y="${567 + i * 7}" width="13" height="5" rx="2.5" fill="#C2410C"/>`).join('')}
-            <rect x="268" y="600" width="68" height="14" fill="#94A3B8"/></g>${tag(276, 538, 52, '大亨堡')}`);
-        // ── 第 13 關：冷藏櫃（御飯糰）──
-        s += O(34, 452, `<g><rect x="4" y="470" width="60" height="88" rx="4" fill="#E0F2FE" stroke="#0369A1" stroke-width="2"/>
-            ${[0, 1, 2].map(r => `<line x1="6" y1="${498 + r * 22}" x2="62" y2="${498 + r * 22}" stroke="#0369A1" stroke-width="2"/>` + [0, 1, 2].map(c => `<path d="M ${16 + c * 18} ${478 + r * 22} l 7 14 h -14 z" fill="#FFFFFF" stroke="#334155" stroke-width="1.2"/><rect x="${11 + c * 18}" y="${488 + r * 22}" width="10" height="4" fill="#1F2937"/>`).join('')).join('')}</g>${tag(8, 452, 52, '御飯糰')}`);
-        // ── 第 14 關：飲料櫃（瓶裝無糖茶）──
-        s += O(307, 382, `<g><rect x="278" y="400" width="58" height="90" rx="4" fill="#DBEAFE" stroke="#1E40AF" stroke-width="2"/>
-            <line x1="307" y1="402" x2="307" y2="488" stroke="#1E40AF" stroke-width="1.5"/>
-            ${[0, 1, 2].map(r => [0, 1, 2, 3].map(c => `<rect x="${283 + c * 13}" y="${408 + r * 27}" width="7" height="20" rx="2.5" fill="${['#86EFAC', '#FCA5A5', '#FDE68A', '#93C5FD'][(r + c) % 4]}" stroke="#334155" stroke-width="0.8"/>`).join('')).join('')}</g>${tag(282, 382, 50, '飲料')}`);
-        // ── 第 15 關：多媒體機（ibon）──
-        s += O(297, 279, `<g><rect x="270" y="298" width="54" height="72" rx="6" fill="#F8FAFC" stroke="#334155" stroke-width="2"/>
-            <rect x="270" y="298" width="54" height="11" rx="5" fill="#F97316"/>
-            <rect x="277" y="314" width="40" height="26" rx="3" fill="#1E3A8A"/>
-            <rect x="282" y="346" width="30" height="5" rx="2" fill="#334155"/><rect x="285" y="350" width="24" height="12" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/></g>${tag(268, 279, 58, 'ibon')}`);
-        // ── 更裡面（第 16～20 關）：冰櫃、零食架、咖啡機、櫃檯 ──
-        // ── 第 16 關：沙拉冷藏櫃 ──
-        s += O(33, 282, `<g><rect x="4" y="300" width="58" height="52" rx="5" fill="#F0FDF4" stroke="#16A34A" stroke-width="2"/>${[0, 1, 2].map(i => `<g><rect x="${9 + i * 17}" y="${312 + (i % 2) * 18}" width="14" height="12" rx="2" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/><circle cx="${16 + i * 17}" cy="${316 + (i % 2) * 18}" r="4" fill="#4ADE80"/></g>`).join('')}</g>${tag(8, 282, 50, '沙拉')}`);
-        // ── 第 18 關：便當冷藏櫃 ──
-        s += O(32, 186, `<g><rect x="4" y="186" width="56" height="84" rx="3" fill="#E0F2FE" stroke="#0369A1" stroke-width="2"/>${[0, 1, 2].map(r => `<line x1="6" y1="${212 + r * 26}" x2="58" y2="${212 + r * 26}" stroke="#0369A1" stroke-width="1.5"/>` + [0, 1].map(c => `<rect x="${9 + c * 25}" y="${194 + r * 26}" width="21" height="14" rx="2" fill="#1F2937"/><rect x="${11 + c * 25}" y="${196 + r * 26}" width="9" height="10" fill="#FFFFFF"/><rect x="${21 + c * 25}" y="${196 + r * 26}" width="7" height="10" fill="#B45309"/>`).join('')).join('')}</g>${tag(10, 168, 44, '便當')}`);
-        // ── 第 17 關：微波爐 ──
-        s += O(308, 160, `<g><rect x="280" y="160" width="56" height="110" rx="3" fill="#FEF3C7" stroke="#B45309" stroke-width="2"/>${[0, 1].map(r => `<line x1="282" y1="${180 + r * 20}" x2="334" y2="${180 + r * 20}" stroke="#B45309" stroke-width="1.5"/>` + [0, 1, 2].map(c => `<rect x="${286 + c * 16}" y="${166 + r * 20}" width="11" height="12" rx="2" fill="${['#A78BFA', '#F472B6', '#FB923C', '#4ADE80'][(r + c) % 4]}"/>`).join('')).join('')}
-            <rect x="280" y="206" width="56" height="64" fill="#CBD5E1" stroke="#475569" stroke-width="2"/><rect x="284" y="214" width="48" height="30" rx="3" fill="#E2E8F0" stroke="#334155" stroke-width="1.5"/><rect x="287" y="218" width="30" height="22" rx="2" fill="#1E293B"/><circle cx="325" cy="223" r="2.4" fill="#334155"/><circle cx="325" cy="233" r="2.4" fill="#334155"/></g>${tag(282, 248, 52, '微波爐')}`);
-        s += O(305, 18, `<g><rect x="280" y="36" width="50" height="56" rx="5" fill="#334155" stroke="#0F172A" stroke-width="2"/><rect x="288" y="44" width="34" height="14" rx="2" fill="#0F172A"/><circle cx="305" cy="70" r="7" fill="#F8FAFC" stroke="#64748B" stroke-width="1.5"/><rect x="301" y="80" width="8" height="8" fill="#B45309"/></g>${tag(282, 18, 46, '咖啡機')}`);
-        s += O(72, 30, `<g><rect x="4" y="30" width="136" height="50" rx="6" fill="#CBD5E1" stroke="#475569" stroke-width="2"/><rect x="18" y="38" width="30" height="22" rx="3" fill="#0F172A"/><rect x="22" y="42" width="22" height="10" fill="#22C55E" opacity="0.7"/><rect x="66" y="40" width="60" height="30" rx="4" fill="#E2E8F0"/></g>${tag(44, 84, 56, '結帳櫃檯')}`);
-        // 茶葉蛋鍋（最後畫，標籤在最上層）：店內、一進門的左手邊（跟著門口一起貼齊下緣）
-        s += O(33, 642, `<g><rect x="6" y="606" width="54" height="36" rx="4" fill="#CBD5E1" stroke="#64748B" stroke-width="1.5"/>
-            <ellipse cx="33" cy="636" rx="22" ry="5" fill="rgba(0,0,0,0.18)"/>
-            <path d="M 12 616 H 54 V 629 Q 54 636 47 636 H 19 Q 12 636 12 629 Z" fill="#7C2D12" stroke="#431407" stroke-width="2"/>
-            <ellipse cx="33" cy="616" rx="21" ry="5.5" fill="#451A03" stroke="#431407" stroke-width="2"/>
-            <ellipse cx="24" cy="615" rx="4.6" ry="3.3" fill="#A16207"/><ellipse cx="34" cy="614" rx="4.6" ry="3.3" fill="#92400E"/><ellipse cx="43" cy="616" rx="4.6" ry="3.3" fill="#A16207"/>
-            <path d="M 24 607 q -3 -4 0 -8 M 34 605 q -3 -4 0 -8 M 43 607 q -3 -4 0 -8" stroke="#94A3B8" stroke-width="1.6" fill="none" opacity="0.9"/></g>${tag(11, 582, 44, '茶葉蛋')}`, true);
-        return `<svg class="adv-map-svg" viewBox="0 0 ${ADV_MAP_W} ${H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        ${s}
-        ${advMapRoad(advMapPath(), ['rgba(15,23,42,0.18)', '#93C5FD', '#DBEAFE', '#60A5FA'])}
-        </svg>`;
-    }
-    let advMapChapter = 1;
-    function advChapterOf(id) { let c = ADV_CHAPTERS.find(ch => id >= ch.from && id <= ch.to); return c ? c.id : 1; }
-    function advHighestUnlocked() { let best = 1; ADV_LEVELS.forEach(l => { if (advUnlocked(l.id)) best = Math.max(best, l.id); }); return best; }
-    function advMapStep(d) {
-        advMapChapter = Math.max(1, Math.min(ADV_CHAPTERS.length, advMapChapter + (parseInt(d) || 0)));
-        advRenderMap();
-    }
-    function advRenderMap() {
-        let ch = ADV_CHAPTERS.find(c => c.id === advMapChapter) || ADV_CHAPTERS[0];
-        let prev = document.getElementById('advMapPrev'), next = document.getElementById('advMapNext');
-        if (prev) prev.disabled = ch.id <= 1;
-        if (next) next.disabled = ch.id >= ADV_CHAPTERS.length;
-        let sub = document.getElementById('advMapSub');
-        if (sub) sub.textContent = `第 ${ch.id} 章：${ch.name}（第 ${ch.from}～${ch.to} 關）`;
-        let nodes = ADV_MAP_PTS.map((p, i) => {
-            let id = ch.from + i, lv = ADV_LEVELS.find(l => l.id === id);
-            let st = (!lv || !advUnlocked(id)) ? 'locked' : (advData.cleared[id] ? 'cleared' : 'open');
-            let pos = `left:${(p[0] / ADV_MAP_W * 100).toFixed(2)}%;top:${(p[1] / ADV_MAP_H * 100).toFixed(2)}%`;
-            return (lv && st !== 'locked')
-                ? `<button type="button" class="adv-node ${st}" style="${pos}" aria-label="第 ${id} 關" data-on-click='[["goToAdvLevel",[${id}]]]'>${id}</button>`
-                : `<button type="button" class="adv-node locked" style="${pos}" disabled aria-label="第 ${id} 關（${lv ? '先通關上一關' : '敬請期待'}）">🔒</button>`;
-        }).join('');
-        let box = document.getElementById('advMap');
-        if (!box) return;
-        advFitMap(box);
-        box.innerHTML = (ch.id === 2 ? advStoreMapSVG() : advMapSVG()) + nodes;
-    }
-    // 地圖高度 = 手機畫面剩下的高度（介於「寬 × 1.15」和原本比例之間），整張地圖不用捲動就看得完
-    function advFitMap(box) {
-        let w = box.offsetWidth;
-        if (!w) { advMapK = 1; box.style.height = ''; return; }
-        let r = box.getBoundingClientRect();
-        let k = r.width / w || 1;                                   // 電腦版整個畫面有放大
-        let avail = (window.innerHeight - r.top - 14) / k;
-        let full = w * ADV_MAP_H / ADV_MAP_W;
-        let h = Math.max(w * 1.15, Math.min(full, avail));
-        box.style.height = Math.round(h) + 'px';
-        advMapK = (h / w) * ADV_MAP_W / ADV_MAP_H;
-    }
-    window.addEventListener('resize', () => { try { if (document.getElementById('adventureView').classList.contains('active')) advRenderMap(); } catch (e) {} });
-
-    // ── 第 2 頁：關卡（攻略條件 + 出題範圍）──
-    let advSelected = [];
-    function advLoadSelected() {
-        try { let s = JSON.parse(localStorage.getItem(ADV_SEL_KEY)); advSelected = Array.isArray(s) ? s.filter(n => Number.isInteger(n)) : [0]; }
-        catch (e) { advSelected = [0]; }
-    }
-    function advGetWords() {
-        let text = '';
-        advSelected.forEach(i => { if (wordLists[i] && wordLists[i].content && isListInCurrentLang(wordLists[i])) text += wordLists[i].content + '\n'; });
-        return parseWordsRaw(text);
-    }
-    function advInitGrid() {
-        let grid = document.getElementById('advGrid');
-        if (!grid) return;
-        advLoadSelected();
-        grid.innerHTML = '';
-        let lists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
-        lists.forEach((list, displayIdx) => {
-            let sel = advSelected.includes(list.originalIdx) ? 'selected' : '';
-            grid.insertAdjacentHTML('beforeend', pickRowHTML(list, getListWordCount(list.content), sel, 'toggleAdvCard'));
-        });
-    }
-    function toggleAdvCard(idx, cardEl) {
-        let i = advSelected.indexOf(idx);
-        if (i >= 0) advSelected.splice(i, 1); else advSelected.push(idx);
-        cardEl.classList.toggle('selected', advSelected.includes(idx));
-        try { localStorage.setItem(ADV_SEL_KEY, JSON.stringify(advSelected)); } catch (e) {}
-        advRenderLevelPage();
-    }
-    function advRenderLevelPage() {
-        let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0];
-        let words = advGetWords();
-        let n = words.length;
-        let stat = document.getElementById('advStatsText');
-        if (stat) setPickSummary('advStatsText', 'advGrid', n, words.filter(w => w.starred).length);
-        advSyncDaily();
-        let ok = n >= lv.minWords;
-        let tired = advData.hp <= 0;
-        let max = advMaxHp();
-        let isCleared = !!advData.cleared[lv.id], left = advReplaysLeft();
-        let canGo = ok && !tired && !(isCleared && left <= 0);
-        let hearts = `♥ ${advData.hp}/${max}`;
-        let shardIcon = advShardIcon(14);
-        let first = lv.firstSauce ? `<span style="color:${ADV_SAUCE_COLOR};font-weight:800;">🍯 糖醋醬 ×${lv.firstSauce}</span>` : `${shardIcon} ×${lv.firstShards}`;
-        let html = `
-            <div class="adv-card adv-level">
-                <div class="adv-lv-sprite">${advEnemySVG(lv.sprite)}</div>
-                <div class="adv-lv-info">
-                    <b>第 ${lv.id} 關：${lv.name} ${advData.cleared[lv.id] ? '✅' : ''}</b>
-                    <span class="${ok ? 'adv-ok' : 'adv-bad'}">攻略條件：選取至少 ${lv.minWords} 題以上的單字${ok ? ' ✓' : `（目前 ${n} 題）`}</span><br>
-                    <span class="${tired ? 'adv-bad' : ''}">體力：${hearts}${tired ? '　沒體力了，明天 00:00 恢復' : ''}</span><br>
-                    ${isCleared ? `<span class="${left <= 0 ? 'adv-bad' : ''}">🔁 今天還能重複挑戰已通關關卡 ${left}/${advReplayCap()} 次</span><br>` : ''}
-                    ${advData.cleared[lv.id] ? '' : `首次通關：${first}${lv.firstMaxHp ? '、❤️ 生命上限 +' + lv.firstMaxHp : ''}${lv.firstPotions ? '、🧪 恢復藥水 ×' + lv.firstPotions : ''}${lv.firstTickets ? '、' + advTicketIcon(15) + ' 冒險卷 ×' + lv.firstTickets : ''}${lv.firstItem ? '、' + ADV_ITEMS[lv.firstItem].icon(15) + ' ' + ADV_ITEMS[lv.firstItem].name : ''}<br>`}通關獎勵：${shardIcon} ×${lv.repeatShards}${lv.ticketChance ? `、${advTicketIcon(15)} 冒險卷（${Math.round(lv.ticketChance * 100)}% 機會）` : ''}${lv.potionChance ? `、🧪 恢復藥水（${Math.round(lv.potionChance * 100)}% 機會）` : ''}
-                    ${ADV_MOVES.filter(m => m.buy.kind === 'reward' && m.buy.level === lv.id && !advOwns(m.key)).map(m => `<br><span style="color:var(--primary);font-weight:700;">🎁 首次通關額外獎勵：學會「${m.name}」</span>`).join('')}
-                    ${lv.special ? `<br><span class="adv-special">⚠️ ${ADV_SPECIAL_TEXT[lv.special]}</span>` : ''}
+            <div class="tab-cards-container">
+                <div class="tab-card-item active" id="cardListeningTab" data-on-click='[["switchHistoryTab",["listening"]]]'>
+                    <div class="history-item-icon-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                    </div>
+                    <div class="history-item-content">
+                        <div class="history-item-title">聽力</div>
+                    </div>
                 </div>
-            </div>`;
-        let box = document.getElementById('advLevelCard');
-        if (box) box.innerHTML = html;
-        advUpdateGearAlerts();
-        let bar = document.getElementById('advGoBar');
-        if (bar) bar.innerHTML = `<button type="button" class="adv-go adv-go-wide" ${canGo ? '' : 'disabled'} data-on-click='[["advStartBattle",[${lv.id}]]]'>開始戰鬥</button>`;
-    }
-    function goToAdvLevel(levelId) {
-        advAbort();
-        adv.pickLevel = (ADV_LEVELS.some(l => l.id === levelId) && advUnlocked(levelId)) ? levelId : 1;
-        advInitGrid();
-        advRenderLevelPage();
-        switchView('advLevelView');
-    }
-    function advBackToLevel() { goToAdvLevel(adv.pickLevel || 1); }
 
-    // ── 第 1 頁：地圖 ──
-    function goToAdventurePage(fromLevel) {
-        advAbort();
-        advSyncDaily();
-        advMapChapter = advChapterOf(fromLevel === true && adv.pickLevel ? adv.pickLevel : advHighestUnlocked());
-        switchView('adventureView');
-        advRenderMap();
-    }
-
-    // ── 第 3 頁：雞塊能力值（糖醋醬可讓任一能力 +1）──
-    const ADV_STAT_DEFS = [
-        { key: 'hp',   label: 'HP',   color: '#10B981' },
-        { key: 'atk',  label: '攻擊', color: '#F43F5E' },
-        { key: 'agi',  label: '敏捷', color: '#3B82F6' },
-        { key: 'def',  label: '防禦', color: '#F59E0B' },
-        { key: 'int',  label: '智慧', color: '#14B8A6' },
-        { key: 'luck', label: '幸運', color: '#A855F7' }
-    ];
-    const ADV_BAR_MAX = 12;
-    function goToAdvStats(tab) {
-        advStatsTab = ['moves', 'gear'].indexOf(tab) !== -1 ? tab : 'stats';   // 每次進來預設「基本素質」
-        advAbort();
-        advSyncDaily();
-        advRenderStatsPage();
-        switchView('advStatsView');
-        requestAnimationFrame(advFitMoveGrid);
-    }
-    // 糖醋醬碎片的圖示（顏色 = 糖醋醬的顏色）
-    function advShardIcon(size) {
-        size = size || 16;
-        return `<svg class="adv-shard-ico" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-3px;"><path d="M13 1.5 L21 8 L17.5 22 L5 18 L3.5 8 Z" fill="${ADV_SAUCE_COLOR}" stroke="#B8553F" stroke-width="1.8" stroke-linejoin="round"/><path d="M13 1.5 L11 11 L3.5 8 M11 11 L17.5 22" stroke="#FFE4DC" stroke-width="1.4" fill="none" stroke-linejoin="round" opacity="0.95"/></svg>`;
-    }
-    // 糖醋醬：小小的醬料杯（粉橘色蓋子 + 白色杯身）
-    function advSauceIcon(size) {
-        size = size || 16;
-        return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-3px;"><path d="M5 12.5 L6.6 20 Q6.9 21.2 8.2 21.2 H15.8 Q17.1 21.2 17.4 20 L19 12.5 Z" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.4" stroke-linejoin="round"/><rect x="2.8" y="5.5" width="18.4" height="8" rx="3.2" fill="#F5ADA3" stroke="#B8553F" stroke-width="1.5"/><path d="M6.5 9.5 H17.5 M8 11.8 H16" stroke="#FFFFFF" stroke-width="1.3" stroke-linecap="round" opacity="0.9"/><circle cx="6" cy="8" r="0.9" fill="#FFFFFF"/></svg>`;
-    }
-    // 背包圖示（紅色包包）
-    function advBagIcon(size) {
-        size = size || 20;
-        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-5px;overflow:visible"><path d="M10.5 9 V7.5 A5.5 5.5 0 0 1 21.5 7.5 V9" stroke="#92400E" stroke-width="2.4" fill="none" stroke-linecap="round"/><rect x="3" y="9" width="26" height="19" rx="5" fill="#8B5CF6" stroke="#3B1D8F" stroke-width="2"/><path d="M3 15.5 H29" stroke="#3B1D8F" stroke-width="2"/><rect x="3" y="9" width="26" height="6.5" rx="5" fill="#6D28D9"/><path d="M3 15.5 H29" stroke="#3B1D8F" stroke-width="2"/><rect x="13" y="13.5" width="6" height="4.5" rx="1.2" fill="#FBBF24" stroke="#92400E" stroke-width="1.2"/><path d="M3.8 24.5 V27 Q3.8 28 5 28 H8 M28.2 24.5 V27 Q28.2 28 27 28 H24" stroke="#FBBF24" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="16" cy="22.2" r="4.6" fill="#F4A236" stroke="#231F20" stroke-width="1.4"/><circle cx="14.3" cy="21.5" r="0.9" fill="#231F20"/><circle cx="17.7" cy="21.5" r="0.9" fill="#231F20"/><path d="M14.8 23.6 Q16 24.6 17.2 23.6" stroke="#231F20" stroke-width="1" fill="none" stroke-linecap="round"/></svg>`;
-    }
-
-    let advStatsTab = 'stats';      // 能力值頁目前的分頁：stats 基本素質 / moves 招式
-    let advMoveFocus = '';          // 招式分頁：正在看哪一招的詳細資料
-    function advSetStatsTab(t) { advStatsTab = ['moves', 'gear'].indexOf(t) !== -1 ? t : 'stats'; advRenderStatsPage(); }
-    function advRenderStatsPage() {
-        let s = advPlayerStats();
-        // 能力條統一綠色；HP 低於 30% 變紅色
-        const GREEN = '#10B981', RED = '#EF4444';
-        let rows = ADV_STAT_DEFS.map(d => {
-            let lvl = advData.up[d.key], maxed = lvl >= ADV_UP_MAX;
-            let pct = Math.min(100, s[d.key] / ADV_BAR_MAX * 100);
-            let tile, bar;
-            if (d.key === 'hp') {
-                // HP：方塊顯示「目前 / 最大」；實心條 = 目前體力，淡色底 = 最大體力
-                let cur = Math.max(0, Math.min(advData.hp, s.hp)), low = cur / s.hp < 0.3, c = low ? RED : GREEN;
-                tile = `<div class="adv-stat-tile${low ? ' low' : ''}">${d.label}<b>${cur}/${s.hp}</b></div>`;
-                bar = `<div class="adv-bar" title="目前體力 ${cur}／最大體力 ${s.hp}"><i class="adv-bar-max" style="width:${pct.toFixed(1)}%;background:${c}"></i><i class="adv-bar-cur" style="width:${Math.min(100, cur / ADV_BAR_MAX * 100).toFixed(1)}%;background:${c}"></i></div>`;
-            } else {
-                tile = `<div class="adv-stat-tile">${d.label}<b>${s[d.key]}</b></div>`;
-                bar = `<div class="adv-bar" title="已強化 ${lvl}/${ADV_UP_MAX}"><i style="width:${Math.max(0, pct).toFixed(1)}%;background:${GREEN}"></i></div>`;
-            }
-            return `<div class="adv-stat-row adv-stat-click" data-stat="${d.key}" role="button" title="點一下看能力介紹" data-on-click='[["advOpenStatInfo",["${d.key}"]]]'>
-                ${tile}${bar}
-                ${maxed ? '<span class="adv-maxed">滿</span>' : ''}<span class="adv-hit-chev">›</span>
-            </div>`;
-        }).join('');
-        let nav = document.getElementById('advNavCounts');
-        if (nav) nav.innerHTML = `<div class="adv-count">${advShardIcon(15)} <b id="advShardCount2">${advData.shards}</b></div>`;
-        let box = document.getElementById('advStatsBox');
-        if (!box) return;
-        let oldGrid = document.getElementById('advMoveGrid'), keepScroll = oldGrid ? oldGrid.scrollTop : 0;
-        let statsBody = `${advHitRowHTML()}<hr class="adv-hit-divider">${rows}`;
-        box.innerHTML = `
-            <div class="adv-hero">
-                <div class="adv-avatar">${advChickenSVG()}</div>
-                <div class="adv-mini-gear">${[0, 1].map(i => advMiniGearHTML(i)).join('')}</div>
-                <button type="button" class="adv-bag-btn" title="背包" aria-label="背包" data-on-click='[["advOpenBag",[]]]'>${advBagIcon(54)}</button>
-            </div>
-            <div class="adv-card adv-stats-panel">
-                <div class="adv-tabs" role="tablist">
-                    <button type="button" role="tab" class="adv-tab${advStatsTab === 'stats' ? ' on' : ''}" data-on-click='[["advSetStatsTab",["stats"]]]'>基本素質</button>
-                    <button type="button" role="tab" class="adv-tab${advStatsTab === 'moves' ? ' on' : ''}" data-on-click='[["advSetStatsTab",["moves"]]]'>招式</button>
-                    <button type="button" role="tab" class="adv-tab${advStatsTab === 'gear' ? ' on' : ''}" data-on-click='[["advSetStatsTab",["gear"]]]'>裝備${advGearAlert() ? ADV_ALERT : ''}</button>
+                <div class="tab-card-item" id="cardWordTab" data-on-click='[["switchHistoryTab",["word"]]]'>
+                    <div class="history-item-icon-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>
+                    </div>
+                    <div class="history-item-content">
+                        <div class="history-item-title">字卡</div>
+                    </div>
                 </div>
-                ${advStatsTab === 'moves' ? advMovesTabHTML() : advStatsTab === 'gear' ? advGearTabHTML() : statsBody}
-            </div>`;
-        let g = document.getElementById('advMoveGrid');
-        if (g) g.scrollTop = keepScroll;
-        advFitMoveGrid();
-        advBindMoveSwipe();
-        advCarDir = 0;
-        advUpdateGearAlerts();
-    }
-    // ── 招式分頁：上面用下拉選單篩選，中間左右輪播（一次看一招），下面是詳細資料 ──
-    const ADV_MOVE_FILTERS = [['all', '全部'], ['eq', '已裝備'], ['card', '字卡'], ['listen', '聽力'], ['speak', '朗讀']];
-    let advCarDir = 0;              // 剛剛往哪邊切換（做滑入動畫用）
-    function advMoveShown() {
-        let owned = ADV_MOVES.filter(m => advOwns(m.key));
-        if (advMoveFilter === 'all') return owned;
-        if (advMoveFilter === 'eq') { let eq = advEquipped().map(m => m.key); return owned.filter(m => eq.includes(m.key)); }
-        return owned.filter(m => m.type === advMoveFilter);
-    }
-    function advCarTri(rot) { return `<svg viewBox="0 0 24 24" width="24" height="24" style="transform:rotate(${rot}deg)" aria-hidden="true"><path d="M7 3 L19 12 L7 21 Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg>`; }
-    function advMovesTabHTML() {
-        let eqKeys = advEquipped().map(m => m.key);
-        let ownedMoves = ADV_MOVES.filter(m => advOwns(m.key));
-        let shown = advMoveShown(), n = shown.length;
-        if (!advMoveFocus || !shown.some(m => m.key === advMoveFocus)) advMoveFocus = n ? (shown.find(m => eqKeys.includes(m.key)) || shown[0]).key : (eqKeys[0] || (ownedMoves[0] ? ownedMoves[0].key : ''));
-        let idx = shown.findIndex(m => m.key === advMoveFocus);
-        let car;
-        if (!n) {
-            car = `<div class="adv-car adv-car-empty" id="advMoveGrid"><div class="adv-note" style="margin:0;">${advMoveFilter === 'eq' ? '還沒有裝備招式' : `還沒有${ADV_TYPE_LABEL[advMoveFilter]}類的招式`}</div></div>`;
-        } else {
-            let m = shown[idx], mi = advMasteryInfo(m.key), on = eqKeys.includes(m.key);
-            let L = n >= 3 ? shown[(idx - 1 + n) % n] : null, R = n >= 2 ? shown[(idx + 1) % n] : null;
-            let side = (x, d) => x ? `<button type="button" class="adv-car-side rar-${advRarityKey(x.key)}" title="${x.name}" aria-label="${x.name}" data-on-click='[["advMoveStep",[${d}]]]'>${x.icon}</button>` : '<span class="adv-car-side ghost"></span>';
-            car = `<div class="adv-car" id="advMoveGrid">
-                <button type="button" class="adv-car-arr${n < 2 ? ' off' : ''}" aria-label="上一招" data-on-click='[["advMoveStep",[-1]]]'>${advCarTri(180)}</button>
-                ${side(L, -1)}
-                <div class="adv-move-card adv-car-center focus rar-${advRarityKey(m.key)}${on ? ' selected' : ''}${advCarDir ? (advCarDir > 0 ? ' go-r' : ' go-l') : ''}" data-move="${m.key}">
-                    ${on ? '<span class="adv-eq-tag">已裝備</span>' : ''}
-                    <span class="ic">${m.icon}</span>
-                    <b>${m.name}${mi.lvl ? ` <span class="adv-lv-chip">Lv.${mi.lvl}</span>` : ''}</b>
+            </div>
+
+            <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+                <div class="tab-panel active" id="panelListeningHistory">
+                    <div class="sub-card">
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="listeningScoreChartToggleBtn" data-on-click='[["toggleSubCard",["listeningScoreChartContent","listeningScoreChartToggleBtn","listening_score_chart"]]]' title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            📈 歷史成績曲線 (聽力測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="listeningScoreChartContent">
+                            <div class="chart-wrapper">
+                                <canvas id="listeningScoreCanvas" class="score-chart-canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sub-card">
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="listeningTopWrongToggleBtn" data-on-click='[["toggleSubCard",["listeningTopWrongContent","listeningTopWrongToggleBtn","listening_top_wrong"]]]' title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            🔥 錯誤率最高單字 (聽力測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="listeningTopWrongContent">
+                            <div id="listeningTopWrongWords" class="error-word-list" style="max-height: 180px; overflow-y: auto;"></div>
+                            <div class="save-target-row" style="margin-top: 10px;">
+                                <span class="save-target-label">儲存至目標題庫：</span>
+                                <select id="targetListSelectorListening" class="target-select"></select>
+                                <button class="btn-purple" data-on-click='[["saveSelectedWrongWords",["listening"]]]'>📥 儲存勾選單字</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sub-card">
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="listeningHistoryListToggleBtn" data-on-click='[["toggleSubCard",["listeningHistoryListContent","listeningHistoryListToggleBtn","listening_history_list"]]]' title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            📜 歷史分數紀錄 (聽力測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="listeningHistoryListContent">
+                            <div id="examHistoryList" style="max-height: 240px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
                 </div>
-                ${side(R, 1)}
-                <button type="button" class="adv-car-arr${n < 2 ? ' off' : ''}" aria-label="下一招" data-on-click='[["advMoveStep",[1]]]'>${advCarTri(0)}</button>
-                <div class="adv-car-dots">${shown.map((x, i) => `<i class="${i === idx ? 'on' : ''}"></i>`).join('')}</div>
-            </div>
-            <div class="adv-car-hint">${n >= 2 ? `◀ 左右滑動選擇招式 ▶（${idx + 1} / ${n}）` : '（1 / 1）'}</div>`;
-        }
-        return `
-            <div class="adv-sec-title">招式選擇　<span id="advEquipCount">已裝備 ${eqKeys.length}/${ADV_MAX_EQUIP}</span>
-                <select class="adv-move-filter" aria-label="篩選招式" data-on-change='[["advSetMoveFilter",["$value"]]]'>
-                    ${ADV_MOVE_FILTERS.map(o => `<option value="${o[0]}"${advMoveFilter === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}
-                </select></div>
-            ${car}
-            <div class="adv-move-detail" id="advMoveDetail">${advMoveDetailHTML(advMoveFocus)}</div>`;
-    }
-    let advCarSwipeAt = 0;
-    function advMoveStep(d) {
-        if (Date.now() - advCarSwipeAt < 350) return;     // 剛用滑的切換過，忽略接著觸發的點擊
-        advMoveStepGo(d);
-    }
-    function advMoveStepGo(d) {
-        let shown = advMoveShown(), n = shown.length;
-        if (n < 2) return;
-        let idx = Math.max(0, shown.findIndex(m => m.key === advMoveFocus));
-        d = parseInt(d) < 0 ? -1 : 1;
-        advMoveFocus = shown[(idx + d + n) % n].key;
-        advCarDir = d;
-        advRenderStatsPage();
-    }
-    // 手機左右滑動（滑鼠拖曳也可以）
-    function advBindMoveSwipe() {
-        let el = document.getElementById('advMoveGrid');
-        if (!el || !el.classList.contains('adv-car') || el._swipe) return;
-        el._swipe = true;
-        let x0 = null, y0 = 0;
-        el.addEventListener('pointerdown', e => { x0 = e.clientX; y0 = e.clientY; });
-        el.addEventListener('pointerup', e => {
-            if (x0 === null) return;
-            let dx = e.clientX - x0, dy = e.clientY - y0; x0 = null;
-            if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) { advMoveStepGo(dx < 0 ? 1 : -1); advCarSwipeAt = Date.now(); }
-        });
-        el.addEventListener('pointercancel', () => { x0 = null; });
-    }
-    function advMoveCardHTML(m, eqKeys) {
-        let on = eqKeys.includes(m.key), mi = advMasteryInfo(m.key);
-        return `<div class="select-card adv-move-card rar-${advRarityKey(m.key)}${on ? ' selected' : ''}${m.key === advMoveFocus ? ' focus' : ''}" data-move="${m.key}" data-on-click='[["advFocusMove",["${m.key}"]]]'>
-                <div class="select-card-info">
-                    <div class="select-card-title">${m.icon} ${m.name}${mi.lvl ? ` <span class="adv-lv-chip">Lv.${mi.lvl}</span>` : ''}</div>
+
+                <div class="tab-panel" id="panelWordHistory">
+                    <div class="sub-card">
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="cardScoreChartToggleBtn" data-on-click='[["toggleSubCard",["cardScoreChartContent","cardScoreChartToggleBtn","card_score_chart"]]]' title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            📈 歷史成績曲線 (字卡測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="cardScoreChartContent">
+                            <div class="chart-wrapper">
+                                <canvas id="cardScoreCanvas" class="score-chart-canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sub-card">
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="cardTopWrongToggleBtn" data-on-click='[["toggleSubCard",["cardTopWrongContent","cardTopWrongToggleBtn","card_top_wrong"]]]' title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            🔥 錯誤率最高單字 (字卡測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="cardTopWrongContent">
+                            <div id="cardTopWrongWords" class="error-word-list" style="max-height: 180px; overflow-y: auto;"></div>
+                            <div class="save-target-row" style="margin-top: 10px;">
+                                <span class="save-target-label">儲存至目標題庫：</span>
+                                <select id="targetListSelectorCard" class="target-select"></select>
+                                <button class="btn-purple" data-on-click='[["saveSelectedWrongWords",["card"]]]'>📥 儲存勾選單字</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sub-card">
+                        <div class="sub-card-title">
+                            <button class="sub-card-toggle-btn" id="cardHistoryListToggleBtn" data-on-click='[["toggleSubCard",["cardHistoryListContent","cardHistoryListToggleBtn","card_history_list"]]]' title="展開/摺疊區塊">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            📜 歷史分數紀錄 (字卡測驗)
+                        </div>
+                        <div class="sub-card-content-wrapper" id="cardHistoryListContent">
+                            <div id="cardExamHistoryList" style="max-height: 240px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
                 </div>
-                ${on ? '<span class="adv-eq-tag">已裝備</span>' : ''}
-            </div>`;
-    }
-    function advMoveDetailHTML(key) {
-        let m = advMoveByKey(key);
-        if (!m || !advOwns(key)) return '<div class="adv-note" style="margin:0;">點上面的招式，就會在這裡顯示詳細資料。</div>';
-        let r = advRarity(key), rk = advRarityKey(key), mi = advMasteryInfo(key), on = advEquipped().some(x => x.key === key);
-        let pct = mi.maxed ? 100 : Math.max(0, Math.min(100, (mi.uses - mi.prev) / (mi.next - mi.prev) * 100));
-        let prog = mi.maxed ? `已達上限（共 ${mi.uses} 次）` : `${mi.uses} / ${mi.next}`;
-        return `
-            <div class="adv-md-stats">
-                <div>類型<b>${ADV_TYPE_LABEL[m.type]}</b></div>
-                <div>威力<b>${m.power}${mi.lvl ? `<em>+${mi.lvl}</em>` : ''}</b></div>
-                <div>攻擊次數<b>${m.hits}</b></div>
-                <div>題數<b>${m.q}</b></div>
+
             </div>
-            <div class="adv-md-desc">${m.desc}</div>
-            <div class="adv-md-mastery">
-                <div class="adv-md-mrow"><span>熟練度 <b>${mi.lvl}</b><small>／${mi.cap}</small></span><small class="prog">${prog}</small></div>
-                <div class="adv-bar adv-md-bar"><i style="width:${pct.toFixed(1)}%;background:${r.color}"></i></div>
-            </div>
-            <button type="button" class="adv-md-btn${on ? ' off' : ''}" data-on-click='[["advToggleMove",["${key}"]]]'>${on ? '卸下這招' : '裝備這招'}</button>`;
-    }
-    function advFocusMove(key) {
-        if (!advOwns(key)) return;
-        if (!advMoveShown().some(m => m.key === key)) advMoveFilter = 'all';
-        advMoveFocus = key;
-        advRenderStatsPage();
-    }
-    // 招式格子一次只看得到 4 張（手機 1 欄 × 4、寬螢幕 2 欄 × 2），其他用右邊的捲軸
-    function advFitMoveGrid() {
-        let g = document.getElementById('advMoveGrid');
-        if (!g) return;
-        let cards = g.querySelectorAll('.adv-move-card');
-        if (cards.length <= 4 || !cards[3].offsetHeight) { g.style.maxHeight = ''; return; }
-        g.style.maxHeight = Math.ceil(cards[3].offsetTop + cards[3].offsetHeight + 6) + 'px';
-    }
-    window.addEventListener('resize', () => { try { advFitMoveGrid(); } catch (e) {} });
-    // ── 招式篩選（全部／字卡／聽力／朗讀）──
-    let advMoveFilter = 'all';
-    function advSetMoveFilter(v) {
-        advMoveFilter = ADV_MOVE_FILTERS.some(o => o[0] === v) ? v : 'all';
-        let g = document.getElementById('advMoveGrid'); if (g) g.scrollTop = 0;
-        advRenderStatsPage();
-    }
-    // ── 裝備欄：左手、右手各放 1 個裝備 ──
-    function advMiniGearHTML(i) {
-        let k = advData.gear[i], it = k ? ADV_ITEMS[k] : null;
-        return `<button type="button" class="adv-mini-slot${it ? ' rar-' + advItemRarityKey(k) : ' empty'}" title="${ADV_HANDS[i]}${it ? '：' + it.name : '（空的）'}" aria-label="${ADV_HANDS[i]}${it ? '：' + it.name : '（空的）'}" data-on-click='[["advOpenGearSlot",[${i}]]]'>${it ? it.icon(24) : '<span>＋</span>' + (advGearAlert() ? ADV_ALERT : '')}</button>`;
-    }
-    function advGearTabHTML() {
-        let n = advData.gear.filter(Boolean).length;
-        let slot = i => {
-            let k = advData.gear[i], it = k ? ADV_ITEMS[k] : null;
-            if (!it) return `<button type="button" class="adv-gear-slot empty" data-on-click='[["advOpenGearSlot",[${i}]]]'>＋ ${ADV_HANDS[i]}（空的）${advGearAlert() ? ADV_ALERT : ''}</button>`;
-            return `<button type="button" class="adv-gear-slot rar-${advItemRarityKey(k)}" data-on-click='[["advOpenGearSlot",[${i}]]]'>
-                <span class="ico">${it.icon(36)}</span><span class="txt"><span class="no">${ADV_HANDS[i]}</span><b>${it.name}</b><small>${it.desc}</small></span></button>`;
-        };
-        return `<div class="adv-sec-title">裝備欄　<span>已裝備 ${n}/2</span></div>
-            <div class="adv-gear-slots">${slot(0)}${slot(1)}</div>`;
-    }
-    // 有空的裝備欄，而且背包裡還有沒裝備的裝備
-    function advGearAlert() {
-        let g = advData.gear;
-        if (g.every(Boolean)) return false;
-        return Object.keys(ADV_ITEMS).some(k => advData.items[k] && !g.includes(k));
-    }
-    const ADV_ALERT = '<span class="adv-alert" aria-label="還可以裝備">!</span>';
-    function advUpdateGearAlerts() {
-        let on = advGearAlert();
-        document.querySelectorAll('.adv-btn-sm[data-on-click*="goToAdvStats"]').forEach(b => {
-            let a = b.querySelector('.adv-alert');
-            if (on && !a) b.insertAdjacentHTML('beforeend', ADV_ALERT);
-            else if (!on && a) a.remove();
-        });
-    }
-    function advOpenGearSlot(i) { advOpenBag('gear', parseInt(i) === 1 ? 1 : 0); }
-    // 裝備／卸下：從左手或右手打開背包 → 放進那一手；從背包直接打開 → 放進空著的那一手
-    function advToggleEquip(key) {
-        if (!ADV_ITEMS[key] || !advData.items[key]) return;
-        let g = advData.gear, at = g.indexOf(key), fromSlot = advBagSlot !== null;
-        if (fromSlot) {
-            if (g[advBagSlot] === key) g[advBagSlot] = '';
-            else { if (at !== -1) g[at] = ''; g[advBagSlot] = key; }
-        } else if (at !== -1) {
-            g[at] = '';
-        } else {
-            let e = g.indexOf('');
-            if (e === -1) { alert('左手、右手都已經有裝備了。\n請到「裝備」分頁點要更換的那一手。'); return; }
-            g[e] = key;
-        }
-        advSave();
-        advRenderStatsPage();
-        if (fromSlot) advCloseBag(); else advBagBack();
-    }
-    // ── 命中：能力值頁最上面一條；點進去看字卡／聽力／朗讀 ──
-    function advHitRowHTML() {
-        let a = advHitAll(), t = advHitTotal();
-        let tile = t === null ? `<div class="adv-stat-tile hit">命中<b class="wait">累積中</b></div>` : `<div class="adv-stat-tile hit">命中<b>${t}%</b></div>`;
-        let bar = t === null
-            ? `<div class="adv-bar"><i class="adv-hit-wait" style="width:${(Math.min(a.length, ADV_HIT_N) / ADV_HIT_N * 100).toFixed(1)}%"></i></div>`
-            : `<div class="adv-bar"><i style="width:${t}%;background:#EAB308"></i></div>`;
-        return `<div class="adv-stat-row adv-hit-row" data-stat="hit" role="button" title="點一下看字卡、聽力、朗讀的命中" data-on-click='[["advOpenHit",[]]]'>${tile}${bar}<span class="adv-hit-chev">›</span></div>`;
-    }
-    // ── 能力介紹：全部能力放同一頁，順序跟能力值頁一樣（只說用途，不寫公式）──
-    const ADV_STAT_INFO = {
-        hp:   '每點一次，HP 上限 +1。',
-        atk:  '每點一次，攻擊力 +1。',
-        agi:  '比對手快，一回合就能多出幾招。',
-        def:  '減少每次被打到的傷害。',
-        int:  '智慧越高護盾越高，護盾扣完才扣 HP；能增加作答時間。',
-        luck: '攻擊時會擲幣，擲到正面就多打 1 點；打贏後也有機會多拿碎片。'
-    };
-    function advOpenStatInfo(key) {
-        let body = document.getElementById('advHitBody');
-        if (!body) return;
-        body.innerHTML = `<div class="adv-hit-title">📖 能力介紹</div>
-            <div class="adv-si-list">${ADV_STAT_DEFS.map(d => `<div class="adv-si-row${d.key === key ? ' on' : ''}" data-stat="${d.key}"><span class="adv-si-lab" style="background:${d.color}">${d.label}</span><p>${ADV_STAT_INFO[d.key]}</p></div>`).join('')}</div>`;
-        document.getElementById('advHitModal').style.display = 'block';
-    }
-    // 命中率的評價（黃色框）
-    function advHitComment(p) {
-        if (p >= 100) return '👑 傳奇人物！每一題都答對，完美無缺！';
-        if (p >= 90) return '🌟 根本是神！單字幾乎都難不倒你！';
-        if (p >= 80) return '🔥 超強！敵人快要擋不住你了！';
-        if (p >= 70) return '💪 很穩喔！大部分的單字你都記住了，繼續保持！';
-        if (p >= 60) return '🙂 還不錯！再多練習一點，命中會越來越高。';
-        return '📚 命中還不到 60%，先去多背幾個單字，再回來打會輕鬆很多！';
-    }
-    const ADV_HIT_TIPS = { card: '「字卡練習」或「字卡測驗」', listen: '「聽力練習」或「聽力測驗」', speak: '「朗讀練習」' };
-    function advOpenHit() {
-        let body = document.getElementById('advHitBody');
-        if (!body) return;
-        let a = advHitAll(), t = advHitTotal(), cur = advHitPct(a);
-        let big, sub;
-        if (t !== null) {
-            let diff = advData.hitPrev === null ? 0 : t - advData.hitPrev;
-            big = `${t}%`; sub = `總命中${diff ? `　<span class="${diff > 0 ? 'up' : 'down'}">${diff > 0 ? '↑' : '↓'} 比上次 ${diff > 0 ? '+' : ''}${diff}%</span>` : ''}`;
-        } else if (a.length) {
-            big = `${cur}%`; sub = `總命中（目前 ${a.length}/${ADV_HIT_N} 題，還在累積）`;
-        } else {
-            big = '—'; sub = '還沒有紀錄，去大冒險打一場吧！';
-        }
-        let weakest = null;
-        let lines = ['card', 'listen', 'speak'].map(k => {
-            let arr = advData.hits[k], p = advHitPct(arr), full = arr.length >= ADV_HIT_N;
-            if (!full) return `<div class="adv-hit-line"><span class="lab">${ADV_TYPE_LABEL[k]}</span><div class="adv-bar"><i class="adv-hit-wait" style="width:${(arr.length / ADV_HIT_N * 100).toFixed(1)}%"></i></div><span class="val">累積中<small>${arr.length}/${ADV_HIT_N} 題</small></span></div>`;
-            if (weakest === null || p < weakest.p) weakest = { k, p };
-            return { k, p, html: (low) => `<div class="adv-hit-line"><span class="lab">${ADV_TYPE_LABEL[k]}</span><div class="adv-bar"><i style="width:${p}%;background:${low ? '#F97316' : '#EAB308'}"></i></div><span class="val${low ? ' low' : ''}">${p}%<small>${arr.reduce((x, y) => x + y, 0)}/${ADV_HIT_N} 題</small></span></div>` };
-        });
-        let weakKey = weakest && weakest.p < 70 ? weakest.k : '';
-        let html = lines.map(l => typeof l === 'string' ? l : l.html(l.k === weakKey)).join('');
-        let tip = t !== null ? advHitComment(t) : a.length ? advHitComment(cur) : '🗡️ 去大冒險打一場，就會開始累積命中！';
-        body.innerHTML = `<div class="adv-hit-title">🎯 命中</div>
-            <div class="adv-hit-sub">字卡、聽力、朗讀各算最近 ${ADV_HIT_N} 題</div>
-            <div class="adv-hit-total">${big}<small>${sub}</small></div>
-            ${html}
-            <div class="adv-hit-tip">${tip}</div>`;
-        document.getElementById('advHitModal').style.display = 'block';
-    }
-    function advCloseHit() { document.getElementById('advHitModal').style.display = 'none'; }
 
-    // ── 背包：九宮格；右上角篩選（全部／道具／物品）；點格子看說明再使用 ──
-    //   道具 = 可以放進裝備欄的東西（同時只能裝 1 個）；物品 = 用掉就沒了的消耗品
-    let advBagFilter = 'all';
-    function advPotionIcon(size) { return `<span style="font-size:${Math.round(size * 0.82)}px;line-height:1">🧪</span>`; }
-    function advBagDefs() {
-        let defs = [
-            { key: 'sauce',  kind: 'item', name: '糖醋醬',   icon: s => advSauceIcon(s),  n: advData.sauce,   desc: `使用後讓任一項能力 +1（每項最多強化 ${ADV_UP_MAX} 次）`, act: '使用', fn: 'advBagSauce' },
-            { key: 'potion', kind: 'item', name: '恢復藥水', icon: s => advPotionIcon(s), n: advData.potions, desc: `使用後 HP +${ADV_POTION_HEAL}（目前 ${advData.hp}/${advMaxHp()}）`, act: '使用', fn: 'advBagUsePotion' },
-            { key: 'ticket', kind: 'item', name: '冒險卷',   icon: s => advTicketIcon(s), n: advData.tickets, desc: `今天「重複挑戰已通關關卡」的次數 +1（今天還能挑戰 ${advReplaysLeft()} 次）`, act: '使用', fn: 'advBagUseTicket' },
-            { key: 'wipe',   kind: 'item', name: '濕紙巾',   icon: s => advWipeIcon(s),   n: advData.wipes,   desc: '把 1 點已強化的能力，轉移到另一項能力', act: '使用', fn: 'advBagWipe' }
-        ];
-        Object.keys(ADV_ITEMS).forEach(k => {
-            if (!advData.items[k]) return;
-            let it = ADV_ITEMS[k], at = advData.gear.indexOf(k), on = at !== -1;
-            let act = advBagSlot !== null ? (advData.gear[advBagSlot] === k ? '卸下' : `裝備到${ADV_HANDS[advBagSlot]}`) : (on ? '卸下' : '裝備');
-            defs.push({ key: k, kind: 'gear', name: it.name, icon: s => it.icon(s), n: 1, on: on, hand: on ? ADV_HANDS[at] : '', off: act === '卸下', desc: it.desc, act: act, fn: 'advToggleEquip' });
-        });
-        return defs;
-    }
-    function advBagCount() { return advData.sauce + advData.potions + advData.tickets + advData.wipes + Object.keys(advData.items).filter(k => advData.items[k]).length; }
-    let advBagGearOnly = false;     // 從「裝備欄」打開：只顯示裝備
-    let advBagSlot = null;          // 從左手(0)／右手(1)打開時，裝備會放進那一手
-    let advBagSel = '';             // 目前點選、在下方顯示說明的東西
-    function advSetBagFilter(v) { advBagFilter = ['all', 'gear', 'item'].indexOf(v) !== -1 ? v : 'all'; advBagSel = ''; advBagBack(); }
-    function advOpenBag(mode, slot) {
-        advBagGearOnly = mode === 'gear';
-        advBagSlot = advBagGearOnly && (slot === 0 || slot === 1) ? slot : null;
-        advBagFilter = advBagGearOnly ? 'gear' : 'all';
-        advBagSel = advBagSlot !== null ? (advData.gear[advBagSlot] || '') : '';
-        advBagBack();
-        document.getElementById('advBagModal').style.display = 'block';
-    }
-    function advCloseBag() { document.getElementById('advBagModal').style.display = 'none'; }
-    function advBagBack() {
-        let body = document.getElementById('advBagBody');
-        if (!body) return;
-        if (advBagGearOnly) advBagFilter = 'gear';
-        let defs = advBagDefs().filter(d => d.kind === 'gear' || d.n > 0).filter(d => advBagFilter === 'all' || d.kind === advBagFilter);
-        if (advBagSel && !defs.some(d => d.key === advBagSel)) advBagSel = '';
-        let cells = defs.map(d => `<button type="button" class="adv-bag-cell${d.on ? ' is-on' : ''}${d.kind === 'gear' ? ' rar-' + advItemRarityKey(d.key) : ''}${d.key === advBagSel ? ' sel' : ''}" data-on-click='[["advBagTap",["${d.key}"]]]'>
-                <span class="adv-bag-cico">${d.icon(34)}</span><b>${d.name}</b><small>${d.kind === 'gear' ? (d.on ? d.hand : '裝備') : '×' + d.n}</small></button>`);
-        let total = Math.max(9, Math.ceil(cells.length / 3) * 3);
-        while (cells.length < total) cells.push('<div class="adv-bag-cell empty"></div>');
-        if (!defs.length && advBagGearOnly) cells = [];
-        body.innerHTML = `<div class="adv-bag-head">
-                <div class="adv-bag-title">${advBagGearOnly ? `${advSkewerIcon(20)} ${advBagSlot !== null ? '選擇' + ADV_HANDS[advBagSlot] + '的裝備' : '裝備欄'}` : `${advBagIcon(22)} 背包`}</div>
-                ${advBagGearOnly ? '' : `<select class="adv-bag-filter" aria-label="篩選背包" data-on-change='[["advSetBagFilter",["$value"]]]'>
-                    ${[['all', '全部'], ['gear', '裝備'], ['item', '道具']].map(o => `<option value="${o[0]}"${advBagFilter === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}
-                </select>`}
-            </div>
-            <div class="adv-bag-grid">${cells.join('')}</div>
-            <div class="adv-bag-info">${advBagInfoHTML(defs)}</div>`;
-    }
-    // 九宮格下面的說明欄（點了哪一格就顯示哪一格）
-    function advBagInfoHTML(defs) {
-        if (advBagGearOnly && !defs.length) return '<div class="adv-bag-hint">還沒有裝備（打贏第 4、5、12 關可以拿到）。</div>';
-        let d = defs.find(x => x.key === advBagSel);
-        if (!d) return '<div class="adv-bag-hint">點一下上面的東西，這裡會顯示說明。</div>';
-        let rk = d.kind === 'gear' ? advItemRarityKey(d.key) : '';
-        return `<div class="adv-bag-detail">
-                <div class="adv-bag-dico">${d.icon(56)}</div>
-                <div class="adv-bag-dtxt"><div class="adv-bag-dkind">${d.kind === 'gear' ? `🛡️ 裝備${d.on ? '（' + d.hand + '）' : ''}　<span class="adv-rar-badge rar-${rk}">${ADV_RARITY[rk].label}</span>` : `📦 道具　持有 ×${d.n}`}</div><b class="adv-bag-dname">${d.name}</b><p>${d.desc}</p></div>
-            </div>
-            <button type="button" class="adv-plain-btn ${d.off ? 'danger' : 'main'}" ${d.kind === 'item' && d.n < 1 ? 'disabled' : ''} data-on-click='[["${d.fn}",["${d.key}"]]]'>${d.act}</button>
-            <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagUnselect",[]]]'>返回</button>`;
-    }
-    function advBagTap(key) { advBagSel = key; advBagBack(); }
-    function advBagUnselect() { advBagSel = ''; advBagBack(); }
-    // 冒險卷：今天的重複挑戰次數 +1
-    function advBagUseTicket() {
-        if (advData.tickets < 1) return;
-        if (!confirm(`要使用 1 張冒險卷嗎？\n\n今天重複挑戰已通關關卡的次數 +1（目前還能挑戰 ${advReplaysLeft()} 次）`)) return;
-        let today = getLocalDateStr();
-        if (advData.replayBonusDay !== today) { advData.replayBonusDay = today; advData.replayBonus = 0; }
-        advData.replayBonus += 1;
-        advData.tickets -= 1;
-        advSave();
-        advBagBack();
-        advRenderStatsPage();
-        try { if (document.getElementById('advLevelView').classList.contains('active')) advRenderLevelPage(); } catch (e) {}
-        alert(`🎫 使用冒險卷！今天還能重複挑戰 ${advReplaysLeft()} 次。`);
-    }
-    // 濕紙巾：把 1 點已強化的能力轉到另一項
-    function advStatLabel(k) { let d = ADV_STAT_DEFS.find(x => x.key === k); return d ? d.label : k; }
-    function advBagWipe() {
-        let body = document.getElementById('advBagBody');
-        if (!body || advData.wipes < 1) return;
-        let s = advPlayerStats();
-        let rows = ADV_STAT_DEFS.map(d => {
-            let can = advData.up[d.key] > 0;
-            return `<button type="button" class="adv-bag-item" ${can ? '' : 'disabled'} data-on-click='[["advWipeFrom",["${d.key}"]]]'>
-                <span class="adv-bag-txt"><b>${d.label}</b><small>目前 ${s[d.key]}（已強化 ${advData.up[d.key]} 次）</small></span><span class="adv-bag-count">${can ? '選這項' : '—'}</span></button>`;
-        }).join('');
-        body.innerHTML = `<div class="adv-bag-title">${advWipeIcon(24)} 要從哪一項拿出 1 點？</div>${rows}
-            <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagBack",[]]]'>返回</button>`;
-    }
-    function advWipeFrom(from) {
-        let body = document.getElementById('advBagBody');
-        if (!body || advData.wipes < 1 || !(advData.up[from] > 0)) return;
-        let s = advPlayerStats();
-        let rows = ADV_STAT_DEFS.filter(d => d.key !== from).map(d => {
-            let can = advData.up[d.key] < ADV_UP_MAX;
-            return `<button type="button" class="adv-bag-item" ${can ? '' : 'disabled'} data-on-click='[["advWipeApply",["${from}","${d.key}"]]]'>
-                <span class="adv-bag-txt"><b>${d.label}</b><small>${s[d.key]} → ${s[d.key] + 1}</small></span><span class="adv-bag-count">${can ? '+1' : '已滿'}</span></button>`;
-        }).join('');
-        body.innerHTML = `<div class="adv-bag-title">${advWipeIcon(24)} 把 1 點「${advStatLabel(from)}」轉到哪一項？</div>
-            <div class="adv-note" style="margin:0 0 8px;">${advStatLabel(from)}：${s[from]} → ${s[from] - 1}</div>${rows}
-            <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagWipe",[]]]'>上一步</button>`;
-    }
-    function advWipeApply(from, to) {
-        if (advData.wipes < 1 || from === to || !(advData.up[from] > 0) || !Object.prototype.hasOwnProperty.call(advData.up, to) || advData.up[to] >= ADV_UP_MAX) return;
-        if (!confirm(`要用 1 張濕紙巾，把 1 點「${advStatLabel(from)}」轉到「${advStatLabel(to)}」嗎？`)) return;
-        advSyncDaily();
-        advData.wipes -= 1;
-        advData.up[from] -= 1;
-        advData.up[to] += 1;
-        if (to === 'hp') advData.hp += 1;                      // 最大體力 +1 的同時，目前體力也 +1
-        advData.hp = Math.max(0, Math.min(advData.hp, advMaxHp()));
-        advSave();
-        advCloseBag();
-        advRenderStatsPage();
-    }
-    function advBagSauce() {
-        let body = document.getElementById('advBagBody');
-        if (!body || advData.sauce < 1) return;
-        let s = advPlayerStats();
-        let rows = ADV_STAT_DEFS.map(d => {
-            let maxed = advData.up[d.key] >= ADV_UP_MAX;
-            return `<button type="button" class="adv-bag-item" ${maxed ? 'disabled' : ''} data-on-click='[["advBagUseSauce",["${d.key}"]]]'>
-                <span class="adv-bag-txt"><b>${d.label}</b><small>${s[d.key]} → ${s[d.key] + 1}</small></span><span class="adv-bag-count">${maxed ? '已滿' : '+1'}</span></button>`;
-        }).join('');
-        body.innerHTML = `<div class="adv-bag-title">${advSauceIcon(24)} 要強化哪一項？</div>${rows}
-            <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagBack",[]]]'>返回</button>`;
-    }
-    function advBagUseSauce(key) {
-        if (advData.sauce < 1) return;
-        advUpgrade(key);
-        advCloseBag();
-    }
-    function advBagUsePotion() {
-        advSyncDaily();
-        let max = advMaxHp();
-        if (advData.potions < 1) return;
-        if (advData.hp >= max) { alert('體力已經是滿的，不需要用藥水喔！'); return; }
-        advData.potions -= 1;
-        advData.hp = Math.min(max, advData.hp + ADV_POTION_HEAL);
-        advSave();
-        advCloseBag();
-        advRenderStatsPage();
-    }
-    function advMoreLabel(owned, eqKeys) {
-        let rest = owned.slice(ADV_MOVES_SHOWN), eqIn = rest.filter(m => eqKeys.includes(m.key)).length;
-        return advMovesOpen ? '▲ 收起' : `▼ 更多招式（還有 ${rest.length} 招${eqIn ? `，其中 ${eqIn} 招已裝備` : ''}）`;
-    }
-    function advToggleMoreMoves() {
-        advMovesOpen = !advMovesOpen;
-        let g = document.getElementById('advMoveGrid'), b = document.getElementById('advMoreBtn');
-        if (g) g.classList.toggle('adv-more-closed', !advMovesOpen);
-        if (b) { let eq = advEquipped().map(m => m.key); b.textContent = advMoreLabel(ADV_MOVES.filter(m => advOwns(m.key)), eq); }
-    }
-    function advToggleMove(key) {
-        let m = advMoveByKey(key);
-        if (!m || !advOwns(key)) return;
-        advData.eq = advData.eq.filter(k => advOwns(k));
-        let i = advData.eq.indexOf(key);
-        if (i >= 0) {
-            if (advData.eq.length <= ADV_MIN_EQUIP) { alert(`至少要裝備 ${ADV_MIN_EQUIP} 招喔！`); return; }
-            advData.eq.splice(i, 1);
-        } else {
-            if (advData.eq.length >= ADV_MAX_EQUIP) { alert(`最多只能裝備 ${ADV_MAX_EQUIP} 招，請先取消其他招式。`); return; }
-            advData.eq.push(key);
-        }
-        advSave();
-        advRenderStatsPage();
-    }
-    function advUpgrade(key) {
-        if (!Object.prototype.hasOwnProperty.call(advData.up, key)) return;
-        if (advData.sauce < 1 || advData.up[key] >= ADV_UP_MAX) return;
-        advSyncDaily();
-        advData.sauce -= 1;
-        advData.up[key] += 1;
-        if (key === 'hp') advData.hp += 1;     // 最大體力 +1 的同時，目前體力也 +1
-        advSave();
-        advRenderStatsPage();
-    }
+            <button class="action-btn-primary" style="margin-top: 16px; padding: 13px;" data-on-click='[["closeHistoryModal",[]]]'>關閉視窗</button>
+        </div>
+    </div>
+</div>
 
-    // ── 雞塊補給站：三個分頁 ──
-    //   0 單字庫（原本的兩個商品，寫在 HTML 裡）／1 雞塊大冒險／2 其他
-    let advShopTab = 0;
-    function setShopTab(i) { advShopTab = Math.max(0, Math.min(2, parseInt(i) || 0)); advShopFilter = 'all'; advRenderShopBox(); }
-    function advWeekId() {
-        // 每週從星期一開始，以台灣時間（UTC+8）計算；後端用同樣的規則
-        let t = new Date(Date.now() + 8 * 3600 * 1000);
-        let back = (t.getUTCDay() + 6) % 7;
-        return new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate() - back)).toISOString().slice(0, 10);
-    }
-    // 補給站右上角的篩選：每個分頁各自的選項（之後新增單字庫再加）
-    const ADV_SHOP_FILTERS = [
-        [['all', '全部']],
-        [['all', '全部'], ['item', '道具'], ['gear', '裝備'], ['move', '招式']],
-        [['all', '全部']]
-    ];
-    let advShopFilter = 'all';
-    function advSetShopFilter(v) { advShopFilter = String(v || 'all'); advRenderShopBox(); }
-    function advShopCell(o) {
-        return `<button type="button" id="${o.id}" data-kind="${o.kind || 'item'}" class="shop-cell shop-item${o.off ? ' is-maxed' : ''}${o.poor ? ' is-poor' : ''}${o.cls ? ' ' + o.cls : ''}" data-on-click='${o.action}'>
-            <div class="shop-emoji">${o.icon}</div>
-            <div class="shop-name">${o.name}</div>
-            <div class="shop-sub">${o.sub}</div>
-            <div class="shop-price">${o.price}</div>
-        </button>`;
-    }
-    const advChickenPrice = (n) => `<span class="chicken-mini"></span><b>${n}</b>`;
-    const advShardPrice = (n) => `${advShardIcon(15)}<b>${n}</b>`;
-    function advRenderShopBox() {
-        let sc = document.getElementById('advShopShardCount');
-        if (sc) sc.textContent = advData.shards;
-        for (let i = 0; i < 3; i++) {
-            let tab = document.getElementById('shopTab' + i), pane = document.getElementById('shopPane' + i);
-            if (tab) tab.classList.toggle('active', i === advShopTab);
-            if (pane) pane.style.display = i === advShopTab ? '' : 'none';
-        }
-        advSyncDaily();
-        let max = advMaxHp();
-        // 分頁 2：雞塊大冒險
-        let cells = [];
-        cells.push(advShopCell({ id: 'advCell_sauce', icon: advSauceIcon(46), name: '糖醋醬', sub: `${ADV_SHARDS_PER_SAUCE} 碎片 → 1 瓶（持有 ${advData.sauce}）`, price: advShardPrice(ADV_SHARDS_PER_SAUCE), poor: advData.shards < ADV_SHARDS_PER_SAUCE, action: '[["advExchangeShards",[]]]' }));
-        cells.push(advShopCell({ id: 'advCell_potion', icon: '🧪', name: '恢復藥水', sub: `HP +${ADV_POTION_HEAL}（持有 ${advData.potions}）`, price: advShardPrice(ADV_POTION_COST), poor: advData.shards < ADV_POTION_COST, action: '[["advBuyPotion",[]]]' }));
-        cells.push(advShopCell({ id: 'advCell_wipe', icon: advWipeIcon(46), name: '濕紙巾', sub: `能力 1 點轉移（持有 ${advData.wipes}）`, price: advShardPrice(ADV_WIPE_COST), poor: advData.shards < ADV_WIPE_COST, action: '[["advBuyWipe",[]]]' }));
-        let hasSoda = !!advData.items.soda;
-        cells.push(advShopCell({ id: 'advCell_soda', kind: 'gear', icon: advSodaIcon(46), name: '彈珠汽水', sub: `普通裝備｜${ADV_ITEMS.soda.desc}`, price: hasSoda ? '已擁有' : advShardPrice(ADV_SODA_PRICE), off: hasSoda, poor: !hasSoda && advData.shards < ADV_SODA_PRICE, cls: 'rar-common', action: '[["advBuySoda",[]]]' }));
-        ADV_MOVES.filter(m => m.buy.kind === 'shards').forEach(m => {
-            let own = advOwns(m.key);
-            let price = own ? '已擁有' : (m.buy.kind === 'shards' ? advShardPrice(m.buy.price) : advChickenPrice(m.buy.price));
-            let poor = !own && (m.buy.kind === 'shards' ? advData.shards < m.buy.price : wallet.balance < m.buy.price);
-            cells.push(advShopCell({ id: 'shopItem_' + (m.buy.item || 'mv_' + m.key), kind: 'move', icon: m.icon, name: m.name, sub: `${advRarity(m.key).label} ｜ 威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題 ｜ ${ADV_TYPE_LABEL[m.type]}`, price: price, off: own, poor: poor, cls: 'rar-' + advRarityKey(m.key), action: `[["advBuyMove",["${m.key}"]]]` }));
-        });
-        // 篩選：全部／道具／裝備／招式（沒寫 kind 的是道具）
-        let f = ADV_SHOP_FILTERS[advShopTab] || ADV_SHOP_FILTERS[0];
-        if (!f.some(o => o[0] === advShopFilter)) advShopFilter = 'all';
-        let sel = document.getElementById('shopFilter');
-        if (sel) { sel.innerHTML = f.map(o => `<option value="${o[0]}"${o[0] === advShopFilter ? ' selected' : ''}>${o[1]}</option>`).join(''); sel.style.display = ''; }
-        if (advShopTab === 1 && advShopFilter !== 'all') cells = cells.filter(c => (c.match(/data-kind="(\w+)"/) || [0, 'item'])[1] === advShopFilter);
-        while (cells.length < 9) cells.push('<div class="shop-cell shop-empty"></div>');
-        let p1 = document.getElementById('shopPane1');
-        if (p1) p1.innerHTML = cells.join('');
-        // 分頁 3：其他
-        let week = advWeekId(), done = advData.weekDone === week;
-        let c3 = [advShopCell({ id: 'advCell_weekly', icon: '<span class="chicken-mini" style="width:46px;height:46px;"></span>', name: '每週雞塊', sub: done ? '本週已兌換（下週一再來）' : `${ADV_WEEKLY_SHARDS} 碎片 → ${ADV_WEEKLY_CHICKENS} 雞塊（每週 1 次）`, price: done ? '已兌換' : advShardPrice(ADV_WEEKLY_SHARDS), off: done, poor: !done && advData.shards < ADV_WEEKLY_SHARDS, action: '[["advWeeklyExchange",[]]]' })];
-        while (c3.length < 9) c3.push('<div class="shop-cell shop-empty"></div>');
-        let p2 = document.getElementById('shopPane2');
-        if (p2) p2.innerHTML = c3.join('');
-    }
-    // 補給站右上角的碎片數字旁，跳出「-15」之類的紅色數字（跟雞塊一樣）
-    function advShardFloat(n) { if (n) showChickenFloat('advShopShardCount', (n > 0 ? '+' : '-') + Math.abs(n), n > 0 ? '#10B981' : '#EF4444'); }
-    function advExchangeShards() {
-        if (advData.shards < ADV_SHARDS_PER_SAUCE) { alert(`碎片不足！需要 ${ADV_SHARDS_PER_SAUCE} 個，目前有 ${advData.shards} 個。`); return; }
-        advData.shards -= ADV_SHARDS_PER_SAUCE;
-        advData.sauce += 1;
-        advSave();
-        advRenderShopBox();
-        advShardFloat(-ADV_SHARDS_PER_SAUCE);
-    }
-    function advBuyPotion() {
-        if (advData.shards < ADV_POTION_COST) { alert(`碎片不足！需要 ${ADV_POTION_COST} 個，目前有 ${advData.shards} 個。`); return; }
-        advData.shards -= ADV_POTION_COST;
-        advData.potions += 1;
-        advSave();
-        advRenderShopBox();
-        advShardFloat(-ADV_POTION_COST);
-    }
-    function advBuySoda() {
-        if (advData.items.soda) { alert('已經擁有彈珠汽水了。'); return; }
-        if (advData.shards < ADV_SODA_PRICE) { alert(`碎片不足！需要 ${ADV_SODA_PRICE} 個，目前有 ${advData.shards} 個。`); return; }
-        advData.shards -= ADV_SODA_PRICE;
-        advData.items.soda = true;
-        advSave();
-        advRenderShopBox();
-        advShardFloat(-ADV_SODA_PRICE);
-        advUpdateGearAlerts();
-        alert('🥤 買到彈珠汽水了！\n到「💪 能力值 → 裝備」把它裝備起來吧。');
-    }
-    function advBuyWipe() {
-        if (advData.shards < ADV_WIPE_COST) { alert(`碎片不足！需要 ${ADV_WIPE_COST} 個，目前有 ${advData.shards} 個。`); return; }
-        advData.shards -= ADV_WIPE_COST;
-        advData.wipes += 1;
-        advSave();
-        advRenderShopBox();
-        advShardFloat(-ADV_WIPE_COST);
-    }
-    function advBuyMove(key) {
-        let m = advMoveByKey(key);
-        if (!m || m.buy.kind === 'free') return;
-        if (advOwns(key)) { alert(`已經擁有「${m.name}」了。`); return; }
-        if (m.buy.kind === 'chicken') { buyShopItem(m.buy.item); return; }
-        if (advData.shards < m.buy.price) { alert(`碎片不足！需要 ${m.buy.price} 個，目前有 ${advData.shards} 個。`); return; }
-        if (!confirm(`要用 ${m.buy.price} 個碎片學會「${m.name}」嗎？\n\n${ADV_TYPE_LABEL[m.type]}｜威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''}｜${m.q} 題｜${m.desc}`)) return;
-        advData.shards -= m.buy.price;
-        advData.own[key] = true;
-        advAutoEquip(key);
-        advSave();
-        advRenderShopBox();
-        advShardFloat(-m.buy.price);
-    }
-    // 新學會的招式：如果還有空位就自動裝備
-    function advAutoEquip(key) {
-        advData.eq = advData.eq.filter(k => advOwns(k));
-        if (advOwns(key) && !advData.eq.includes(key) && advData.eq.length < ADV_MAX_EQUIP) advData.eq.push(key);
-        advSave();
-    }
-    function advOnShopPurchase(itemKey) {
-        let m = ADV_MOVES.find(x => x.buy.item === itemKey);
-        if (m) advAutoEquip(m.key);
-        advRenderShopBox();
-    }
-    async function advWeeklyExchange() {
-        let week = advWeekId();
-        if (advData.weekDone === week) { alert('這週已經兌換過了，下週一（台灣時間）再來！'); return; }
-        if (advData.shards < ADV_WEEKLY_SHARDS) { alert(`碎片不足！需要 ${ADV_WEEKLY_SHARDS} 個，目前有 ${advData.shards} 個。`); return; }
-        if (walletBusy) return;
-        if (!ensureLoginBeforeSpend()) return;
-        if (!confirm(`要用 ${ADV_WEEKLY_SHARDS} 個碎片兌換 ${ADV_WEEKLY_CHICKENS} 個雞塊嗎？\n\n每週只能兌換 1 次。`)) return;
-        walletBusy = true;
-        try {
-            let data = await walletRpc('weekly_exchange', {});
-            advData.shards -= ADV_WEEKLY_SHARDS;
-            advData.weekDone = week;
-            advSave();
-            let sc = document.getElementById('advShopShardCount'); if (sc) sc.textContent = advData.shards;
-            advShardFloat(-ADV_WEEKLY_SHARDS);
-            applyWallet(data, getLocalDateStr());
-            showChickenFloat('chickenShopCountDisplay', '+' + ADV_WEEKLY_CHICKENS, '#10B981');
-            updateChickenShopUI();
-        } catch (e) {
-            let m = String((e && e.message) || '');
-            if (m.includes('weekly_used')) { advData.weekDone = week; advSave(); alert('這週已經兌換過了（伺服器紀錄），下週一再來！'); }
-            else if (m.includes('weekly_exchange') && (m.includes('function') || m.includes('schema'))) alert('伺服器還沒更新：請先在 Supabase 執行 supabase_adv_v3_2.sql。');
-            else alert(`❌ 兌換失敗：${walletErrorMessage(e)}`);
-            refreshWallet();
-        } finally {
-            walletBusy = false;
-            advRenderShopBox();
-        }
-    }
+<div id="examAdvancedModal" class="modal">
+    <div class="modal-content sm-modal">
+        <div class="sm-head"><b>聽力測驗設定</b><span class="close-modal sm-x" data-on-click='[["closeExamAdvancedModal",[]]]'>&times;</span></div>
+        <div class="sm-grp">題目</div><div class="sm-list"><div class="sm-row"><span class="t">只考加星號（*）的單字</span><label class="switch"><input type="checkbox" id="examOnlyStarred" data-on-change='[["saveExamAppSettings",[]]]'><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">題目數量<small>0 為全部</small></span><input type="number" class="sm-num" id="examQuestionCount" value="0" min="0" data-on-input='[["saveExamAppSettings",[]]]'></div></div><div class="sm-grp">作答</div><div class="sm-list"><div class="sm-row"><span class="t">作答秒數</span><input type="number" class="sm-num" id="examAnswerTime" value="26" min="5" max="120" data-on-input='[["saveExamAppSettings",[]]]'></div><div class="sm-row"><span class="t">語音輸入中文<small>中文欄位旁會有麥克風按鈕</small></span><label class="switch"><input type="checkbox" id="examVoiceChi" data-on-change='[["saveExamAppSettings",[]],["applyVoiceChiButtons",[]]]'><span class="slider-toggle"></span></label></div></div><div class="sm-grp">朗讀</div><div class="sm-list"><div class="sm-row col"><div class="top"><span class="t">語速</span><span id="examSpeedValue" class="speed-val">0.80 倍</span></div><input type="range" id="examSpeakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" data-on-input='[["updateSpeedDisplay",["examSpeakRate","examSpeedValue"]],["saveExamAppSettings",[]],["updateSliderProgress",["$this"]]]'></div><div class="sm-row"><span class="t">每個單字唸幾次</span><input type="number" class="sm-num" id="examRepeatCount" value="1" min="1" max="5" data-on-input='[["saveExamAppSettings",[]]]'></div><div class="sm-row"><span class="t">單字間隔秒數</span><input type="number" class="sm-num" id="examPauseTime" value="1" min="0" max="10" data-on-input='[["saveExamAppSettings",[]]]'></div></div>
+        <button class="action-btn-primary sm-ok" data-on-click='[["closeExamAdvancedModal",[]]]'>確定</button>
+    </div>
+</div>
 
-    // ── 戰鬥狀態 ──
-    let adv = { pickLevel: 1, runId: 0, active: false, busy: false, level: null, words: [], cnWords: [], decks: { all: [], cn: [] }, player: null, enemy: null, round: 1, actionsLeft: 0, actionsTotal: 0, move: null, q: null, micOk: false };
-    let advRec = null, advListening = false, advAlts = [], advErr = '', advPressAt = 0, advIgnore = false, advShort = false, advWatch = null, advStarted = false, advLatched = false, advSkipUp = false;
+<div id="advancedModal" class="modal">
+    <div class="modal-content sm-modal">
+        <div class="sm-head"><b>聽力練習設定</b><span class="close-modal sm-x" data-on-click='[["closeAdvancedModal",[]]]'>&times;</span></div>
+        <div class="sm-grp">題目</div><div class="sm-list"><div class="sm-row"><span class="t">只選加星號（*）的單字</span><label class="switch"><input type="checkbox" id="onlyStarred" data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">隨機播放</span><label class="switch"><input type="checkbox" id="enableShuffle" data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">循環播放</span><label class="switch"><input type="checkbox" id="enableLoop" data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div></div><div class="sm-grp">朗讀內容</div><div class="sm-list"><div class="sm-row"><span class="t" data-t-en="拼讀字母（a-p-p-l-e）" data-t-ko="拼讀音節（사-과-나-무）">拼讀字母（a-p-p-l-e）</span><label class="switch"><input type="checkbox" id="enableSpell" checked data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">播放中文意思</span><label class="switch"><input type="checkbox" id="enableChinese" checked data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div><div class="sm-row"><span class="t">播放詞性</span><label class="switch"><input type="checkbox" id="enablePOS" checked data-on-change='[["saveAppSettings",[]]]'><span class="slider-toggle"></span></label></div></div><div class="sm-grp">朗讀</div><div class="sm-list"><div class="sm-row col"><div class="top"><span class="t">語速</span><span id="speedValue" class="speed-val">0.80 倍</span></div><input type="range" id="speakRate" min="0.5" max="1.5" step="0.05" value="0.8" class="range-slider" data-on-input='[["updateSpeedDisplay",["speakRate","speedValue"]],["saveAppSettings",[]],["updateSliderProgress",["$this"]]]'></div><div class="sm-row"><span class="t">每個單字唸幾次</span><input type="number" class="sm-num" id="repeatCount" value="1" min="1" max="5" data-on-input='[["saveAppSettings",[]]]'></div><div class="sm-row"><span class="t">單字之間停頓秒數</span><input type="number" class="sm-num" id="pauseTime" value="2" min="0" max="10" data-on-input='[["saveAppSettings",[]]]'></div></div>
+        <button class="action-btn-primary sm-ok" data-on-click='[["closeAdvancedModal",[]]]'>確定</button>
+    </div>
+</div>
 
-    function advWait(ms) { return new Promise(r => setTimeout(r, ms)); }
-    function advAnimate(el, frames, opts) {
-        if (!el) return advWait((opts && opts.duration) || 300);
-        try { return el.animate(frames, opts).finished.catch(() => {}); } catch (e) { return advWait((opts && opts.duration) || 300); }
-    }
-    function advShuffle(a) {
-        for (let i = a.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-        return a;
-    }
-    function advWordKey(w) { return String(w.english || '').toLowerCase(); }
-    function advNextWord(kind) {
-        let filt = kind === 'cn' ? (w => !!w.chinese) : (() => true);
-        let pool = adv.words.filter(filt);
-        if (!adv.seen) adv.seen = new Set();
-        let fresh = pool.filter(w => !adv.seen.has(advWordKey(w)));
-        if (!fresh.length) {                       // 全部出現過一輪了：重新開始一輪
-            pool.forEach(w => adv.seen.delete(advWordKey(w)));
-            fresh = pool.slice();
-        }
-        let w = fresh[Math.floor(Math.random() * fresh.length)];
-        adv.seen.add(advWordKey(w));
-        return w;
-    }
-    // 選項（干擾答案）：先從這場還沒出現過的單字挑，不夠才用出現過的；值不能重複、不能等於正確答案
-    function advPickDistractors(answer, n, filt, valueOf) {
-        let ans = valueOf(answer), vals = new Set([ans]), out = [];
-        let pool = adv.words.filter(x => x !== answer && filt(x));
-        let fresh = advShuffle(pool.filter(x => !adv.seen.has(advWordKey(x))));
-        let used = advShuffle(pool.filter(x => adv.seen.has(advWordKey(x))));
-        for (let x of fresh.concat(used)) {
-            if (out.length >= n) break;
-            let v = valueOf(x);
-            if (!v || vals.has(v)) continue;
-            vals.add(v); out.push(x);
-        }
-        out.forEach(x => adv.seen.add(advWordKey(x)));
-        return out;
-    }
-    function advSetLog(text) {
-        let el = document.getElementById('advLog');
-        if (el) el.textContent = text;
-    }
-    function advSpeakWord(text) {
-        try {
-            let u = new SpeechSynthesisUtterance(text);
-            let v = getSelectedVoiceForLearning();
-            if (v) u.voice = v;
-            u.lang = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
-            u.rate = 0.85;
-            let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
-            u.volume = Math.max(0, Math.min(1, (parseInt(sysVol) || 100) / 100));
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(u);
-        } catch (e) {}
-    }
-    function advActorCenter(el) {
-        let stage = document.getElementById('advStage');
-        return { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2, w: stage ? stage.clientWidth : 300 };
-    }
-    // 兩個角色中心的位移量（要除以畫面縮放比例，電腦版整個畫面有放大）
-    function advDelta(fromEl, toEl) {
-        let a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
-        let k = (fromEl.offsetWidth ? a.width / fromEl.offsetWidth : 1) || 1;
-        return { dx: ((b.left + b.width / 2) - (a.left + a.width / 2)) / k, dy: ((b.top + b.height / 2) - (a.top + a.height / 2)) / k };
-    }
-    function advFloat(actorEl, text, color) {
-        let stage = document.getElementById('advStage');
-        if (!stage || !actorEl) return;
-        let c = advActorCenter(actorEl);
-        let d = document.createElement('div');
-        d.className = 'adv-float';
-        d.textContent = text;
-        if (color) d.style.color = color;
-        d.style.left = c.x + 'px';
-        d.style.top = (actorEl.offsetTop - 4) + 'px';
-        stage.appendChild(d);
-        advAnimate(d, [{ opacity: 1, transform: 'translate(-50%, 0)' }, { opacity: 1, transform: 'translate(-50%, -22px)', offset: 0.6 }, { opacity: 0, transform: 'translate(-50%, -34px)' }], { duration: 900, easing: 'ease-out' }).then(() => d.remove());
-    }
-    function advFx(html, x, y, size) {
-        let fx = document.getElementById('advFx');
-        if (!fx) return null;
-        let d = document.createElement('div');
-        d.innerHTML = html;
-        d.style.left = (x - size / 2) + 'px';
-        d.style.top = (y - size / 2) + 'px';
-        d.style.width = size + 'px';
-        d.style.height = size + 'px';
-        d.style.fontSize = (size * 0.8) + 'px';
-        d.style.lineHeight = size + 'px';
-        d.style.textAlign = 'center';
-        fx.appendChild(d);
-        return d;
-    }
-    function advUpdateHud() {
-        let p = adv.player, e = adv.enemy;
-        if (!p || !e) return;
-        let pf = document.getElementById('advPlayerFill'), ef = document.getElementById('advEnemyFill');
-        if (pf) { pf.style.width = (Math.max(0, p.hp) / p.max * 100) + '%'; pf.classList.toggle('low', p.hp / p.max <= 0.34); }
-        if (ef) { ef.style.width = (Math.max(0, e.hp) / e.max * 100) + '%'; ef.classList.toggle('low', e.hp / e.max <= 0.34); }
-        let pt = document.getElementById('advPlayerHpText'), et = document.getElementById('advEnemyHpText');
-        if (pt) pt.textContent = `${Math.max(0, p.hp)}/${p.max}` + (p.shieldMax ? ` 🛡️${p.shield}` : '');
-        if (et) et.textContent = `${Math.max(0, e.hp)}/${e.max}` + (e.shield ? ` 🛡️${e.shield}` : '');
-        let info = document.getElementById('advTopInfo');
-        if (info) info.textContent = `第 ${adv.level.id} 關 ｜ 回合 ${adv.round} ｜ 行動 ${Math.min(adv.actionsTotal - adv.actionsLeft + 1, adv.actionsTotal)}/${adv.actionsTotal}`;
-    }
-    // 戰鬥場景：夜市小吃攤街景（藍紅帆布攤 + 紅燈籠 + 木檯）
-    function advStageBG() {
-        const FONT = `font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif"`;
-        let seed = 17;
-        const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-        const glow = (x, y, r, c, o) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity="${o}"/>`;
-        const lan = (x, y, r) => `<g><line x1="${x}" y1="${y - r * 1.4}" x2="${x}" y2="${y}" stroke="#1E1B4B" stroke-width="1"/><ellipse cx="${x}" cy="${y + r * 1.1}" rx="${r}" ry="${r * 1.25}" fill="#EF4444" stroke="#7F1D1D" stroke-width="0.8"/><rect x="${x - r * 0.45}" y="${y - 1}" width="${r * 0.9}" height="2.2" fill="#FCD34D"/><rect x="${x - r * 0.45}" y="${y + r * 2.2}" width="${r * 0.9}" height="2" fill="#FCD34D"/><ellipse cx="${x - r * 0.3}" cy="${y + r * 0.8}" rx="${r * 0.25}" ry="${r * 0.5}" fill="#FFFFFF" opacity="0.3"/></g>`;
-        const sign = (x, y, w, h, txt, bg, fg, fs) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${bg}" stroke="#00000055" stroke-width="0.8"/><text x="${x + w / 2}" y="${y + h / 2 + fs * 0.36}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${fg}" ${FONT}>${txt}</text>`;
-        const people = (xs, y) => xs.map((x, i) => `<g opacity="0.9"><circle cx="${x}" cy="${y}" r="3" fill="#1F2937"/><path d="M ${x - 4} ${y + 12} q 0 -9 4 -9 q 4 0 4 9 z" fill="${['#334155', '#475569', '#1E293B', '#3F3F46'][i % 4]}"/></g>`).join('');
-        let s = `<rect width="340" height="150" fill="url(#sgE1)"/><rect width="340" height="26" fill="#1B1740"/>`;
-        s += sign(130, 4, 80, 18, '好吃小吃', '#B91C1C', '#FEF3C7', 12) + sign(10, 6, 56, 14, '排骨麵', '#E0F2FE', '#1D4ED8', 10) + sign(274, 6, 56, 14, '腳底按摩', '#FEF9C3', '#92400E', 9);
-        for (let i = 0; i < 10; i++) s += lan(14 + i * 34, 22 + (i % 2) * 3, 4.8);
-        s += `<path d="M 6 58 L 150 58 L 160 78 L -4 78 Z" fill="#2563EB"/><path d="M 6 58 L 40 58 L 30 78 L -4 78 Z" fill="#DC2626"/><path d="M 78 58 L 112 58 L 106 78 L 66 78 Z" fill="#DC2626"/>`;
-        s += `<path d="M 190 58 L 334 58 L 344 78 L 180 78 Z" fill="#DC2626"/><path d="M 224 58 L 258 58 L 252 78 L 212 78 Z" fill="#2563EB"/><path d="M 300 58 L 334 58 L 344 78 L 290 78 Z" fill="#2563EB"/>`;
-        s += `<rect x="14" y="78" width="136" height="30" fill="#3A2A55"/><rect x="190" y="78" width="136" height="30" fill="#3A2A55"/>`;
-        s += glow(82, 88, 40, '#FDE68A', 0.28) + glow(258, 88, 40, '#FDE68A', 0.28);
-        for (let i = 0; i < 6; i++) s += `<ellipse cx="${24 + i * 20}" cy="${86 + (i % 2) * 2}" rx="4" ry="7" fill="#B45309" stroke="#451A03" stroke-width="0.8"/>`;
-        for (let i = 0; i < 6; i++) s += `<ellipse cx="${200 + i * 20}" cy="${86 + (i % 2) * 2}" rx="4" ry="7" fill="#92400E" stroke="#451A03" stroke-width="0.8"/>`;
-        s += `<rect x="160" y="60" width="30" height="48" fill="#241A3D"/>` + glow(175, 70, 16, '#FCD34D', 0.3) + people([164, 172, 180, 187], 84);
-        s += `<rect x="0" y="108" width="340" height="42" fill="url(#sgE2)"/><rect x="0" y="104" width="340" height="6" fill="#8B5E34"/><path d="M 0 106 H 340" stroke="#C08A52" stroke-width="1"/>`;
-        const cols = ['#FCD34D', '#F87171', '#60A5FA'];
-        for (let i = 0; i < 8; i++) s += glow(rnd() * 340, 100 + rnd() * 40, 2 + rnd() * 4, cols[i % 3], 0.35);
-        return `<svg class="adv-stage-bg" viewBox="0 0 340 150" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
-            <linearGradient id="sgE1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#120E30"/><stop offset="1" stop-color="#3A2342"/></linearGradient>
-            <linearGradient id="sgE2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A2E22"/><stop offset="1" stop-color="#1F110C"/></linearGradient></defs>${s}</svg>`;
-    }
-    // 戰鬥場景：便利商店店內（日光燈 + 貨架 + 冷藏櫃 + 地磚）
-    function advStoreStageBG() {
-        const FONT = `font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif"`;
-        let seed = 23;
-        const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-        const cols = ['#F87171', '#60A5FA', '#FBBF24', '#34D399', '#A78BFA', '#F472B6', '#FB923C'];
-        let s = `<rect width="340" height="150" fill="url(#sgS1)"/>`;
-        for (let i = 0; i < 4; i++) s += `<rect x="${18 + i * 84}" y="4" width="64" height="5" rx="2.5" fill="#FFFFFF"/><ellipse cx="${50 + i * 84}" cy="14" rx="44" ry="10" fill="#FFFFFF" opacity="0.25"/>`;
-        s += `<rect x="0" y="22" width="340" height="12" fill="#1E3A8A"/><rect x="0" y="22" width="340" height="2" fill="#F97316"/><rect x="0" y="32" width="340" height="2" fill="#22C55E"/>`;
-        s += `<text x="170" y="31.5" font-size="8" font-weight="900" text-anchor="middle" fill="#FFFFFF" ${FONT}>便利商店　24H</text>`;
-        // 左邊：零食貨架
-        s += `<rect x="6" y="38" width="140" height="68" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1"/>`;
-        for (let r = 0; r < 3; r++) {
-            s += `<rect x="6" y="${58 + r * 22}" width="140" height="3" fill="#94A3B8"/>`;
-            for (let x = 10; x < 140; x += 11 + Math.floor(rnd() * 4)) s += `<rect x="${x}" y="${43 + r * 22 + Math.floor(rnd() * 3)}" width="8" height="${13 - Math.floor(rnd() * 3)}" rx="1.5" fill="${cols[Math.floor(rnd() * cols.length)]}"/>`;
-        }
-        // 右邊：飲料冷藏櫃
-        s += `<rect x="194" y="38" width="140" height="68" fill="#DBEAFE" stroke="#1E40AF" stroke-width="1.5"/>`;
-        for (let i = 1; i < 4; i++) s += `<line x1="${194 + i * 35}" y1="38" x2="${194 + i * 35}" y2="106" stroke="#1E40AF" stroke-width="1.2"/>`;
-        for (let r = 0; r < 3; r++) for (let x = 198; x < 330; x += 9) s += `<rect x="${x}" y="${42 + r * 21}" width="5" height="15" rx="2" fill="${['#86EFAC', '#FCA5A5', '#FDE68A', '#93C5FD'][(r + Math.floor(x / 9)) % 4]}" opacity="0.95"/>`;
-        s += `<rect x="194" y="38" width="140" height="68" fill="#FFFFFF" opacity="0.18"/>`;
-        // 中間：自動門
-        s += `<rect x="150" y="38" width="40" height="68" fill="#BAE6FD" stroke="#64748B" stroke-width="1"/><line x1="170" y1="38" x2="170" y2="106" stroke="#64748B" stroke-width="1"/>`;
-        // 地磚
-        s += `<rect x="0" y="106" width="340" height="44" fill="url(#sgS2)"/>`;
-        for (let i = -6; i <= 16; i++) s += `<line x1="${170 + i * 30}" y1="106" x2="${170 + i * 60}" y2="150" stroke="#CBD5E1" stroke-width="1"/>`;
-        [118, 132].forEach(y => { s += `<line x1="0" y1="${y}" x2="340" y2="${y}" stroke="#CBD5E1" stroke-width="1"/>`; });
-        return `<svg class="adv-stage-bg" viewBox="0 0 340 150" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
-            <linearGradient id="sgS1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E2E8F0"/><stop offset="1" stop-color="#F8FAFC"/></linearGradient>
-            <linearGradient id="sgS2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E5E7EB"/><stop offset="1" stop-color="#F9FAFB"/></linearGradient></defs>${s}</svg>`;
-    }
-    function advBuildStage() {
-        let st = document.getElementById('advStage');
-        st.innerHTML = (adv.level && adv.level.id >= 11 ? advStoreStageBG() : advStageBG()) + `
-            <div class="adv-hud adv-hud-enemy"><div class="adv-enemy-tag" id="advEnemyTag" style="display:none"></div><div><span id="advEnemyName">${escapeHTML(adv.enemy.name)}</span> <span id="advEnemyHpText"></span></div><div class="adv-hpbar"><div class="adv-hpfill" id="advEnemyFill"></div></div></div>
-            <div class="adv-actor adv-enemy" id="advEnemy">${advEnemySVG(adv.enemy.sprite)}</div>
-            <div class="adv-actor adv-player" id="advPlayer">${advChickenSVG()}</div>
-            <div class="adv-hud adv-hud-player"><div>雞塊 <span id="advPlayerHpText"></span></div><div class="adv-hpbar"><div class="adv-hpfill" id="advPlayerFill"></div></div></div>
-            <div class="adv-fx" id="advFx"></div>`;
-        advUpdateHud();
-    }
-
-    // ── 開始 / 結束 ──
-    function advAbort() {
-        advStopTimer();
-        try { advCloseReward(); } catch (e) {}
-        adv.runId++;
-        adv.active = false;
-        adv.busy = false;
-        adv.q = null;
-        clearTimeout(advWatch);
-        advIgnore = true;
-        if (advRec && advListening) { try { advRec.abort(); } catch (e) {} }
-        advListening = false;
-        try { window.speechSynthesis.cancel(); } catch (e) {}
-        releaseWakeLock();
-    }
-    // 戰鬥畫面的高度：開戰時用當下的螢幕高度算好固定下來（打字跳出鍵盤時畫面不會被擠動）
-    function advLockBattleHeight() {
-        let b = document.querySelector('#adventureBattleView .adv-battle');
-        if (!b) return;
-        let h = window.innerWidth <= 768 ? Math.max(330, Math.round(window.innerHeight * 0.6 - 44)) : 440;
-        b.style.setProperty('--adv-h', h + 'px');
-    }
-    function advStartBattle(levelId) {
-        let lv = ADV_LEVELS.find(l => l.id === levelId);
-        if (!lv || !advUnlocked(lv.id)) return;
-        let words = advGetWords();
-        if (words.length < lv.minWords) { alert(`⚠️ 這一關需要範圍內至少 ${lv.minWords} 個單字，請多勾選一些題庫。`); return; }
-        advAbort();
-        advSyncDaily();
-        if (advData.hp <= 0) { alert('雞塊沒有體力了，明天 00:00 會恢復。'); advRenderLevelPage(); return; }
-        if (advData.cleared[lv.id]) {      // 已通關的關卡：每天只能重複挑戰 3 次（沒通關的關卡不限次數）
-            if (advReplaysLeft() <= 0) { alert(`今天重複挑戰已通關關卡的次數用完了（今天共 ${advReplayCap()} 次）。\n\n還沒通關的關卡可以一直挑戰；背包裡的「冒險卷」可以讓今天多挑戰 1 次。`); advRenderLevelPage(); return; }
-            let used = advReplaysUsed();
-            advData.replayDay = getLocalDateStr();
-            advData.replays = used + 1;
-            advSave();
-        }
-        adv.words = words;
-        adv.cnWords = words.filter(w => w.chinese);
-        adv.decks = { all: [], cn: [] };
-        adv.seen = new Set();          // 這場戰鬥已經出現過的單字
-        let s = advPlayerStats();
-        adv.level = lv;
-        adv.moves = advEquipped();
-        adv.player = { hp: Math.min(advData.hp, s.hp), max: s.hp, atk: s.atk, agi: s.agi, def: s.def, int: s.int, luck: s.luck, shield: advShieldMax(s.int), shieldMax: advShieldMax(s.int) };
-        adv.phases = Array.isArray(lv.phases) && lv.phases.length ? lv.phases : [lv];
-        adv.phase = 0;
-        adv.enemy = advMakeEnemy(adv.phases[0]);
-        adv.sealed = [];
-        adv.round = 1;
-        adv.gear = advData.gear.filter(Boolean);    // 這場戰鬥帶的裝備（左手、右手）
-        if (advHasGear('bag')) { adv.player.shield += ADV_BAG_SHIELD; adv.player.shieldMax += ADV_BAG_SHIELD; }
-        advData.hitPrev = advHitTotal();             // 命中的「比上次」用這個比較
-        adv.itemUsed = false;
-        adv.stamps = new Set(); adv.redeemed = false; adv.stampTold = false;   // 店員：集點卡
-        adv.post = null; adv.shifted = false; adv.cd = 0; adv.cdFresh = false; adv.billNext = false;
-        adv.micOk = false;
-        adv.active = true;
-        adv.busy = false;
-        requestWakeLock();
-        if (!document.getElementById('adventureBattleView').classList.contains('active')) advLockBattleHeight();
-        switchView('adventureBattleView');
-        advBuildStage();
-        if (adv.enemy.special === 'coffee') { advCoffeeBurn(adv.runId); return; }
-        advBeginRound();
-    }
-    // 美式咖啡：戰鬥一開始燙傷雞塊（直接扣體力，護盾越高燙得越輕）
-    async function advCoffeeBurn(id) {
-        adv.busy = true;
-        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
-        document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">☕ ${escapeHTML(adv.enemy.name)}冒著熱氣…</div>`;
-        await advWait(700);
-        if (id !== adv.runId) return;
-        let dmg = Math.max(0, ADV_COFFEE_BURN - adv.player.shieldMax);
-        advFloat(E, '太燙了！', '#B45309');
-        if (dmg > 0) {
-            adv.player.hp = Math.max(0, adv.player.hp - dmg);
-            advData.hp = adv.player.hp;
-            advSave();
-            advSetLog(`☕ 好燙！雞塊被燙傷了，受到 ${dmg} 點傷害`);
-            advUpdateHud();
-            await advHurt(P, dmg, false, '-' + dmg);
-        } else {
-            advSetLog('☕ 好燙！還好護盾夠厚，雞塊沒有被燙傷');
-            await advWait(500);
-        }
-        if (id !== adv.runId) return;
-        await advWait(500);
-        if (id !== adv.runId) return;
-        if (adv.player.hp <= 0) { await advLose(id); return; }
-        advBeginRound();
-    }
-    // 店員：頭上的牌子（崗位／下班倒數）
-    function advClerkTag() {
-        let el = document.getElementById('advEnemyTag');
-        if (!el) return;
-        let t = '';
-        if (adv.enemy && adv.enemy.special === 'clerk') t = adv.shifted ? (adv.cd > 0 ? `⏰ 下班倒數 ${adv.cd}` : '⏰ 下班了') : adv.post ? `🏷️ ${adv.post.name}` : '';
-        el.textContent = t;
-        el.style.display = t ? '' : 'none';
-        el.classList.toggle('cd', !!adv.shifted);
-    }
-    // 店員：HP 低於 20 → 交班（敏捷 +6、智慧 +4、攻擊 +2、HP +10；帶繳費單的話敏捷只剩 5、幸運 0）
-    async function advClerkShift(id) {
-        let e = adv.enemy;
-        if (!e || e.special !== 'clerk' || adv.shifted || e.hp <= 0 || e.hp >= ADV_CLERK_SHIFT_HP) return;
-        adv.shifted = true; adv.post = null; adv.cd = ADV_CLERK_CD; adv.cdFresh = true;
-        const E = document.getElementById('advEnemy');
-        e.agi += 6; e.int += 4; e.atk += 2; e.hp = Math.min(e.max, e.hp + 10);
-        e.shieldMax = advShieldMax(e.int); e.shield = e.shieldMax;
-        advSetLog(`🔔 交班中！${e.name}換上新的同事：敏捷、攻擊力、護盾都提升了，還回復 10 點體力`);
-        advFloat(E, '交班中！', '#F97316');
-        advUpdateHud(); advClerkTag();
-        await advWait(1100);
-        if (id !== adv.runId) return;
-        if (advHasGear('bill')) {
-            e.agi = 5; e.luck = 0; adv.billNext = true;
-            advSetLog('🧾 救命！是繳費單！（店員被繳費單纏住，動作變慢了）');
-            advFloat(E, '救命！是繳費單！', '#DC2626');
-            advUpdateHud();
-            await advWait(1200);
-        }
-    }
-    // 店員：兌換集點卡（不用考英文、不消耗行動；一場一次）
-    function advRedeemStamps() {
-        if (!adv.active || adv.busy || adv.q || adv.redeemed || !adv.stamps || adv.stamps.size < ADV_STAMP_NEED) return;
-        adv.redeemed = true;
-        adv.player.atk += ADV_STAMP_ATK;
-        let before = adv.player.hp;
-        adv.player.hp = Math.min(adv.player.max, adv.player.hp + ADV_STAMP_HEAL);
-        advData.hp = adv.player.hp; advSave();
-        advShowMenu();
-        advSetLog(`🎫 兌換集點卡！雞塊這場攻擊力 +${ADV_STAMP_ATK}${adv.player.hp > before ? `，HP +${adv.player.hp - before}` : ''}（不消耗行動）`);
-        advFloat(document.getElementById('advPlayer'), `攻擊 +${ADV_STAMP_ATK}`, '#7C3AED');
-    }
-    // 敵人資料：護盾 = 智慧 ÷ 2（最多 5）；有特別指定 shield 的（御飯糰 12 點）照指定
-    function advMakeEnemy(d) {
-        let sh = (typeof d.shield === 'number') ? d.shield : advShieldMax(d.int);
-        return { name: d.name, sprite: d.sprite, special: d.special || '', hp: d.hp, max: d.hp, atk: d.atk, agi: d.agi, def: d.def, int: d.int || 0, shield: sh, shieldMax: sh, luck: d.luck || 0, moveName: d.moveName || '攻擊', movePower: d.movePower || 0 };
-    }
-    // 第一階段被打倒 → 下一個敵人登場（雞塊的體力、護盾延續）
-    async function advNextPhase(id) {
-        const E = document.getElementById('advEnemy');
-        let old = adv.enemy;
-        adv.phase++;
-        let nxt = advMakeEnemy(adv.phases[adv.phase]);
-        document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">💥 ${escapeHTML(old.name)}被打倒了…等等！裡面的${escapeHTML(nxt.name)}跳出來了！</div>`;
-        await advAnimate(E, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.2) rotate(200deg)', opacity: 0 }], { duration: 520, easing: 'ease-in' });
-        if (id !== adv.runId) return;
-        adv.enemy = nxt;
-        // 新的敵人登場：雞塊的行動次數依新敵人的敏捷重新計算（+1 是因為打倒上一隻的這一招等一下會扣掉 1 次）
-        adv.actionsTotal = advActionCount(adv.player.agi, nxt.agi);
-        adv.actionsLeft = adv.actionsTotal + 1;
-        adv.sealed = [];
-        if (E) E.innerHTML = advEnemySVG(nxt.sprite);
-        let nm = document.getElementById('advEnemyName');
-        if (nm) nm.textContent = nxt.name;
-        advUpdateHud();
-        await advAnimate(E, [{ transform: 'translateY(-40px) scale(0.6)', opacity: 0 }, { transform: 'translateY(6px) scale(1.08)', opacity: 1, offset: 0.7 }, { transform: 'translateY(0) scale(1)', opacity: 1 }], { duration: 560, easing: 'ease-out' });
-        if (id !== adv.runId) return;
-        advFloat(E, '登場！', '#F97316');
-        await advWait(500);
-    }
-    // 敵人倒下：還有下一階段就換人（回傳 false），沒有就勝利（回傳 true）
-    async function advEnemyDown(id) {
-        if (adv.enemy.hp > 0) return false;
-        if (adv.phases && adv.phase < adv.phases.length - 1) { await advNextPhase(id); return false; }
-        await advWin(id);
-        return true;
-    }
-    function advQuit() {
-        if (adv.active && !confirm('要離開戰鬥嗎？這場戰鬥不會有任何獎勵。')) return;
-        advAbort();
-        advBackToLevel();
-    }
-    function advBackToMenu() { advAbort(); advBackToLevel(); }
-    function advRetry() { if (adv.level) advStartBattle(adv.level.id); }
-
-    // ── 回合 ──
-    function advBeginRound() {
-        if (adv.enemy.special === 'clerk') {
-            if (adv.shifted) {
-                if (adv.cdFresh) adv.cdFresh = false; else adv.cd--;
-                if (adv.cd <= 0) { advClerkTag(); advLose(adv.runId, 'shift'); return; }
-            } else {
-                adv.post = ADV_CLERK_POSTS[Math.floor(Math.random() * ADV_CLERK_POSTS.length)];
-            }
-            advClerkTag();
-        }
-        adv.actionsTotal = advActionCount(adv.player.agi, adv.enemy.agi);
-        adv.actionsLeft = adv.actionsTotal;
-        adv.busy = false;
-        adv.sealed = [];
-        if (adv.enemy.special === 'seal') {
-            // 只封印「本來能用」的招式，而且一定留至少 1 招能用（避免剩下的招式剛好因為別的原因不能用而卡住）
-            let keys = advShuffle(adv.moves.filter(m => !advMoveBlock(m)).map(m => m.key));
-            adv.sealed = keys.slice(0, Math.min(2, Math.max(0, keys.length - 1)));
-        }
-        advShowMenu();
-        if (adv.enemy.special === 'clerk' && !adv.shifted && adv.post) {
-            advSetLog(`🏪「歡迎光臨！今天我負責${adv.post.name}」`);
-            advFloat(document.getElementById('advEnemy'), adv.post.name, '#2563EB');
-        }
-        if (adv.billNext) { adv.billNext = false; advSetLog('🧾 條碼刷不過..'); advFloat(document.getElementById('advEnemy'), '條碼刷不過..', '#64748B'); }
-        if (adv.sealed.length) {
-            advSetLog(`🧾 取票失敗！這回合有 ${adv.sealed.length} 招被封印（灰色的不能用）`);
-            advFloat(document.getElementById('advEnemy'), '取票失敗！', '#F97316');
-        }
-    }
-    // 這招每一下的傷害：攻擊力 + 招式威力 + 熟練度 − 對方防禦（至少 1）；茶葉蛋被字卡打時 +2
-    function advHitDamage(m) {
-        let bonus = (adv.enemy.special === 'egg' && m.type === 'card') ? ADV_EGG_CARD_BONUS : 0;
-        let wk = ADV_WEAK_BONUS[adv.enemy.special];
-        if (wk && wk.type === m.type) bonus += wk.bonus;
-        return advDamage(adv.player.atk, m.power + advMastery(m.key) + bonus, adv.enemy.def);
-    }
-    // 這招因為題庫或瀏覽器的關係不能用：回傳原因（可以用就回傳空字串）
-    function advMoveBlock(m) {
-        if ((m.mode === 'choice' || m.mode === 'listenCn') && adv.cnWords.length < 4) return '缺中文';
-        if (m.mode === 'speakCn' && adv.cnWords.length < 1) return '缺中文';
-        if (m.mode === 'typeCn' && adv.cnWords.length < 1) return '缺中文';
-        if (m.type === 'speak' && !getSpeechRecognitionCtor()) return '不支援';
-        return '';
-    }
-    function advShowMenu() {
-        adv.q = null;
-        advUpdateHud();
-        let speakOk = !!getSpeechRecognitionCtor();
-        let moves = adv.moves.map(m => {
-            let why = advMoveBlock(m), off = !!why;
-            let sealed = (adv.sealed || []).includes(m.key);
-            if (sealed) { off = true; why = '封印中'; }
-            let lvl = advMastery(m.key);
-            let per = adv.player.atk + m.power + lvl;      // 不扣敵人防禦：打下去才知道
-            let stamp = adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.has(m.type);
-            return `<button type="button" class="adv-move rar-${advRarityKey(m.key)}${sealed ? ' sealed' : ''}" ${off ? 'disabled' : ''} data-on-click='[["advChooseMove",["${m.key}"]]]'>
-                ${stamp ? '<span class="adv-stamp">已集點</span>' : ''}<b class="nm">${m.icon} ${m.name}${lvl ? ` <span class="adv-lv-chip">Lv.${lvl}</span>` : ''}</b><span class="dmg">傷害 ${m.hits > 1 ? per + '×' + m.hits : per}</span><small>${ADV_TYPE_LABEL[m.type]}${why ? '｜' + why : ''}</small></button>`;
-        }).join('');
-        if (adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.size >= ADV_STAMP_NEED && !adv.redeemed) {
-            moves += `<button type="button" class="adv-move adv-redeem rar-legend" data-on-click='[["advRedeemStamps",[]]]'><b class="nm">🎫 兌換集點卡！</b><span class="dmg">攻擊 +${ADV_STAMP_ATK}・HP +${ADV_STAMP_HEAL}</span><small>不用作答・不消耗行動・一場一次</small></button>`;
-        }
-        let itemBtn = '';
-        if (advHasGear('boba')) {
-            let can = !adv.itemUsed && adv.player.hp <= 3 && adv.player.hp < adv.player.max;
-            itemBtn += `<button type="button" class="adv-item-btn" ${can ? '' : 'disabled'} data-on-click='[["advUseBoba",[]]]'>🧋 喝快喝光的珍珠奶茶　HP +1 <small>${adv.itemUsed ? '（這場已經喝過了）' : '（HP 3 以下可用，一場 1 次）'}</small></button>`;
-        }
-        if (advHasGear('tofu')) itemBtn += `<div class="adv-item-tip">${advTofuIcon(16)} 裝備烤焦臭豆腐：招式失敗時雙方各扣 1 點體力</div>`;
-        if (advHasGear('skewer')) itemBtn += `<div class="adv-item-tip">${advSkewerIcon(16)} 裝備竹籤：攻擊無視對方護盾</div>`;
-        document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">選擇招式！（本回合還可行動 ${adv.actionsLeft} 次）</div><div class="adv-moves">${moves}</div>${itemBtn}`;
-    }
-    function advHasGear(k) { return Array.isArray(adv.gear) && adv.gear.includes(k); }
-    // 快喝光的珍珠奶茶：一場戰鬥限用 1 次，HP 3 以下才能喝，不消耗行動次數
-    function advUseBoba() {
-        if (!adv.active || adv.busy || adv.q || !advHasGear('boba') || adv.itemUsed) return;
-        if (adv.player.hp > 3 || adv.player.hp >= adv.player.max) return;
-        adv.itemUsed = true;
-        adv.player.hp = Math.min(adv.player.max, adv.player.hp + 1);
-        advData.hp = adv.player.hp;
-        advSave();
-        advFloat(document.getElementById('advPlayer'), '+1', '#10B981');
-        advShowMenu();
-        advSetLog('🧋 喝了快喝光的珍珠奶茶，HP +1！');
-    }
-
-    async function advChooseMove(key) {
-        if (!adv.active || adv.busy || adv.q) return;
-        let m = adv.moves.find(x => x.key === key);
-        if (!m || (adv.sealed || []).includes(key)) return;
-        const id = adv.runId;
-        adv.move = m;
-        adv.moveSeq = (adv.moveSeq || 0) + 1;     // 這一次出招的編號：同一招只會結算一次
-        adv.q = { type: 'pending' };
-        if (m.type === 'speak' && !adv.micOk) {
-            adv.busy = true;
-            let mic = await ensureMicPermission();
-            if (id !== adv.runId) return;
-            adv.busy = false;
-            if (!mic.ok) { adv.q = null; if (mic.denied) openMicHelpModal(); else alert(mic.message); return; }
-            adv.micOk = true;
-        }
-        adv.progress = 0;
-        advNextQuestion();
-    }
-    // 出下一題（多題的招式要連續答對 m.q 題）
-    function advNextQuestion() {
-        let m = adv.move;
-        adv.triesLeft = m.tries;
-        if (m.mode === 'choice') advAskCard();
-        else if (m.mode === 'typeCn') advAskTypeCn();
-        else if (m.mode === 'listenChoice' || m.mode === 'listenCn') advAskListenChoice();
-        else if (m.mode === 'listenSpell') advAskListen();
-        else advAskSpeak();
-        advMountTimer();
-    }
-    function advProgText() { let m = adv.move; return m.q > 1 ? `（第 ${adv.progress + 1}/${m.q} 題）` : ''; }
-    // 這一題答對了：還有下一題就繼續，題目答完就發動招式
-    // 命中：每一題記一次（答對 1／答錯或時間到 0），各類與全部都只留最近 20 題
-    function advRecordHit(ok) {
-        let t = adv.move && adv.move.type;
-        if (!t || !advData.hits[t]) return;
-        [t, 'all'].forEach(k => { advData.hits[k].push(ok ? 1 : 0); if (advData.hits[k].length > ADV_HIT_N) advData.hits[k].splice(0, advData.hits[k].length - ADV_HIT_N); });
-    }
-    function advHitPct(arr) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 100) : null; }
-    // 總命中 = 字卡、聽力、朗讀各自最近 20 題合起來算（不會只看最近 20 題而忽略比較弱的類別）
-    function advHitAll() { return ['card', 'listen', 'speak'].reduce((x, k) => x.concat(advData.hits[k] || []), []); }
-    function advHitTotal() { let a = advHitAll(); return a.length >= ADV_HIT_N ? advHitPct(a) : null; }
-    function advQuestionPassed() {
-        advRecordHit(true);
-        adv.progress++;
-        if (adv.progress < adv.move.q) { advNextQuestion(); return; }
-        advResolveMove(true);
-    }
-
-    // ── 作答倒數：每題 15 秒（智慧可增減），時間到 = 招式失敗 ──
-    function advStopTimer() { clearInterval(adv.timer); adv.timer = null; }
-    function advMountTimer() {
-        advStopTimer();
-        let q = adv.q, log = document.getElementById('advLog');
-        if (!adv.active || !q || q.done || !log) return;
-        let total = advAnswerSecs(adv.player.int, adv.enemy.int);
-        adv.timerEnd = Date.now() + total * 1000;
-        adv.timerTotal = total;
-        log.classList.add('has-timer');
-        log.insertAdjacentHTML('beforeend', `<span class="adv-timer" id="advTimer"><svg viewBox="0 0 36 36" width="34" height="34"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(100,116,139,.25)" stroke-width="4"/><circle id="advTimerArc" cx="18" cy="18" r="15" fill="none" stroke="#10B981" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="0" transform="rotate(-90 18 18)"/></svg><b id="advTimerNum">${total}</b></span>`);
-        const tick = () => {
-            let q2 = adv.q;
-            if (!adv.active || !q2 || q2.done || q2 !== q) { advStopTimer(); return; }
-            let left = Math.max(0, adv.timerEnd - Date.now());
-            let arc = document.getElementById('advTimerArc'), num = document.getElementById('advTimerNum');
-            if (arc) { arc.style.strokeDashoffset = String(94.25 * (1 - left / (adv.timerTotal * 1000))); arc.style.stroke = left <= 5000 ? '#EF4444' : '#10B981'; }
-            if (num) { num.textContent = String(Math.ceil(left / 1000)); num.style.color = left <= 5000 ? '#EF4444' : ''; }
-            if (left <= 0) { advStopTimer(); advTimeUp(); }
-        };
-        adv.timer = setInterval(tick, 100);
-    }
-    async function advTimeUp() {
-        let q = adv.q;
-        if (!adv.active || !q || q.done) return;
-        const id = adv.runId;
-        q.done = true;
-        advIgnore = true;
-        if (advRec && advListening) { try { advRec.abort(); } catch (e) {} advListening = false; }
-        clearTimeout(advWatch);
-        try { window.speechSynthesis.cancel(); } catch (e) {}
-        let btns = document.querySelectorAll('#advPanel .adv-opt');
-        if (q.type === 'card' || q.type === 'listenChoice') btns.forEach((b, i) => { if (i === q.correct) b.classList.add('ok'); });
-        let sub = document.getElementById(q.type === 'typeCn' ? 'advCnSub' : q.type === 'listen' ? 'advListenSub' : 'advSpeakHint');
-        if (sub && (q.type === 'typeCn' || q.type === 'listen')) sub.innerHTML = `⏰ 時間到！正確答案：<b>${escapeHTML(q.type === 'typeCn' ? q.word.chinese : q.word.english)}</b>`;
-        else if (sub) sub.textContent = '⏰ 時間到！';
-        let t = document.getElementById('advTimerNum'); if (t) t.textContent = '0';
-        await advWait(1200);
-        if (id !== adv.runId) return;
-        advResolveMove(false);
-    }
-
-    // 字卡（選擇題）
-    function advAskCard() {
-        let w = advNextWord('cn');
-        let wrong = advPickDistractors(w, 3, x => !!x.chinese, x => x.chinese).map(x => x.chinese);
-        let opts = advShuffle([w.chinese, ...wrong]);
-        adv.q = { type: 'card', word: w, opts, correct: opts.indexOf(w.chinese), done: false };
-        let m = adv.move;
-        document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：選出正確的意思</div>
-            <div class="adv-qword">${escapeHTML(w.english)}</div>
-            <div class="adv-opts">${opts.map((o, i) => `<button type="button" class="adv-opt" data-on-click='[["advAnswerCard",[${i}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
-    }
-    async function advAnswerCard(i) {
-        let q = adv.q;
-        if (!adv.active || adv.busy || !q || q.type !== 'card' || q.done) return;
-        const id = adv.runId;
-        q.done = true;
-        let btns = document.querySelectorAll('#advPanel .adv-opt');
-        btns.forEach((b, idx) => { if (idx === q.correct) b.classList.add('ok'); else if (idx === i) b.classList.add('bad'); });
-        let ok = i === q.correct;
-        await advWait(ok ? 450 : 1000);
-        if (id !== adv.runId) return;
-        if (ok) advQuestionPassed(); else advResolveMove(false);
-    }
-
-    // 字卡（輸入中文意思）
-    function advCnNorm(s) { return String(s || '').normalize('NFC').replace(/[\s　，,、；;。.！!？?\/／]/g, '').toLowerCase(); }
-    function advCnMatch(input, chinese) {
-        let a = advCnNorm(input);
-        if (!a) return false;
-        if (a === advCnNorm(chinese)) return true;
-        return String(chinese || '').split(/[；;,，、\/／]/).some(p => {
-            let n = advCnNorm(p.replace(/[（(][^）)]*[）)]/g, ''));
-            return n && n === a;
-        });
-    }
-    function advAskTypeCn() {
-        let w = advNextWord('cn');
-        adv.q = { type: 'typeCn', word: w, done: false };
-        let m = adv.move;
-        document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：輸入這個單字的中文意思</div>
-            <div class="adv-qword">${escapeHTML(w.english)}</div>
-            <div class="adv-input-row">
-                <input type="text" id="advCnInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入中文意思">
-                <button type="button" data-on-click='[["advSubmitCn",[]]]'>送出</button>
-            </div>
-            <div class="adv-qsub" id="advCnSub"></div>`;
-        let inp = document.getElementById('advCnInput');
-        inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); advSubmitCn(); } });
-        setTimeout(() => { try { inp.focus({ preventScroll: true }); } catch (e) {} }, 50);
-    }
-    async function advSubmitCn() {
-        let q = adv.q;
-        if (!adv.active || adv.busy || !q || q.type !== 'typeCn' || q.done) return;
-        let inp = document.getElementById('advCnInput');
-        let val = inp ? inp.value : '';
-        if (!val.trim()) return;
-        const id = adv.runId;
-        q.done = true;
-        let ok = advCnMatch(val, q.word.chinese);
-        if (inp) inp.blur();
-        document.getElementById('advCnSub').innerHTML = ok ? '✅ 正確！' : `❌ 正確答案：<b>${escapeHTML(q.word.chinese)}</b>`;
-        await advWait(ok ? 500 : 1300);
-        if (id !== adv.runId) return;
-        if (ok) advQuestionPassed(); else advResolveMove(false);
-    }
-
-    // 聽力（聽發音，選出單字）
-    function advNorm(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC').toLowerCase().replace(/[\s'’\-.,!?]/g, ''); }
-    function advAskListenChoice() {
-        let m = adv.move, cn = m.mode === 'listenCn';     // listenCn：聽英文，選中文意思
-        let w = advNextWord(cn ? 'cn' : 'all');
-        let wrong = cn ? advPickDistractors(w, 3, x => !!x.chinese, x => x.chinese).map(x => x.chinese)
-                       : advPickDistractors(w, 3, x => !!advNorm(x.english), x => advNorm(x.english)).map(x => x.english);
-        let ans = cn ? w.chinese : w.english;
-        let opts = advShuffle([ans, ...wrong]);
-        adv.q = { type: 'listenChoice', word: w, opts, correct: opts.indexOf(ans), done: false };
-        document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：${cn ? '聽英文，選出中文意思' : '聽發音，選出正確的單字'}</div>
-            <div class="adv-opts">${opts.map((o, i) => `<button type="button" class="adv-opt" data-on-click='[["advAnswerListen",[${i}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
-        advSpeakWord(w.english);
-    }
-    async function advAnswerListen(i) {
-        let q = adv.q;
-        if (!adv.active || adv.busy || !q || q.type !== 'listenChoice' || q.done) return;
-        const id = adv.runId;
-        q.done = true;
-        let btns = document.querySelectorAll('#advPanel .adv-opt');
-        btns.forEach((b, idx) => { if (idx === q.correct) b.classList.add('ok'); else if (idx === i) b.classList.add('bad'); });
-        let ok = i === q.correct;
-        await advWait(ok ? 450 : 1000);
-        if (id !== adv.runId) return;
-        if (ok) advQuestionPassed(); else advResolveMove(false);
-    }
-    // 聽力（聽發音、拼單字）
-    function advAskListen() {
-        let w = advNextWord('all');
-        adv.q = { type: 'listen', word: w, done: false };
-        let m = adv.move;
-        document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：聽發音，拼出單字</div>
-            <div class="adv-input-row">
-                <input type="text" id="advListenInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入聽到的單字">
-                <button type="button" data-on-click='[["advSubmitListen",[]]]'>送出</button>
-            </div>
-            <div class="adv-qsub" id="advListenSub"></div>`;
-        let inp = document.getElementById('advListenInput');
-        inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); advSubmitListen(); } });
-        advSpeakWord(w.english);
-        setTimeout(() => { try { inp.focus({ preventScroll: true }); } catch (e) {} }, 50);
-    }
-    function advReplayListen() { if (adv.q && (adv.q.type === 'listen' || adv.q.type === 'listenChoice')) advSpeakWord(adv.q.word.english); }
-    async function advSubmitListen() {
-        let q = adv.q;
-        if (!adv.active || adv.busy || !q || q.type !== 'listen' || q.done) return;
-        let inp = document.getElementById('advListenInput');
-        let val = inp ? inp.value : '';
-        if (!val.trim()) return;
-        const id = adv.runId;
-        q.done = true;
-        let ok = advNorm(val) === advNorm(q.word.english);
-        if (inp) inp.blur();
-        document.getElementById('advListenSub').innerHTML = ok ? '✅ 正確！' : `❌ 正確答案：<b>${escapeHTML(q.word.english)}</b>`;
-        await advWait(ok ? 500 : 1200);
-        if (id !== adv.runId) return;
-        if (ok) advQuestionPassed(); else advResolveMove(false);
-    }
-
-    // 朗讀（按住麥克風）
-    function advAskSpeak() {
-        let m = adv.move, cn = m.mode === 'speakCn';     // speakCn：只顯示中文，要唸出英文
-        let w = advNextWord(cn ? 'cn' : 'all');
-        adv.q = { type: 'speak', word: w, done: false, cn };
-        document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：${cn ? '看中文，唸出英文單字' : '按住麥克風唸出單字'}</div>
-            ${cn ? `<div class="adv-qword">${escapeHTML(w.chinese)}</div>
-            <div class="adv-qsub">唸出這個意思的英文單字</div>` : `<div class="adv-qword">${escapeHTML(w.english)}</div>
-            <div class="adv-qsub">${escapeHTML(w.chinese || '')}</div>`}
-            <button type="button" class="adv-mic" id="advMicBtn" aria-label="按住麥克風說話"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg></button>
-            <div class="adv-qsub" id="advSpeakHint">剩 ${adv.triesLeft} 次機會 ｜ 說完再多按住約 2 秒</div>
-            <button type="button" class="adv-speak-btn" data-on-click='[["advGiveUpSpeak",[]]]'>放棄這招</button>`;
-        let btn = document.getElementById('advMicBtn');
-        const down = () => {
-            if (advListening && advLatched) { advLatched = false; advSkipUp = true; advFinishHold(advRec, 500); return; }
-            advSpeakStart();
-        };
-        const up = () => { if (advSkipUp) { advSkipUp = false; return; } advSpeakStop(); };
-        btn.addEventListener('pointerdown', (e) => { e.preventDefault(); try { if (btn.setPointerCapture && e.pointerId !== undefined) btn.setPointerCapture(e.pointerId); } catch (err) {} down(); });
-        ['pointerup', 'pointercancel'].forEach(t => btn.addEventListener(t, (e) => { e.preventDefault(); up(); }));
-        btn.addEventListener('contextmenu', (e) => e.preventDefault());
-        btn.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); down(); } });
-        btn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); up(); } });
-    }
-    function advSpeakHint(t) { let el = document.getElementById('advSpeakHint'); if (el) el.textContent = t; }
-    function advSpeakStart() {
-        let q = adv.q;
-        if (advListening || adv.busy || !adv.active || !q || q.type !== 'speak' || q.done) return;
-        const SR = getSpeechRecognitionCtor();
-        if (!SR) { advSpeakHint('這個瀏覽器不支援語音辨識'); return; }
-        try { window.speechSynthesis.cancel(); } catch (e) {}
-        let rec = new SR();
-        rec.lang = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
-        rec.interimResults = true;
-        rec.continuous = false;
-        rec.maxAlternatives = 10;
-        advAlts = []; advErr = ''; advShort = false; advIgnore = false; advPressAt = Date.now();
-        advStarted = false; advLatched = false; advSkipUp = false;
-        rec.onaudiostart = () => { advStarted = true; if (advRec === rec && advListening && advLatched) advSpeakHint(SPEAK_LATCH_HINT); };
-        rec.onresult = (ev) => {
-            let alts = [];
-            for (let i = 0; i < ev.results.length; i++) for (let j = 0; j < ev.results[i].length; j++) alts.push({ transcript: ev.results[i][j].transcript, confidence: ev.results[i][j].confidence });
-            advAlts = alts;
-            if (advListening && alts.length && !advIgnore) advSpeakHint('🎙️ ' + alts[0].transcript);
-        };
-        rec.onerror = (ev) => { advErr = (ev && ev.error) || 'error'; };
-        rec.onend = () => advSpeakFinish(rec, false);
-        advRec = rec;
-        advListening = true;
-        let btn = document.getElementById('advMicBtn');
-        if (btn) btn.classList.add('recording');
-        advSpeakHint('🎙️ 聆聽中…說完請再多按住一下');
-        try { rec.start(); } catch (e) {
-            advListening = false;
-            if (btn) btn.classList.remove('recording');
-            advSpeakHint('無法啟動語音辨識，請再按一次');
-        }
-    }
-    function advSpeakStop() {
-        if (!advListening || !advRec) return;
-        let rec = advRec;
-        if (!advStarted || Date.now() - advPressAt < 350) {        // 還在等授權、或只是輕點：改成「點一下模式」
-            advLatched = true;
-            advSpeakHint(advStarted ? SPEAK_LATCH_HINT : '⏳ 等待麥克風授權…請按瀏覽器的「允許」，然後直接說話');
-            clearTimeout(advWatch);
-            advWatch = setTimeout(() => { if (advListening && advRec === rec) { try { rec.abort(); } catch (e) {} advSpeakFinish(rec, true); } }, 25000);
-            return;
-        }
-        advFinishHold(rec, SPEAK_TAIL_MS);
-    }
-    function advFinishHold(rec, tailMs) {
-        let btn = document.getElementById('advMicBtn');
-        if (btn) btn.classList.remove('recording');
-        advSpeakHint('🎙️ 收音中…');
-        setTimeout(() => { if (advRec === rec && advListening) { try { rec.stop(); } catch (e) {} } }, tailMs);
-        clearTimeout(advWatch);
-        advWatch = setTimeout(() => { if (advListening && advRec === rec) { try { rec.abort(); } catch (e) {} advSpeakFinish(rec, true); } }, 8000 + tailMs);
-    }
-    async function advSpeakFinish(rec, forced) {
-        if (advRec !== rec || !advListening) return;
-        advListening = false;
-        clearTimeout(advWatch);
-        let btn = document.getElementById('advMicBtn');
-        if (btn) btn.classList.remove('recording');
-        let q = adv.q;
-        if (!adv.active || !q || q.type !== 'speak' || q.done) return;
-        if (advShort) { advSpeakHint('請「按住」麥克風說話，說完再放開'); return; }
-        if (advIgnore) return;
-        let alts = advAlts.filter(a => a.transcript && a.transcript.trim());
-        if (!alts.length) {
-            advSpeakHint(forced ? '辨識逾時，請再按住說一次' : speakErrorMessage(advErr));
-            if (advErr === 'not-allowed' || advErr === 'service-not-allowed') openMicHelpModal();
-            return;
-        }
-        const id = adv.runId;
-        let res = scoreSpeakAttempt(q.word.english, alts, getLearningLanguage());
-        let pass = res.score >= getSpeakPassScore();
-        adv.triesLeft--;
-        if (pass) {
-            q.done = true;
-            advSpeakHint(`✅ ${res.score} 分（辨識到：${res.heard || ''}）`);
-            await advWait(600);
-            if (id !== adv.runId) return;
-            advQuestionPassed();
-        } else if (adv.triesLeft <= 0) {
-            q.done = true;
-            advSpeakHint(`❌ ${res.score} 分（需 ${getSpeakPassScore()} 分），沒有機會了${q.cn ? `｜答案：${q.word.english}` : ''}`);
-            await advWait(1100);
-            if (id !== adv.runId) return;
-            advResolveMove(false);
-        } else {
-            advSpeakHint(`❌ ${res.score} 分（需 ${getSpeakPassScore()} 分）｜ 辨識到：${res.heard || '(沒有內容)'} ｜ 剩 ${adv.triesLeft} 次機會`);
-        }
-    }
-    async function advGiveUpSpeak() {
-        let q = adv.q;
-        if (!adv.active || adv.busy || !q || q.type !== 'speak' || q.done) return;
-        const id = adv.runId;
-        q.done = true;
-        advIgnore = true;
-        if (advRec && advListening) { try { advRec.abort(); } catch (e) {} advListening = false; }
-        await advWait(200);
-        if (id !== adv.runId) return;
-        advResolveMove(false);
-    }
-
-    // ── 招式結算與動畫 ──
-    let advFxSeq = 0;
-    // 藍色能量彗星（頭在右邊、尾巴往左變細），yellow = 黃色衝擊波
-    function advCometSVG(kind) {
-        const id = 'cm' + (++advFxSeq);
-        const c = kind === 'yellow'
-            ? { a: '#FEF9C3', b: '#FACC15', c: '#F59E0B', glow: '#FDE047' }
-            : { a: '#E0F2FE', b: '#38BDF8', c: '#2563EB', glow: '#7DD3FC' };
-        return `<svg viewBox="0 0 150 46" width="100%" height="100%" style="overflow:visible" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="${id}t" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${c.c}" stop-opacity="0"/><stop offset="0.55" stop-color="${c.b}" stop-opacity="0.55"/><stop offset="1" stop-color="${c.a}" stop-opacity="0.95"/></linearGradient>
-                <radialGradient id="${id}h"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.45" stop-color="${c.glow}" stop-opacity="0.95"/><stop offset="1" stop-color="${c.c}" stop-opacity="0"/></radialGradient>
-            </defs>
-            <path d="M 0 23 Q 46 6 118 8 L 118 38 Q 46 40 0 23 Z" fill="url(#${id}t)"/>
-            <path d="M 18 23 Q 64 14 118 15 L 118 31 Q 64 32 18 23 Z" fill="${c.a}" opacity="0.6"/>
-            <path d="M 30 12 Q 60 10 90 11 M 24 34 Q 60 36 92 35" stroke="${c.b}" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.8"/>
-            <circle cx="40" cy="14" r="2" fill="#FFFFFF"/><circle cx="62" cy="32" r="1.7" fill="#FFFFFF"/><circle cx="84" cy="12" r="1.6" fill="#FFFFFF"/><circle cx="18" cy="26" r="1.4" fill="#FFFFFF"/>
-            <circle cx="124" cy="23" r="22" fill="url(#${id}h)"/>
-            <circle cx="124" cy="23" r="10" fill="#FFFFFF"/>
-        </svg>`;
-    }
-    function advFxBox(html, cx, cy, w, h) {
-        let fx = document.getElementById('advFx');
-        if (!fx) return null;
-        let d = document.createElement('div');
-        d.innerHTML = html;
-        d.style.left = (cx - w / 2) + 'px';
-        d.style.top = (cy - h / 2) + 'px';
-        d.style.width = w + 'px';
-        d.style.height = h + 'px';
-        fx.appendChild(d);
-        return d;
-    }
-    // 播放「一下」攻擊；招式打幾下就呼叫幾次
-    async function advPlayAttack(m, hitNo) {
-        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
-        if (!P || !E) return;
-        const d = advDelta(P, E);
-        const ec = advActorCenter(E), pc = advActorCenter(P);
-        const dash = (f, dur, sc) => advAnimate(P, [
-            { transform: 'translate(0,0) scale(1)' },
-            { transform: `translate(${d.dx * f}px, ${d.dy * f}px) scale(${sc || 1.12})`, offset: 0.5 },
-            { transform: 'translate(0,0) scale(1)' }], { duration: dur || 420, easing: 'ease-in-out' });
-        const burst = (txt, size) => { let b = advFx(txt || '💥', ec.x + (Math.random() * 12 - 6), ec.y + (Math.random() * 12 - 6), size || 40); if (b) advAnimate(b, [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1.1)', offset: 0.4 }, { opacity: 0, transform: 'scale(1.4)' }], { duration: 380 }).then(() => b.remove()); };
-        if (m.fx === 'dash') {
-            let p = dash(0.78); await advWait(190); burst(m.icon); await p;
-        } else if (m.fx === 'charge') {
-            // 衝鋒撞擊：先往後蓄力，再一口氣衝過去
-            await advAnimate(P, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${-d.dx * 0.12}px, ${-d.dy * 0.12}px) scale(0.9)` }], { duration: 220, fill: 'forwards', easing: 'ease-out' });
-            let p = advAnimate(P, [
-                { transform: `translate(${-d.dx * 0.12}px, ${-d.dy * 0.12}px) scale(0.9)` },
-                { transform: `translate(${d.dx * 0.84}px, ${d.dy * 0.84}px) scale(1.25)`, offset: 0.6 },
-                { transform: 'translate(0,0) scale(1)' }], { duration: 460, easing: 'cubic-bezier(.5,0,.3,1)' });
-            await advWait(260); burst(m.icon, 64);
-            advAnimate(document.getElementById('advStage'), [{ transform: 'translate(0,0)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(3px,-2px)' }, { transform: 'translate(0,0)' }], { duration: 240 });
-            await p;
-        } else if (m.fx === 'slash') {
-            let p = advAnimate(P, [{ transform: 'translate(0,0)' }, { transform: `translate(${d.dx * 0.5}px, ${d.dy * 0.5}px)`, offset: 0.5 }, { transform: 'translate(0,0)' }], { duration: 380, easing: 'ease-in-out' });
-            await advWait(170);
-            let flip = hitNo % 2 === 1;      // 第二下換個方向斬
-            let s = advFx(`<svg viewBox="0 0 60 60" width="100%" height="100%"><path d="M8 8 Q 42 18 52 54" stroke="#FFFFFF" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M8 8 Q 42 18 52 54" stroke="#FACC15" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>`, ec.x, ec.y, 64);
-            if (s) await advAnimate(s, [{ opacity: 0, transform: `scale(${flip ? -.4 : .4}, .4) rotate(${flip ? 25 : -25}deg)` }, { opacity: 1, transform: `scale(${flip ? -1.1 : 1.1}, 1.1) rotate(0deg)`, offset: 0.45 }, { opacity: 0, transform: `scale(${flip ? -1.25 : 1.25}, 1.25) rotate(${flip ? -12 : 12}deg)` }], { duration: 380 }).then(() => s.remove());
-            burst(m.icon, 40);
-            await p;
-        } else if (m.fx === 'thrust') {
-            // 突刺：快速直線刺過去，留下一道光
-            let ang = Math.atan2(d.dy, d.dx) * 180 / Math.PI;
-            let p = advAnimate(P, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${d.dx * 0.82}px, ${d.dy * 0.82}px) scale(1.1)`, offset: 0.4 }, { transform: `translate(${d.dx * 0.82}px, ${d.dy * 0.82}px) scale(1.1)`, offset: 0.55 }, { transform: 'translate(0,0) scale(1)' }], { duration: 480, easing: 'ease-out' });
-            let ln = advFxBox(`<svg viewBox="0 0 100 16" width="100%" height="100%" style="overflow:visible"><path d="M0 8 L 86 8" stroke="#E0F2FE" stroke-width="7" stroke-linecap="round"/><path d="M 8 8 L 92 8" stroke="#38BDF8" stroke-width="3" stroke-linecap="round"/><path d="M 90 1 L 100 8 L 90 15 Z" fill="#FFFFFF"/></svg>`, (pc.x + ec.x) / 2, (pc.y + ec.y) / 2, Math.max(50, Math.hypot(d.dx, d.dy) * 0.9), 16);
-            if (ln) { ln.style.transformOrigin = '50% 50%'; advAnimate(ln, [{ opacity: 0, transform: `rotate(${ang}deg) scaleX(.3)` }, { opacity: 1, transform: `rotate(${ang}deg) scaleX(1)`, offset: 0.4 }, { opacity: 0, transform: `rotate(${ang}deg) scaleX(1)` }], { duration: 420 }).then(() => ln.remove()); }
-            await advWait(200); burst(m.icon, 46); await p;
-        } else if (m.fx === 'yellow') {
-            // 黃色衝擊波：龜派氣功！先在雙手之間聚氣，再射出一道粗粗的光束
-            let ang = Math.atan2(d.dy, d.dx) * 180 / Math.PI;
-            let len = Math.max(80, Math.hypot(d.dx, d.dy));
-            let orb = advFxBox('<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#FFFFFF 0%,#FDE047 45%,rgba(250,204,21,0) 72%)"></div>', pc.x + 20, pc.y, 34, 34);
-            if (orb) await advAnimate(orb, [{ opacity: 0.2, transform: 'scale(.2)' }, { opacity: 1, transform: 'scale(1.1)' }], { duration: 380, easing: 'ease-out', fill: 'forwards' });
-            let bm = advFxBox(`<svg viewBox="0 0 200 40" width="100%" height="100%" preserveAspectRatio="none" style="overflow:visible"><path d="M0 20 L14 4 L30 12 L46 2 L66 11 L88 1 L110 11 L134 2 L156 11 L178 4 L200 20 L178 36 L156 29 L134 38 L110 29 L88 39 L66 29 L46 38 L30 28 L14 36 Z" fill="#FACC15" stroke="#F59E0B" stroke-width="2" stroke-linejoin="round"/><path d="M0 20 L16 11 H182 L200 20 L182 29 H16 Z" fill="#FFFFFF" opacity="0.92"/></svg>`, pc.x + len / 2 + 14, pc.y, len, 34);
-            if (bm) {
-                bm.style.transformOrigin = '50% 50%';
-                let hold = advAnimate(bm, [
-                    { opacity: 1, transform: `rotate(${ang}deg) scaleX(0.02)`, transformOrigin: '0% 50%' },
-                    { opacity: 1, transform: `rotate(${ang}deg) scaleX(1)`, transformOrigin: '0% 50%', offset: 0.35 },
-                    { opacity: 1, transform: `rotate(${ang}deg) scaleX(1) scaleY(1.15)`, transformOrigin: '0% 50%', offset: 0.75 },
-                    { opacity: 0, transform: `rotate(${ang}deg) scaleX(1) scaleY(.4)`, transformOrigin: '0% 50%' }], { duration: 760, easing: 'ease-out' }).then(() => bm.remove());
-                await advWait(240); burst(m.icon, 72); advAnimate(document.getElementById('advStage'), [{ transform: 'translate(0,0)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(3px,-2px)' }, { transform: 'translate(0,0)' }], { duration: 300 });
-                await hold;
-            }
-            if (orb) { advAnimate(orb, [{ opacity: 1 }, { opacity: 0 }], { duration: 150 }).then(() => orb.remove()); }
-        } else if (m.fx === 'wave') {
-            // 衝擊波：藍（或黃）色能量彗星從雞塊飛向敵人
-            await advAnimate(P, [{ transform: 'translateX(0) scale(1)' }, { transform: 'translateX(-8px) scale(0.92)', offset: 0.5 }, { transform: 'translateX(0) scale(1)' }], { duration: 280 });
-            let ang = Math.atan2(d.dy, d.dx) * 180 / Math.PI;
-            let big = m.fx === 'yellow';
-            let w = big ? 124 : 104, h = w * 46 / 150;
-            let c = advFxBox(advCometSVG(big ? 'yellow' : 'blue'), pc.x, pc.y, w, h);
-            if (c) {
-                await advAnimate(c, [
-                    { opacity: 0, transform: `translate(0px, 0px) rotate(${ang}deg) scale(.5)` },
-                    { opacity: 1, transform: `translate(${d.dx * 0.12}px, ${d.dy * 0.12}px) rotate(${ang}deg) scale(1)`, offset: 0.15 },
-                    { opacity: 1, transform: `translate(${d.dx}px, ${d.dy}px) rotate(${ang}deg) scale(1.05)`, offset: 0.9 },
-                    { opacity: 0, transform: `translate(${d.dx}px, ${d.dy}px) rotate(${ang}deg) scale(1.3)` }], { duration: 560, easing: 'ease-in' }).then(() => c.remove());
-            }
-            let ring = advFx('<div style="width:100%;height:100%;box-sizing:border-box;border-radius:50%;border:4px solid ' + (big ? '#FACC15' : '#38BDF8') + ';background:' + (big ? 'rgba(250,204,21,.3)' : 'rgba(56,189,248,.3)') + '"></div>', ec.x, ec.y, 40);
-            if (ring) advAnimate(ring, [{ opacity: 0.9, transform: 'scale(.4)' }, { opacity: 0 , transform: 'scale(2)' }], { duration: 420 }).then(() => ring.remove());
-            burst(m.icon, 46);
-            await advWait(260);
-        }
-    }
-    async function advHurt(actorEl, dmg, isEnemy, label) {
-        advFloat(actorEl, label || ('-' + dmg));
-        let dir = isEnemy ? 1 : -1;
-        await advAnimate(actorEl, [
-            { transform: 'translateX(0)', filter: 'brightness(1)' },
-            { transform: `translateX(${8 * dir}px)`, filter: 'brightness(2) saturate(.4)', offset: 0.2 },
-            { transform: `translateX(${-7 * dir}px)`, filter: 'brightness(1.6)', offset: 0.5 },
-            { transform: `translateX(${4 * dir}px)`, offset: 0.75 },
-            { transform: 'translateX(0)', filter: 'brightness(1)' }], { duration: 420 });
-    }
-
-    // 幸運擲幣：硬幣飄在攻擊者上方，每個「正面」傷害 +1（最多 +3）
-    async function advShowCoins(actorEl, luck, who) {
-        advSetLog(`🪙 ${who || ''}幸運擲幣中…`);
-        let fx = document.getElementById('advFx');
-        let row = null;
-        if (fx && actorEl) {
-            let c = advActorCenter(actorEl);
-            row = document.createElement('div');
-            row.className = 'adv-coin-row';
-            row.style.left = c.x + 'px';
-            row.style.top = Math.max(4, actorEl.offsetTop - 30) + 'px';
-            row.innerHTML = luck.flips.map(f => `<div class="adv-coin"><div class="adv-coin-in${f ? ' heads' : ' tails'}"><span class="adv-coin-f">正</span><span class="adv-coin-b">反</span></div></div>`).join('');
-            fx.appendChild(row);
-            // 先往上拋、一邊翻轉，最後停在正面或反面
-            row.querySelectorAll('.adv-coin').forEach((coin, i) => {
-                advAnimate(coin, [{ transform: 'translateY(16px)', opacity: 0 }, { transform: 'translateY(-26px)', opacity: 1, offset: 0.45 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 760, delay: i * 90, easing: 'ease-out', fill: 'both' });
-                let inner = coin.firstChild, heads = inner.classList.contains('heads');
-                advAnimate(inner, [{ transform: 'rotateY(0deg)' }, { transform: `rotateY(${heads ? 1440 : 1620}deg)` }], { duration: 760, delay: i * 90, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' });
-            });
-            await advWait(780 + luck.flips.length * 90);
-            row.querySelectorAll('.adv-coin-in').forEach(el => el.classList.add('done'));
-        } else {
-            await advWait(600);
-        }
-        advSetLog(`🪙 ${who || ''}幸運擲幣：${advCoinText(luck.flips)}${luck.bonus ? `　正面 ${luck.bonus} 次！傷害 +${luck.bonus}` : '　沒有正面'}`);
-        await advWait(550);
-        if (row) await advAnimate(row, [{ opacity: 1 }, { opacity: 0 }], { duration: 220 }).then(() => row.remove());
-        if (luck.bonus) { advFloat(actorEl, `+${luck.bonus}`, '#B45309'); await advWait(250); }
-    }
-
-    async function advResolveMove(ok) {
-        if (!adv.active) return;
-        // 防呆：同一次出招只結算一次（避免多題招式在最後一題被重複結算，一次扣掉兩次行動）
-        if (adv.resolvedSeq === adv.moveSeq) { console.warn('同一招重複結算，已忽略'); return; }
-        adv.resolvedSeq = adv.moveSeq;
-        // 熟練度：不論成功或失敗，用一次就 +1（先算好，打倒敵人直接勝利時也會算到）
-        let masteryUp = adv.move ? advAddMasteryUse(adv.move.key) : 0;
-        advSave();
-        if (!ok) advRecordHit(false);
-        const id = adv.runId;
-        adv.busy = true;
-        const m = adv.move;
-        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
-        advStopTimer();
-        adv.q = null;
-        if (ok) {
-            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">${m.icon} 「${m.name}」發動成功！</div>`;
-            if (adv.enemy.special === 'clerk' && adv.stamps && !adv.stamps.has(m.type)) {   // 店員：集點
-                adv.stamps.add(m.type);
-                advFloat(document.getElementById('advPlayer'), `🎫 ${ADV_TYPE_LABEL[m.type]}集點！`, '#7C3AED');
-            }
-            // 每一下各自計算：攻擊力 + 招式威力 + 熟練度 − 對方防禦（至少 1）；每一下都各自擲一次幸運幣
-            let total = 0;
-            let pierce = advHasGear('skewer');         // 竹籤：無視對方護盾
-            for (let h = 0; h < m.hits; h++) {
-                await advPlayAttack(m, h);
-                if (id !== adv.runId) return;
-                let dmg = advHitDamage(m);
-                let luck = advRollLuck(adv.player.luck, adv.enemy.luck);
-                if (luck.flips.length) {
-                    await advShowCoins(P, luck, m.hits > 1 ? `第 ${h + 1} 下` : '');
-                    if (id !== adv.runId) return;
-                    dmg += luck.bonus;
-                }
-                let immune = advImmuneType() === m.type;
-                let guarded = immune || ADV_RESIST[adv.enemy.special] === m.type;
-                if (immune) dmg = 0;                    // 完全不受這類招式的傷害
-                else if (guarded) dmg = Math.min(dmg, 1);    // 對這類招式有抗性：每一下最多 1 點
-                let weak = ADV_WEAK_BONUS[adv.enemy.special];
-                if (weak && weak.type === m.type && dmg > 0) advFloat(E, '💥 效果拔群！', '#DC2626');
-                total += dmg;
-                let hadShield = adv.enemy.shield > 0;
-                let er = advTakeDamage(adv.enemy, dmg, pierce);
-                advSetLog(immune
-                    ? `🛡️ ${adv.enemy.name}防禦了${ADV_TYPE_LABEL[m.type]}招式！完全沒有受到傷害`
-                    : guarded
-                    ? `🛡️ ${adv.enemy.name}防禦了${ADV_TYPE_LABEL[m.type]}招式！${er.absorbed ? `護盾再擋下 ${er.absorbed} 點，` : ''}只受到 ${er.loss} 點傷害`
-                    : `${weak && weak.type === m.type ? '💥 效果拔群！' : '✨'}「${m.name}」${m.hits > 1 ? `第 ${h + 1} 下` : ''}命中！${adv.enemy.name}${er.absorbed ? `護盾擋下 ${er.absorbed} 點，` : ''}${pierce && hadShield ? '竹籤刺穿護盾！' : ''}受到 ${er.loss} 點傷害`);
-                advUpdateHud();
-                await advHurt(E, dmg, true, (guarded ? '🛡️防禦 ' : '') + advHurtLabel(er));
-                if (id !== adv.runId) return;
-                if (adv.enemy.hp <= 0) {
-                    if (await advEnemyDown(id)) return;
-                    if (id !== adv.runId) return;
-                    break;                               // 換下一個敵人：這招剩下的攻擊不再繼續
-                }
-                await advClerkShift(id);
-                if (id !== adv.runId) return;
-            }
-            if (adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.size >= ADV_STAMP_NEED && !adv.redeemed && !adv.stampTold) {
-                adv.stampTold = true;
-                advSetLog('🎫 集點卡集滿了！招式選單多了「兌換集點卡！」');
-                await advWait(900);
-                if (id !== adv.runId) return;
-            }
-        } else {
-            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">💨 「${m.name}」發動失敗…</div>`;
-            advFloat(P, 'MISS', '#64748B');
-            await advAnimate(P, [{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration: 320 });
-            await advWait(300);
-            if (id !== adv.runId) return;
-            // 裝備「烤焦臭豆腐」：招式失敗時雙方各扣 1 點體力
-            if (advHasGear('tofu')) {
-                let er = advTakeDamage(adv.enemy, 1), pr = advTakeDamage(adv.player, 1);
-                advData.hp = adv.player.hp;
-                advSave();
-                advSetLog('🔥 烤焦臭豆腐爆發！雙方各扣 1 點體力');
-                advUpdateHud();
-                await Promise.all([advHurt(E, 1, true, advHurtLabel(er)), advHurt(P, 1, false, advHurtLabel(pr))]);
-                if (id !== adv.runId) return;
-                if (adv.player.hp <= 0 && adv.enemy.hp > 0) { await advLose(id); return; }
-                if (adv.enemy.hp <= 0) { if (await advEnemyDown(id)) return; if (id !== adv.runId) return; }
-                if (adv.player.hp <= 0) { await advLose(id); return; }
-                await advClerkShift(id);
-                if (id !== adv.runId) return;
-            }
-            // 臭豆腐的「發臭」：招式失敗就被臭味反擊，無視防禦，固定 1 點
-            if (adv.enemy.special === 'stink') {
-                let dr = advTakeDamage(adv.player, 1);
-                advSetLog(`🤢 ${adv.enemy.name}散發臭味！無視防禦，${dr.absorbed ? '護盾擋下 1 點' : '雞塊受到 1 點傷害'}`);
-                advData.hp = adv.player.hp;
-                advSave();
-                advUpdateHud();
-                await advHurt(P, 1, false, advHurtLabel(dr));
-                if (id !== adv.runId) return;
-                if (adv.player.hp <= 0) { await advLose(id); return; }
-            }
-        }
-        let up = masteryUp;
-        if (up) {
-            advFloat(P, `⬆️ 熟練度 ${up}`, '#4F46E5');
-            advSetLog(`⬆️ 「${m.name}」熟練度提升到 ${up}！這招攻擊 +1`);
-            await advWait(900);
-            if (id !== adv.runId) return;
-        }
-        adv.actionsLeft--;
-        if (adv.actionsLeft > 0) { adv.busy = false; advShowMenu(); }
-        else await advEnemyPhase(id);
-    }
-
-    async function advEnemyPhase(id) {
-        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
-        let n = advActionCount(adv.enemy.agi, adv.player.agi);
-        for (let i = 0; i < n; i++) {
-            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">${escapeHTML(adv.enemy.name)}的「${escapeHTML(adv.enemy.moveName)}」攻擊！</div>`;
-            await advWait(350);
-            if (id !== adv.runId) return;
-            if (adv.enemy.special === 'pinball') {
-                let r = 1 + Math.floor(Math.random() * 6);
-                advFloat(E, '🎰技能骰 ' + r, '#0284C7');
-                if (r <= 2) {
-                    adv.enemy.hp = Math.min(adv.enemy.max, adv.enemy.hp + 2);
-                    advSetLog(`🎰【打彈珠】技能骰 ${r}（不是幸運骰）　彈珠台回復 2 點體力`);
-                    await advWait(500);
-                    advUpdateHud();
-                    advFloat(E, '+2', '#10B981');
-                    await advWait(700);
-                } else if (r <= 4) {
-                    advSetLog(`🎰【打彈珠】技能骰 ${r}（不是幸運骰）　沒有效果`);
-                    await advWait(1000);
-                } else {
-                    advSetLog(`🎰【打彈珠】技能骰 ${r}（不是幸運骰）　彈珠直擊！無視防禦扣 1 點體力`);
-                    await advWait(500);
-                    let pr = advTakeDamage(adv.player, 1);
-                    advData.hp = adv.player.hp;
-                    advSave();
-                    advUpdateHud();
-                    await advHurt(P, 1, false, advHurtLabel(pr));
-                    if (id !== adv.runId) return;
-                    if (adv.player.hp <= 0) { await advLose(id); return; }
-                }
-                if (id !== adv.runId) return;
-                document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">${escapeHTML(adv.enemy.name)}的「${escapeHTML(adv.enemy.moveName)}」攻擊！</div>`;
-            }
-            const d = advDelta(E, P);
-            await advAnimate(E, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${d.dx * 0.8}px, ${d.dy * 0.8}px) scale(1.12)`, offset: 0.5 }, { transform: 'translate(0,0) scale(1)' }], { duration: 480, easing: 'ease-in-out' });
-            if (id !== adv.runId) return;
-            let dmg = advDamage(adv.enemy.atk, adv.enemy.movePower, adv.player.def);
-            let luck = advRollLuck(adv.enemy.luck, adv.player.luck);
-            if (luck.flips.length) {
-                await advShowCoins(E, luck, adv.enemy.name + '的');
-                if (id !== adv.runId) return;
-                dmg += luck.bonus;
-            }
-            let dr = advTakeDamage(adv.player, dmg, adv.enemy.special === 'salad');   // 盒裝沙拉：無視雞塊的護盾
-            advData.hp = adv.player.hp;          // 體力會繼承到之後的戰鬥
-            advSave();
-            advSetLog(`${adv.enemy.name}的攻擊！${dr.absorbed ? `護盾擋下 ${dr.absorbed} 點，` : ''}雞塊受到 ${dr.loss} 點傷害`);
-            advUpdateHud();
-            await advHurt(P, dmg, false, advHurtLabel(dr));
-            if (id !== adv.runId) return;
-            if (adv.player.hp <= 0) { await advLose(id); return; }
-            if (adv.enemy.special === 'microwave') {
-                adv.enemy.atk += ADV_MICRO_ATK_UP;
-                advSetLog(`🔥 轉吧！美味雞塊！${adv.enemy.name}越來越燙，攻擊力 +${ADV_MICRO_ATK_UP}（現在 ${adv.enemy.atk}）`);
-                advFloat(E, `攻擊 +${ADV_MICRO_ATK_UP}`, '#F97316');
-                advUpdateHud();
-                await advWait(800);
-                if (id !== adv.runId) return;
-            }
-            if (adv.enemy.special === 'expire') {
-                adv.enemy.hp = Math.max(0, adv.enemy.hp - ADV_EXPIRE_SELF);
-                advSetLog(`🥀 我快過期了..（${adv.enemy.name}自己扣了 ${ADV_EXPIRE_SELF} 點體力）`);
-                advUpdateHud();
-                await advHurt(E, ADV_EXPIRE_SELF, true, '-' + ADV_EXPIRE_SELF);
-                if (id !== adv.runId) return;
-                advFloat(E, '我快過期了..', '#64748B');
-                await advWait(500);
-                if (id !== adv.runId) return;
-                if (adv.enemy.hp <= 0) { await advEnemyDown(id); return; }
-            }
-        }
-        // 珍珠奶茶的「治癒」：敵人攻擊結束後回 1 點體力
-        if (adv.enemy.special === 'heal' && adv.enemy.hp < adv.enemy.max) {
-            adv.enemy.hp = Math.min(adv.enemy.max, adv.enemy.hp + 1);
-            advSetLog(`💚 ${adv.enemy.name}發動治癒，回復 1 點體力`);
-            advUpdateHud();
-            advFloat(E, '+1', '#10B981');
-            await advWait(900);
-            if (id !== adv.runId) return;
-        }
-        adv.round++;
-        advBeginRound();
-    }
-
-    async function advWin(id) {
-        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
-        adv.active = false;
-        releaseWakeLock();
-        let lv = adv.level;
-        let first = !advData.cleared[lv.id];
-        advData.cleared[lv.id] = true;
-        try {   // 每日任務：在大冒險中打贏一場敵人
-            checkDailyReset();
-            if (chickenData.tasks.advWin && !chickenData.tasks.advWin.done && !isTaskClaimed('advWin')) { chickenData.tasks.advWin.done = true; saveChickenData(); }
-        } catch (e) {}
-        let gainShards = first ? lv.firstShards : lv.repeatShards;
-        let gainSauce = first ? lv.firstSauce : 0;
-        // 幸運的第二個用途：打贏後擲幣，每個正面碎片 +1（最多 +3）
-        let loot = advRollLuck(adv.player.luck, adv.enemy.luck);
-        let gotTicket = (!first && lv.ticketChance && Math.random() < lv.ticketChance) ? 1 : 0;
-        if (first && lv.firstTickets) gotTicket += lv.firstTickets;
-        if (gotTicket) advData.tickets += gotTicket;
-        let dropPotion = (!first && lv.potionChance && Math.random() < lv.potionChance) ? 1 : 0;    // IBON 機：重複通關 20% 掉恢復藥水
-        if (dropPotion) advData.potions += dropPotion;
-        let sodaHeal = 0;
-        if (advHasGear('soda') && advData.hp > 0 && advData.hp < advMaxHp()) { sodaHeal = 1; advData.hp += 1; adv.player.hp = advData.hp; }
-        gainShards += loot.bonus;
-        let clawBonus = (lv.special === 'claw' && Math.random() < 0.5) ? 1 : 0;   // 娃娃機：50% 機會碎片 +1
-        gainShards += clawBonus;
-        advData.shards += gainShards;
-        advData.sauce += gainSauce;
-        let gotCombo = false, gotMaxHp = 0, gotPotions = 0;
-        if (first && lv.firstMaxHp && advData.up.hp < ADV_UP_MAX) { gotMaxHp = lv.firstMaxHp; advData.up.hp += gotMaxHp; advData.hp += gotMaxHp; }
-        if (first && lv.firstPotions) { gotPotions = lv.firstPotions; advData.potions += gotPotions; }
-        let gotMoves = [];
-        if (first) ADV_MOVES.forEach(m => { if (m.buy.kind === 'reward' && m.buy.level === lv.id && !advData.own[m.key]) { advData.own[m.key] = true; advAutoEquip(m.key); gotMoves.push(m); } });
-        gotCombo = gotMoves.length > 0;
-        let gotItem = '';
-        let hadGearBefore = Object.keys(advData.items).some(k => advData.items[k]);   // 之前就有裝備：不再顯示「去裝備」的紅字
-        if (first && lv.firstItem && !advData.items[lv.firstItem]) { advData.items[lv.firstItem] = true; gotItem = lv.firstItem; }
-        advSave();
-        document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">🎉 打敗了${escapeHTML(lv.name)}！</div>`;
-        advAnimate(E, [{ transform: 'scale(1) rotate(0deg)', opacity: 1 }, { transform: 'scale(.15) rotate(540deg)', opacity: 0 }], { duration: 750, fill: 'forwards', easing: 'ease-in' });
-        await advAnimate(P, [{ transform: 'translateY(0)' }, { transform: 'translateY(-16px)', offset: 0.3 }, { transform: 'translateY(0)', offset: 0.6 }, { transform: 'translateY(-10px)', offset: 0.8 }, { transform: 'translateY(0)' }], { duration: 800 });
-        if (id !== adv.runId && adv.runId !== id) return;
-        let lines = [], pop = [];
-        if (gainShards > 0) { lines.push(`<div class="line">${advShardIcon(16)} 糖醋醬碎片 +${gainShards}</div>`); pop.push(`${advShardIcon(22)} 糖醋醬碎片 ×${gainShards}`); }
-        if (loot.flips.length) {
-            lines.push(`<div class="line" style="color:#B45309;font-weight:700;">🪙 幸運擲幣 ${advCoinText(loot.flips)}　${loot.bonus ? `正面 ${loot.bonus} 次，碎片多 +${loot.bonus}` : '沒有正面，沒有額外碎片'}</div>`);
-            if (loot.bonus) pop.push(`🪙 幸運加成：糖醋醬碎片 +${loot.bonus}`);
-        }
-        if (gotTicket) { pop.push(`${advTicketIcon(22)} 冒險卷 ×${gotTicket}`); lines.push(`<div class="line" style="font-weight:800;">${advTicketIcon(16)} ${first ? '首次通關獎勵' : '掉落'}：冒險卷 ×${gotTicket}（到背包使用：今天重複挑戰次數 +1）</div>`); }
-        if (dropPotion) { pop.push(`🧪 恢復藥水 ×1`); lines.push(`<div class="line" style="font-weight:800;">🧪 掉落恢復藥水 ×1</div>`); }
-        if (sodaHeal) lines.push(`<div class="line" style="color:#0369A1;font-weight:800;">${advSodaIcon(16)} 喝了彈珠汽水，HP +1</div>`);
-        if (clawBonus) pop.push(`🧸 送你娃娃！糖醋醬碎片 +1`);
-        if (gotItem) pop.push(`${ADV_ITEMS[gotItem].icon(22)} 獲得裝備：${ADV_ITEMS[gotItem].name}${hadGearBefore ? '' : '<br><small style="color:#EF4444;font-weight:800;">❗ 到「能力值 → 裝備」裝備它</small>'}`);
-        if (first && lv.id === 2) pop.push(`🛒 補給站可以用碎片買裝備囉！<br><small style="color:var(--text-muted);font-weight:700;">首頁「雞塊補給站」→ 雞塊大冒險（彈珠汽水 ${ADV_SODA_PRICE} 碎片）</small>`);
-        if (gainSauce > 0) pop.push(`${advSauceIcon(22)} 糖醋醬 ×${gainSauce}`);
-        if (gotMaxHp) pop.push(`❤️ 生命上限 +${gotMaxHp}`);
-        if (gotPotions) pop.push(`🧪 恢復藥水 ×${gotPotions}`);
-        gotMoves.forEach(m => pop.push(`${m.icon} 學會${m.name}`));
-        if (gainSauce > 0) lines.push(`<div class="line" style="color:${ADV_SAUCE_COLOR};font-weight:800;">${advSauceIcon(16)} ${first ? '首次通關獎勵：' : ''}糖醋醬 +${gainSauce}</div>`);
-        if (gotMaxHp) lines.push(`<div class="line" style="font-weight:800;">❤️ 首次通關獎勵：生命上限 +${gotMaxHp}</div>`);
-        if (gotPotions) lines.push(`<div class="line" style="font-weight:800;">🧪 首次通關獎勵：恢復藥水 ×${gotPotions}</div>`);
-        if (clawBonus) lines.push(`<div class="line" style="font-weight:800;">🧸 送你娃娃！糖醋醬碎片多 +1</div>`);
-        if (gotItem) lines.push(`<div class="line" style="font-weight:800;">🎁 首次通關獎勵：${ADV_ITEMS[gotItem].icon(16)} ${ADV_ITEMS[gotItem].name}</div>${hadGearBefore ? '' : '<div class="line" style="color:#EF4444;font-weight:800;">❗ 到「💪 能力值 → 裝備」把它裝備起來吧！</div>'}`);
-        if (first && lv.id === 2) lines.push(`<div class="line" style="color:var(--primary);font-weight:800;">🛒 可以到「雞塊補給站」用碎片購買裝備囉！</div>`);
-        gotMoves.forEach(m => lines.push(`<div class="line" style="font-weight:800;">🎁 學會新招式：${m.icon} ${m.name}！</div>`));
-        let nextLv = ADV_LEVELS.find(l => l.id === lv.id + 1);
-        document.getElementById('advPanel').innerHTML = `
-            <div class="adv-result">
-                <div class="big">🎉 勝利！</div>
-                ${lines.join('')}
-                <div class="line" style="color:var(--text-muted);font-size:12px;">體力剩 ${advData.hp}/${advMaxHp()}（每天 00:00 恢復）</div>
-            </div>
-            ${advData.hp > 0 ? `<button type="button" class="adv-plain-btn main" data-on-click='[["advRetry",[]]]'>再戰一次</button>` : ''}
-            ${nextLv ? `<button type="button" class="adv-plain-btn next" data-on-click='[["advNextLevel",[]]]'>挑戰下一關</button>` : `<button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`}`;
-        advShowReward(pop);
-    }
-    // 勝利後跳出的獎勵視窗：簡短列出拿到什麼
-    function advShowReward(items) {
-        let body = document.getElementById('advRewardBody');
-        if (!body || !items.length) return;
-        body.innerHTML = `<div class="adv-reward-title">🎉 獲得獎勵</div>${items.map(t => `<div class="adv-reward-item">${t}</div>`).join('')}`;
-        document.getElementById('advRewardModal').style.display = 'block';
-    }
-    function advCloseReward() { document.getElementById('advRewardModal').style.display = 'none'; }
-    function advNextLevel() {
-        let id = adv.level ? adv.level.id + 1 : 1;
-        advAbort();
-        goToAdvLevel(id);
-    }
-    async function advLose(id, why) {
-        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
-        adv.active = false;
-        releaseWakeLock();
-        let tip = '';
-        if (!advData.loseTipShown) { advData.loseTipShown = true; advSave(); tip = '<br>🧪 背包裡的恢復藥水可以恢復體力喔！'; }   // 第一次失敗才提醒
-        if (why === 'shift') {
-            advData.hp = adv.player.hp; advSave();      // 店員下班：雞塊的體力保留
-            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">⏰ 打卡下班！</div>`;
-            await advAnimate(E, [{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(60px)', opacity: 0 }], { duration: 700, fill: 'forwards' });
-            if (id !== adv.runId) return;
-            document.getElementById('advPanel').innerHTML = `
-            <div class="adv-result"><div class="big">🕘 店員下班了，明天請早</div><div class="line">雞塊的體力保留下來了（${adv.player.hp}/${adv.player.max}）。<br>下次要在倒數結束前打倒店員！${tip}</div></div>
-            <button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`;
-            return;
-        }
-        document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">雞塊倒下了…</div>`;
-        await advAnimate(P, [{ transform: 'rotate(0deg)', opacity: 1 }, { transform: 'rotate(80deg) translateY(10px)', opacity: 0.55 }], { duration: 600, fill: 'forwards' });
-        if (id !== adv.runId) return;
-        document.getElementById('advPanel').innerHTML = `
-            <div class="adv-result"><div class="big">😵 挑戰失敗</div><div class="line">雞塊沒有體力了，明天 00:00 恢復。<br>先去練習單字，或用糖醋醬提升能力吧！${tip}</div></div>
-            <button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`;
-    }
-
-    // 只有登記在 INLINE_ACTIONS 的函式能被呼叫（白名單）
-    // ═════════════════════════════════════════════════════════════
-    const INLINE_ACTIONS = {
-        copyAppUrl,
-        playSpeakPracticeSample,
-        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
-        advQuit, advRetry, advRedeemStamps, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
-        openMicHelpModal,
-        closeMicHelpModal,
-        recheckMicPermission,
-        goToAdventurePage,
-        goToSpeakPracticePage,
-        toggleSpeakPracticeCard,
-        toggleSpeakPracticePreview,
-        sortSpeakPracticePreview,
-        openSpeakPracticeSettingsModal,
-        saveSpeakPracticeSettings,
-        startSpeakPracticeSession,
-        finishSpeakPracticeSession,
-        nextSpeakPracticeQuestion,
-        closeShopListPicker,
-        buyWordCapForList,
-        buyShopItem,
-        closeChickenShopModal,
-        openChickenShopModal,
-        enforceCurrentEditorLanguage,
-        changeListLanguageFromMenu,
-        onLearningLanguageChange,
-        addNewWordList,
-        backToFlashcardSetup,
-        backToHome,
-        backToHomeFromExam,
-        backToListFromDetail,
-        claimChickenReward,
-        clearAllExamHistoryData,
-        clearAllWordListsData,
-        clearListContentFromMenu,
-        closeAboutModal,
-        closeAdvancedModal,
-        closeChickenRewardModal,
-        closeExamAdvancedModal,
-        closeExamResultModal,
-        closeExportModal,
-        closeHistoryModal,
-        closeSystemSettingsModal,
-        confirmExportTxtFiles,
-        deleteListFromMenu,
-        finishCardExamSession,
-        finishExam,
-        goToCardExamPage,
-        goToEditorPage,
-        goToExamPage,
-        goToFlashcardPage,
-        goToPracticePage,
-        handleAuthClick,
-        handleCardExamKeyDown,
-        setHomeTab, goDoTask, histSetType, histOpenDetail, histToggleWrong, histOpenSave, histToggleSel, histSelectAll, histSaveWords, historyBack, setListSeg, setPickSeg, pickSelectAll, handleEditorSearch, clearEditorSearch, jumpToEditorLine, toggleEditorSort, togglePackStar,
-        handleEditorTextareaInput,
-        handleInputKeyDown,
-        handleChiKeyDown,
-        openWordFormatModal,
-        closeWordFormatModal,
-        hideInAppBrowserWarning,
-        loadInitialSettings,
-        nextFlashcard,
-        openAboutModal,
-        openAdvancedModal,
-        openCardExamSettingsModal,
-        openChickenRewardModal,
-        openEditorDetail,
-        openExamAdvancedModal,
-        openExportModal,
-        openFlashcardSettingsModal,
-        openHistoryModal,
-        openSystemSettingsModal,
-        playCurrentFlashcardAudio,
-        prevFlashcard,
-        renameListTitleFromMenu,
-        runStressTest,
-        saveAndStayInEditor,
-        saveAppSettings,
-        saveCardExamSettings,
-        saveExamAppSettings,
-        saveFlashcardSettings,
-        saveSelectedWrongWords,
-        saveSystemSettings,
-        sortCardExamPreview,
-        sortEditorContent,
-        sortExamWordListContent,
-        sortFlashcardPreview,
-        sortWordListContent,
-        startCardExamSession,
-        startExamMode,
-        startFlashcardSession,
-        submitCardExamAnswer,
-        submitExamAnswer,
-        switchHistoryTab,
-        syncEditorScroll,
-        toggleAccordion,
-        toggleAllExportCheckboxes,
-        toggleCardExamCard,
-        toggleCardExamPreview,
-        toggleCardHistoryDetail,
-        toggleCurrentCardStar,
-        toggleDictation,
-        toggleDropdownMenu,
-        toggleExamCard,
-        toggleExamPreview,
-        toggleFlashcardCard,
-        toggleFlashcardPreview,
-        toggleHistoryDetail,
-        togglePauseDictation,
-        togglePowerSavingMode,
-        togglePracticeCard,
-        togglePreview,
-        toggleSubCard,
-        updateSliderProgress,
-        updateSpeedDisplay,
-        updateVolumeDisplay,
-        verifyDevPassword,
-        handleLogout,
-        openCloudSettings, cloudReconnect,
-        voiceChiToggle, applyVoiceChiButtons,
-        advSetShopFilter, advBuySoda, advRunTestCodeInput
-    };
-
-    const inlineCallCache = new Map();
-
-    function runInlineCalls(el, raw, ev) {
-        let calls = inlineCallCache.get(raw);
-        if (!calls) {
-            try { calls = JSON.parse(raw); } catch (e) { console.warn('data-on-* 格式錯誤:', raw); return false; }
-            inlineCallCache.set(raw, calls);
-        }
-        let stopped = false;
-        for (const [name, args] of calls) {
-            if (name === '$stop') { ev.stopPropagation(); stopped = true; continue; }
-            const fn = INLINE_ACTIONS[name];
-            if (typeof fn !== 'function') { console.warn('未登記的動作:', name); continue; }
-            fn(...args.map(a => a === '$this' ? el : a === '$event' ? ev : a === '$value' ? el.value : a));
-        }
-        return stopped;
-    }
-
-    // click / change / input / keydown 都會冒泡，從點擊目標一路往上找，行為與原本 inline 事件相同
-    ['click', 'change', 'input', 'keydown'].forEach(type => {
-        document.addEventListener(type, ev => {
-            let el = ev.target instanceof Element ? ev.target : null;
-            while (el) {
-                const raw = el.getAttribute('data-on-' + type);
-                if (raw) {
-                    // 讓 event.currentTarget 指向「掛有 data-on-* 的元素」，與原本 inline 事件一致
-                    Object.defineProperty(ev, 'currentTarget', { value: el, configurable: true });
-                    const stopped = runInlineCalls(el, raw, ev);
-                    delete ev.currentTarget;
-                    if (stopped) break;
-                }
-                el = el.parentElement;
-            }
-        });
-    });
-
-    // scroll 不會冒泡，改用捕獲階段監聽
-    document.addEventListener('scroll', ev => {
-        const el = ev.target instanceof Element ? ev.target : null;
-        const raw = el && el.getAttribute('data-on-scroll');
-        if (raw) runInlineCalls(el, raw, ev);
-    }, true);
+<script src="app.js"></script>
+</body>
+</html>
