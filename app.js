@@ -64,11 +64,14 @@
 
     const MAX_LISTS_DEFAULT = 10;
     
+    const OB_FIRST_RUN = localStorage.getItem('dictation_word_lists') === null;   // 第一次打開 App（新手教學用）
     let wordLists = JSON.parse(localStorage.getItem('dictation_word_lists')) || [];
-    
+
     if (wordLists.length === 0) {
         let nowTs = Date.now();
-        wordLists.push({ title: `unit 1-1`, content: "courage 勇氣\n*foreigner 外國人\n*fantastic 極好的 形容詞", createdAt: nowTs });
+        // 新玩家：先給一個空的「我的單字」，新手教學最後一步會帶他放進第一個字
+        wordLists.push(OB_FIRST_RUN ? { title: '我的單字', content: '', createdAt: nowTs }
+                                    : { title: `unit 1-1`, content: "courage 勇氣\n*foreigner 外國人\n*fantastic 極好的 形容詞", createdAt: nowTs });
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
     }
     ensureListIds();   // 舊題庫補上固定識別碼
@@ -4774,6 +4777,11 @@
             alert('🔄 雞塊大冒險已重設。');
             return true;
         }
+        if (code === 'newplayer') {
+            try { localStorage.setItem(OB_FORCE_KEY, '1'); localStorage.removeItem(OB_DONE_KEY); } catch (e) {}
+            alert('🐣 下次打開 App 會再跑一次新手教學。');
+            return true;
+        }
         if (code === 'flower') {
             walletRpc('farm_act', { p_action: 'dev', p_args: { code: 'flower' } })
                 .then(res => { farmApply(res); farmSrv = true; farmRefresh(); alert('🌸 花 +500（雲端）'); })
@@ -5821,13 +5829,13 @@
         let words = advAutoWords(lv), review = advIsReview(lv.id);
         let key = advPlanOf(lv.id) && (Array.isArray(advPlanOf(lv.id)) ? advPlanOf(lv.id)[0] : advPlanOf(advPlanOf(lv.id).review[0])[0]) < advAutoParts().night.length ? 'adv_night' : 'adv_store';
         box.innerHTML = `<div class="lst-list">
-                <div class="lst-row" style="cursor:default"><span class="lst-no pk">${packIconHTML(key, 30)}</span><span class="lst-tx"><b>${WORD_PACKS[key].title}</b><small>${advRangeText(lv)}${review ? '・複習關' : `・這關 ${words.length} 個新字`}</small></span></div>
-                <div class="lst-row lst-shop" data-on-click='[["advOpenWords",[]]]'><span class="lst-no">📖</span><span class="lst-tx"><b>看這關的 ${words.length} 個字</b></span><span class="lst-ar">›</span></div>
+                <div class="lst-row" style="cursor:default"><span class="lst-no pk">${packIconHTML(key, 30)}</span><span class="lst-tx"><b>${WORD_PACKS[key].title}</b></span></div>
+                <div class="lst-row lst-shop" data-on-click='[["advOpenWords",[]]]'><span class="lst-no">📖</span><span class="lst-tx"><b>這關單字</b></span><span class="lst-ar">›</span></div>
             </div>`;
         let n = words.length;
         let last = ((advData.lastWrong || {})[lv.id] || []).length;
         let stat = document.getElementById('advStatsText');
-        if (stat) stat.innerHTML = `這關範圍：<b>${n}</b> 個字${last ? `・上次打錯 <b style="color:#EA580C">${last}</b> 個` : ''}`;
+        if (stat) stat.innerHTML = `這關範圍：<b>${n}</b> 個字${last ? `・上次答錯 <b style="color:#EA580C">${last}</b> 個` : ''}`;
     }
     // 這關會考的字：新增的在上面、之前學過的在下面
     function advOpenWords() {
@@ -7970,7 +7978,24 @@
         { id: 'guard_none', slot: 'guard', name: '空位', price: 0 },
         { id: 'guard_dog', slot: 'guard', name: '看門狗', price: 60 },
         { id: 'mailbox_nugget', slot: 'mailbox', name: '雞塊信箱', price: 0 },
-        { id: 'mailbox_red', slot: 'mailbox', name: '紅色郵筒', price: 40 }
+        { id: 'mailbox_red', slot: 'mailbox', name: '紅色郵筒', price: 40 },
+        // 2026/11 新增：夜市 A／夜市 B／粉粉貓／懶懶海豹 四套（價格要和後台 farm_act 的 decor 一致，見 supabase_007_farm_decor.sql）
+        { id: 'house_cutlet_cart', slot: 'house', name: '香雞排攤車', price: 60 },
+        { id: 'house_balloon_stall', slot: 'house', name: '射氣球攤位', price: 60 },
+        { id: 'house_peach_cat', slot: 'house', name: '粉粉貓小屋', price: 80 },
+        { id: 'house_seal_dome', slot: 'house', name: '海豹午睡屋', price: 80 },
+        { id: 'scarecrow_market_umbrella', slot: 'scarecrow', name: '夜市陽傘', price: 40 },
+        { id: 'scarecrow_candied_fruit', slot: 'scarecrow', name: '糖葫蘆串', price: 40 },
+        { id: 'scarecrow_peach_cat', slot: 'scarecrow', name: '粉粉貓稻草人', price: 50 },
+        { id: 'scarecrow_seal', slot: 'scarecrow', name: '懶懶海豹稻草人', price: 50 },
+        { id: 'fence_plastic_stools', slot: 'fence', name: '塑膠椅圍籬', price: 50 },
+        { id: 'fence_cones', slot: 'fence', name: '三角錐圍籬', price: 50 },
+        { id: 'fence_cat_posts', slot: 'fence', name: '貓頭圍籬', price: 60 },
+        { id: 'fence_seal_posts', slot: 'fence', name: '睡覺海豹圍籬', price: 60 },
+        { id: 'mailbox_capsule_toy', slot: 'mailbox', name: '扭蛋機信箱', price: 40 },
+        { id: 'mailbox_pull_tab', slot: 'mailbox', name: '抽抽樂信箱', price: 40 },
+        { id: 'mailbox_peach_cat', slot: 'mailbox', name: '粉粉貓信箱', price: 50 },
+        { id: 'mailbox_seal', slot: 'mailbox', name: '海豹抱抱信箱', price: 50 }
     ];
     const FARM_SLOT_NAMES = { house: '小屋', scarecrow: '稻草人', fence: '圍籬', guard: '守衛', mailbox: '信箱' };
     const FARM_DEFAULT_DECOR = { house: 'house_chicken', scarecrow: 'scarecrow_nugget', fence: 'fence_wood', guard: 'guard_none', mailbox: 'mailbox_nugget' };
@@ -8164,7 +8189,30 @@
             <rect x="26" y="58" width="36" height="7" rx="3.5" fill="#2E2650"/>
             <rect x="30" y="80" width="28" height="22" rx="3" fill="#FFFFFF"/><path d="M33 84 L44 93 L55 84" stroke="#E8483B" stroke-width="2.4" fill="none"/></svg>`
     };
+    // 新的四套裝飾圖（夜市 A／夜市 B／粉粉貓／懶懶海豹）
+    Object.assign(FARM_ART, {
+        house_cutlet_cart: () => `<svg viewBox="0 0 110 108" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><rect x="12" y="10" width="4" height="30" fill="#8a8f99"/><rect x="94" y="10" width="4" height="30" fill="#8a8f99"/><rect x="6" y="2" width="98" height="22" rx="4" fill="#f7d14a"/><text x="55" y="19" text-anchor="middle" font-family="Noto Sans TC,PingFang TC,Microsoft JhengHei,sans-serif" font-size="14" font-weight="900" fill="#d9301e">香雞排</text><path d="M8 30 Q55 40 102 30" fill="none" stroke="#2e2650" stroke-width="1.2"/><circle cx="14" cy="31" r="5.5" fill="#fff4b8" opacity="0.55"/><circle cx="14" cy="31" r="2.6" fill="#ffe066"/><circle cx="26" cy="35" r="5.5" fill="#fff4b8" opacity="0.55"/><circle cx="26" cy="35" r="2.6" fill="#ffe066"/><circle cx="38" cy="35" r="5.5" fill="#fff4b8" opacity="0.55"/><circle cx="38" cy="35" r="2.6" fill="#ffe066"/><circle cx="50" cy="35" r="5.5" fill="#fff4b8" opacity="0.55"/><circle cx="50" cy="35" r="2.6" fill="#ffe066"/><circle cx="62" cy="35" r="5.5" fill="#fff4b8" opacity="0.55"/><circle cx="62" cy="35" r="2.6" fill="#ffe066"/><circle cx="74" cy="35" r="5.5" fill="#fff4b8" opacity="0.55"/><circle cx="74" cy="35" r="2.6" fill="#ffe066"/><circle cx="86" cy="33" r="5.5" fill="#fff4b8" opacity="0.55"/><circle cx="86" cy="33" r="2.6" fill="#ffe066"/><circle cx="98" cy="31" r="5.5" fill="#fff4b8" opacity="0.55"/><circle cx="98" cy="31" r="2.6" fill="#ffe066"/><rect x="6" y="36" width="14" height="13" fill="#e2463c"/><rect x="20" y="36" width="14" height="13" fill="#ffffff"/><rect x="34" y="36" width="14" height="13" fill="#e2463c"/><rect x="48" y="36" width="14" height="13" fill="#ffffff"/><rect x="62" y="36" width="14" height="13" fill="#e2463c"/><rect x="76" y="36" width="14" height="13" fill="#ffffff"/><rect x="90" y="36" width="14" height="13" fill="#e2463c"/><circle cx="13" cy="49" r="7" fill="#e2463c"/><circle cx="27" cy="49" r="7" fill="#ffffff"/><circle cx="41" cy="49" r="7" fill="#e2463c"/><circle cx="55" cy="49" r="7" fill="#ffffff"/><circle cx="69" cy="49" r="7" fill="#e2463c"/><circle cx="83" cy="49" r="7" fill="#ffffff"/><circle cx="97" cy="49" r="7" fill="#e2463c"/><rect x="12" y="56" width="86" height="16" rx="2" fill="#e8f6ff" stroke="#b9c6d3" stroke-width="2"/><ellipse cx="32" cy="66" rx="10" ry="5" fill="#e9a94a"/><ellipse cx="55" cy="65" rx="10" ry="5" fill="#d9952f"/><ellipse cx="78" cy="66" rx="10" ry="5" fill="#e9a94a"/><rect x="8" y="72" width="94" height="24" rx="4" fill="#c7d0d9"/><rect x="8" y="82" width="94" height="5" fill="#6355e8"/><circle cx="26" cy="99" r="7" fill="#2e2650"/><circle cx="26" cy="99" r="2.5" fill="#c7d0d9"/><circle cx="84" cy="99" r="7" fill="#2e2650"/><circle cx="84" cy="99" r="2.5" fill="#c7d0d9"/></svg>`,
+        house_balloon_stall: () => `<svg viewBox="0 0 110 108" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><path d="M2 14 L55 2 L108 14Z" fill="#2f6f9c"/><rect x="4" y="14" width="17" height="14" fill="#3d86b8"/><rect x="21" y="14" width="17" height="14" fill="#ffffff"/><rect x="38" y="14" width="17" height="14" fill="#3d86b8"/><rect x="55" y="14" width="17" height="14" fill="#ffffff"/><rect x="72" y="14" width="17" height="14" fill="#3d86b8"/><rect x="89" y="14" width="17" height="14" fill="#ffffff"/><rect x="8" y="28" width="5" height="62" fill="#8a8f99"/><rect x="97" y="28" width="5" height="62" fill="#8a8f99"/><rect x="15" y="34" width="80" height="44" rx="3" fill="#fbe7c4" stroke="#d9a441" stroke-width="2"/><ellipse cx="24.0" cy="44" rx="5" ry="6" fill="#e2463c"/><circle cx="22.4" cy="42" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="36.5" cy="44" rx="5" ry="6" fill="#f7d14a"/><circle cx="34.9" cy="42" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="49.0" cy="44" rx="5" ry="6" fill="#5aa6d6"/><circle cx="47.4" cy="42" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="61.5" cy="44" rx="5" ry="6" fill="#6cc468"/><circle cx="59.9" cy="42" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="74.0" cy="44" rx="5" ry="6" fill="#f28bb2"/><circle cx="72.4" cy="42" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="86.5" cy="44" rx="5" ry="6" fill="#6355e8"/><circle cx="84.9" cy="42" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="24.0" cy="57" rx="5" ry="6" fill="#e2463c"/><circle cx="22.4" cy="55" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="36.5" cy="57" rx="5" ry="6" fill="#f7d14a"/><circle cx="34.9" cy="55" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="49.0" cy="57" rx="5" ry="6" fill="#5aa6d6"/><circle cx="47.4" cy="55" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="61.5" cy="57" rx="5" ry="6" fill="#6cc468"/><circle cx="59.9" cy="55" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="74.0" cy="57" rx="5" ry="6" fill="#f28bb2"/><circle cx="72.4" cy="55" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="86.5" cy="57" rx="5" ry="6" fill="#6355e8"/><circle cx="84.9" cy="55" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="24.0" cy="70" rx="5" ry="6" fill="#e2463c"/><circle cx="22.4" cy="68" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="36.5" cy="70" rx="5" ry="6" fill="#f7d14a"/><circle cx="34.9" cy="68" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="49.0" cy="70" rx="5" ry="6" fill="#5aa6d6"/><circle cx="47.4" cy="68" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="61.5" cy="70" rx="5" ry="6" fill="#6cc468"/><circle cx="59.9" cy="68" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="74.0" cy="70" rx="5" ry="6" fill="#f28bb2"/><circle cx="72.4" cy="68" r="1.3" fill="#ffffff" opacity="0.7"/><ellipse cx="86.5" cy="70" rx="5" ry="6" fill="#6355e8"/><circle cx="84.9" cy="68" r="1.3" fill="#ffffff" opacity="0.7"/><rect x="4" y="80" width="102" height="22" rx="3" fill="#6355e8"/><rect x="4" y="80" width="102" height="5" fill="#4b3fc9"/><text x="55" y="97" text-anchor="middle" font-family="Noto Sans TC,PingFang TC,Microsoft JhengHei,sans-serif" font-size="11" font-weight="900" fill="#ffffff">射氣球</text><path d="M88 76 l12 -8" stroke="#2e2650" stroke-width="2" stroke-linecap="round"/><path d="M100 68 l-4 0 l2 3z" fill="#e2463c"/></svg>`,
+        house_peach_cat: () => `<svg viewBox="0 0 110 108" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><path d="M14 40 L22 8 L40 26 H70 L88 8 L96 40Z" fill="#e2789d"/><path d="M22 16 L27 30 L34 27Z" fill="#fde3ec"/><path d="M88 16 L83 30 L76 27Z" fill="#fde3ec"/><rect x="8" y="38" width="94" height="8" rx="4" fill="#c95580"/><rect x="14" y="44" width="82" height="58" rx="6" fill="#fde3ec"/><circle cx="34" cy="66" r="13" fill="#bfe3f2" stroke="#c95580" stroke-width="3"/><clipPath id="fmCatWin"><circle cx="34" cy="66" r="11.5"/></clipPath><g clip-path="url(#fmCatWin)"><path d="M24.2 69.0 L25.0 58.5 L31.8 63.8Z" fill="#f6a5c0"/><path d="M25.8 66.8 L26.1 61.5 L30.2 64.5Z" fill="#fde3ec"/><path d="M43.8 69.0 L43.0 58.5 L36.2 63.8Z" fill="#f6a5c0"/><path d="M42.2 66.8 L41.9 61.5 L37.8 64.5Z" fill="#fde3ec"/><ellipse cx="34" cy="72" rx="11.2" ry="9.8" fill="#f6a5c0"/><path d="M31.4 62.6 L31.4 66.0" stroke="#e2789d" stroke-width="1.4" stroke-linecap="round"/><path d="M34.0 62.6 L34.0 66.0" stroke="#e2789d" stroke-width="1.4" stroke-linecap="round"/><path d="M36.6 62.6 L36.6 66.0" stroke="#e2789d" stroke-width="1.4" stroke-linecap="round"/><circle cx="30.2" cy="72.0" r="2.2" fill="#2e2650"/><circle cx="31.0" cy="71.2" r="0.8" fill="#fff"/><circle cx="37.8" cy="72.0" r="2.2" fill="#2e2650"/><circle cx="38.5" cy="71.2" r="0.8" fill="#fff"/><path d="M32.8 74.7 L35.2 74.7 L34.0 76.0Z" fill="#e2789d"/><path d="M31.4 76.7 q1.3 1.5 2.5 0 q1.3 1.5 2.5 0" fill="none" stroke="#2e2650" stroke-width="0.9" stroke-linecap="round"/><circle cx="27.2" cy="75.0" r="2.0" fill="#e2789d" opacity="0.45"/><circle cx="40.8" cy="75.0" r="2.0" fill="#e2789d" opacity="0.45"/></g><path d="M62 102 V70 a12 12 0 0 1 24 0 V102Z" fill="#9b5a35"/><circle cx="81" cy="87" r="1.8" fill="#f7d14a"/><path d="M74 60 c-3 -4 -8 0 0 6 c8 -6 3 -10 0 -6z" fill="#6355e8"/></svg>`,
+        house_seal_dome: () => `<svg viewBox="0 0 110 108" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><circle cx="86" cy="6" r="4" fill="#ffffff" opacity="0.9"/><circle cx="93" cy="3" r="3" fill="#ffffff" opacity="0.7"/><rect x="14" y="44" width="82" height="58" rx="4" fill="#fbefd9"/><path d="M14 58 H96" stroke="#ead7b4" stroke-width="1.5"/><path d="M14 70 H96" stroke="#ead7b4" stroke-width="1.5"/><path d="M14 82 H96" stroke="#ead7b4" stroke-width="1.5"/><path d="M6 44 L28 14 H82 L104 44Z" fill="#a9c7e6"/><circle cx="14.0" cy="44" r="6" fill="#a9c7e6"/><circle cx="25.5" cy="44" r="6" fill="#a9c7e6"/><circle cx="37.0" cy="44" r="6" fill="#a9c7e6"/><circle cx="48.5" cy="44" r="6" fill="#a9c7e6"/><circle cx="60.0" cy="44" r="6" fill="#a9c7e6"/><circle cx="71.5" cy="44" r="6" fill="#a9c7e6"/><circle cx="83.0" cy="44" r="6" fill="#a9c7e6"/><circle cx="94.5" cy="44" r="6" fill="#a9c7e6"/><path d="M28 14 H82" stroke="#7c9fc4" stroke-width="4" stroke-linecap="round"/><rect x="74" y="6" width="11" height="12" rx="2" fill="#c9b08a"/><rect x="68" y="54" width="20" height="18" rx="3" fill="#2e3b6b"/><circle cx="75" cy="61" r="3.2" fill="#f7d14a"/><circle cx="76.6" cy="60" r="2.6" fill="#2e3b6b"/><circle cx="83" cy="58" r="0.9" fill="#ffffff"/><circle cx="81" cy="66" r="0.8" fill="#ffffff"/><path d="M68 54 h20 v4 q-10 6 -20 0z" fill="#c9b8f5"/><path d="M22 102 V70 a14 14 0 0 1 28 0 V102Z" fill="#9b5a35"/><rect x="16" y="90" width="42" height="12" rx="6" fill="#6355e8"/><rect x="16" y="90" width="42" height="4" rx="2" fill="#7f74ef"/><ellipse cx="36" cy="86" rx="15.2" ry="13.3" fill="#d5dde7"/><ellipse cx="31.2" cy="79.3" rx="4.8" ry="2.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="36" cy="90.8" rx="7.6" ry="5.2" fill="#ffffff"/><path d="M27.5 85.0 q2.8 2.5 5.7 0" fill="none" stroke="#2e2650" stroke-width="1.4" stroke-linecap="round"/><path d="M38.9 85.0 q2.8 2.5 5.7 0" fill="none" stroke="#2e2650" stroke-width="1.4" stroke-linecap="round"/><ellipse cx="36" cy="88.5" rx="2.1" ry="1.4" fill="#2e2650"/><path d="M33.1 91.7 q1.4 1.5 2.8 0 q1.4 1.5 2.8 0" fill="none" stroke="#2e2650" stroke-width="0.9" stroke-linecap="round"/><circle cx="32.2" cy="90.8" r="0.7" fill="#b8c4d3"/><circle cx="30.8" cy="92.7" r="0.7" fill="#b8c4d3"/><circle cx="39.8" cy="90.8" r="0.7" fill="#b8c4d3"/><circle cx="41.2" cy="92.7" r="0.7" fill="#b8c4d3"/><ellipse cx="25.6" cy="89.8" rx="2.7" ry="1.7" fill="#f4a6b8" opacity="0.7"/><ellipse cx="46.5" cy="89.8" rx="2.7" ry="1.7" fill="#f4a6b8" opacity="0.7"/><ellipse cx="23" cy="95" rx="4.5" ry="2.6" fill="#d5dde7"/><ellipse cx="49" cy="95" rx="4.5" ry="2.6" fill="#d5dde7"/><text x="52" y="76" font-family="Baloo 2,Arial Rounded MT Bold,sans-serif" font-weight="800" font-size="9" fill="#6355e8">z</text><text x="58" y="70" font-family="Baloo 2,Arial Rounded MT Bold,sans-serif" font-weight="800" font-size="7" fill="#6355e8" opacity="0.7">z</text><rect x="4" y="100" width="102" height="7" rx="3.5" fill="#e8d3ad"/></svg>`,
+        scarecrow_market_umbrella: () => `<svg viewBox="0 0 70 92" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><rect x="33" y="10" width="4" height="70" fill="#8a8f99"/><path d="M35 34 L2.0 34.0 L4.5 26.3Z" fill="#e2463c"/><path d="M35 34 L4.5 26.3 L11.7 19.9Z" fill="#ffffff"/><path d="M35 34 L11.7 19.9 L22.4 15.5Z" fill="#e2463c"/><path d="M35 34 L22.4 15.5 L35.0 14.0Z" fill="#ffffff"/><path d="M35 34 L35.0 14.0 L47.6 15.5Z" fill="#e2463c"/><path d="M35 34 L47.6 15.5 L58.3 19.9Z" fill="#ffffff"/><path d="M35 34 L58.3 19.9 L65.5 26.3Z" fill="#e2463c"/><path d="M35 34 L65.5 26.3 L68.0 34.0Z" fill="#ffffff"/><path d="M2 34 Q35 30 68 34" fill="none" stroke="#c23a30" stroke-width="2"/><circle cx="35" cy="12" r="3" fill="#c23a30"/><path d="M22 92 L26 76 H44 L48 92Z" fill="#3d86b8"/><rect x="24" y="74" width="22" height="4" rx="2" fill="#2f6f9c"/></svg>`,
+        scarecrow_candied_fruit: () => `<svg viewBox="0 0 70 92" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><path d="M30 12 L8 6" stroke="#d9b77a" stroke-width="1.6" stroke-linecap="round"/><circle cx="20.8" cy="9.5" r="3.3" fill="#d9301e"/><circle cx="19.8" cy="8.4" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="15.0" cy="7.9" r="3.3" fill="#d9301e"/><circle cx="14.0" cy="6.8" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="9.3" cy="6.4" r="3.3" fill="#d9301e"/><circle cx="8.3" cy="5.3" r="0.9" fill="#ffffff" opacity="0.85"/><path d="M40 22 L62 16" stroke="#d9b77a" stroke-width="1.6" stroke-linecap="round"/><circle cx="49.2" cy="19.5" r="3.3" fill="#d9301e"/><circle cx="48.2" cy="18.4" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="55.0" cy="17.9" r="3.3" fill="#d9301e"/><circle cx="54.0" cy="16.8" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="60.7" cy="16.4" r="3.3" fill="#d9301e"/><circle cx="59.7" cy="15.3" r="0.9" fill="#ffffff" opacity="0.85"/><path d="M30 32 L8 26" stroke="#d9b77a" stroke-width="1.6" stroke-linecap="round"/><circle cx="20.8" cy="29.5" r="3.3" fill="#d9301e"/><circle cx="19.8" cy="28.4" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="15.0" cy="27.9" r="3.3" fill="#d9301e"/><circle cx="14.0" cy="26.8" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="9.3" cy="26.4" r="3.3" fill="#d9301e"/><circle cx="8.3" cy="25.3" r="0.9" fill="#ffffff" opacity="0.85"/><path d="M40 42 L62 36" stroke="#d9b77a" stroke-width="1.6" stroke-linecap="round"/><circle cx="49.2" cy="39.5" r="3.3" fill="#d9301e"/><circle cx="48.2" cy="38.4" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="55.0" cy="37.9" r="3.3" fill="#d9301e"/><circle cx="54.0" cy="36.8" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="60.7" cy="36.4" r="3.3" fill="#d9301e"/><circle cx="59.7" cy="35.3" r="0.9" fill="#ffffff" opacity="0.85"/><path d="M40 17 L62 11" stroke="#d9b77a" stroke-width="1.6" stroke-linecap="round"/><circle cx="49.2" cy="14.5" r="3.3" fill="#d9301e"/><circle cx="48.2" cy="13.4" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="55.0" cy="12.9" r="3.3" fill="#d9301e"/><circle cx="54.0" cy="11.8" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="60.7" cy="11.4" r="3.3" fill="#d9301e"/><circle cx="59.7" cy="10.3" r="0.9" fill="#ffffff" opacity="0.85"/><path d="M30 27 L8 21" stroke="#d9b77a" stroke-width="1.6" stroke-linecap="round"/><circle cx="20.8" cy="24.5" r="3.3" fill="#d9301e"/><circle cx="19.8" cy="23.4" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="15.0" cy="22.9" r="3.3" fill="#d9301e"/><circle cx="14.0" cy="21.8" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="9.3" cy="21.4" r="3.3" fill="#d9301e"/><circle cx="8.3" cy="20.3" r="0.9" fill="#ffffff" opacity="0.85"/><path d="M40 37 L62 31" stroke="#d9b77a" stroke-width="1.6" stroke-linecap="round"/><circle cx="49.2" cy="34.5" r="3.3" fill="#d9301e"/><circle cx="48.2" cy="33.4" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="55.0" cy="32.9" r="3.3" fill="#d9301e"/><circle cx="54.0" cy="31.8" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="60.7" cy="31.4" r="3.3" fill="#d9301e"/><circle cx="59.7" cy="30.3" r="0.9" fill="#ffffff" opacity="0.85"/><path d="M30 47 L8 41" stroke="#d9b77a" stroke-width="1.6" stroke-linecap="round"/><circle cx="20.8" cy="44.5" r="3.3" fill="#d9301e"/><circle cx="19.8" cy="43.4" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="15.0" cy="42.9" r="3.3" fill="#d9301e"/><circle cx="14.0" cy="41.8" r="0.9" fill="#ffffff" opacity="0.85"/><circle cx="9.3" cy="41.4" r="3.3" fill="#d9301e"/><circle cx="8.3" cy="40.3" r="0.9" fill="#ffffff" opacity="0.85"/><rect x="30" y="6" width="10" height="58" rx="5" fill="#f4e3c1" stroke="#d9b77a" stroke-width="1.5"/><rect x="33" y="62" width="4" height="20" fill="#9b5a35"/><path d="M20 92 L26 80 H44 L50 92Z" fill="#9b5a35"/><rect x="18" y="66" width="34" height="11" rx="3" fill="#f7d14a"/><text x="35" y="75" text-anchor="middle" font-family="Noto Sans TC,PingFang TC,Microsoft JhengHei,sans-serif" font-size="8" font-weight="900" fill="#d9301e">糖葫蘆</text></svg>`,
+        scarecrow_peach_cat: () => `<svg viewBox="0 0 70 92" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><rect x="32" y="52" width="6" height="40" rx="2" fill="#9b5a35"/><path d="M10.3 32.4 L12.2 5.8 L29.3 19.1Z" fill="#f6a5c0"/><path d="M14.1 26.7 L15.1 13.4 L25.5 21.0Z" fill="#fde3ec"/><path d="M59.7 32.4 L57.8 5.8 L40.7 19.1Z" fill="#f6a5c0"/><path d="M55.9 26.7 L55.0 13.4 L44.5 21.0Z" fill="#fde3ec"/><ellipse cx="35" cy="40" rx="28.5" ry="24.7" fill="#f6a5c0"/><path d="M28.4 16.2 L28.4 24.8" stroke="#e2789d" stroke-width="3.4" stroke-linecap="round"/><path d="M35.0 16.2 L35.0 24.8" stroke="#e2789d" stroke-width="3.4" stroke-linecap="round"/><path d="M41.6 16.2 L41.6 24.8" stroke="#e2789d" stroke-width="3.4" stroke-linecap="round"/><circle cx="25.5" cy="40.0" r="5.7" fill="#2e2650"/><circle cx="27.4" cy="37.9" r="1.9" fill="#fff"/><circle cx="44.5" cy="40.0" r="5.7" fill="#2e2650"/><circle cx="46.4" cy="37.9" r="1.9" fill="#fff"/><path d="M32.0 46.8 L38.0 46.8 L35.0 50.3Z" fill="#e2789d"/><path d="M28.5 51.8 q3.2 3.8 6.5 0 q3.2 3.8 6.5 0" fill="none" stroke="#2e2650" stroke-width="2.3" stroke-linecap="round"/><circle cx="17.9" cy="47.6" r="4.9" fill="#e2789d" opacity="0.45"/><circle cx="52.1" cy="47.6" r="4.9" fill="#e2789d" opacity="0.45"/></svg>`,
+        scarecrow_seal: () => `<svg viewBox="0 0 70 92" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><rect x="32" y="52" width="6" height="40" rx="2" fill="#9b5a35"/><ellipse cx="35" cy="38" rx="30.4" ry="26.6" fill="#d5dde7"/><ellipse cx="25.5" cy="24.7" rx="9.5" ry="4.8" fill="#eef2f6" opacity="0.8"/><ellipse cx="35" cy="47.5" rx="15.2" ry="10.4" fill="#ffffff"/><path d="M17.9 36.1 q5.7 4.9 11.4 0" fill="none" stroke="#2e2650" stroke-width="2.8" stroke-linecap="round"/><path d="M40.7 36.1 q5.7 4.9 11.4 0" fill="none" stroke="#2e2650" stroke-width="2.8" stroke-linecap="round"/><ellipse cx="35" cy="42.9" rx="4.2" ry="2.8" fill="#2e2650"/><path d="M29.3 49.4 q2.8 3.0 5.7 0 q2.8 3.0 5.7 0" fill="none" stroke="#2e2650" stroke-width="1.9" stroke-linecap="round"/><circle cx="27.4" cy="47.5" r="1.3" fill="#b8c4d3"/><circle cx="24.6" cy="51.3" r="1.3" fill="#b8c4d3"/><circle cx="42.6" cy="47.5" r="1.3" fill="#b8c4d3"/><circle cx="45.5" cy="51.3" r="1.3" fill="#b8c4d3"/><ellipse cx="14.1" cy="45.6" rx="5.3" ry="3.4" fill="#f4a6b8" opacity="0.7"/><ellipse cx="55.9" cy="45.6" rx="5.3" ry="3.4" fill="#f4a6b8" opacity="0.7"/><text x="54" y="16" font-family="Baloo 2,Arial Rounded MT Bold,sans-serif" font-weight="800" font-size="9.9" fill="#6355e8">z</text><text x="60.6" y="9.399999999999999" font-family="Baloo 2,Arial Rounded MT Bold,sans-serif" font-weight="800" font-size="7.700000000000001" fill="#6355e8" opacity="0.7">z</text></svg>`,
+        mailbox_capsule_toy: () => `<svg viewBox="0 0 48 66" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><circle cx="24" cy="20" r="17" fill="#e8f6ff" stroke="#b9c6d3" stroke-width="2"/><circle cx="14" cy="16" r="4.2" fill="#e2463c"/><circle cx="12.8" cy="14.8" r="1.2" fill="#ffffff" opacity="0.7"/><circle cx="23" cy="12" r="4.2" fill="#f7d14a"/><circle cx="21.8" cy="10.8" r="1.2" fill="#ffffff" opacity="0.7"/><circle cx="31" cy="17" r="4.2" fill="#5aa6d6"/><circle cx="29.8" cy="15.8" r="1.2" fill="#ffffff" opacity="0.7"/><circle cx="19" cy="24" r="4.2" fill="#6cc468"/><circle cx="17.8" cy="22.8" r="1.2" fill="#ffffff" opacity="0.7"/><circle cx="28" cy="25" r="4.2" fill="#f28bb2"/><circle cx="26.8" cy="23.8" r="1.2" fill="#ffffff" opacity="0.7"/><circle cx="36" cy="22" r="4.2" fill="#f7d14a"/><circle cx="34.8" cy="20.8" r="1.2" fill="#ffffff" opacity="0.7"/><circle cx="11" cy="24" r="4.2" fill="#6355e8"/><circle cx="9.8" cy="22.8" r="1.2" fill="#ffffff" opacity="0.7"/><rect x="10" y="34" width="28" height="24" rx="3" fill="#e2463c"/><circle cx="24" cy="42" r="5" fill="#ffffff"/><rect x="21" y="41" width="6" height="2" rx="1" fill="#c23a30"/><rect x="17" y="50" width="14" height="6" rx="2" fill="#2e2650"/><rect x="8" y="58" width="32" height="8" rx="2" fill="#c23a30"/></svg>`,
+        mailbox_pull_tab: () => `<svg viewBox="0 0 48 66" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><rect x="21" y="44" width="6" height="22" fill="#9b5a35"/><rect x="4" y="2" width="40" height="46" rx="4" fill="#6355e8"/><rect x="8" y="4" width="32" height="8" rx="2" fill="#f7d14a"/><text x="24" y="10.5" text-anchor="middle" font-family="Noto Sans TC,PingFang TC,Microsoft JhengHei,sans-serif" font-size="6.5" font-weight="900" fill="#d9301e">抽抽樂</text><rect x="9" y="14" width="5.5" height="5.5" rx="1" fill="#f28bb2"/><rect x="16" y="14" width="5.5" height="5.5" rx="1" fill="#f7d14a"/><rect x="23" y="14" width="5.5" height="5.5" rx="1" fill="#5aa6d6"/><rect x="30" y="14" width="5.5" height="5.5" rx="1" fill="#6cc468"/><rect x="37" y="14" width="5.5" height="5.5" rx="1" fill="#ffffff"/><rect x="9" y="21" width="5.5" height="5.5" rx="1" fill="#f7d14a"/><rect x="16" y="21" width="5.5" height="5.5" rx="1" fill="#5aa6d6"/><rect x="23" y="21" width="5.5" height="5.5" rx="1" fill="#6cc468"/><rect x="30" y="21" width="5.5" height="5.5" rx="1" fill="#ffffff"/><rect x="37" y="21" width="5.5" height="5.5" rx="1" fill="#f28bb2"/><rect x="9" y="28" width="5.5" height="5.5" rx="1" fill="#5aa6d6"/><rect x="16" y="28" width="5.5" height="5.5" rx="1" fill="#6cc468"/><rect x="23" y="28" width="5.5" height="5.5" rx="1" fill="#ffffff"/><rect x="30" y="28" width="5.5" height="5.5" rx="1" fill="#f28bb2"/><rect x="37" y="28" width="5.5" height="5.5" rx="1" fill="#f7d14a"/><rect x="9" y="35" width="5.5" height="5.5" rx="1" fill="#6cc468"/><rect x="16" y="35" width="5.5" height="5.5" rx="1" fill="#ffffff"/><rect x="23" y="35" width="5.5" height="5.5" rx="1" fill="#f28bb2"/><rect x="30" y="35" width="5.5" height="5.5" rx="1" fill="#f7d14a"/><rect x="37" y="35" width="5.5" height="5.5" rx="1" fill="#5aa6d6"/><rect x="10" y="44" width="28" height="3" rx="1.5" fill="#4b3fc9"/></svg>`,
+        mailbox_peach_cat: () => `<svg viewBox="0 0 48 66" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><rect x="21" y="42" width="6" height="24" fill="#9b5a35"/><path d="M38 30 q10 -2 6 -14" fill="none" stroke="#e2789d" stroke-width="3.5" stroke-linecap="round"/><rect x="8" y="22" width="32" height="24" rx="5" fill="#f6a5c0"/><rect x="15" y="34" width="18" height="4" rx="2" fill="#c95580"/><path d="M18 44 h12 v-3 h-12z" fill="#6355e8"/><path d="M11.0 12.0 L12.0 -2.0 L21.0 5.0Z" fill="#f6a5c0"/><path d="M13.0 9.0 L13.5 2.0 L19.0 6.0Z" fill="#fde3ec"/><path d="M37.0 12.0 L36.0 -2.0 L27.0 5.0Z" fill="#f6a5c0"/><path d="M35.0 9.0 L34.5 2.0 L29.0 6.0Z" fill="#fde3ec"/><ellipse cx="24" cy="16" rx="15.0" ry="13.0" fill="#f6a5c0"/><path d="M20.5 3.5 L20.5 8.0" stroke="#e2789d" stroke-width="1.8" stroke-linecap="round"/><path d="M24.0 3.5 L24.0 8.0" stroke="#e2789d" stroke-width="1.8" stroke-linecap="round"/><path d="M27.5 3.5 L27.5 8.0" stroke="#e2789d" stroke-width="1.8" stroke-linecap="round"/><path d="M16.0 16.0 q3.0 -3.0 6.0 0" fill="none" stroke="#2e2650" stroke-width="1.6" stroke-linecap="round"/><path d="M26.0 16.0 q3.0 -3.0 6.0 0" fill="none" stroke="#2e2650" stroke-width="1.6" stroke-linecap="round"/><path d="M22.4 19.6 L25.6 19.6 L24.0 21.4Z" fill="#e2789d"/><path d="M20.6 22.2 q1.7 2.0 3.4 0 q1.7 2.0 3.4 0" fill="none" stroke="#2e2650" stroke-width="1.2" stroke-linecap="round"/><circle cx="15.0" cy="20.0" r="2.6" fill="#e2789d" opacity="0.45"/><circle cx="33.0" cy="20.0" r="2.6" fill="#e2789d" opacity="0.45"/></svg>`,
+        mailbox_seal: () => `<svg viewBox="0 0 48 66" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><rect x="21" y="44" width="6" height="22" fill="#9b5a35"/><rect x="6" y="24" width="36" height="22" rx="5" fill="#a9c7e6"/><rect x="15" y="34" width="18" height="4" rx="2" fill="#7c9fc4"/><ellipse cx="24" cy="22" rx="20" ry="9" fill="#d5dde7"/><path d="M42 20 q5 -2 4 -7 q-4 1 -5 4" fill="#d5dde7"/><ellipse cx="16" cy="14" rx="15.2" ry="13.3" fill="#d5dde7"/><ellipse cx="11.2" cy="7.4" rx="4.8" ry="2.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="16" cy="18.8" rx="7.6" ry="5.2" fill="#ffffff"/><path d="M7.5 13.1 q2.8 2.5 5.7 0" fill="none" stroke="#2e2650" stroke-width="1.4" stroke-linecap="round"/><path d="M18.9 13.1 q2.8 2.5 5.7 0" fill="none" stroke="#2e2650" stroke-width="1.4" stroke-linecap="round"/><ellipse cx="16" cy="16.5" rx="2.1" ry="1.4" fill="#2e2650"/><path d="M13.2 19.7 q1.4 1.5 2.8 0 q1.4 1.5 2.8 0" fill="none" stroke="#2e2650" stroke-width="0.9" stroke-linecap="round"/><circle cx="12.2" cy="18.8" r="0.7" fill="#b8c4d3"/><circle cx="10.8" cy="20.6" r="0.7" fill="#b8c4d3"/><circle cx="19.8" cy="18.8" r="0.7" fill="#b8c4d3"/><circle cx="21.2" cy="20.6" r="0.7" fill="#b8c4d3"/><ellipse cx="5.6" cy="17.8" rx="2.7" ry="1.7" fill="#f4a6b8" opacity="0.7"/><ellipse cx="26.4" cy="17.8" rx="2.7" ry="1.7" fill="#f4a6b8" opacity="0.7"/><ellipse cx="9" cy="27" rx="5" ry="2.6" fill="#d5dde7"/><text x="30" y="8" font-family="Baloo 2,Arial Rounded MT Bold,sans-serif" font-weight="800" font-size="7.2" fill="#6355e8">z</text><text x="34.8" y="3.1999999999999993" font-family="Baloo 2,Arial Rounded MT Bold,sans-serif" font-weight="800" font-size="5.6000000000000005" fill="#6355e8" opacity="0.7">z</text></svg>`
+    });
+    // 新圍籬：一段 150×40 的圖，左右各放一段（中間留給守衛）
+    const FARM_FENCE_ART = {
+        fence_plastic_stools: `<rect x="0" y="22" width="150" height="4" fill="#e6cf9f"/><g transform="translate(4 6)"><rect x="2" y="0" width="30" height="7" rx="3.5" fill="#f2665c"/><path d="M5 7 L2 32 H8 L11 12 H23 L26 32 H32 L29 7Z" fill="#e2463c"/><rect x="9" y="18" width="16" height="3" rx="1.5" fill="#c23a30"/></g><g transform="translate(58 6)"><rect x="2" y="0" width="30" height="7" rx="3.5" fill="#f2665c"/><path d="M5 7 L2 32 H8 L11 12 H23 L26 32 H32 L29 7Z" fill="#e2463c"/><rect x="9" y="18" width="16" height="3" rx="1.5" fill="#c23a30"/></g><g transform="translate(112 6)"><rect x="2" y="0" width="30" height="7" rx="3.5" fill="#f2665c"/><path d="M5 7 L2 32 H8 L11 12 H23 L26 32 H32 L29 7Z" fill="#e2463c"/><rect x="9" y="18" width="16" height="3" rx="1.5" fill="#c23a30"/></g>`,
+        fence_cones: `<rect x="16" y="14" width="54" height="7" rx="2" fill="#f7d14a"/><path d="M20 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M30 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M40 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M50 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M60 14 h5 l-4 7 h-5z" fill="#2e2650"/><rect x="80" y="14" width="54" height="7" rx="2" fill="#f7d14a"/><path d="M84 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M94 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M104 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M114 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M124 14 h5 l-4 7 h-5z" fill="#2e2650"/><g transform="translate(0 0)"><path d="M10 4 L18 34 H2Z" fill="#f28a2e"/><rect x="5" y="14" width="10" height="4" fill="#ffffff"/><rect x="3.5" y="24" width="13" height="4" fill="#ffffff"/><rect x="0" y="34" width="20" height="4" rx="1" fill="#c96a1e"/></g><g transform="translate(65 0)"><path d="M10 4 L18 34 H2Z" fill="#f28a2e"/><rect x="5" y="14" width="10" height="4" fill="#ffffff"/><rect x="3.5" y="24" width="13" height="4" fill="#ffffff"/><rect x="0" y="34" width="20" height="4" rx="1" fill="#c96a1e"/></g><g transform="translate(130 0)"><path d="M10 4 L18 34 H2Z" fill="#f28a2e"/><rect x="5" y="14" width="10" height="4" fill="#ffffff"/><rect x="3.5" y="24" width="13" height="4" fill="#ffffff"/><rect x="0" y="34" width="20" height="4" rx="1" fill="#c96a1e"/></g>`,
+        fence_cat_posts: `<rect x="0" y="24" width="150" height="6" rx="3" fill="#f3c6d6"/><g fill="#e2789d" opacity="0.8"><ellipse cx="37" cy="25" rx="3" ry="2.4"/><circle cx="34" cy="21.4" r="1.2"/><circle cx="37" cy="20.5" r="1.2"/><circle cx="40" cy="21.4" r="1.2"/></g><g fill="#e2789d" opacity="0.8"><ellipse cx="112" cy="25" rx="3" ry="2.4"/><circle cx="109" cy="21.4" r="1.2"/><circle cx="112" cy="20.5" r="1.2"/><circle cx="115" cy="21.4" r="1.2"/></g><g><rect x="6" y="16" width="12" height="24" rx="3" fill="#fde3ec" stroke="#e8b6c8" stroke-width="2"/><path d="M4.8 9.8 L5.4 2.1 L10.3 5.9Z" fill="#f6a5c0"/><path d="M5.9 8.1 L6.2 4.3 L9.2 6.5Z" fill="#fde3ec"/><path d="M19.1 9.8 L18.6 2.1 L13.7 5.9Z" fill="#f6a5c0"/><path d="M18.1 8.1 L17.8 4.3 L14.8 6.5Z" fill="#fde3ec"/><ellipse cx="12" cy="12" rx="8.2" ry="7.2" fill="#f6a5c0"/><path d="M10.1 5.1 L10.1 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M12.0 5.1 L12.0 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M13.9 5.1 L13.9 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><circle cx="9.2" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="9.8" cy="11.4" r="0.6" fill="#fff"/><circle cx="14.8" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="15.3" cy="11.4" r="0.6" fill="#fff"/><path d="M11.1 14.0 L12.9 14.0 L12.0 15.0Z" fill="#e2789d"/><path d="M10.1 15.4 q0.9 1.1 1.9 0 q0.9 1.1 1.9 0" fill="none" stroke="#2e2650" stroke-width="0.7" stroke-linecap="round"/><circle cx="7.0" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/><circle cx="16.9" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/></g><g><rect x="69" y="16" width="12" height="24" rx="3" fill="#fde3ec" stroke="#e8b6c8" stroke-width="2"/><path d="M67.8 9.8 L68.4 2.1 L73.3 5.9Z" fill="#f6a5c0"/><path d="M69.0 8.1 L69.2 4.3 L72.2 6.5Z" fill="#fde3ec"/><path d="M82.2 9.8 L81.6 2.1 L76.7 5.9Z" fill="#f6a5c0"/><path d="M81.0 8.1 L80.8 4.3 L77.8 6.5Z" fill="#fde3ec"/><ellipse cx="75" cy="12" rx="8.2" ry="7.2" fill="#f6a5c0"/><path d="M73.1 5.1 L73.1 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M75.0 5.1 L75.0 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M76.9 5.1 L76.9 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><circle cx="72.2" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="72.8" cy="11.4" r="0.6" fill="#fff"/><circle cx="77.8" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="78.3" cy="11.4" r="0.6" fill="#fff"/><path d="M74.1 14.0 L75.9 14.0 L75.0 15.0Z" fill="#e2789d"/><path d="M73.1 15.4 q0.9 1.1 1.9 0 q0.9 1.1 1.9 0" fill="none" stroke="#2e2650" stroke-width="0.7" stroke-linecap="round"/><circle cx="70.0" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/><circle cx="80.0" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/></g><g><rect x="132" y="16" width="12" height="24" rx="3" fill="#fde3ec" stroke="#e8b6c8" stroke-width="2"/><path d="M130.8 9.8 L131.4 2.1 L136.3 5.9Z" fill="#f6a5c0"/><path d="M131.9 8.1 L132.2 4.3 L135.2 6.5Z" fill="#fde3ec"/><path d="M145.2 9.8 L144.6 2.1 L139.7 5.9Z" fill="#f6a5c0"/><path d="M144.1 8.1 L143.8 4.3 L140.8 6.5Z" fill="#fde3ec"/><ellipse cx="138" cy="12" rx="8.2" ry="7.2" fill="#f6a5c0"/><path d="M136.1 5.1 L136.1 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M138.0 5.1 L138.0 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M139.9 5.1 L139.9 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><circle cx="135.2" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="135.8" cy="11.4" r="0.6" fill="#fff"/><circle cx="140.8" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="141.3" cy="11.4" r="0.6" fill="#fff"/><path d="M137.1 14.0 L138.9 14.0 L138.0 15.0Z" fill="#e2789d"/><path d="M136.1 15.4 q0.9 1.1 1.9 0 q0.9 1.1 1.9 0" fill="none" stroke="#2e2650" stroke-width="0.7" stroke-linecap="round"/><circle cx="133.1" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/><circle cx="142.9" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/></g>`,
+        fence_seal_posts: `<rect x="0" y="24" width="150" height="6" rx="3" fill="#e8d3ad"/><g><rect x="32" y="20" width="22" height="12" rx="6" fill="#a9c7e6"/><path d="M37 26 h12" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/></g><g><rect x="95" y="20" width="22" height="12" rx="6" fill="#a9c7e6"/><path d="M100 26 h12" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/></g><g><rect x="6" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="12" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="9.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="12" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><path d="M7.0 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><path d="M13.7 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><ellipse cx="12" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M10.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="9.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="9.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="14.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="15.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="5.9" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="18.1" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g><g><rect x="69" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="75" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="72.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="75" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><circle cx="71.7" cy="12.4" r="1.4" fill="#2e2650"/><circle cx="72.2" cy="11.9" r="0.5" fill="#fff"/><circle cx="78.3" cy="12.4" r="1.4" fill="#2e2650"/><circle cx="78.8" cy="11.9" r="0.5" fill="#fff"/><ellipse cx="75" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M73.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="72.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="72.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="77.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="78.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="69.0" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="81.0" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g><g><rect x="132" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="138" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="135.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="138" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><path d="M133.1 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><path d="M139.7 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><ellipse cx="138" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M136.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="135.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="135.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="140.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="141.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="131.9" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="144.1" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g>`
+    };
     function farmFenceHTML(id) {
+        if (FARM_FENCE_ART[id]) return `<svg class="fm-fence-svg" viewBox="0 0 390 46" preserveAspectRatio="none" aria-hidden="true" style="overflow:visible"><g transform="translate(0 4)">${FARM_FENCE_ART[id]}</g><g transform="translate(240 4)">${FARM_FENCE_ART[id]}</g></svg>`;
         let post = id === 'fence_lantern'
             ? (x) => `<g><rect x="${x}" y="8" width="13" height="34" rx="4" fill="#F4E3C1" stroke="#D8B98E" stroke-width="2"/><ellipse cx="${x + 6.5}" cy="6" rx="7" ry="8" fill="#E8483B"/><rect x="${x + 3}" y="-3" width="7" height="3" fill="#B9452F"/></g>`
             : (x) => `<rect x="${x}" y="6" width="13" height="36" rx="4" fill="#F4E3C1" stroke="#D8B98E" stroke-width="2"/>`;
@@ -8231,7 +8279,7 @@
             : `<div class="fm-helper"><span class="fm-helper-ic dim">${advEnemySVG('meatball')}</span><span><small>幫手</small><b>還沒有幫手</b><em>打倒大冒險第 1 關的貢丸就能邀請</em></span></div>`;
         let plantOff = left <= 0 || empty < 0;
         box.innerHTML = `<div class="fm-wrap" id="farmStageWrap"><div class="fm-stage" id="farmStage"><div class="fm-top">
-            <div class="fm-head">
+            <div class="fm-head${ed ? ' ed' : ''}">
                 ${ed ? `<b class="fm-title">布置模式</b><button type="button" class="fm-done" data-on-click='[["farmEditDone",[]]]'>完成</button>`
                      : `<button type="button" class="fm-sq" aria-label="返回" data-on-click='[["farmBack",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E2650" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg></button><b class="fm-title">雞塊農場</b><button type="button" class="fm-sq" aria-label="布置農場" data-on-click='[["farmEditStart",[]]]'>${farmPencilIcon(22)}</button>`}
                 <span class="fm-pills"><span class="fm-pill">${farmNuggetIcon(22)}<b>${(typeof wallet !== 'undefined' && wallet.balance != null) ? wallet.balance : 0}</b></span><button type="button" class="fm-pill" aria-label="花店" data-on-click='[["farmOpenShop",[]]]'>${farmFlowerIcon(22)}<b id="farmFlowerN">${farm.flowers}</b></button></span>
@@ -8242,7 +8290,7 @@
             ${farmSrv === false && farmSrvMsg ? `<div class="fm-offline">☁️ ${farmSrvMsg}</div>` : ''}
             </div>
             <div class="fm-scene">
-                <svg class="fm-hill" viewBox="0 0 390 86" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 Q100 18 200 42 Q300 4 390 22 V86 H0 Z" fill="#C9D98A"/></svg>
+                <svg class="fm-hill" viewBox="0 0 3590 86" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="fmHillG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9D98A"/><stop offset=".72" stop-color="#C3D584"/><stop offset="1" stop-color="#B9CF7C"/></linearGradient></defs><path d="M0 36 Q200 16 400 36 Q600 56 800 36 Q1000 16 1200 36 Q1350 50 1450 46 Q1530 43 1600 40 Q1700 18 1800 42 Q1900 4 1990 22 Q2080 40 2190 36 Q2390 26 2590 40 Q2790 54 2990 36 Q3190 18 3390 34 Q3490 42 3590 36 V86 H0 Z" fill="url(#fmHillG)"/></svg>
                 ${slot('house', '', farmDecorArt('house'))}
                 ${slot('scarecrow', '', farmDecorArt('scarecrow'))}
                 <div class="fm-field${ed ? ' faded' : ''}">${farm.plots.map((p, i) => farmPlotHTML(p, i)).join('')}</div>
@@ -8456,24 +8504,30 @@
         advShuffle(pool).forEach(w => { let c = String(w.chinese).split(/[、,，；;\/／]/)[0]; if (out.length < n && c && !cnEx.includes(c)) { cnEx.push(c); out.push(c); } });
         return out;
     }
-    // 是非題的「錯的意思」：從題庫找中文最像的（例如「電容器」→「電容量」），比較能考出有沒有真的記住
+    // 是非題的「錯的意思」：從題庫找中文最像的（例如題目是「電容器」，題庫有「電容量」，就問「是不是電容量？」）
+    //   有共同的字就算像；共同的字越多、開頭或結尾一樣、字數接近的越優先；最像的幾個裡隨機挑一個，同一個字不會每次都問一樣的
     function farmSimilarCn(p) {
-        let ans = farmCnOf(p);
+        let ans = farmCnOf(p).trim();
         if (!ans) return '';
-        let all = String(p.cn || '').split(/[、,，；;\/／]/).map(x => x.trim());
-        let best = '', score = 0;
+        let all = String(p.cn || '').split(/[、,，；;\/／]/).map(x => x.trim()).filter(Boolean);
+        let ansChars = [...new Set(ans.replace(/[\s（）()〔〕\[\]·・.]/g, ''))];
+        let seen = {}, cands = [];
         farmWordPool().forEach(w => {
             if (!w.chinese || String(w.english).toLowerCase() === p.word.toLowerCase()) return;
             String(w.chinese).split(/[、,，；;\/／]/).forEach(c => {
                 c = c.trim();
-                if (!c || all.includes(c)) return;
-                let common = [...new Set(c)].filter(ch => ans.includes(ch)).length;
-                if (common < Math.min(2, Math.ceil(ans.length / 2))) return;      // 至少要有一半的字一樣，才算「很像」
-                let sc = common * 10 - Math.abs(c.length - ans.length) + Math.random();
-                if (sc > score) { score = sc; best = c; }
+                if (!c || seen[c] || all.includes(c)) return;
+                seen[c] = true;
+                let common = [...new Set(c)].filter(ch => ansChars.includes(ch)).length;
+                if (!common) return;
+                let sc = common * 10 + (c[0] === ans[0] ? 4 : 0) + (c[c.length - 1] === ans[ans.length - 1] ? 4 : 0) - Math.abs(c.length - ans.length) * 2;
+                cands.push({ c, sc });
             });
         });
-        return best;
+        if (!cands.length) return '';
+        cands.sort((a, b) => b.sc - a.sc);
+        let top = cands.filter(x => x.sc >= cands[0].sc - 3).slice(0, 3);
+        return top[Math.floor(Math.random() * top.length)].c;
     }
     function farmBuildTasks() {
         let due = farmDueList();
@@ -8599,7 +8653,7 @@
         farmSave();
         if (farmSrv === true) farmCall('water', { indices: (q.type === 'odd' ? fw.tasks[fw.k].idx : fw.tasks[fw.k].idx.slice(0, 1)), ok });
         fw.done = true; fw.ok = ok;
-        if (!ok) advSpeakWord(p0.word);
+        if (!ok && q.type !== 'tf') advSpeakWord(p0.word);      // 是非題答錯不唸發音
         farmRenderWater();
     }
     function farmNextTask() {
@@ -8612,6 +8666,187 @@
 
     // 只有登記在 INLINE_ACTIONS 的函式能被呼叫（白名單）
     // ═════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════
+    // 🐣 新手教學：只在第一次打開 App 出現（開發者密碼 newplayer：下次打開再跑一次）
+    //   ① 歡迎頁 → ② 題庫 ③ 練習 ④ 測驗 ⑤ 樂園（遮罩介紹底部分頁）→ ⑥ 打開「我的單字」放第一個字
+    //   chicky_onboard_done：'1' 看完或略過、'old' 更新前就在用的玩家、'pending' 開始了但還沒看完（下次再跑）
+    // ═════════════════════════════════════════════════════════════
+    const OB_DONE_KEY = 'chicky_onboard_done', OB_FORCE_KEY = 'chicky_onboard_force';
+    const OB_ICONS = {
+        lists: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7"/></svg>',
+        practice: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+        exam: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
+        fun: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"/><path d="M4 4h13l-2 4 2 4H4"/></svg>'
+    };
+    const OB_STEPS = [
+        { tab: 'lists', title: '題庫', text: '第一步：把想背的單字放進來，一行一個字。沒有的話，也可以直接用精選單字庫。' },
+        { tab: 'practice', title: '練習', text: '用聽力、字卡、朗讀練你的單字，每天幾分鐘就好。' },
+        { tab: 'exam', title: '測驗', text: '練得差不多了就考考看，常錯的字會幫你記下來。' },
+        { tab: 'fun', title: '樂園', text: '玩大冒險和農場，一邊玩一邊複習，每天都想回來。' }
+    ];
+    let obStepNow = -1;
+    function obShouldRun() {
+        try {
+            if (localStorage.getItem(OB_FORCE_KEY) === '1') return true;
+            let v = localStorage.getItem(OB_DONE_KEY);
+            if (v === 'pending') return true;
+            if (v) return false;
+            if (OB_FIRST_RUN) { localStorage.setItem(OB_DONE_KEY, 'pending'); return true; }
+            localStorage.setItem(OB_DONE_KEY, 'old');        // 更新前就在用的玩家：不跳教學
+            return false;
+        } catch (e) { return false; }
+    }
+    function obDots(k) { return `<span class="ob-dots" aria-hidden="true">${[0, 1, 2, 3, 4].map(i => `<i class="${i === k ? 'on' : ''}"></i>`).join('')}</span>`; }
+    function obNugget() {
+        return `<svg role="img" aria-label="雞塊揮手打招呼" style="position:absolute;left:228px;top:38px" width="120" height="94" viewBox="0 14 128 100">
+            <path d="M 22 70 Q 10 72 6 84" stroke="#231F20" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+            <path d="M 97 50 Q 112 44 114 26" stroke="#231F20" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+            <path d="M 121 18 Q 126 23 124 31" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.7"/>
+            <path d="M 48 99 L 44 110 L 36 110 M 72 99 L 76 110 L 84 110" stroke="#231F20" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <ellipse cx="60" cy="62" rx="38" ry="40" fill="#F4A236" stroke="#231F20" stroke-width="5"/>
+            <circle cx="30" cy="76" r="3.5" fill="#E2861E"/><circle cx="58" cy="90" r="3" fill="#E2861E"/><circle cx="86" cy="80" r="3" fill="#E2861E"/>
+            <ellipse cx="38" cy="66" rx="7" ry="5" fill="#F87171"/><ellipse cx="82" cy="66" rx="7" ry="5" fill="#F87171"/>
+            <circle cx="48" cy="56" r="4.2" fill="#231F20"/><circle cx="72" cy="56" r="4.2" fill="#231F20"/>
+            <path d="M 54 65 Q 60 72 66 65" stroke="#231F20" stroke-width="4" stroke-linecap="round" fill="none"/></svg>`;
+    }
+    function obClear() {
+        ['obWelcome', 'obMask'].forEach(id => { let el = document.getElementById(id); if (el) el.remove(); });
+        document.documentElement.style.overflow = '';
+        window.removeEventListener('resize', obPlace);
+    }
+    // ① 歡迎頁
+    function obStart() {
+        obClear();
+        obStepNow = 0;
+        if (document.getElementById('homeDashboardView') && !document.getElementById('homeDashboardView').classList.contains('active')) setHomeTab('practice');
+        let star = (x, y, s, c, o) => `<svg aria-hidden="true" style="position:absolute;${x};${y}" width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2z" fill="${c}"${o ? ` opacity="${o}"` : ''}/></svg>`;
+        document.body.insertAdjacentHTML('beforeend', `<div id="obWelcome" role="dialog" aria-modal="true" aria-label="歡迎來到 Chicky Vocab"><div class="ob-w">
+            <div class="ob-top">
+                <button type="button" class="ob-skip" data-ob="skip">略過</button>
+                <div class="ob-art">
+                    <div class="ob-circle" aria-hidden="true" style="width:260px;height:260px;left:-80px;bottom:-120px"></div>
+                    <div class="ob-circle" aria-hidden="true" style="width:140px;height:140px;right:-40px;top:24px"></div>
+                    ${star('left:44px', 'top:78px', 16, '#FFD27A')}${star('right:50px', 'bottom:66px', 12, '#FFFFFF', .8)}
+                    <div class="ob-card" aria-hidden="true" style="left:82px;top:112px;background:#A5B4FC;transform:rotate(8deg)"></div>
+                    <div class="ob-card" aria-hidden="true" style="left:76px;top:106px;background:#E0E7FF;transform:rotate(3deg)"></div>
+                    <div class="ob-card main">
+                        <div style="display:flex;justify-content:space-between;align-items:center"><span class="chip">我的單字</span><span class="spk"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></span></div>
+                        <div class="en">meeting</div><div class="cn">會議</div>
+                    </div>
+                    ${obNugget()}
+                </div>
+            </div>
+            <div class="ob-body">
+                <h1>歡迎來到 Chicky Vocab！</h1>
+                <div class="ob-feat"><span class="ic" style="background:#EEF0FF"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/><path d="M9 8h6M9 12h4"/></svg></span><div><b>背你自己的單字</b><span>用聽力、字卡、朗讀來練</span></div></div>
+                <div class="ob-feat"><span class="ic" style="background:#FFE9C7"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3"/><circle cx="16" cy="11.5" r="0.8" fill="#B45309"/><circle cx="18" cy="13.5" r="0.8" fill="#B45309"/></svg></span><div><b>玩遊戲，天天複習</b><span>大冒險打怪、農場種花</span></div></div>
+                <div class="ob-foot">${obDots(0)}<button type="button" class="ob-go" data-ob="next">看看怎麼用</button></div>
+            </div>
+        </div></div>`);
+        document.documentElement.style.overflow = 'hidden';
+        let w = document.getElementById('obWelcome');
+        w.addEventListener('click', ev => {
+            let b = ev.target.closest('[data-ob]');
+            if (!b) return;
+            if (b.getAttribute('data-ob') === 'skip') obFinish(false);
+            else obGo(0);
+        });
+        setTimeout(() => { try { w.querySelector('.ob-go').focus({ preventScroll: true }); } catch (e) {} }, 50);
+    }
+    // ②～⑤ 遮罩：把整個畫面蓋暗，只留下要介紹的底部分頁，旁邊放一個固定大小的白框
+    function obGo(k) {
+        obClear();
+        obStepNow = k + 1;
+        let st = OB_STEPS[k];
+        setHomeTab(st.tab);
+        window.scrollTo(0, 0);
+        document.documentElement.style.overflow = 'hidden';
+        let last = k === OB_STEPS.length - 1;
+        document.body.insertAdjacentHTML('beforeend', `<div id="obMask" role="dialog" aria-modal="true" aria-label="新手教學：${st.title}">
+            <div class="ob-catch"></div><div class="ob-hole"></div>
+            <div class="ob-tip"><div class="ob-tip-h">${OB_ICONS[st.tab]}${st.title}</div><p>${st.text}</p>
+                <div class="ob-tip-f">${obDots(k + 1)}<button type="button" class="ob-next">${last ? '開始使用' : '下一步'}</button></div></div>
+        </div>`);
+        let m = document.getElementById('obMask');
+        m.querySelector('.ob-next').addEventListener('click', () => { if (last) obFinish(true); else obGo(k + 1); });
+        window.addEventListener('resize', obPlace);
+        requestAnimationFrame(() => requestAnimationFrame(obPlace));
+        setTimeout(obPlace, 250);
+        setTimeout(() => { try { m.querySelector('.ob-next').focus({ preventScroll: true }); } catch (e) {} }, 60);
+    }
+    function obPlace() {
+        let m = document.getElementById('obMask');
+        if (!m || obStepNow < 1) return;
+        let st = OB_STEPS[obStepNow - 1];
+        let tab = document.querySelector(`#acTabs .ac-tab[data-tab="${st.tab}"]`);
+        let hole = m.querySelector('.ob-hole'), tip = m.querySelector('.ob-tip');
+        let vw = window.innerWidth, vh = window.innerHeight;
+        let r = tab && tab.offsetParent !== null ? tab.getBoundingClientRect() : null;
+        if (!r || !r.width) {               // 找不到分頁列：白框放在畫面中間
+            hole.style.cssText = 'left:50%;top:50%;width:0;height:0';
+            tip.className = 'ob-tip';
+            tip.style.left = Math.max(16, (vw - tip.offsetWidth) / 2) + 'px';
+            tip.style.top = Math.max(16, (vh - tip.offsetHeight) / 2) + 'px';
+            return;
+        }
+        let pad = 4;
+        hole.style.left = (r.left - pad) + 'px'; hole.style.top = (r.top - pad) + 'px';
+        hole.style.width = (r.width + pad * 2) + 'px'; hole.style.height = (r.height + pad * 2) + 'px';
+        let tw = tip.offsetWidth, th = tip.offsetHeight, cx = r.left + r.width / 2;
+        let left = Math.min(Math.max(16, cx - tw / 2), vw - tw - 16);
+        let below = r.top + r.height / 2 < vh / 2;          // 分頁列在上面（電腦）→ 白框放下面
+        tip.className = 'ob-tip ' + (below ? 'down' : 'up');
+        tip.style.left = left + 'px';
+        tip.style.top = (below ? r.bottom + pad + 14 : r.top - pad - 14 - th) + 'px';
+        tip.style.setProperty('--ax', Math.min(Math.max(24, cx - left), tw - 24) + 'px');
+    }
+    // ⑥ 看完（或略過）：記下來，下次不再出現；按「開始使用」會直接打開題庫放第一個字
+    function obFinish(openEditor) {
+        obClear();
+        obStepNow = -1;
+        try { localStorage.setItem(OB_DONE_KEY, '1'); localStorage.removeItem(OB_FORCE_KEY); } catch (e) {}
+        if (!openEditor) { setHomeTab('practice'); return; }
+        let cur = getLearningLanguage();
+        let mine = wordLists.map((l, idx) => ({ l, idx })).filter(x => !isPackList(x.l) && getListLang(x.l) === cur);
+        let pick = mine.find(x => x.l.title === '我的單字') || mine[0];
+        listSeg = 'custom';
+        if (!pick) { goToEditorPage(); return; }
+        initEditorListCards();
+        openEditorDetail(pick.idx);
+        window.scrollTo(0, 0);
+        setTimeout(obShowCoach, 120);
+    }
+    function obShowCoach() {
+        let box = document.getElementById('editorWrapperBox');
+        if (!box || !box.offsetParent) return;
+        let old = document.getElementById('obCoach'); if (old) old.remove();
+        let r = box.getBoundingClientRect();
+        document.body.insertAdjacentHTML('beforeend', `<div id="obCoach" role="note">
+            <button type="button" class="ob-x" aria-label="關閉提示">✕</button>
+            <b>✍️ 先放一個你想背的字吧</b>
+            <p>英文後面空一格寫中文，例如「meeting 會議」。存好之後到「練習」就能開始練。</p>
+            <button type="button" class="ob-pk">不想打字？先用精選單字庫 ›</button></div>`);
+        let c = document.getElementById('obCoach');
+        c.style.left = Math.max(16, r.left + window.scrollX + 12) + 'px';
+        c.style.top = (r.top + window.scrollY + Math.min(64, r.height * 0.35)) + 'px';
+        let ta = document.getElementById('editorWordList');
+        let close = () => { c.remove(); if (ta) ta.removeEventListener('input', close); document.removeEventListener('click', away, true); };
+        let away = ev => {
+            if (!document.getElementById('obCoach')) return;
+            if (ev.target.closest('#obCoach')) return;
+            close();
+        };
+        c.querySelector('.ob-x').addEventListener('click', close);
+        c.querySelector('.ob-pk').addEventListener('click', () => { close(); listSeg = 'pack'; goToEditorPage(); });
+        if (ta) ta.addEventListener('input', close);
+        setTimeout(() => document.addEventListener('click', away, true), 0);
+        let watch = setInterval(() => {            // 離開題庫編輯頁就收起來
+            if (!document.getElementById('obCoach')) { clearInterval(watch); return; }
+            if (!document.getElementById('editorDetailView').classList.contains('active')) { clearInterval(watch); close(); }
+        }, 500);
+    }
+    setTimeout(() => { try { if (obShouldRun()) obStart(); } catch (e) { console.warn('新手教學啟動失敗', e); } }, 400);
+
     const INLINE_ACTIONS = {
         copyAppUrl,
         playSpeakPracticeSample,
