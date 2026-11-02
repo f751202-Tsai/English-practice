@@ -20,6 +20,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-body: #EEF2F6;
@@ -1952,8 +1953,10 @@
         .fm-page { color: #2E2650; font-family: inherit; }
         .fm-pad { padding: 20px 16px 28px; min-height: 80vh; }
         .fm-wrap { position: relative; width: 100%; overflow: hidden; }
-        .fm-stage { position: absolute; left: 0; top: 0; width: 390px; transform-origin: 0 0; background: linear-gradient(#FFE6C4 0, #FFE6C4 320px, #B9CF7C 320px); padding-bottom: 22px; }
-        .fm-top { background: #FFE6C4; padding-bottom: 4px; }
+        .fm-stage { position: absolute; left: 0; top: 0; width: 390px; height: 660px; transform-origin: 0 0; background: linear-gradient(#FFE6C4 0, #FFE6C4 268px, #B9CF7C 268px); }
+        /* 版面 v11（farm_layout_v11.csv）：整個農場 390×660，每個元件照表格的 x、y、寬、高擺放 */
+        .fm-top { position: absolute !important; left: 0; top: 0; width: 390px; height: 66px; z-index: 3; }
+        .fm-top .fm-remind, .fm-top .fm-tip { position: absolute; left: 42px; top: 66px; width: 306px; height: 50px; margin: 0; box-sizing: border-box; }
         .fm-head { display: flex; align-items: center; gap: 8px; padding: 20px 16px 0 14px; }
         .fm-title { font-size: 25px; font-weight: 900; color: #2E2650; letter-spacing: .5px; white-space: nowrap; }
         .fm-sq { width: 42px; height: 42px; flex: 0 0 42px; border: none; border-radius: 14px; background: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
@@ -1965,16 +1968,15 @@
         .fm-head.ed .fm-pills { gap: 5px; }
         .fm-head.ed .fm-pill { padding: 5px 10px 5px 6px; font-size: 16px; }
         /* 舞台兩旁（電腦或較寬的畫面）也畫一樣的天空、山坡、草地，背景才不會在舞台邊緣斷掉 */
-        .fm-stage::before { content: ''; position: absolute; top: 0; bottom: 0; left: -1600px; right: -1600px; background: linear-gradient(#FFE6C4 0, #FFE6C4 320px, #B9CF7C 320px); z-index: -1; }
-        .fm-top { position: relative; }
-        .fm-top::before { content: ''; position: absolute; top: 0; bottom: 0; left: -1600px; right: -1600px; background: #FFE6C4; z-index: -1; }
-        .fm-scene::before { content: ''; position: absolute; top: 0; bottom: 0; left: -1600px; right: -1600px; background: linear-gradient(#FFE6C4 0, #FFE6C4 100px, #B9CF7C 100px); z-index: -1; }
-        .fm-tip { margin: 16px 16px 0; background: #E9E5FF; color: #4F46E5; border-radius: 20px; padding: 17px 20px; font-size: 16.5px; font-weight: 900; }
-        .fm-remind { margin: 16px 16px 0; background: #FFFFFF; border-radius: 24px; padding: 14px 14px 14px 16px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 10px rgba(120, 80, 20, .06); min-height: 68px; }
+        .fm-stage::before { content: ''; position: absolute; top: 0; bottom: 0; left: -1600px; right: -1600px; background: linear-gradient(#FFE6C4 0, #FFE6C4 268px, #B9CF7C 268px); z-index: -1; }
+        .fm-tip { background: #E9E5FF; color: #4F46E5; border-radius: 18px; padding: 0 18px; font-size: 15.5px; font-weight: 900; display: flex; align-items: center; }
+        .fm-remind { background: #FFFFFF; border-radius: 18px; padding: 0 7px 0 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 10px rgba(120, 80, 20, .06); }
+        .fm-remind svg { flex: 0 0 auto; width: 34px; height: 34px; }
         .fm-remind-tx { flex: 1; min-width: 0; }
-        .fm-remind.mini { min-height: 0; padding: 9px 14px; border-radius: 18px; gap: 8px; margin-top: 12px; }
-        .fm-remind.mini .fm-remind-tx b { font-size: 14.5px; } .fm-remind.mini .fm-remind-tx small { font-size: 11.5px; margin-top: 1px; }
-        .fm-offline { margin: 8px 16px 0; font-size: 12px; font-weight: 800; color: #8A5A2B; background: rgba(255,255,255,.6); border-radius: 12px; padding: 6px 10px; }
+        .fm-remind .fm-remind-tx b { font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .fm-remind .fm-remind-tx small { font-size: 11.5px; margin-top: 1px; white-space: nowrap; }
+        .fm-remind .fm-go { padding: 9px 12px; font-size: 14px; border-radius: 13px; }
+        .fm-go:disabled { background: #A8A2D8; cursor: not-allowed; }
+        .fm-offline { position: absolute; left: 42px; top: 118px; width: 306px; box-sizing: border-box; text-align: center; z-index: 4; font-size: 11px; font-weight: 800; color: #8A5A2B; background: rgba(255,255,255,.75); border-radius: 10px; padding: 3px 8px; }
         button.fm-pill { border: none; font-family: inherit; cursor: pointer; }
         .fm-shop-row { display: flex; align-items: center; gap: 12px; background: #FFFFFF; border: 2px solid #EFE6DA; border-radius: 18px; padding: 12px 14px; margin-bottom: 10px; }
         .fm-shop-ic { font-size: 30px; width: 44px; text-align: center; }
@@ -1985,39 +1987,39 @@
         .fm-remind-tx b { display: block; font-size: 16.5px; font-weight: 900; color: #2E2650; }
         .fm-remind-tx small { display: block; font-size: 12.5px; color: #8A8A85; margin-top: 3px; font-weight: 600; }
         .fm-go { border: none; background: #6355E8; color: #FFFFFF; font-weight: 900; font-size: 16px; border-radius: 16px; padding: 14px 16px; font-family: inherit; cursor: pointer; white-space: nowrap; }
-        .fm-scene { position: relative; height: 560px; background: linear-gradient(#FFE6C4 0, #FFE6C4 100px, #B9CF7C 100px); }
-        .fm-hill { position: absolute; left: -1600px; top: 40px; width: 3590px; height: 86px; }
+        .fm-scene { position: absolute; left: 0; top: 0; width: 390px; height: 660px; }
+        .fm-hill { position: absolute; left: -1600px; top: 188px; width: 3590px; height: 86px; }
         .fm-slot { position: absolute; }
         .fm-slot svg { width: 100%; height: 100%; display: block; }
-        .fm-house { left: 22px; top: 12px; width: 92px; height: 108px; }
-        .fm-scarecrow { left: 290px; top: 26px; width: 76px; height: 106px; }
-        .fm-fence { left: 0; top: 470px; width: 390px; height: 34px; }
-        .fm-guard { left: 170px; top: 440px; width: 50px; height: 62px; }
-        .fm-mailbox { left: 30px; top: 498px; width: 36px; height: 58px; }
+        .fm-house { left: 44px; top: 128.8px; width: 116.6px; height: 114.5px; }
+        .fm-scarecrow { left: 256.2px; top: 124.9px; width: 85.8px; height: 112.8px; }
+        .fm-fence { left: 18px; top: 504px; width: 354px; height: 41.6px; }
+        .fm-guard { left: 136px; top: 572px; width: 50px; height: 62px; }
+        .fm-mailbox { left: 58px; top: 563px; width: 57px; height: 78.4px; }
         .fm-guard-empty { width: 100%; height: 100%; box-sizing: border-box; border: 2px dashed #A98B6A; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #6B5D3D; font-size: 11px; font-weight: 800; background: rgba(255,255,255,.12); }
         .fm-guard-empty b { font-size: 18px; line-height: 1; }
         .fm-guard-empty.sm { width: 54px; height: 60px; margin: 0 auto; }
-        .fm-field { position: absolute; left: 39px; top: 136px; width: 312px; height: 312px; box-sizing: border-box; padding: 12px; background: #B98552; border-radius: 26px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 10px; transition: opacity .2s; }
+        .fm-field { position: absolute; left: 82px; top: 253px; width: 240px; height: 240px; box-sizing: border-box; padding: 9px; background: #B98552; border-radius: 22px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 8px; transition: opacity .2s; }
         .fm-field > * { min-height: 0; min-width: 0; }
         .fm-field.faded, .fm-bottom.faded { opacity: .5; pointer-events: none; }
-        .fm-plot { position: relative; border: none; border-radius: 18px; background: #7A4E2C; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 0 9px; cursor: pointer; font-family: inherit; overflow: visible; }
+        .fm-plot { position: relative; border: none; border-radius: 14px; background: #7A4E2C; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 0 6px; cursor: pointer; font-family: inherit; overflow: visible; }
         .fm-plot.locked { background: #A8977F; cursor: default; justify-content: center; gap: 6px; }
-        .fm-plot.locked small { font-size: 11.5px; font-weight: 800; color: #6F6253; }
+        .fm-plot.locked small { font-size: 9.5px; font-weight: 800; color: #6F6253; white-space: nowrap; } .fm-plot.locked { gap: 3px; } .fm-plot.locked svg { width: 22px; height: 22px; }
         .fm-plot.empty { justify-content: center; }
         .fm-empty { color: rgba(255,255,255,.45); font-size: 26px; font-weight: 900; }
-        .fm-crop { display: flex; align-items: flex-end; height: 60px; margin-bottom: 2px; }
-        .fm-word { color: #FFFFFF; font-size: 13px; font-weight: 800; max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .fm-drop { position: absolute; top: -6px; right: -6px; width: 30px; height: 30px; border-radius: 50%; background: #6355E8; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #B98552; }
-        .fm-ripe { position: absolute; top: -8px; right: 2px; background: #6355E8; color: #FFFFFF; font-size: 12.5px; font-weight: 900; border-radius: 999px; padding: 3px 10px; box-shadow: 0 0 0 3px #B98552; }
-        .fm-wait { position: absolute; top: 6px; right: 7px; font-size: 10.5px; font-weight: 800; color: rgba(255,255,255,.7); }
-        .fm-bottom { display: flex; gap: 10px; padding: 0 16px; }
-        .fm-helper { flex: 1.4; background: #FFFFFF; border-radius: 22px; display: flex; align-items: center; gap: 8px; padding: 10px 12px; min-height: 66px; }
-        .fm-helper-ic { width: 46px; height: 46px; flex: 0 0 46px; }
+        .fm-crop { display: flex; align-items: flex-end; height: 44px; margin-bottom: 1px; } .fm-crop svg { width: 50px; height: 50px; }
+        .fm-word { color: #FFFFFF; font-size: 11.5px; font-weight: 800; max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .fm-drop { position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; border-radius: 50%; background: #6355E8; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #B98552; }
+        .fm-ripe { position: absolute; top: -8px; right: 2px; background: #6355E8; color: #FFFFFF; font-size: 11px; font-weight: 900; border-radius: 999px; padding: 2px 8px; box-shadow: 0 0 0 3px #B98552; }
+        .fm-wait { position: absolute; top: 4px; right: 6px; font-size: 9.5px; font-weight: 800; color: rgba(255,255,255,.7); }
+        .fm-bottom { position: absolute; left: 206px; top: 594px; width: 168px; height: 56px; display: flex; }
+        .fm-helper { flex: 1; min-width: 0; box-sizing: border-box; background: #FFFFFF; border-radius: 18px; display: flex; align-items: center; gap: 7px; padding: 6px 9px; }
+        .fm-helper-ic { width: 38px; height: 38px; flex: 0 0 38px; }
         .fm-helper-ic svg { width: 100%; height: 100%; }
         .fm-helper-ic.dim { filter: grayscale(1); opacity: .5; }
         .fm-helper small { display: block; font-size: 11.5px; font-weight: 800; color: #8A8A85; }
-        .fm-helper b { display: block; font-size: 15.5px; font-weight: 900; color: #2E2650; }
-        .fm-helper em { display: block; font-style: normal; font-size: 11.5px; color: #6B6B66; line-height: 1.3; }
+        .fm-helper b { display: block; font-size: 13.5px; font-weight: 900; color: #2E2650; white-space: nowrap; }
+        .fm-helper em { display: block; font-style: normal; font-size: 10.5px; color: #6B6B66; line-height: 1.3; }
         .fm-plant { flex: 1; border: none; background: #6355E8; color: #FFFFFF; border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 8px 8px; font-family: inherit; cursor: pointer; }
         .fm-plant b { font-size: 17px; font-weight: 900; } .fm-plant small { font-size: 12px; font-weight: 700; opacity: .9; }
         .fm-plant:disabled { background: #A8A2D8; cursor: not-allowed; }
@@ -2025,12 +2027,21 @@
         .fm-slot.edit { cursor: pointer; outline: 2.5px dashed #6355E8; outline-offset: 5px; border-radius: 14px; background: rgba(99,85,232,.06); }
         .fm-slot.edit.sel { outline-style: solid; outline-width: 3px; background: rgba(99,85,232,.14); }
         .fm-slot-tag { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); background: #6355E8; color: #FFFFFF; font-size: 12px; font-weight: 900; border-radius: 999px; padding: 3px 10px; white-space: nowrap; z-index: 2; }
-        .fm-fence.edit .fm-slot-tag { left: 25%; }
+        .fm-fence.edit .fm-slot-tag { left: 22%; }
         .fm-sheet-bg { position: fixed; inset: 0; background: rgba(46,38,80,.18); z-index: 1100; }
         .fm-sheet { position: fixed; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 560px; max-height: 80vh; overflow-y: auto; overscroll-behavior: contain; background: #FFF9F0; border-radius: 28px 28px 0 0; padding: 10px 16px calc(20px + env(safe-area-inset-bottom)); z-index: 1101; box-shadow: 0 -8px 24px rgba(46,38,80,.12); color: #2E2650; }
         .fm-grab { width: 44px; height: 5px; border-radius: 3px; background: #D6CDC0; margin: 0 auto 12px; }
         .fm-sheet-head { display: flex; align-items: baseline; justify-content: space-between; margin: 0 4px 12px; }
         .fm-sheet-head b { font-size: 20px; font-weight: 900; } .fm-sheet-head span { color: #8A8378; font-weight: 700; }
+        .fm-sheet-head { align-items: center; gap: 10px; } .fm-sheet-head b { margin-right: auto; }
+        .fm-x { width: 36px; height: 36px; flex: 0 0 36px; border: none; border-radius: 12px; background: #F1E8DA; color: #2E2650; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+        .fm-house.edit .fm-slot-tag, .fm-scarecrow.edit .fm-slot-tag { top: auto; bottom: -13px; }
+        /* 花店：放大 */
+        .fm-shop-row { padding: 16px 16px; gap: 14px; border-radius: 22px; }
+        .fm-shop-ic { font-size: 44px; width: 60px; }
+        .fm-shop-tx b { font-size: 20px; } .fm-shop-tx small { font-size: 14.5px; }
+        .fm-shop-buy { font-size: 17px; padding: 12px 16px; border-radius: 16px; }
+        .fm-shop-note { font-size: 14px; }
         .fm-opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .fm-opt { border: 2px solid #EFE6DA; background: #FFFFFF; border-radius: 18px; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-family: inherit; color: #2E2650; }
         .fm-opt.on { border: 3px solid #6355E8; }
@@ -2039,6 +2050,24 @@
         .fm-thumb-fence { width: 90px; } .fm-thumb-fence svg { width: 90px !important; height: 30px !important; }
         .fm-opt b { font-size: 14.5px; font-weight: 900; } .fm-opt small { font-size: 12.5px; font-weight: 800; color: #8A8378; display: inline-flex; align-items: center; gap: 3px; }
         .fm-opt.on small { color: #6355E8; }
+        /* 電腦版：換裝飾、花店整個放大一倍，圖案看得清楚 */
+        @media (min-width: 769px) {
+            .fm-sheet { max-width: 1040px; max-height: 88vh; padding: 16px 32px 32px; border-radius: 40px 40px 0 0; }
+            .fm-grab { width: 64px; height: 6px; margin-bottom: 16px; }
+            .fm-sheet-head { margin: 0 6px 20px; } .fm-sheet-head b { font-size: 34px; } .fm-sheet-head span { font-size: 22px; }
+            .fm-x { width: 52px; height: 52px; flex-basis: 52px; border-radius: 16px; } .fm-x svg { width: 26px; height: 26px; }
+            .fm-opts { gap: 18px; }
+            .fm-opt { padding: 18px 10px; border-radius: 26px; gap: 8px; }
+            .fm-opt-art { height: 124px; } .fm-opt-art svg { height: 124px; max-width: 200px; }
+            .fm-thumb-fence { width: 200px; } .fm-thumb-fence svg { width: 200px !important; height: 66px !important; }
+            .fm-guard-empty.sm { width: 100px; height: 112px; font-size: 18px; } .fm-guard-empty.sm b { font-size: 32px; }
+            .fm-opt b { font-size: 24px; } .fm-opt small { font-size: 18px; }
+            .fm-shop-row { padding: 28px 30px; gap: 24px; border-radius: 30px; margin-bottom: 18px; }
+            .fm-shop-ic { font-size: 64px; width: 88px; }
+            .fm-shop-tx b { font-size: 32px; } .fm-shop-tx small { font-size: 22px; }
+            .fm-shop-buy { font-size: 26px; padding: 18px 26px; border-radius: 22px; } .fm-shop-buy svg { width: 28px; height: 28px; }
+            .fm-shop-note { font-size: 20px; margin-top: 10px; }
+        }
         .fm-toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); background: #2E2650; color: #FFFFFF; font-weight: 800; font-size: 14px; padding: 11px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: all .25s; z-index: 1200; max-width: 88vw; text-align: center; }
         .fm-toast.on { opacity: 1; transform: translate(-50%, 0); }
         /* 種新的字 */
@@ -2060,23 +2089,26 @@
         .fm-big:disabled { background: #B9B3E6; box-shadow: none; cursor: not-allowed; }
         .fm-link { border: none; background: transparent; color: #2E2650; font-weight: 900; font-size: 15.5px; padding: 14px; font-family: inherit; cursor: pointer; display: block; margin: 4px auto 0; }
         /* 澆水 */
-        .fw-card { background: #FDF3E1; border-radius: 26px; padding: 16px 12px 16px; display: flex; flex-direction: column; align-items: center; }
-        .fw-art { display: flex; align-items: flex-end; gap: 4px; }
+        .fw-card { background: #FDF3E1; border-radius: 24px; padding: 10px 12px 12px; display: flex; flex-direction: column; align-items: center; }
+        .fw-art { display: flex; align-items: flex-end; gap: 4px; } .fw-art svg { height: 86px; width: auto; }
         .fw-pill { margin-top: 6px; background: #E9E5FF; color: #6355E8; font-weight: 900; font-size: 14px; border-radius: 999px; padding: 6px 14px; }
-        .fw-ask { text-align: center; font-size: 15px; font-weight: 900; margin-top: 18px; color: #2E2650; }
-        .fw-big { text-align: center; font-size: 28px; font-weight: 900; margin: 6px 0 14px; color: #2E2650; word-break: break-word; }
+        .fw-ask { text-align: center; font-size: 15px; font-weight: 900; margin-top: 14px; color: #2E2650; }
+        .fw-big { text-align: center; font-size: 28px; font-weight: 900; margin: 4px 0 12px; color: #2E2650; word-break: break-word; }
         .fw-big .en { font-family: Inter, Arial, sans-serif; }
         .fw-tf { display: flex; gap: 14px; justify-content: center; }
         .fw-tfb { width: 104px; height: 84px; border-radius: 22px; border: 3px solid #DCD6FF; background: #FFFFFF; font-size: 40px; font-weight: 900; color: #2E2650; cursor: pointer; font-family: inherit; }
         .fw-tfb.sel { border-color: #6355E8; background: #EFEBFF; }
         .fw-tfb.right { border-color: #16A34A; background: #DCFCE7; }
-        .fw-slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; margin-bottom: 18px; }
+        /* 拼字：格子永遠排成一行（字越長格子越窄），畫面才不會被撐長、最下面被切掉 */
+        .fw-slots { display: flex; flex-wrap: nowrap; justify-content: center; gap: 6px; margin-bottom: 14px; }
+        .fw-slots .fw-slot { flex: 0 1 38px; min-width: 0; padding: 0; }
+        .fw-slots .fw-slot.w { flex: 0 1 auto; } .fw-slots:has(.w) { flex-wrap: wrap; }
         .fw-slot { width: 38px; height: 46px; border-radius: 12px; border: 2.5px dashed #C9C2FF; background: transparent; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: #2E2650; font-family: Inter, Arial, sans-serif; }
-        .fw-slots.many .fw-slot { width: 32px; height: 42px; font-size: 19px; }
+        .fw-slots.many .fw-slot { height: 42px; font-size: 19px; }
         .fw-slot.fill { border: none; background: #FFFFFF; cursor: pointer; }
         .fw-slot.w, .fw-tile.w { width: auto; min-width: 54px; padding: 0 12px; font-size: 18px; }
-        .fw-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-        .fw-tile { width: 46px; height: 52px; border-radius: 14px; border: 2.5px solid #DCD6FF; background: #FFFFFF; font-size: 24px; font-weight: 900; color: #2E2650; cursor: pointer; font-family: Inter, Arial, sans-serif; box-shadow: 0 3px 0 #E8E3FF; }
+        .fw-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+        .fw-tile { width: 44px; height: 48px; border-radius: 14px; border: 2.5px solid #DCD6FF; background: #FFFFFF; font-size: 24px; font-weight: 900; color: #2E2650; cursor: pointer; font-family: Inter, Arial, sans-serif; box-shadow: 0 3px 0 #E8E3FF; }
         .fw-words { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
         .fw-words span { background: #FFFFFF; border-radius: 14px; padding: 10px 14px; font-weight: 900; font-size: 17px; font-family: Inter, Arial, sans-serif; }
         .fw-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -2086,7 +2118,8 @@
         .fw-fb { margin-top: 16px; border-radius: 16px; padding: 12px 14px; font-weight: 800; font-size: 15px; text-align: center; line-height: 1.5; }
         .fw-fb.ok { background: #DCFCE7; color: #166534; }
         .fw-fb.bad { background: #FFF1E6; color: #C2410C; } .fw-fb small { color: #8A6A55; font-weight: 700; }
-        .fw-foot { margin-top: 26px; }
+        .fw-foot { margin-top: 18px; } .fw-foot .fm-link { padding: 10px 14px; }
+        #farmWaterBody.fm-pad { min-height: 0; padding-top: 14px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
         /* ══ 大冒險：跟著關卡／這關會考的字／答錯的字 ══ */
         #advAutoBox { margin-top: 12px; }
         .aw-ok { color: #16A34A; font-weight: 800; }
@@ -2162,7 +2195,7 @@
         .ac-tabs { display: flex; gap: 4px; border-bottom: 1.5px solid var(--border-color); }
         body.power-saving-mode .ac-tabs { border-bottom-color: #2B303C; }
         .ac-tab { display: flex; align-items: center; gap: 6px; padding: 9px 14px 10px; border: none; background: transparent; font: 800 15px inherit; font-family: inherit; color: #94A3B8; position: relative; cursor: pointer; }
-        .ac-tab svg { width: 19px; height: 19px; }
+        .ac-tab svg { width: 22px; height: 22px; }
         .ac-tab.on { color: var(--primary); }
         .ac-tab.on::after { content: ''; position: absolute; left: 8px; right: 8px; bottom: -1.5px; height: 3px; border-radius: 3px; background: var(--primary); }
         body.power-saving-mode .ac-tab.on { color: #A5B4FC; }
@@ -2353,6 +2386,879 @@
         #obCoach p { margin: 6px 0 0; font-size: 13px; line-height: 1.6; color: #E0E7FF; }
         #obCoach .ob-x { position: absolute; right: 6px; top: 6px; width: 32px; height: 32px; border: none; background: transparent; color: #C7D2FE; font-size: 18px; cursor: pointer; border-radius: 8px; }
         #obCoach .ob-pk { margin-top: 10px; border: none; background: rgba(255,255,255,.14); color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 700; border-radius: 10px; padding: 7px 12px; cursor: pointer; }
+    
+/* ===== 練習頁 UI（chicky-practice.css）===== */
+/* ============================================================
+   Chicky Vocab・練習頁共用樣式
+   適用：聽力開始頁（含繼續練習卡片、確認視窗）、聽力練習、字卡練習
+   手機與電腦共用；寬度 960px 以上自動切換成電腦版
+   字型：
+   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+   class 一律 cp- 開頭，避免跟 app 原本的樣式衝突
+   ============================================================ */
+
+:root {
+  --cp-bg: #eef1f7;
+  --cp-card: #ffffff;
+  --cp-ink: #1e1b4b;
+  --cp-muted: #545a75;
+  --cp-muted-2: #6b7090;
+  --cp-faint: #8b8fb5;
+  --cp-line: #e6e8f2;
+  --cp-line-2: #e2e5ef;
+  --cp-track: #e7e9f3;
+  --cp-panel: #f7f8fc;
+  --cp-selected: #f3f5fd;
+  --cp-primary: #4f46e5;
+  --cp-primary-2: #6366f1;
+  --cp-primary-dark: #3730a3;
+  --cp-primary-text: #4338ca;
+  --cp-primary-soft: #eef0ff;
+  --cp-primary-border: #dfe2ff;
+  --cp-primary-border-2: #c7caf7;
+  --cp-pos-bg: #fff1e0;
+  --cp-pos-text: #b45309;
+  --cp-star-bg: #fff4d6;
+  --cp-star: #f59e0b;
+  --cp-font: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+  --cp-font-en: 'Nunito', 'Noto Sans TC', sans-serif;
+  --cp-grad: linear-gradient(145deg, var(--cp-primary-2), var(--cp-primary));
+}
+
+/* ============================================================
+   1. 共用版型
+   ============================================================ */
+.cp *, .cp *::before, .cp *::after { box-sizing: border-box; }
+.cp button { font-family: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.cp button:focus-visible { outline: 3px solid var(--cp-primary-border-2); outline-offset: 3px; }
+.cp [hidden], .cp-dialog[hidden] { display: none !important; }
+
+/* 大白卡：頂端靛紫線 */
+/* 開始頁內容較長：高度依內容，不撐滿 */
+
+/* 標題列：返回｜標題置中｜設定 */
+.cp-header {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 8px;
+}
+.cp-back {
+  grid-column: 1;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 16px;
+  background: var(--cp-grad);
+  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.35);
+  color: #fff !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cp-title {
+  grid-column: 2;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--cp-primary-soft);
+  color: var(--cp-primary);
+  font-size: 16px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.cp-settings {
+  grid-column: 3;
+  width: 48px;
+  height: 48px;
+  border: 1.5px solid var(--cp-line-2);
+  border-radius: 16px;
+  background: var(--cp-card);
+  color: var(--cp-primary) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+/* 進度 */
+.cp-progress { display: flex; flex-direction: column; gap: 8px; }
+.cp-progress__meta { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.cp-progress__book {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cp-muted);
+}
+.cp-loop { display: flex; align-items: center; gap: 4px; color: var(--cp-primary-text); }
+.cp-count {
+  font-family: var(--cp-font-en);
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--cp-primary-text);
+  white-space: nowrap;
+}
+.cp-count small { font-size: inherit; font-weight: 800; color: var(--cp-muted-2); }
+.cp-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--cp-track);
+  overflow: hidden;
+}
+.cp-fill {
+  height: 100%;
+  width: 0;                 /* 用 JS 設定：目前第幾個 ÷ 總數 */
+  min-width: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--cp-primary-2), var(--cp-primary));
+  transition: width 0.3s ease;
+}
+
+/* 淺色內框（單字區、字卡） */
+.cp-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 16px 18px;
+  border: 1.5px solid var(--cp-line);
+  border-radius: 20px;
+  background: var(--cp-panel);
+  text-align: center;
+}
+.cp-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--cp-primary-border);
+  background: var(--cp-card);
+  color: var(--cp-primary-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+.cp-word {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.cp-word__en {
+  font-family: var(--cp-font-en);
+  font-size: clamp(34px, 12.5vw, 50px);
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  line-height: 1.15;
+  word-break: break-word;
+}
+.cp-word__ipa { font-size: 15px; color: var(--cp-muted); }
+.cp-divider { width: 55%; height: 1px; background: var(--cp-line); }
+.cp-meaning { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
+.cp-meaning__zh { font-size: 26px; font-weight: 900; }
+.cp-pos {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--cp-pos-bg);
+  color: var(--cp-pos-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ============================================================
+   2. 聽力練習
+   ============================================================ */
+.cp-wave { display: flex; align-items: center; gap: 2px; height: 14px; }
+.cp-wave span {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--cp-primary-2);
+  animation: cp-wave 0.9s ease-in-out infinite;
+}
+.cp-wave span:nth-child(2) { animation-delay: 0.15s; }
+.cp-wave span:nth-child(3) { animation-delay: 0.3s; background: var(--cp-primary); }
+.cp-wave span:nth-child(4) { animation-delay: 0.45s; }
+.cp-wave span:nth-child(5) { animation-delay: 0.6s; }
+@keyframes cp-wave { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+.cp.is-paused .cp-wave span { animation-play-state: paused; }
+.cp.is-paused .cp-status-text::after { content: '（已暫停）'; }
+
+.cp-repeat {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--cp-line);
+  background: var(--cp-card);
+}
+.cp-repeat__label { font-size: 13px; font-weight: 700; color: var(--cp-muted); }
+.cp-repeat__dots { display: flex; gap: 6px; }
+.cp-repeat__dots span { width: 22px; height: 8px; border-radius: 999px; background: #d4d8e8; }
+.cp-repeat__dots span.is-on { background: var(--cp-primary); }
+.cp-repeat__num { font-family: var(--cp-font-en); font-size: 14px; font-weight: 900; color: var(--cp-primary-text); }
+
+.cp-controls { display: flex; justify-content: center; padding: 4px 0 8px; }
+.cp-play {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--cp-primary);
+  background: var(--cp-grad);
+  box-shadow: 0 5px 0 var(--cp-primary-dark);
+  color: #fff !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.cp-play:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--cp-primary-dark); }
+.cp-play .icon-play { display: none; }
+.cp.is-paused .cp-play .icon-pause { display: none; }
+.cp.is-paused .cp-play .icon-play { display: block; }
+
+/* ============================================================
+   3. 字卡練習
+   ============================================================ */
+.cp-flip { cursor: pointer; font: inherit; color: inherit; width: 100%; }
+.cp-flip__front, .cp-flip__back { display: contents; }
+.cp-flip__back { display: none; }
+.cp-flip.is-flipped { background: var(--cp-primary-soft); border-color: var(--cp-primary-border-2); }
+.cp-flip.is-flipped .cp-flip__front { display: none; }
+.cp-flip.is-flipped .cp-flip__back { display: contents; }
+.cp-flip.is-flipped .cp-chip { border-color: var(--cp-primary-border-2); }
+
+.cp-card-word {
+  margin: auto 0;
+  font-family: var(--cp-font-en);
+  font-size: clamp(34px, 12.5vw, 50px);
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  line-height: 1.15;
+  word-break: break-word;
+}
+.cp-card-back { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.cp-card-back__en { font-family: var(--cp-font-en); font-size: 20px; font-weight: 800; color: var(--cp-muted-2); }
+.cp-card-back__zh { font-size: 44px; font-weight: 900; line-height: 1.2; }
+.cp-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cp-muted-2);
+}
+.cp-flip.is-flipped .cp-hint { margin-top: auto; color: var(--cp-muted); }
+.cp-hint--desktop { display: none; }
+
+.cp-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 2px 0 4px;
+}
+.cp-tool { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.cp-tool__btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s, box-shadow 0.1s, background 0.15s;
+}
+.cp-tool__btn:active { transform: scale(0.94); }
+.cp-tool__label { font-size: 12px; font-weight: 700; color: var(--cp-muted); }
+
+.cp-tool--sound .cp-tool__btn { background: var(--cp-primary-soft); color: var(--cp-primary) !important; }
+.cp-tool--prev .cp-tool__btn,
+.cp-tool--next-plain .cp-tool__btn { background: var(--cp-primary-soft); color: var(--cp-primary) !important; }
+.cp-tool--next .cp-tool__btn {
+  border: 2px solid var(--cp-primary);
+  background: var(--cp-grad);
+  box-shadow: 0 5px 0 var(--cp-primary-dark);
+  color: #fff !important;
+}
+.cp-tool--next .cp-tool__btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--cp-primary-dark); }
+.cp-tool--next .cp-tool__label { color: var(--cp-primary-text); }
+.cp-tool--star .cp-tool__btn { background: var(--cp-star-bg); }
+.cp-tool--star .cp-tool__label { color: var(--cp-pos-text); }
+.cp-tool--star .cp-star { fill: none; stroke: #d97706; }
+.cp-tool--star .cp-tool__btn[aria-pressed="true"] .cp-star { fill: var(--cp-star); }
+/* 第一張時「上一張」不能按 */
+.cp-tool__btn:disabled { background: #f3f4f8 !important; color: #b6bad0 !important; cursor: not-allowed; box-shadow: none; }
+.cp-tool__btn:disabled + .cp-tool__label { color: var(--cp-faint); }
+
+/* ============================================================
+   4. 開始頁（繼續練習卡片、題庫清單、確認視窗）
+   ============================================================ */
+.cp-resume {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  border: 1.5px solid var(--cp-primary-border);
+  border-radius: 20px;
+  background: var(--cp-primary-soft);
+}
+.cp-resume__info { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.cp-resume__head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.cp-resume__title { font-size: 15px; font-weight: 900; }
+.cp-resume__time { font-size: 12px; font-weight: 700; color: var(--cp-muted); white-space: nowrap; }
+.cp-resume__row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 10px 12px; }
+.cp-resume__row .cp-track { order: 3; flex-basis: 100%; }   /* 手機：進度條換到下一行 */
+.cp-resume__books {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cp-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cp-resume .cp-track { background: #dadef5; }
+
+.cp-btn {
+  height: 54px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 900;
+  transition: transform 0.1s, filter 0.15s;
+}
+.cp-btn:active { transform: scale(0.98); }
+.cp-btn--primary {
+  border: none;
+  background: linear-gradient(135deg, var(--cp-primary-2), var(--cp-primary));
+  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.3);
+  color: #fff !important;
+}
+.cp-btn--secondary {
+  border: 1.5px solid var(--cp-primary-border-2);
+  background: var(--cp-primary-soft);
+  color: var(--cp-primary-text) !important;
+}
+.cp-btn--ghost {
+  border: 1.5px solid var(--cp-line-2);
+  background: var(--cp-card);
+  color: var(--cp-muted) !important;
+}
+.cp-resume .cp-btn { margin-top: 4px; height: 50px; border-radius: 14px; }
+
+.cp-tabs { display: flex; gap: 22px; padding: 0 4px; border-bottom: 1.5px solid var(--cp-line); }
+.cp-tab {
+  position: relative;
+  padding: 6px 0 12px;
+  border: none;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--cp-muted) !important;
+}
+.cp-tab.is-active { font-weight: 700; color: var(--cp-primary) !important; }
+.cp-tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  bottom: -2px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--cp-primary);
+}
+.cp-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--cp-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.cp-section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.cp-section-head__label { font-size: 14px; font-weight: 700; color: var(--cp-muted); }
+.cp-pill-btn {
+  height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--cp-primary-soft);
+  color: var(--cp-primary) !important;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cp-books {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border: 1.5px solid var(--cp-line);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.cp-book {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: -1.5px;     /* 讓最後一列的底線被外框蓋掉 */
+  padding: 12px 18px;
+  border: none;
+  border-bottom: 1.5px solid var(--cp-line);
+  background: var(--cp-card);
+  text-align: left;
+}
+.cp-book__text { display: flex; flex-direction: column; gap: 2px; }
+.cp-book__name { font-size: 16px; font-weight: 700; color: var(--cp-ink); }
+.cp-book__count { font-size: 13px; font-weight: 700; color: var(--cp-muted-2); }
+.cp-book__check { color: var(--cp-primary); visibility: hidden; }
+.cp-book[aria-pressed="true"] { background: var(--cp-selected); }
+.cp-book[aria-pressed="true"] .cp-book__check { visibility: visible; }
+
+.cp-summary { font-size: 14px; font-weight: 700; color: var(--cp-muted); }
+.cp-summary b { color: var(--cp-ink); }
+
+/* 確認視窗 */
+.cp-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(30, 27, 75, 0.45);
+}
+.cp-dialog__box {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 26px 22px 20px;
+  border-radius: 24px;
+  background: var(--cp-card);
+  box-shadow: 0 24px 60px rgba(30, 27, 75, 0.3);
+  text-align: center;
+  animation: cp-pop 0.18s ease-out;
+}
+@keyframes cp-pop { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.cp-dialog__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--cp-primary-soft);
+  color: var(--cp-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cp-dialog__title { margin: 0; font-size: 19px; font-weight: 900; color: var(--cp-ink); }
+.cp-dialog__text { margin: 0; font-size: 14px; line-height: 1.7; color: var(--cp-muted); }
+.cp-dialog__text b { color: var(--cp-ink); }
+.cp-dialog__text b.cp-hl { color: var(--cp-primary-text); }
+.cp-dialog__actions {
+  width: 100%;
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.cp-dialog__actions .cp-btn { height: 50px; border-radius: 14px; font-size: 15px; }
+
+/* ============================================================
+   5. 電腦版（寬度 960px 以上）
+   ============================================================ */
+@media (min-width: 960px) {
+  .cp-title { font-size: 17px; padding: 9px 20px; }
+  .cp-progress__book { font-size: 14px; gap: 10px; }
+  .cp-count { font-size: 18px; }
+
+  .cp-panel { flex: 0 0 auto; min-height: 400px; gap: 20px; padding: 26px 24px 22px; border-radius: 24px; }
+  .cp-chip { font-size: 14px; padding: 7px 16px; }
+  .cp-word { gap: 8px; }
+  .cp-word__en, .cp-card-word { font-size: 80px; letter-spacing: 1px; line-height: 1.1; }
+  .cp-word__ipa { font-size: 18px; }
+  .cp-divider { width: 45%; }
+  .cp-meaning__zh { font-size: 34px; }
+  .cp-pos { font-size: 15px; padding: 5px 12px; }
+  .cp-repeat { padding: 10px 18px; }
+  .cp-repeat__label { font-size: 14px; }
+  .cp-repeat__dots span { width: 26px; }
+  .cp-card-back__en { font-size: 24px; }
+  .cp-card-back__zh { font-size: 60px; }
+  .cp-hint { font-size: 14px; }
+  .cp-hint--mobile { display: none; }
+  .cp-hint--desktop { display: flex; }
+
+  .cp-tools { display: flex; justify-content: center; gap: 36px; }
+  .cp-tool__btn { width: 64px; height: 64px; }
+  .cp-tool__label { font-size: 13px; }
+
+  /* 開始頁 */
+  .cp-resume { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 24px; padding: 16px 20px; }
+  .cp-resume__info { flex: 1 1 320px; gap: 8px; }
+  .cp-resume__head { justify-content: flex-start; }
+  .cp-resume__title { font-size: 16px; }
+  .cp-resume__time { font-size: 13px; }
+  .cp-resume__row { flex-wrap: nowrap; align-items: center; gap: 14px; }
+  .cp-resume__row .cp-track { order: 0; flex: 1 1 auto; }   /* 電腦：進度條放中間 */
+  .cp-resume__books { font-size: 14px; }
+  .cp-resume .cp-btn { margin-top: 0; padding: 0 28px; }
+  .cp-tabs { gap: 26px; }
+  .cp-books { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cp-book { padding: 14px 20px; }
+  .cp-book:nth-child(odd) { border-right: 1.5px solid var(--cp-line); }
+  .cp-btn { height: 56px; font-size: 17px; }
+
+  .cp-settings:hover { background: var(--cp-primary-soft); }
+  .cp-tool--sound .cp-tool__btn:hover,
+  .cp-tool--prev .cp-tool__btn:not(:disabled):hover { background: #e0e3ff; }
+  .cp-book:hover { background: #fafbff; }
+  .cp-book[aria-pressed="true"]:hover { background: var(--cp-selected); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-wave span { animation: none; transform: scaleY(0.7); }
+  .cp-dialog__box { animation: none; }
+}
+
+/* ===== 建立單字頁 UI（words-editor.css）===== */
+/* ============================================================
+   Chicky Vocab・建立單字頁（C 版：表格編輯）
+   三種狀態在同一頁切換：.we[data-mode="list" | "add" | "paste"]
+   手機與電腦共用；寬度 960px 以上自動加寬置中
+   字型：
+   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+   class 一律 we- 開頭，避免跟 app 原本的樣式衝突
+   ============================================================ */
+
+:root {
+  --we-bg: #eef1f7;
+  --we-card: #ffffff;
+  --we-ink: #1e1b4b;
+  --we-text-2: #3d4260;
+  --we-muted: #545a75;
+  --we-muted-2: #6b7090;
+  --we-faint: #8b8fb5;
+  --we-line: #e6e8f2;
+  --we-line-2: #e2e5ef;
+  --we-row-line: #eef0f6;
+  --we-head-bg: #f3f5fd;
+  --we-edit-bg: #f7f8ff;
+  --we-primary: #4f46e5;
+  --we-primary-2: #6366f1;
+  --we-primary-text: #4338ca;
+  --we-primary-soft: #eef0ff;
+  --we-primary-border: #dfe2ff;
+  --we-primary-border-2: #c7caf7;
+  --we-pos-bg: #fff1e0;
+  --we-pos-text: #b45309;
+  --we-star: #f59e0b;
+  --we-star-line: #d97706;
+  --we-star-off: #c4c7da;
+  --we-ok-bg: #ecf8f0;
+  --we-ok-text: #2f6f47;
+  --we-warn-bg: #fff7e8;
+  --we-warn-text: #92400e;
+  --we-font: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+  --we-font-en: 'Nunito', 'Noto Sans TC', sans-serif;
+  --we-grad: linear-gradient(135deg, var(--we-primary-2), var(--we-primary));
+  --we-vh: 100dvh;              /* JS 會換成「扣掉鍵盤後」的可見高度 */
+}
+
+/* ---------- 外層 ---------- */
+.we *, .we *::before, .we *::after { box-sizing: border-box; }
+.we button, .we input, .we textarea { font-family: inherit; color: inherit; }
+.we button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.we button:focus-visible, .we input:focus-visible { outline: 3px solid var(--we-primary-border-2); outline-offset: 2px; }
+.we [hidden], .we-pos-menu[hidden], .we-toast[hidden] { display: none !important; }
+
+/* 新增／批次貼上：卡片貼齊鍵盤，畫面往上 */
+
+/* ---------- 標題列 ---------- */
+.we-header { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; align-items: center; gap: 8px; }
+.we-back {
+  width: 48px; height: 48px;
+  border: none; border-radius: 16px;
+  background: linear-gradient(145deg, var(--we-primary-2), var(--we-primary));
+  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.35);
+  color: #fff !important;
+  display: flex; align-items: center; justify-content: center;
+}
+.we-title {
+  grid-column: 2; justify-self: center;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 18px; border-radius: 999px;
+  background: var(--we-primary-soft); color: var(--we-primary);
+  font-size: 16px; font-weight: 900; white-space: nowrap;
+}
+/* 新增／批次貼上：左上角返回＝取消，標題置中，右上角字數 */
+.we-header--sub .we-title { font-size: 14px; padding: 6px 14px; }
+
+.we-count { font-family: var(--we-font-en); font-size: 13px; font-weight: 900; white-space: nowrap; }
+.we-count small { font-size: inherit; font-weight: 800; color: var(--we-muted-2); }
+
+/* ---------- 搜尋、工具列 ---------- */
+.we-search {
+  height: 40px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 12px;
+  border: 1.5px solid var(--we-line-2); border-radius: 12px;
+  color: var(--we-faint);
+}
+.we-search input { flex: 1; min-width: 0; border: none; outline: none; background: none; font-size: 14px; color: var(--we-ink); }
+.we-search input::placeholder { color: var(--we-faint); }
+
+.we-tools { display: flex; align-items: center; gap: 8px; margin-top: -4px; }
+.we-pill {
+  height: 38px; padding: 0 12px;
+  border: none; border-radius: 12px;
+  background: var(--we-primary-soft); color: var(--we-primary) !important;
+  display: flex; align-items: center; gap: 5px;
+  font-size: 14px; font-weight: 700; white-space: nowrap;
+  transition: background 0.15s;
+}
+.we-pill--en { font-family: var(--we-font-en); font-weight: 800; }
+.we-pill--push { margin-left: auto; }
+
+/* ---------- 表格 ---------- */
+.we-table {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  border: 1.5px solid var(--we-line); border-radius: 18px;
+  overflow: hidden;
+}
+.we-table__body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.we-grid { display: grid; grid-template-columns: 34px minmax(0, 1.25fr) minmax(0, 1.6fr); padding: 0 6px; }
+.we-thead {
+  align-items: center; height: 38px;
+  background: var(--we-head-bg); border-bottom: 1.5px solid var(--we-line);
+  font-size: 12px; font-weight: 900; color: var(--we-muted);
+}
+.we-thead__zh { display: flex; justify-content: space-between; padding: 0 10px 0 6px; }
+.we-thead__en { padding-left: 6px; }
+.we-thead__star { display: flex; justify-content: center; color: var(--we-star-off); }
+
+.we-row { align-items: start; padding-top: 4px; padding-bottom: 4px; border-bottom: 1px solid var(--we-row-line); }
+.we-star {
+  width: 34px; height: 36px;
+  border: none; background: none; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.we-star svg path { fill: none; stroke: var(--we-star-off); stroke-width: 1.6; stroke-linejoin: round; }
+.we-star[aria-pressed="true"] svg path { fill: var(--we-star); stroke: var(--we-star-line); }
+.we-en {
+  min-width: 0; margin: 0 3px; padding: 7px 6px;
+  font-family: var(--we-font-en); font-size: 15px; font-weight: 800;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.we-means { display: flex; flex-direction: column; min-width: 0; }
+.we-mean { display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 6px; }
+.we-mean + .we-mean { border-top: 1px dashed var(--we-line); }
+.we-zh { flex: 1; min-width: 0; font-size: 14px; color: var(--we-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.we-pos {
+  padding: 2px 6px; border-radius: 6px;
+  background: var(--we-pos-bg); color: var(--we-pos-text);
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.we-empty { padding: 28px 16px; text-align: center; font-size: 14px; color: var(--we-faint); }
+
+/* ---------- 底部：字數＋儲存 ---------- */
+.we-footer { display: flex; align-items: center; gap: 12px; }
+.we-progress { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.we-progress .we-count { font-size: 14px; }
+.we-track { height: 6px; border-radius: 999px; background: #e7e9f3; overflow: hidden; }
+.we-fill { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--we-primary-2), var(--we-primary)); transition: width 0.3s; }
+.we-save {
+  height: 52px; padding: 0 30px;
+  border: none; border-radius: 16px;
+  background: var(--we-grad); box-shadow: 0 6px 14px rgba(79, 70, 229, 0.3);
+  color: #fff !important; font-size: 17px; font-weight: 900;
+}
+.we-save:disabled { background: #c7caf7; box-shadow: none; cursor: default; }
+
+/* ---------- 新增一列 ---------- */
+.we-edit { align-items: start; padding-top: 7px; padding-bottom: 4px; background: var(--we-edit-bg); }
+.we-edit .we-star { height: 36px; }
+.we-input {
+  width: 100%; height: 36px; padding: 0 8px;
+  border: none; border-radius: 9px; outline: none;
+  background: #fff; box-shadow: inset 0 0 0 1.5px var(--we-primary-border);
+  font-size: 14px;
+}
+.we-input:focus { box-shadow: inset 0 0 0 2px var(--we-primary-2); }
+.we-input--en { font-family: var(--we-font-en); font-size: 15px; font-weight: 800; }
+.we-edit__en { margin: 0 3px; }
+.we-edit__means { display: flex; flex-direction: column; gap: 6px; }
+.we-edit__mean { display: grid; grid-template-columns: minmax(0, 1fr) 58px; gap: 6px; padding: 0 3px; }
+.we-pos-btn {
+  height: 36px; border: none; border-radius: 9px;
+  background: #fff; box-shadow: inset 0 0 0 1.5px var(--we-primary-border);
+  font-size: 12px; color: var(--we-faint); line-height: 1.2; padding: 0 4px;
+}
+.we-pos-btn.has-value { background: var(--we-pos-bg); box-shadow: none; color: var(--we-pos-text); font-weight: 700; }
+.we-add-mean {
+  align-self: flex-start; height: 30px; padding: 0 8px; margin-left: 3px;
+  border: none; border-radius: 8px; background: none;
+  color: var(--we-primary) !important; display: flex; align-items: center; gap: 4px;
+  font-size: 13px; font-weight: 700;
+}
+
+/* 詞性選單 */
+.we-pos-menu {
+  position: absolute; z-index: 20;
+  width: 200px; padding: 10px;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;
+  border-radius: 14px; background: #fff;
+  box-shadow: 0 12px 30px rgba(30, 27, 75, 0.2);
+}
+.we-pos-menu button {
+  height: 32px; border: 1.5px solid var(--we-primary-border); border-radius: 9px;
+  background: #fff; color: var(--we-muted) !important; font-size: 12px; font-weight: 700;
+}
+.we-pos-menu button[aria-pressed="true"] { background: var(--we-pos-bg); border-color: var(--we-pos-bg); color: var(--we-pos-text) !important; }
+
+/* 底部動作列（新增／批次貼上共用）：左邊選項、右下角「取消／加入」 */
+.we-actionbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 2px; }
+.we-actionbar__right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.we-btn-ghost, .we-btn-primary {
+  height: 38px; padding: 0 14px; border-radius: 12px;
+  font-size: 14px; white-space: nowrap;
+}
+.we-btn-ghost { border: 1.5px solid var(--we-line-2); background: #fff; color: var(--we-muted) !important; font-weight: 700; }
+.we-btn-primary { border: none; background: var(--we-grad); color: #fff !important; font-weight: 900; }
+.we-btn-primary:disabled { background: #c7caf7; cursor: default; }
+.we-pill[aria-pressed="true"] { background: #fff4d6; color: var(--we-pos-text) !important; }
+.we-pill[aria-pressed="true"] svg path { fill: var(--we-star); stroke: var(--we-star-line); }
+
+/* ---------- 批次貼上 ---------- */
+.we-hint {
+  padding: 8px 12px; border-radius: 12px;
+  background: #f7f8fc; border: 1px dashed var(--we-primary-border-2);
+  font-size: 12px; line-height: 1.65; color: var(--we-muted);
+}
+.we-hint b { color: var(--we-ink); }
+.we-hint .we-hint__star { color: var(--we-pos-text); }
+.we-paste {
+  flex: 1; min-height: 120px; width: 100%;
+  padding: 8px 12px; resize: none;
+  border: 1.5px solid var(--we-primary-2); border-radius: 16px; outline: none;
+  box-shadow: 0 0 0 4px var(--we-primary-soft);
+  font-size: 16px; line-height: 30px;   /* 16px 以上，iPhone 才不會自動放大 */
+}
+.we-paste::placeholder { color: var(--we-faint); }
+.we-status { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; }
+.we-chip { display: flex; align-items: center; gap: 5px; padding: 5px 9px; border-radius: 10px; font-size: 12.5px; font-weight: 700; }
+.we-chip--ok { background: var(--we-ok-bg); color: var(--we-ok-text); }
+.we-chip--warn { background: var(--we-warn-bg); color: var(--we-warn-text); }
+
+/* 提示訊息 */
+.we-toast {
+  position: fixed; left: 50%; top: calc(24px + env(safe-area-inset-top)); z-index: 30;
+  transform: translateX(-50%);
+  padding: 10px 18px; border-radius: 999px;
+  background: var(--we-ink); color: #fff; font-size: 14px; font-weight: 700;
+  box-shadow: 0 10px 24px rgba(30, 27, 75, 0.3);
+}
+
+/* ============================================================
+   電腦版（寬度 960px 以上）
+   ============================================================ */
+@media (min-width: 960px) {
+  .we-title { font-size: 17px; padding: 9px 20px; }
+  .we-grid { grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1.4fr); padding: 0 10px; }
+  .we-en { font-size: 16px; }
+  .we-zh { font-size: 15px; }
+  .we-mean { min-height: 40px; }
+  .we-pos { font-size: 12px; }
+  .we-edit__mean { grid-template-columns: minmax(0, 1fr) 96px; }
+  .we-input { height: 40px; font-size: 15px; }
+  .we-pos-btn { height: 40px; }
+  .we-pill:hover { background: #e0e3ff; }
+  .we-row:hover { background: #fafbff; }
+}
+
+/* ============================================================
+   App 整合：練習頁（cp-）、建立單字頁（we-）用 App 原本的大白卡當作設計稿的 .cp-shell / .we-shell
+   ============================================================ */
+.scale-wrapper-cp { display: flex; justify-content: center; width: 100%; max-width: 480px; margin: 0 auto 24px; box-sizing: border-box; }
+body.cp-on, body.we-on { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)) !important; background: #eef1f7 !important; }
+body.cp-on #appChrome, body.we-on #appChrome { display: none !important; }
+body.cp-on .paper-card-container, body.we-on .paper-card-container, body.power-saving-mode.cp-on .paper-card-container, body.power-saving-mode.we-on .paper-card-container {
+  display: flex; flex-direction: column; padding: 22px 18px 20px !important; border-radius: 26px !important; border: none !important;
+  background: #ffffff !important; color: #1e1b4b !important; box-shadow: 0 10px 30px rgba(30, 27, 75, 0.08) !important; overflow: hidden; min-height: 0 !important; margin-bottom: 0 !important;
+}
+body.cp-on .paper-card-container::before, body.we-on .paper-card-container::before { height: 6px; background: linear-gradient(90deg, #6366f1, #4f46e5); box-shadow: none; }
+body.cp-tall .paper-card-container { min-height: calc(100vh - 32px) !important; min-height: calc(100dvh - 32px - env(safe-area-inset-bottom)) !important; }
+.app-view.cp.active { display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0; color: #1e1b4b; font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif; }
+.app-view.cp.active.cp-playing { gap: 18px; }
+.cp-part { display: contents; }
+.cp .cp-stack:not([style*="none"]) { display: flex !important; flex-direction: column; gap: 16px; }
+.cp .cp-btn:not([style*="none"]) { display: flex !important; }
+.cp-dialog.cp { z-index: 3000; font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif; color: #1e1b4b; }
+.cp-dialog.cp[hidden] { display: none !important; }
+.cp .cp-meaning .cp-pos + .cp-pos { margin-left: -4px; }
+@media (min-width: 960px) { .cp .cp-stack:not([style*="none"]) { gap: 20px; } }
+.cp-part[hidden] { display: none !important; }
+.cp .pk-empty { padding: 22px 16px; text-align: center; font-size: 14px; color: #8b8fb5; grid-column: 1 / -1; }
+/* 題庫列：沿用 App 原本的選取邏輯（.select-card.selected），外觀照設計稿 .cp-book */
+.cp-books .select-card.cp-book { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: -1.5px; padding: 12px 18px; border-bottom: 1.5px solid #e6e8f2; background: #ffffff; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.cp-books .select-card.cp-book.selected { background: #f3f5fd; }
+.cp-books .select-card.cp-book.selected .cp-book__check { visibility: visible; }
+.cp-books .cp-book__name { display: flex; align-items: center; gap: 6px; }
+.cp-books.seg-custom .select-card[data-kind="pack"], .cp-books.seg-pack .select-card[data-kind="custom"] { display: none !important; }
+.cp-summary { margin: 0; }
+.cp-book__name .pack-ic, .cp-book__name svg { flex: 0 0 auto; }
+@media (min-width: 960px) {
+  .scale-wrapper-cp { max-width: 780px; margin-top: 24px; }
+  body.cp-on, body.we-on { padding: 40px 24px !important; }
+  body.cp-on .paper-card-container, body.power-saving-mode.cp-on .paper-card-container { padding: 28px 36px 32px !important; border-radius: 30px !important; box-shadow: 0 12px 36px rgba(30, 27, 75, 0.08) !important; }
+  body.we-on .paper-card-container, body.power-saving-mode.we-on .paper-card-container { padding: 28px 36px 28px !important; border-radius: 30px !important; }
+  body.cp-tall .paper-card-container { min-height: 0 !important; }
+  .app-view.cp.active { gap: 20px; } .app-view.cp.active.cp-playing { gap: 22px; }
+  .cp-books .select-card.cp-book { padding: 14px 20px; }
+  .cp-books .select-card.cp-book.cp-l { border-right: 1.5px solid #e6e8f2; }
+  .cp-books .select-card.cp-book:hover { background: #fafbff; }
+  .cp-books .select-card.cp-book.selected:hover { background: #f3f5fd; }
+}
+/* 建立單字頁 */
+body.we-on .paper-card-container { height: calc(var(--we-vh, 100dvh) - 32px - env(safe-area-inset-bottom)); }
+body.we-on.we-sub { padding-bottom: 0 !important; }
+body.we-on.we-sub .paper-card-container { height: calc(var(--we-vh, 100dvh) - 16px); padding: 16px 14px 10px !important; border-radius: 22px 22px 0 0 !important; }
+.app-view.we.active { display: flex; flex-direction: column; gap: 14px; flex: 1; min-height: 0; color: #1e1b4b; font-family: var(--we-font); }
+body.we-sub .app-view.we.active { gap: 10px; }
+.we [data-view] { display: contents; }
+.we-row--tap { cursor: pointer; }
+.we-font { font-family: var(--we-font); box-sizing: border-box; }
+.we-font * { box-sizing: border-box; font-family: inherit; }
+.we-pos-menu { z-index: 2000; } .we-toast { z-index: 3000; }
+.we-pos-menu[hidden], .we-toast[hidden] { display: none !important; }
+.we-pos-menu button { cursor: pointer; }
+.we-pack .we-tools #weToAdd, .we-pack .we-tools #weToPaste, .we-pack #weSaveBtn { display: none; }
+.we-del { margin-right: auto; }
+@media (min-width: 960px) {
+  body.we-on .paper-card-container { height: calc(100vh - 80px); }
+  body.we-on.we-sub { padding-bottom: 40px !important; }
+  body.we-on.we-sub .paper-card-container { height: calc(100vh - 80px); padding: 24px 32px 24px !important; border-radius: 30px !important; }
+  body.we-sub .app-view.we.active { gap: 14px; }
+}
+
     </style>
 </head>
 <body>
@@ -2450,7 +3356,7 @@
                 <button class="settings-gear-btn" data-on-click='[["openSystemSettingsModal",[]]]' title="系統設定">⚙️<span class="gear-dot" id="gearDot" style="display:none">!</span></button>
                 <div class="cloud-tip" id="cloudTip" style="display: none;">雲端已中斷，點一下重新連線</div>
             </div>
-            <nav class="ac-tabs" id="acTabs" role="tablist"><button type="button" class="ac-tab" data-tab="practice" role="tab" data-on-click='[["setHomeTab",["practice"]]]'><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg><span>練習</span></button><button type="button" class="ac-tab" data-tab="exam" role="tab" data-on-click='[["setHomeTab",["exam"]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg><span>測驗</span></button><button type="button" class="ac-tab" data-tab="lists" role="tab" data-on-click='[["setHomeTab",["lists"]]]'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7"/></svg><span>題庫</span></button><button type="button" class="ac-tab" data-tab="fun" role="tab" data-on-click='[["setHomeTab",["fun"]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"></path><path d="M4 4h13l-2 4 2 4H4"></path></svg><span>樂園</span><em class="fun-lv-badge" id="funLvBadge" style="display:none"></em></button></nav>
+            <nav class="ac-tabs" id="acTabs" role="tablist"><button type="button" class="ac-tab" data-tab="practice" role="tab" data-on-click='[["setHomeTab",["practice"]]]'><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h8"/><rect x="5" y="6.5" width="3" height="11" rx="1"/><rect x="16" y="6.5" width="3" height="11" rx="1"/><rect x="2" y="9" width="3" height="6" rx="1"/><rect x="19" y="9" width="3" height="6" rx="1"/></svg><span>練習</span></button><button type="button" class="ac-tab" data-tab="exam" role="tab" data-on-click='[["setHomeTab",["exam"]]]'><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4z"/><path d="M14.5 5.5l4 4"/></svg><span>測驗</span></button><button type="button" class="ac-tab" data-tab="lists" role="tab" data-on-click='[["setHomeTab",["lists"]]]'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7"/></svg><span>題庫</span></button><button type="button" class="ac-tab" data-tab="fun" role="tab" data-on-click='[["setHomeTab",["fun"]]]'><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="6.5"/><path d="M12 10L7.4 5.4M12 10l4.6-4.6M12 10l-4.6 4.6M12 10l4.6 4.6"/><path d="M8.5 21L12 10l3.5 11"/><path d="M5.5 21h13"/><circle cx="12" cy="3.5" r="1.2" fill="currentColor"/><circle cx="18.5" cy="10" r="1.2" fill="currentColor"/><circle cx="5.5" cy="10" r="1.2" fill="currentColor"/></svg><span>樂園</span><em class="fun-lv-badge" id="funLvBadge" style="display:none"></em></button></nav>
         </div>
         <!-- ================= 🏠 首頁儀表板檢視 ================= -->
         <div id="homeDashboardView" class="app-view active">
@@ -2569,26 +3475,26 @@
         </div>
 
         <!-- ================= 🎴 字卡練習：範圍與設定頁面 ================= -->
-        <div id="flashcardSetupView" class="app-view">
-            <div class="top-nav-bar">
-                <button class="back-home-btn" data-on-click='[["backToHome",[]]]' title="返回首頁">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                    </svg>
-                </button>
-                <div class="current-mode-indicator" data-t-en="🗂️ 英文字卡練習" data-t-ko="🗂️ 韓文字卡練習">🗂️ 英文字卡練習</div>
-                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openFlashcardSettingsModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
-            </div>
+        <div id="flashcardSetupView" class="app-view cp">
+            <header class="cp-header">
+                <button class="cp-back" type="button" aria-label="返回" data-on-click='[["backToHome",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                <div class="cp-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span data-t-en="英文字卡練習" data-t-ko="韓文字卡練習">英文字卡練習</span></div>
+                <button class="cp-settings" type="button" aria-label="練習設定" data-on-click='[["openFlashcardSettingsModal",[]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="15" cy="6" r="2" fill="#fff"/><circle cx="9" cy="12" r="2" fill="#fff"/><circle cx="15" cy="18" r="2" fill="#fff"/></svg></button>
+            </header>
+            <section class="cp-resume" id="flashResumeCard" aria-label="未完成的練習" hidden>
+                <div class="cp-resume__info">
+                    <div class="cp-resume__head"><span class="cp-resume__title">上次的練習還沒完成</span><span class="cp-resume__time" id="flashResumeTime"></span></div>
+                    <div class="cp-resume__row"><span class="cp-resume__books" id="flashResumeBooks"></span><div class="cp-track"><div class="cp-fill" id="flashResumeFill"></div></div><span class="cp-count" id="flashResumeCount"></span></div>
+                </div>
+                <button class="cp-btn cp-btn--primary" type="button" data-on-click='[["cpResume",["flash"]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>繼續練習</button>
+            </section>
 
-            <div>
-                <div class="pk-seg" data-grid="flashcardGrid"></div>
-                <div class="pk-bar"><span>請勾選練習範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["flashcardGrid"]]]'>全選</button></div>
-                <div class="select-card-grid pk-grid seg-custom" id="flashcardGrid"></div>
+            <div class="cp-stack">
+                <nav class="cp-tabs" data-grid="flashcardGrid" aria-label="單字庫"></nav>
+                <div class="cp-section-head"><span class="cp-section-head__label">請勾選練習範圍（可複選）</span><button class="cp-pill-btn" type="button" data-on-click='[["pickSelectAll",["flashcardGrid"]]]'>全選</button></div>
+                <div class="cp-books seg-custom" id="flashcardGrid"></div>
             </div>
-
-            <div class="stats-status-bar">
-                <span id="flashcardStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
-            </div>
+            <div class="cp-stack"><p class="cp-summary" id="flashcardStatsText"></p></div>
 
             <div class="pk-hide">
                 <div class="textarea-header">
@@ -2618,72 +3524,74 @@
 
             <button class="btn-advanced pk-hide" data-on-click='[["openFlashcardSettingsModal",[]]]'>⚙️ 進階設定</button>
 
-            <button class="action-btn-primary" data-on-click='[["startFlashcardSession",[]]]' style="margin-top: 12px;">
-                ▶ 開始字卡練習
-            </button>
+            <button class="cp-btn cp-btn--primary" type="button" id="fcStartBtn" data-cp-kind="flash" data-cp-text="開始字卡練習" data-on-click='[["cpStartNewFlash",[]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>開始字卡練習</button>
         </div>
 
         <!-- ================= 🎴 字卡練習：執行介面 ================= -->
-        <div id="flashcardPlayView" class="app-view">
-            <div class="top-nav-bar">
-                <button class="back-home-btn" data-on-click='[["backToFlashcardSetup",[]]]' title="返回設定">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                    </svg>
-                </button>
-                <div class="progress-indicator" id="fcProgressText" style="font-size: 13.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 4px 12px; border-radius: 20px;">1 / 1 題</div>
-            </div>
-
-            <div class="progress-bar-container">
-                <div class="progress-bar-fill" id="fcProgressBar"></div>
-            </div>
-
-            <div class="flashcard-perspective">
-                <div class="flashcard" id="flashcardCardEl">
-                    <div class="card-face card-front">
-                        <div class="card-english" id="fcCardEng">Biography</div>
-                    </div>
-
-                    <div class="card-face card-back">
-                        <div class="card-footer-info">
-                            <div class="card-chinese" id="fcCardChi">自傳</div>
-                            <div class="card-pos" id="fcCardPos">單字</div>
-                        </div>
-                    </div>
+        <div id="flashcardPlayView" class="app-view cp cp-playing">
+            <header class="cp-header">
+                <button class="cp-back" type="button" aria-label="返回（保留進度）" data-on-click='[["backToFlashcardSetup",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                <div class="cp-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span data-t-en="英文字卡練習" data-t-ko="韓文字卡練習">英文字卡練習</span></div>
+                <button class="cp-settings" type="button" aria-label="練習設定" data-on-click='[["openFlashcardSettingsModal",[]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="15" cy="6" r="2" fill="#fff"/><circle cx="9" cy="12" r="2" fill="#fff"/><circle cx="15" cy="18" r="2" fill="#fff"/></svg></button>
+            </header>
+            <section class="cp-progress">
+                <div class="cp-progress__meta">
+                    <span class="cp-progress__book" id="fcBook">題庫</span>
+                    <span class="cp-count" id="fcProgressText">1 <small>/ 1</small></span>
                 </div>
-            </div>
-
-            <div class="swipe-hint">💡 提示：點擊卡片即可翻轉看中文，左右滑動切換卡片</div>
-
-            <div class="card-nav-controls">
-                <button class="external-card-audio-btn" data-on-click='[["playCurrentFlashcardAudio",[]]]' title="播放發音">🔊</button>
-                <button class="ctrl-btn" id="fcPrevBtn" data-on-click='[["prevFlashcard",[]]]'>◀ 上一張</button>
-                <button class="ctrl-btn primary" id="fcNextBtn" data-on-click='[["nextFlashcard",[]]]'>下一張 ▶</button>
-                <button class="external-card-star-btn starred" id="fcStarBtn" data-on-click='[["toggleCurrentCardStar",[]]]' title="標記不熟 (*)">⭐</button>
+                <div class="cp-track"><div class="cp-fill" id="fcProgressBar"></div></div>
+            </section>
+            <button class="cp-panel cp-flip" type="button" id="flashcardCardEl" aria-label="翻面看中文">
+                <span class="cp-flip__front">
+                    <span class="cp-chip" id="fcFrontChip">英文</span>
+                    <span class="cp-card-word" id="fcCardEng"></span>
+                    <span class="cp-hint cp-hint--mobile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 4v5h-5"/></svg>點一下翻面・左右滑動換卡</span>
+                    <span class="cp-hint cp-hint--desktop"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 4v5h-5"/></svg>點一下翻面・鍵盤 ← → 換卡</span>
+                </span>
+                <span class="cp-flip__back">
+                    <span class="cp-chip">中文</span>
+                    <span class="cp-card-back">
+                        <span class="cp-card-back__en" id="fcCardEngBack"></span>
+                        <span class="cp-card-back__zh" id="fcCardChi"></span>
+                        <span class="cp-meaning" id="fcCardPos"></span>
+                    </span>
+                    <span class="cp-hint"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 4v5h-5"/></svg><span id="fcBackHint">點一下翻回英文</span></span>
+                </span>
+            </button>
+            <div class="cp-tools">
+                <div class="cp-tool cp-tool--sound">
+                    <button class="cp-tool__btn" type="button" aria-label="播放發音" data-on-click='[["playCurrentFlashcardAudio",[]]]'><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a10 10 0 010 14"/></svg></button>
+                    <span class="cp-tool__label">發音</span>
+                </div>
+                <div class="cp-tool cp-tool--prev">
+                    <button class="cp-tool__btn" type="button" id="fcPrevBtn" aria-label="上一張" data-on-click='[["prevFlashcard",[]]]' disabled><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 5v14a1 1 0 01-1.5.86l-11-7a1 1 0 010-1.72l11-7A1 1 0 0117 5z"/></svg></button>
+                    <span class="cp-tool__label">上一張</span>
+                </div>
+                <div class="cp-tool cp-tool--next">
+                    <button class="cp-tool__btn" type="button" id="fcNextBtn" aria-label="下一張" data-on-click='[["nextFlashcard",[]]]'><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14a1 1 0 001.5.86l11-7a1 1 0 000-1.72l-11-7A1 1 0 007 5z"/></svg></button>
+                    <span class="cp-tool__label" id="fcNextLabel">下一張</span>
+                </div>
+                <div class="cp-tool cp-tool--star">
+                    <button class="cp-tool__btn" type="button" id="fcStarBtn" aria-label="加星號" aria-pressed="false" data-on-click='[["toggleCurrentCardStar",[]]]'><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path class="cp-star" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
+                    <span class="cp-tool__label">星號</span>
+                </div>
             </div>
         </div>
 
         <!-- ================= 📋 字卡測驗：範圍與設定頁面 ================= -->
-        <div id="cardExamSetupView" class="app-view">
-            <div class="top-nav-bar">
-                <button class="back-home-btn" data-on-click='[["backToHome",[]]]' title="返回首頁">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                    </svg>
-                </button>
-                <div class="current-mode-indicator" data-t-en="📋 英文字卡測驗" data-t-ko="📋 韓文字卡測驗">📋 英文字卡測驗</div>
-                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openCardExamSettingsModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
-            </div>
+        <div id="cardExamSetupView" class="app-view cp">
+            <header class="cp-header">
+                <button class="cp-back" type="button" aria-label="返回" data-on-click='[["backToHome",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                <div class="cp-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span data-t-en="英文字卡測驗" data-t-ko="韓文字卡測驗">英文字卡測驗</span></div>
+                <button class="cp-settings" type="button" aria-label="練習設定" data-on-click='[["openCardExamSettingsModal",[]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="15" cy="6" r="2" fill="#fff"/><circle cx="9" cy="12" r="2" fill="#fff"/><circle cx="15" cy="18" r="2" fill="#fff"/></svg></button>
+            </header>
 
-            <div>
-                <div class="pk-seg" data-grid="cardExamGrid"></div>
-                <div class="pk-bar"><span>請勾選測驗範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["cardExamGrid"]]]'>全選</button></div>
-                <div class="select-card-grid pk-grid seg-custom" id="cardExamGrid"></div>
+            <div class="cp-stack">
+                <nav class="cp-tabs" data-grid="cardExamGrid" aria-label="單字庫"></nav>
+                <div class="cp-section-head"><span class="cp-section-head__label">請勾選測驗範圍（可複選）</span><button class="cp-pill-btn" type="button" data-on-click='[["pickSelectAll",["cardExamGrid"]]]'>全選</button></div>
+                <div class="cp-books seg-custom" id="cardExamGrid"></div>
             </div>
-
-            <div class="stats-status-bar">
-                <span id="cardExamStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
-            </div>
+            <div class="cp-stack"><p class="cp-summary" id="cardExamStatsText"></p></div>
 
             <div class="pk-hide">
                 <div class="textarea-header">
@@ -2713,9 +3621,7 @@
 
             <button class="btn-advanced pk-hide" data-on-click='[["openCardExamSettingsModal",[]]]'>⚙️ 字卡測驗進階設定</button>
 
-            <button class="action-btn-primary" data-on-click='[["startCardExamSession",[]]]' style="margin-top: 12px;">
-                ▶ 開始字卡測驗
-            </button>
+            <button class="cp-btn cp-btn--primary" type="button" id="ceStartBtn" data-on-click='[["startCardExamSession",[]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>開始字卡測驗</button>
         </div>
 
         <!-- ================= 📋 字卡測驗：執行介面 ================= -->
@@ -2771,26 +3677,19 @@
         </div>
 
         <!-- ================= 🎤 朗讀練習：範圍與設定頁面 ================= -->
-        <div id="speakPracticeSetupView" class="app-view">
-            <div class="top-nav-bar">
-                <button class="back-home-btn" data-on-click='[["backToHome",[]]]' title="返回首頁">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                    </svg>
-                </button>
-                <div class="current-mode-indicator" data-t-en="🎤 英文朗讀練習" data-t-ko="🎤 韓文朗讀練習">🎤 英文朗讀練習</div>
-                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
-            </div>
+        <div id="speakPracticeSetupView" class="app-view cp">
+            <header class="cp-header">
+                <button class="cp-back" type="button" aria-label="返回" data-on-click='[["backToHome",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                <div class="cp-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg><span data-t-en="英文朗讀練習" data-t-ko="韓文朗讀練習">英文朗讀練習</span></div>
+                <button class="cp-settings" type="button" aria-label="練習設定" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="15" cy="6" r="2" fill="#fff"/><circle cx="9" cy="12" r="2" fill="#fff"/><circle cx="15" cy="18" r="2" fill="#fff"/></svg></button>
+            </header>
 
-            <div>
-                <div class="pk-seg" data-grid="speakPracticeGrid"></div>
-                <div class="pk-bar"><span>請勾選練習範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["speakPracticeGrid"]]]'>全選</button></div>
-                <div class="select-card-grid pk-grid seg-custom" id="speakPracticeGrid"></div>
+            <div class="cp-stack">
+                <nav class="cp-tabs" data-grid="speakPracticeGrid" aria-label="單字庫"></nav>
+                <div class="cp-section-head"><span class="cp-section-head__label">請勾選練習範圍（可複選）</span><button class="cp-pill-btn" type="button" data-on-click='[["pickSelectAll",["speakPracticeGrid"]]]'>全選</button></div>
+                <div class="cp-books seg-custom" id="speakPracticeGrid"></div>
             </div>
-
-            <div class="stats-status-bar">
-                <span id="speakPracticeStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
-            </div>
+            <div class="cp-stack"><p class="cp-summary" id="speakPracticeStatsText"></p></div>
 
             <div class="pk-hide">
                 <div class="textarea-header">
@@ -2820,9 +3719,7 @@
 
             <button class="btn-advanced pk-hide" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'>⚙️ 朗讀練習進階設定</button>
 
-            <button class="action-btn-primary" data-on-click='[["startSpeakPracticeSession",[]]]' style="margin-top: 12px;">
-                ▶ 開始朗讀練習
-            </button>
+            <button class="cp-btn cp-btn--primary" type="button" id="spStartBtn" data-on-click='[["startSpeakPracticeSession",[]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>開始朗讀練習</button>
         </div>
 
         <!-- ================= 🎤 朗讀練習：執行介面 ================= -->
@@ -2933,10 +3830,6 @@
             </div>
             <div class="adv-level-wrap">
                 <div id="advWordsBody"></div>
-                <div class="aw-bar">
-                    <button type="button" class="aw-btn" data-on-click='[["advPracticeLevel",["card"]]]'>🃏 字卡練習</button>
-                    <button type="button" class="aw-btn" data-on-click='[["advPracticeLevel",["listen"]]]'>🎧 聽力練習</button>
-                </div>
             </div>
         </div>
 
@@ -2971,26 +3864,27 @@
         </div>
 
         <!-- ================= 🎧 聽力練習頁面 ================= -->
-        <div id="practiceView" class="app-view">
-            <div class="top-nav-bar" id="practiceNavBar">
-                <button class="back-home-btn" id="practiceBackBtn" data-on-click='[["backToHome",[]]]' title="返回首頁">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                    </svg>
-                </button>
-                <div class="current-mode-indicator" data-t-en="🎧 英文聽力練習" data-t-ko="🎧 韓文聽力練習">🎧 英文聽力練習</div>
-                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openAdvancedModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
-            </div>
+        <div id="practiceView" class="app-view cp">
+            <div class="cp-part" id="lpSetupPart">
+            <header class="cp-header">
+                <button class="cp-back" id="practiceBackBtn" type="button" aria-label="返回" data-on-click='[["backToHome",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                <div class="cp-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-2a9 9 0 0118 0v2"/><rect x="3" y="14" width="4" height="7" rx="1.5"/><rect x="17" y="14" width="4" height="7" rx="1.5"/></svg><span data-t-en="英文聽力練習" data-t-ko="韓文聽力練習">英文聽力練習</span></div>
+                <button class="cp-settings" type="button" aria-label="練習設定" data-on-click='[["openAdvancedModal",[]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="15" cy="6" r="2" fill="#fff"/><circle cx="9" cy="12" r="2" fill="#fff"/><circle cx="15" cy="18" r="2" fill="#fff"/></svg></button>
+            </header>
+            <section class="cp-resume" id="listenResumeCard" aria-label="未完成的練習" hidden>
+                <div class="cp-resume__info">
+                    <div class="cp-resume__head"><span class="cp-resume__title">上次的練習還沒完成</span><span class="cp-resume__time" id="listenResumeTime"></span></div>
+                    <div class="cp-resume__row"><span class="cp-resume__books" id="listenResumeBooks"></span><div class="cp-track"><div class="cp-fill" id="listenResumeFill"></div></div><span class="cp-count" id="listenResumeCount"></span></div>
+                </div>
+                <button class="cp-btn cp-btn--primary" type="button" data-on-click='[["cpResume",["listen"]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>繼續練習</button>
+            </section>
 
-            <div id="practiceRangeContainer">
-                <div class="pk-seg" data-grid="cardGrid"></div>
-                <div class="pk-bar"><span>請勾選練習範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["cardGrid"]]]'>全選</button></div>
-                <div class="select-card-grid pk-grid seg-custom" id="cardGrid"></div>
+            <div class="cp-stack" id="practiceRangeContainer">
+                <nav class="cp-tabs" data-grid="cardGrid" aria-label="單字庫"></nav>
+                <div class="cp-section-head"><span class="cp-section-head__label">請勾選練習範圍（可複選）</span><button class="cp-pill-btn" type="button" data-on-click='[["pickSelectAll",["cardGrid"]]]'>全選</button></div>
+                <div class="cp-books seg-custom" id="cardGrid"></div>
             </div>
-
-            <div class="stats-status-bar" id="practiceStatsBar">
-                <span id="practiceStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
-            </div>
+            <div class="cp-stack" id="practiceStatsBar"><p class="cp-summary" id="practiceStatsText"></p></div>
 
             <div id="practicePreviewContainer" class="pk-hide">
                 <div class="textarea-header">
@@ -3018,42 +3912,64 @@
                 </div>
             </div>
 
-            <div id="advancedBtnContainer" class="pk-hide">
-                <button class="btn-advanced" data-on-click='[["openAdvancedModal",[]]]'>⚙️ 聽力練習設定</button>
+            <div id="advancedBtnContainer" class="pk-hide"></div>
+            <button class="cp-btn cp-btn--primary" type="button" id="lpStartBtn" data-cp-kind="listen" data-cp-text="開始聽力練習" data-on-click='[["cpStartNew",[]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>開始聽力練習</button>
             </div>
-
-            <div class="btn-group">
-                <button id="toggleDictationBtn" class="action-btn btn-start" data-on-click='[["toggleDictation",[]]]'>▶ 開始聽力練習</button>
-                <button id="pauseDictationBtn" class="action-btn btn-pause" data-on-click='[["togglePauseDictation",[]]]'>⏸ 暫停</button>
+            <div class="cp-part" id="lpPlayPart" hidden>
+                <header class="cp-header">
+                    <button class="cp-back" type="button" aria-label="返回（保留進度）" data-on-click='[["lpBack",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                    <div class="cp-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-2a9 9 0 0118 0v2"/><rect x="3" y="14" width="4" height="7" rx="1.5"/><rect x="17" y="14" width="4" height="7" rx="1.5"/></svg><span data-t-en="英文聽力練習" data-t-ko="韓文聽力練習">英文聽力練習</span></div>
+                    <button class="cp-settings" type="button" aria-label="練習設定" data-on-click='[["openAdvancedModal",[]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="15" cy="6" r="2" fill="#fff"/><circle cx="9" cy="12" r="2" fill="#fff"/><circle cx="15" cy="18" r="2" fill="#fff"/></svg></button>
+                </header>
+                <section class="cp-progress">
+                    <div class="cp-progress__meta">
+                        <span class="cp-progress__book"><span id="lpBook">題庫</span>
+                            <span class="cp-loop" id="lpLoop" hidden><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 01-4 4H3"/></svg>循環</span>
+                        </span>
+                        <span class="cp-count" id="lpCount">1 <small>/ 1</small></span>
+                    </div>
+                    <div class="cp-track"><div class="cp-fill" id="lpFill"></div></div>
+                </section>
+                <section class="cp-panel" aria-live="polite">
+                    <div class="cp-chip">
+                        <span class="cp-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+                        <span class="cp-status-text" id="lpStatus">正在朗讀</span>
+                    </div>
+                    <div class="cp-word">
+                        <div class="cp-word__en" id="lpEn"></div>
+                        <div class="cp-word__ipa" id="lpIpa" hidden></div>
+                    </div>
+                    <div class="cp-divider"></div>
+                    <div class="cp-meaning" id="lpMeaning"></div>
+                    <div class="cp-repeat" id="lpRepeat">
+                        <span class="cp-repeat__label">朗讀次數</span>
+                        <span class="cp-repeat__dots" id="lpDots" aria-hidden="true"></span>
+                        <span class="cp-repeat__num" id="lpRepNum">1/1</span>
+                    </div>
+                </section>
+                <div class="cp-controls">
+                    <button class="cp-play" type="button" id="lpPlayBtn" aria-label="暫停" data-on-click='[["lpTogglePause",[]]]'>
+                        <svg class="icon-pause" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="2" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="2" fill="currentColor"/></svg>
+                        <svg class="icon-play" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15a1 1 0 001.5.86l12-7.5a1 1 0 000-1.72l-12-7.5A1 1 0 007 4.5z" fill="currentColor"/></svg>
+                    </button>
+                </div>
             </div>
-            
-            <div id="status">準備就緒 🔥</div>
         </div>
 
         <!-- ================= 🎓 聽力測驗模式 ================= -->
-        <div id="examView" class="app-view">
-            <div class="top-nav-bar" id="examNavBar">
-                <button class="back-home-btn" id="examBackBtn" data-on-click='[["backToHomeFromExam",[]]]' title="返回首頁">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                    </svg>
-                </button>
-                <div class="current-mode-indicator">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
-                    <span data-t-en="英文聽力測驗" data-t-ko="韓文聽力測驗">英文聽力測驗</span>
-                </div>
-                <button type="button" class="nav-tune-btn" title="設定" aria-label="設定" data-on-click='[["openExamAdvancedModal",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
-            </div>
+        <div id="examView" class="app-view cp">
+            <header class="cp-header">
+                <button class="cp-back" id="examBackBtn" type="button" aria-label="返回" data-on-click='[["backToHomeFromExam",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                <div class="cp-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-2a9 9 0 0118 0v2"/><rect x="3" y="14" width="4" height="7" rx="1.5"/><rect x="17" y="14" width="4" height="7" rx="1.5"/></svg><span data-t-en="英文聽力測驗" data-t-ko="韓文聽力測驗">英文聽力測驗</span></div>
+                <button class="cp-settings" type="button" aria-label="練習設定" data-on-click='[["openExamAdvancedModal",[]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="15" cy="6" r="2" fill="#fff"/><circle cx="9" cy="12" r="2" fill="#fff"/><circle cx="15" cy="18" r="2" fill="#fff"/></svg></button>
+            </header>
 
-            <div id="examRangeContainer">
-                <div class="pk-seg" data-grid="examCardGrid"></div>
-                <div class="pk-bar"><span>請勾選測驗範圍（可複選）</span><button type="button" class="addb" data-on-click='[["pickSelectAll",["examCardGrid"]]]'>全選</button></div>
-                <div class="select-card-grid pk-grid seg-custom" id="examCardGrid"></div>
+            <div class="cp-stack" id="examRangeContainer">
+                <nav class="cp-tabs" data-grid="examCardGrid" aria-label="單字庫"></nav>
+                <div class="cp-section-head"><span class="cp-section-head__label">請勾選測驗範圍（可複選）</span><button class="cp-pill-btn" type="button" data-on-click='[["pickSelectAll",["examCardGrid"]]]'>全選</button></div>
+                <div class="cp-books seg-custom" id="examCardGrid"></div>
             </div>
-
-            <div class="stats-status-bar" id="examStatsBar">
-                <span id="examStatsText">📊 範圍統計：總單字數 0 個 ｜ 星號 (*) 單字數 0 個</span>
-            </div>
+            <div class="cp-stack" id="examStatsBar"><p class="cp-summary" id="examStatsText"></p></div>
 
             <div id="examPreviewContainer" class="pk-hide">
                 <div class="textarea-header">
@@ -3085,9 +4001,7 @@
                 <button class="btn-advanced" data-on-click='[["openExamAdvancedModal",[]]]'>⚙️ 聽力測驗設定</button>
             </div>
 
-            <div class="btn-group" style="margin-top: 14px;">
-                <button class="action-btn btn-start" id="startExamBtn" data-on-click='[["startExamMode",[]]]'>▶ 開始聽力測驗</button>
-            </div>
+            <button class="cp-btn cp-btn--primary" type="button" id="startExamBtn" data-on-click='[["startExamMode",[]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>開始聽力測驗</button>
 
             <div id="examArea" style="display: none; margin-top: 0;">
                 <h3 style="margin-top:0; color:var(--primary); font-size:16.5px;">✍️ 考試作答中</h3>
@@ -3132,46 +4046,111 @@
         </div>
 
         <!-- ================= 📝 單字編輯內頁 ================= -->
-        <div id="editorDetailView" class="app-view">
-            <div class="top-nav-bar">
-                <button class="back-home-btn" data-on-click='[["backToListFromDetail",[]]]' title="返回清單">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                    </svg>
-                </button>
-                <div class="current-mode-indicator" id="editorDetailTitleIndicator">📁 unit 1-1</div>
+        <div id="editorDetailView" class="app-view we" data-mode="list">
+            <!-- 舊版編輯框留著（隱藏），讓檢查語言／上限的舊程式照常運作 -->
+            <textarea id="editorWordList" hidden></textarea><div id="packStarList" hidden></div><span id="editorDetailTitleIndicator" hidden></span>
+
+            <!-- ===================== 1. 表格 ===================== -->
+            <div data-view="list">
+                <header class="we-header">
+                    <button class="we-back" type="button" id="weBackBtn" aria-label="返回"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                    <div class="we-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span class="js-book">1-1</span></div>
+                </header>
+                <label class="we-search">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>
+                    <input type="search" id="weSearch" placeholder="搜尋單字…" aria-label="搜尋單字" autocomplete="off">
+                </label>
+                <div class="we-tools">
+                    <button class="we-pill" type="button" id="weToAdd"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新增一列</button>
+                    <button class="we-pill" type="button" id="weToPaste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="4" width="13" height="16" rx="2"/><path d="M4 8v11a2 2 0 002 2h9"/></svg>批次貼上</button>
+                    <button class="we-pill we-pill--en we-pill--push" type="button" id="weSortBtn" aria-label="排序"><span id="weSortLabel">A-Z</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/></svg></button>
+                </div>
+                <div class="we-table">
+                    <div class="we-grid we-thead">
+                        <span class="we-thead__star"><svg width="14" height="14" viewBox="0 0 24 24" aria-label="星號"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z" fill="currentColor"/></svg></span>
+                        <span class="we-thead__en js-lang">英文</span>
+                        <span class="we-thead__zh"><span>中文</span><span>詞性</span></span>
+                    </div>
+                    <div class="we-table__body" id="weRows"></div>
+                </div>
+                <div class="we-footer">
+                    <div class="we-progress">
+                        <span class="we-count"><span class="js-count">0</span> <small>/ <span class="js-max">100</span> 字</small></span>
+                        <div class="we-track"><div class="we-fill" id="weFill"></div></div>
+                    </div>
+                    <button class="we-save" type="button" id="weSaveBtn">儲存</button>
+                </div>
             </div>
 
-            <div class="ed-search" id="edSearchBox">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-                <input type="text" class="search-input" id="wordSearchInput" placeholder="搜尋單字…" autocomplete="off" data-on-input='[["handleEditorSearch",[]]]'>
-                <button type="button" class="ed-search-x" id="edSearchClear" aria-label="清除搜尋" data-on-click='[["clearEditorSearch",[]]]'>✕</button>
+            <!-- ===================== 2. 新增一列（也用來編輯單字）===================== -->
+            <div data-view="add" hidden>
+                <div class="we-header we-header--sub">
+                    <button class="we-back js-cancel" type="button" aria-label="取消，回到表格"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                    <div class="we-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span><span class="js-book">1-1</span>・<span id="weAddTitle">新增單字</span></span></div>
+                </div>
+                <div class="we-table">
+                    <div class="we-grid we-thead">
+                        <span></span>
+                        <span class="we-thead__en js-lang">英文</span>
+                        <span class="we-thead__zh"><span>中文</span><span>詞性</span></span>
+                    </div>
+                    <div class="we-grid we-edit">
+                        <span class="we-star" aria-hidden="true" id="weDraftStarIcon"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg></span>
+                        <div class="we-edit__en"><input class="we-input we-input--en" id="weDraftEn" placeholder="英文" aria-label="英文" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+                        <div class="we-edit__means">
+                            <div id="weDraftMeans" style="display:flex;flex-direction:column;gap:6px"></div>
+                            <button class="we-add-mean" type="button" id="weAddMean"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>再加一個意思</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="we-actionbar">
+                    <button class="we-pill" type="button" id="weDraftStar" aria-pressed="false"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>星號</button>
+                    <button class="we-btn-ghost" type="button" id="weDelBtn" hidden>刪除</button>
+                    <div class="we-actionbar__right">
+                        <span class="we-count"><span class="js-count">0</span> <small>/ <span class="js-max">100</span></small></span>
+                        <button class="we-btn-primary" type="button" id="weAddConfirm" disabled>加入</button>
+                    </div>
+                </div>
             </div>
-            <div id="searchNotFoundTip" style="display: none;"></div>
-            <div id="edSearchResults" class="ed-results" style="display: none;"></div>
 
-            <div id="edMain">
-                <div class="ed-bar">
-                    <span id="editorWordCounter" class="editor-word-counter"></span>
-                    <span class="ed-tools">
-                        <button type="button" class="ed-chip ed-edit-only" data-on-click='[["openWordFormatModal",[]]]'>格式說明</button>
-                        <button type="button" class="ed-chip ed-edit-only" id="edSortBtn" data-on-click='[["toggleEditorSort",[]]]'>A-Z ⇅</button>
-                        <span class="ed-pack-hint">點單字加星號</span>
-                    </span>
+            <!-- ===================== 3. 批次貼上 ===================== -->
+            <div data-view="paste" hidden>
+                <div class="we-header we-header--sub">
+                    <button class="we-back js-cancel" type="button" aria-label="取消，回到表格"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                    <div class="we-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="4" width="13" height="16" rx="2"/><path d="M4 8v11a2 2 0 002 2h9"/></svg><span><span class="js-book">1-1</span>・批次貼上</span></div>
                 </div>
-
-                <div class="editor-wrapper ed-edit-only" id="editorWrapperBox">
-                    <div class="highlight-backdrop" id="editorBackdrop"></div>
-                    <textarea id="editorWordList" data-on-input='[["handleEditorTextareaInput",[]],["handleEditorSearch",[]]]' data-on-scroll='[["syncEditorScroll",[]]]' data-on-change='[["enforceCurrentEditorLanguage",[]]]' placeholder="例如：apple 蘋果 名詞" data-p-en="例如：apple 蘋果 名詞" data-p-ko="例如：사과 蘋果 名詞"></textarea>
+                <div class="we-hint" id="wePasteHint">
+                    一行一個：<b><span class="js-lang">英文</span>　中文　詞性</b>（詞性可省略）<br>
+                    多個意思：<b>Star 星星 名詞 出演 動詞</b>・開頭加 <b class="we-hint__star">*</b> 為星號
                 </div>
-                <div id="packStarList" class="ed-starlist"></div>
-
-                <button class="action-btn-primary ed-edit-only" id="editorSaveBtn" data-on-click='[["saveAndStayInEditor",[]]]'>
-                    儲存
-                </button>
+                <textarea class="we-paste" id="wePasteBox" aria-label="貼上單字" placeholder="honest 誠實的 形容詞&#10;*generous 慷慨的" autocapitalize="off" spellcheck="false"></textarea>
+                <div class="we-status" id="wePasteStatus" aria-live="polite"></div>
+                <div class="we-actionbar">
+                    <div class="we-actionbar__right">
+                        <span class="we-count"><span class="js-count">0</span> <small>/ <span class="js-max">100</span></small></span>
+                        <button class="we-btn-primary" type="button" id="wePasteConfirm" disabled>加入</button>
+                    </div>
+                </div>
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- 建立單字頁：詞性選單、提示訊息 -->
+<div class="we-pos-menu we-font" id="wePosMenu" role="dialog" aria-label="選擇詞性" hidden></div>
+<div class="we-toast we-font" id="weToast" role="status" hidden></div>
+
+<!-- 練習頁：開始新練習的確認視窗 -->
+<div class="cp cp-dialog" id="cpConfirm" hidden data-on-click='[["cpConfirmBg",["$event"]]]'>
+    <div class="cp-dialog__box" role="dialog" aria-modal="true" aria-labelledby="cpConfirmTitle">
+        <div class="cp-dialog__icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 4v5h-5"/></svg></div>
+        <h2 class="cp-dialog__title" id="cpConfirmTitle">要開始新的練習嗎？</h2>
+        <p class="cp-dialog__text" id="cpConfirmText"></p>
+        <div class="cp-dialog__actions">
+            <button class="cp-btn cp-btn--ghost" type="button" data-on-click='[["cpConfirmClose",[]]]'>取消</button>
+            <button class="cp-btn cp-btn--primary" type="button" id="cpConfirmOk" data-on-click='[["cpConfirmOk",[]]]'>開始新練習</button>
+        </div>
     </div>
 </div>
 
