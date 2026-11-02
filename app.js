@@ -82,7 +82,8 @@
     // 本機只保存「今天各任務有沒有完成」(chickenData)。
     // 前端不能直接寫入雞塊數，只能呼叫後端函式 claim_reward / buy_item；
     // 就算有人用 F12 改了畫面上的數字，下次連線也會被後端的數字蓋回來。
-    const CHICKEN_TASK_KEYS = ['dailyLogin', 'listeningPractice', 'cardPractice', 'listeningPerfect', 'cardPerfect', 'advWin'];
+    // 每日任務（2026/11 改版）：每日登入／任一練習 10 題／任一測驗 10 題／大冒險打敗敵人／農場澆水或收成
+    const CHICKEN_TASK_KEYS = ['dailyLogin', 'practice10', 'exam10', 'advWin', 'farmCare'];
 
     function loadLocalChickenProgress() {
         let raw = {};
@@ -246,8 +247,9 @@
     // 每日登入：雞塊 +1（後端錢包）＋ 糖醋醬碎片 +3（存在大冒險進度裡）；其他任務照舊送雞塊
     const LOGIN_SHARDS = 3;
     function isLoginShardClaimed() { try { return advData.loginShardDay === chickenData.lastDate; } catch (e) { return false; } }
+    function isLoginFlowerClaimed() { try { return farm.loginFlowerDay === chickenData.lastDate; } catch (e) { return true; } }
     function isTaskClaimed(key) {
-        if (key === 'dailyLogin' && !isLoginShardClaimed()) return false;   // 每日登入：雞塊和碎片都領了才算領完
+        if (key === 'dailyLogin' && (!isLoginShardClaimed() || !isLoginFlowerClaimed())) return false;   // 每日登入：雞塊、碎片、花都領了才算領完
         return wallet.day === chickenData.lastDate && (wallet.claimedToday || []).indexOf(key) !== -1;
     }
 
@@ -486,9 +488,10 @@
     // 今日任務的「去做 ›」：直接跳到那個功能
     function goDoTask(key) {
         closeChickenRewardModal();
-        if (key === 'listeningPractice' || key === 'listeningPerfect') { homeTab = 'exam'; goToExamPage(); }
-        else if (key === 'cardPractice' || key === 'cardPerfect') { homeTab = 'exam'; goToCardExamPage(); }
+        if (key === 'practice10') setHomeTab('practice');
+        else if (key === 'exam10') setHomeTab('exam');
         else if (key === 'advWin') { homeTab = 'fun'; goToAdventurePage(); }
+        else if (key === 'farmCare') { homeTab = 'fun'; goToFarmPage(); }
     }
     function closeChickenRewardModal() {
         document.getElementById('chickenRewardModal').style.display = 'none';
@@ -502,12 +505,11 @@
         if (!container) return;
 
         const taskDefs = [
-            { key: 'dailyLogin', title: '1. 每日登入', desc: `雞塊 ×1、糖醋醬碎片 ×${LOGIN_SHARDS}` },
-            { key: 'listeningPractice', title: '2. 完成一次聽力測驗', desc: '' },
-            { key: 'cardPractice', title: '3. 完成一次字卡測驗', desc: '' },
-            { key: 'listeningPerfect', title: '4. 聽力測驗 80 分且題數≥ 10 ', desc: '' },
-            { key: 'cardPerfect', title: '5. 字卡測驗 80 分且題數≥ 10', desc: '' },
-            { key: 'advWin', title: '6. 在大冒險中打贏一場敵人', desc: '雞塊 ×1' }
+            { key: 'dailyLogin', title: '1. 每日登入', desc: `雞塊 ×1、糖醋醬碎片 ×${LOGIN_SHARDS}、花 ×1` },
+            { key: 'practice10', title: '2. 完成 10 題以上的任一練習', desc: '' },
+            { key: 'exam10', title: '3. 完成 10 題以上的任一測驗', desc: '' },
+            { key: 'advWin', title: '4. 在雞塊大冒險打敗任一敵人', desc: '' },
+            { key: 'farmCare', title: '5. 在雞塊農場澆花或收成', desc: '' }
         ];
 
         let html = '', done = 0;
@@ -524,11 +526,30 @@
         try { renderHomeToday(); } catch (e) {}
     }
 
+    // 每日登入的花 +1：連得到後台就由 farm_act('login_flower') 發（同一天只能一次），連不到先記在這台裝置
+    async function claimLoginFlower() {
+        let day = chickenData.lastDate;
+        if (farm.loginFlowerDay === day) return;
+        if (farmSrv !== true) { try { await farmSync(); } catch (e) {} }      // 先跟後台對一次農場，避免花被後台的資料蓋掉
+        if (farm.loginFlowerDay === day) return;
+        farm.loginFlowerDay = day;
+        if (farmSrv === true) {
+            try { farmApply(await walletRpc('farm_act', { p_action: 'login_flower', p_args: { day } })); }
+            catch (e) { if (!String((e && e.message) || '').includes('already_claimed')) { farm.flowers += 1; } farm.loginFlowerDay = day; }
+        } else {
+            farm.flowers += 1;
+        }
+        farmSave();
+        try { farmRefresh(); } catch (e) {}
+        updateChickenModalUI(); updateChickenBadgeUI();
+    }
+
     // 領取：向後端登記（同一天同一任務只會算一次），成功後以後端回傳的餘額為準
     async function claimChickenReward(taskKey) {
         checkDailyReset();
         let t = chickenData.tasks[taskKey];
         if (!t || !t.done || isTaskClaimed(taskKey) || walletBusy) return;
+        if (taskKey === 'dailyLogin' && !isLoginFlowerClaimed()) claimLoginFlower();     // 花 +1（存在農場；後台 farm_act login_flower 把關）
         if (taskKey === 'dailyLogin' && !isLoginShardClaimed()) {
             // 碎片先發（存在本機進度）；雞塊下面照原本的方式向後端領
             advData.shards += LOGIN_SHARDS;
@@ -537,9 +558,8 @@
             showChickenFloat('rewardShardCount', '+' + LOGIN_SHARDS, '#10B981');
             try { advRenderShopBox(); } catch (e) {}
             updateChickenBadgeUI();
-            let alreadyChicken = wallet.day === chickenData.lastDate && (wallet.claimedToday || []).indexOf('dailyLogin') !== -1;
-            if (alreadyChicken) { updateChickenModalUI(); return; }
         }
+        if (taskKey === 'dailyLogin' && wallet.day === chickenData.lastDate && (wallet.claimedToday || []).indexOf('dailyLogin') !== -1) { updateChickenModalUI(); updateChickenBadgeUI(); return; }
         walletBusy = true;
         try {
             let before = wallet.balance;
@@ -752,35 +772,13 @@
     // 觸發任務完成檢查 (供外部呼叫)
     function triggerTaskCheck(taskType, data = {}) {
         checkDailyReset();
-        let updated = false;
-
-        if (taskType === 'listening_exam_done') {
-            if (!isTaskClaimed('listeningPractice')) {
-                chickenData.tasks.listeningPractice.done = true;
-                updated = true;
-            }
-            if (data.total >= 10 && data.score >= 80) {
-                if (!isTaskClaimed('listeningPerfect')) {
-                    chickenData.tasks.listeningPerfect.done = true;
-                    updated = true;
-                }
-            }
-        } else if (taskType === 'card_exam_done') {
-            if (!isTaskClaimed('cardPractice')) {
-                chickenData.tasks.cardPractice.done = true;
-                updated = true;
-            }
-            if (data.total >= 10 && data.score >= 80) {
-                if (!isTaskClaimed('cardPerfect')) {
-                    chickenData.tasks.cardPerfect.done = true;
-                    updated = true;
-                }
-            }
-        }
-
-        if (updated) {
-            saveChickenData();
-        }
+        let key = '';
+        if (taskType === 'practice_done' && (data.total || 0) >= 10) key = 'practice10';                  // 任一練習完成 10 題以上
+        else if ((taskType === 'listening_exam_done' || taskType === 'card_exam_done') && (data.total || 0) >= 10) key = 'exam10';   // 任一測驗 10 題以上
+        else if (taskType === 'farm_care') key = 'farmCare';                                             // 農場澆水或收成
+        if (!key || !chickenData.tasks[key] || chickenData.tasks[key].done || isTaskClaimed(key)) return;
+        chickenData.tasks[key].done = true;
+        saveChickenData();
     }
 
     // ---------------------------------
@@ -1026,14 +1024,21 @@
                 if (diffX < -40) nextFlashcard();
                 else if (diffX > 40) prevFlashcard();
             } else {
-                cardEl.classList.toggle('flipped');
+                fcFlip();
             }
         }, false);
 
         cardEl.addEventListener('click', e => {
-            if (!('ontouchstart' in window)) {
-                cardEl.classList.toggle('flipped');
-            }
+            if (!('ontouchstart' in window)) fcFlip();
+        });
+        // 電腦版：← → 換卡、空白鍵翻面
+        document.addEventListener('keydown', e => {
+            if (!document.getElementById('flashcardPlayView').classList.contains('active')) return;
+            if (/INPUT|TEXTAREA|SELECT/.test((e.target && e.target.tagName) || '')) return;
+            if ([...document.querySelectorAll('.modal')].some(m => m.style.display === 'block')) return;
+            if (e.key === 'ArrowRight') { e.preventDefault(); nextFlashcard(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); if (currentFcIndex > 0) prevFlashcard(); }
+            else if (e.code === 'Space') { e.preventDefault(); fcFlip(); }
         });
     }
 
@@ -1599,7 +1604,15 @@
         try { setTimeout(updateStickyBar, 0); } catch (e) {}
         
         let wrapper = document.getElementById('mainScaleWrapper');
-        if (['practiceView', 'examView', 'flashcardPlayView', 'flashcardSetupView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'speakPracticePlayView', 'homeDashboardView', 'editorListView', 'editorDetailView', 'historyView'].includes(viewId)) {
+        // 新版練習頁（cp-）與建立單字頁（we-）：不放大，照設計稿的寬度（手機 480、電腦 780）
+        const CP_VIEWS = ['practiceView', 'examView', 'flashcardSetupView', 'flashcardPlayView', 'cardExamSetupView', 'speakPracticeSetupView'];
+        let cpOn = CP_VIEWS.includes(viewId), weOn = viewId === 'editorDetailView';
+        document.body.classList.toggle('cp-on', cpOn);
+        document.body.classList.toggle('we-on', weOn);
+        if (!weOn) document.body.classList.remove('we-sub');
+        document.body.classList.toggle('cp-tall', viewId === 'flashcardPlayView' || (viewId === 'practiceView' && typeof isPlaying !== 'undefined' && isPlaying));
+        if (cpOn || weOn) { wrapper.className = 'scale-wrapper-cp'; }
+        else if (['practiceView', 'examView', 'flashcardPlayView', 'flashcardSetupView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'speakPracticePlayView', 'homeDashboardView', 'editorListView', 'editorDetailView', 'historyView'].includes(viewId)) {
             wrapper.className = 'scale-wrapper-practice';
         } else {
             wrapper.className = 'scale-wrapper';
@@ -1608,12 +1621,15 @@
 
     function goToPracticePage() {
         initPracticeCardGrid();
+        if (!isPlaying) lpShowPart(false);
         switchView('practiceView');
+        cpRenderResume('listen');
     }
 
     function goToFlashcardPage() {
         initFlashcardGrid();
         switchView('flashcardSetupView');
+        cpRenderResume('flash');
     }
 
     function goToCardExamPage() {
@@ -1688,7 +1704,7 @@
     function activeBackBtn() {
         let v = document.querySelector('.app-view.active');
         if (!v) return null;
-        return [...v.querySelectorAll('.top-nav-bar .back-home-btn, .adv-topbar .back-home-btn')].find(b => b.offsetParent !== null) || null;
+        return [...v.querySelectorAll('.top-nav-bar .back-home-btn, .adv-topbar .back-home-btn, .cp-header .cp-back, .we-header .we-back')].find(b => b.offsetParent !== null) || null;
     }
     function updateStickyBar() {
         let el = stickyBarEl();
@@ -1867,31 +1883,290 @@
     document.addEventListener('scroll', closeAllDropdownMenus, true);
     window.addEventListener('resize', closeAllDropdownMenus);
 
+    // ═════════ 建立單字頁（表格編輯；三種畫面：list 表格／add 新增一列（也用來編輯）／paste 批次貼上）═════════
+    const WE_POS = ['名詞', '動詞', '形容詞', '副詞', '連接詞', '介係詞', '片語', '代名詞', '感嘆詞'];
+    const WE_STAR_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>';
+    let weWords = [], weSort = null, weDirty = false, weMax = 100, wePack = false, weDraft = null, weEditAt = -1, weParsed = [];
+    const we$ = (sel) => document.querySelector(sel);
+    function weEl(tag, cls, text) { let n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+    // 鍵盤打開時，畫面高度＝看得到的高度（底部按鈕停在鍵盤上方）
+    function weFitViewport() {
+        let h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        document.documentElement.style.setProperty('--we-vh', h + 'px');
+    }
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', weFitViewport);
+    window.addEventListener('resize', weFitViewport); weFitViewport();
+    function weToast(msg) {
+        let t = we$('#weToast'); if (!t) return;
+        t.textContent = msg; t.hidden = false;
+        clearTimeout(weToast._t); weToast._t = setTimeout(() => { t.hidden = true; }, 1800);
+    }
+    function weLangName() { return getListLang(wordLists[lastSelectedList]) === 'ko' ? '韓文' : '英文'; }
+    // 題庫內容 → 表格資料
+    function weFromContent(content) {
+        return parseWordsRaw(content || '').map(w => ({
+            star: !!w.starred, en: w.english,
+            means: (w.senses && w.senses.length ? w.senses : [{ m: w.meanings, p: w.posList }]).map(s => ({ zh: (s.m || []).join(' '), pos: (s.p || []).slice() })),
+            raw: w.rawLine
+        }));
+    }
+    function weLine(w) {
+        if (w.raw) return (w.star ? '*' : '') + w.raw.replace(/^\s*\*\s*/, '');
+        return (w.star ? '*' : '') + w.en + ' ' + w.means.map(m => [m.zh].concat(m.pos).filter(Boolean).join(' ')).join(' ');
+    }
+    function weCount(extra) {
+        let n = weWords.length + (extra || 0);
+        document.querySelectorAll('#editorDetailView .js-count').forEach(e => { e.textContent = n; });
+        document.querySelectorAll('#editorDetailView .js-max').forEach(e => { e.textContent = weMax; });
+        let f = we$('#weFill'); if (f) f.style.width = Math.min(100, weWords.length / weMax * 100) + '%';
+    }
+    function weSetMode(m) {
+        let root = we$('#editorDetailView');
+        root.dataset.mode = m;
+        root.querySelectorAll('[data-view]').forEach(v => { v.hidden = v.dataset.view !== m; });
+        document.body.classList.toggle('we-sub', m !== 'list');
+        weClosePos();
+        weCount();
+    }
     function openEditorDetail(idx) {
         lastSelectedList = idx;
         localStorage.setItem('dictation_last_selected_list', idx);
         let list = wordLists[idx];
         if (!list) return;
-
-        let pack = isPackList(list);
-        let ti = document.getElementById('editorDetailTitleIndicator');
-        if (pack) ti.innerHTML = `${packIconHTML(list.pack, 18)} ${escapeHTML(list.title)}`; else ti.innerText = `📁 ${list.title}`;
+        wePack = isPackList(list);
         editorOpenCount = getListWordCount(list.content);
         document.getElementById('editorWordList').value = list.content || '';
-        document.getElementById('wordSearchInput').value = '';
-        document.getElementById('searchNotFoundTip').style.display = 'none';
-        document.getElementById('editorDetailView').classList.toggle('ed-pack', pack);   // 精選單字庫：只能加星號
-        if (pack) renderPackStarList();
-        else document.getElementById('packStarList').innerHTML = '';
-        handleEditorSearch();
+        weWords = weFromContent(list.content);
+        weMax = wePack ? Math.max(weWords.length, 1) : Math.max(getListWordCap(list), editorOpenCount);
+        weSort = null; weDirty = false;
+        let root = we$('#editorDetailView');
+        root.classList.toggle('we-pack', wePack);
+        root.classList.toggle('ed-pack', wePack);
+        root.querySelectorAll('.js-book').forEach(e => { e.textContent = list.title; });
+        root.querySelectorAll('.js-lang').forEach(e => { e.textContent = weLangName(); });
+        we$('#weDraftEn').placeholder = weLangName();
+        we$('#wePasteBox').placeholder = getListLang(list) === 'ko' ? '사과 蘋果 名詞\n*친구 朋友' : 'honest 誠實的 形容詞\n*generous 慷慨的';
+        we$('#weSearch').value = '';
+        we$('#weSortLabel').textContent = 'A-Z';
         switchView('editorDetailView');
+        weSetMode('list');
+        weRenderRows();
+        window.scrollTo(0, 0);
     }
-
+    function weRenderRows() {
+        let q = we$('#weSearch').value.trim().toLowerCase();
+        let list = weWords.map((w, i) => ({ w, i }));
+        if (q) list = list.filter(({ w }) => w.en.toLowerCase().includes(q) || w.means.some(m => m.zh.toLowerCase().includes(q)));
+        if (weSort) list.sort((a, b) => a.w.en.localeCompare(b.w.en, getLearningLanguage(), { sensitivity: 'base' }) * (weSort === 'az' ? 1 : -1));
+        let body = we$('#weRows'); body.textContent = '';
+        if (!list.length) { body.appendChild(weEl('div', 'we-empty', q ? '找不到符合的單字' : (wePack ? '這本沒有單字' : '還沒有單字，按「新增一列」開始'))); weCount(); return; }
+        list.forEach(({ w, i }) => {
+            let row = weEl('div', 'we-grid we-row' + (wePack ? '' : ' we-row--tap'));
+            let star = weEl('button', 'we-star'); star.type = 'button';
+            star.innerHTML = WE_STAR_SVG;
+            star.setAttribute('aria-pressed', w.star ? 'true' : 'false');
+            star.setAttribute('aria-label', (w.star ? '取消星號：' : '加星號：') + w.en);
+            star.addEventListener('click', (e) => { e.stopPropagation(); weToggleStar(i); });
+            let en = weEl('span', 'we-en', w.en);
+            let means = weEl('div', 'we-means');
+            w.means.forEach(m => {
+                let line = weEl('div', 'we-mean');
+                line.appendChild(weEl('span', 'we-zh', m.zh));
+                m.pos.forEach(p => line.appendChild(weEl('span', 'we-pos', p)));
+                means.appendChild(line);
+            });
+            row.append(star, en, means);
+            if (!wePack) { row.title = '點一下編輯'; row.addEventListener('click', () => weOpenEdit(i)); }
+            body.appendChild(row);
+        });
+        weCount();
+    }
+    function weToggleStar(i) {
+        let w = weWords[i]; if (!w) return;
+        w.star = !w.star;
+        if (wePack) weSave(true); else weDirty = true;      // 精選單字庫：只能加星號，點了直接存
+        weRenderRows();
+    }
+    // 存回題庫（跟原本的「儲存」一樣：存本機＋雲端，更新各個選題庫畫面）
+    function weSave(silent) {
+        let idx = lastSelectedList, list = wordLists[idx];
+        if (!list) return;
+        list.content = weWords.map(weLine).join('\n');
+        document.getElementById('editorWordList').value = list.content;
+        localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
+        triggerAutoSaveToCloud();
+        if (wePack) refreshListViewsSoon();
+        else { try { initPracticeCardGrid(); initExamCardGrid(); initFlashcardGrid(); initCardExamGrid(); initSpeakPracticeGrid(); } catch (e) {} }
+        weDirty = false;
+        if (!silent) weToast('已儲存');
+    }
     function backToListFromDetail() {
+        weClosePos();
+        if (weDirty) weSave(true);          // 還沒按儲存就返回：自動幫你存起來
+        document.body.classList.remove('we-sub');
         enforceCurrentEditorLanguage();
         initEditorListCards();
         switchView('editorListView');
     }
+    // ---- 新增一列／編輯 ----
+    function weNewDraft() { weDraft = { star: false, en: '', means: [{ zh: '', pos: [] }] }; }
+    function weRenderDraft() {
+        we$('#weDraftEn').value = weDraft.en;
+        we$('#weDraftStar').setAttribute('aria-pressed', weDraft.star ? 'true' : 'false');
+        we$('#weDraftStarIcon').setAttribute('aria-pressed', weDraft.star ? 'true' : 'false');
+        let box = we$('#weDraftMeans'); box.textContent = '';
+        weDraft.means.forEach((m, k) => {
+            let line = weEl('div', 'we-edit__mean');
+            let zh = weEl('input', 'we-input'); zh.value = m.zh; zh.placeholder = '中文'; zh.setAttribute('aria-label', '中文意思 ' + (k + 1));
+            zh.addEventListener('input', () => { m.zh = zh.value; weCheckDraft(); });
+            zh.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); if (!we$('#weAddConfirm').disabled) weConfirmDraft(); } });
+            let pb = weEl('button', 'we-pos-btn' + (m.pos.length ? ' has-value' : ''), m.pos.length ? m.pos.join('\n') : '詞性');
+            pb.type = 'button'; pb.style.whiteSpace = 'pre-line';
+            pb.setAttribute('aria-label', '選擇詞性');
+            pb.addEventListener('click', (e) => { e.stopPropagation(); weOpenPos(pb, m); });
+            line.append(zh, pb); box.appendChild(line);
+        });
+        weCheckDraft();
+    }
+    function weDraftError() {
+        let en = weDraft.en.trim(), lang = getListLang(wordLists[lastSelectedList]);
+        if (!en || !weDraft.means.some(m => m.zh.trim())) return 'empty';
+        if (/[一-龥]/.test(en)) return `${weLangName()}欄不能有中文`;
+        if (lang === 'ko' ? RE_LATIN.test(en) : RE_HANGUL.test(en)) return `這本是${weLangName()}題庫`;
+        let dup = weWords.findIndex(w => w.en.toLowerCase() === en.toLowerCase());
+        if (dup !== -1 && dup !== weEditAt) return `已經有「${weWords[dup].en}」了`;
+        return '';
+    }
+    function weCheckDraft() {
+        let full = weEditAt < 0 && weWords.length >= weMax;
+        we$('#weAddConfirm').disabled = !!weDraftError() || full;
+    }
+    function weOpenAdd() {
+        if (weWords.length >= weMax) { weToast(`已達單字上限 ${weMax} 字`); }
+        weEditAt = -1; weNewDraft();
+        we$('#weAddTitle').textContent = '新增單字';
+        we$('#weAddConfirm').textContent = '加入';
+        we$('#weDelBtn').hidden = true;
+        weSetMode('add'); weRenderDraft(); we$('#weDraftEn').focus();
+    }
+    function weOpenEdit(i) {
+        let w = weWords[i]; if (!w) return;
+        weEditAt = i;
+        weDraft = { star: w.star, en: w.en, means: w.means.map(m => ({ zh: m.zh, pos: m.pos.slice() })) };
+        if (!weDraft.means.length) weDraft.means.push({ zh: '', pos: [] });
+        we$('#weAddTitle').textContent = '編輯單字';
+        we$('#weAddConfirm').textContent = '儲存';
+        we$('#weDelBtn').hidden = false;
+        weSetMode('add'); weRenderDraft();
+    }
+    function weConfirmDraft() {
+        let err = weDraftError();
+        if (err) { if (err !== 'empty') weToast(err); return; }
+        let w = { star: weDraft.star, en: weDraft.en.trim().replace(/\s+/g, ' '), means: weDraft.means.filter(m => m.zh.trim()).map(m => ({ zh: m.zh.trim(), pos: m.pos })), raw: '' };
+        if (weEditAt >= 0) { weWords[weEditAt] = w; }
+        else { weWords.unshift(w); weSort = null; we$('#weSortLabel').textContent = 'A-Z'; }
+        weDirty = true;
+        let msg = (weEditAt >= 0 ? '已更新 ' : '已加入 ') + w.en;
+        weEditAt = -1;
+        weSetMode('list'); weRenderRows(); weToast(msg);
+        try { let c = document.getElementById('obCoach'); if (c) c.remove(); } catch (e) {}
+    }
+    function weDeleteDraft() {
+        if (weEditAt < 0) return;
+        let w = weWords[weEditAt];
+        if (!confirm(`要刪除「${w.en}」嗎？`)) return;
+        weWords.splice(weEditAt, 1); weEditAt = -1; weDirty = true;
+        weSetMode('list'); weRenderRows(); weToast('已刪除 ' + w.en);
+    }
+    // 詞性選單（可複選）
+    function weOpenPos(btn, mean) {
+        let menu = we$('#wePosMenu'); menu.textContent = '';
+        WE_POS.forEach(p => {
+            let b = weEl('button', '', p); b.type = 'button';
+            b.setAttribute('aria-pressed', mean.pos.includes(p) ? 'true' : 'false');
+            b.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mean.pos = mean.pos.includes(p) ? mean.pos.filter(x => x !== p) : mean.pos.concat(p);
+                b.setAttribute('aria-pressed', mean.pos.includes(p) ? 'true' : 'false');
+                btn.textContent = mean.pos.length ? mean.pos.join('\n') : '詞性';
+                btn.classList.toggle('has-value', mean.pos.length > 0);
+            });
+            menu.appendChild(b);
+        });
+        let r = btn.getBoundingClientRect();
+        menu.hidden = false;
+        let left = Math.max(8, Math.min(window.innerWidth - menu.offsetWidth - 8, r.right - menu.offsetWidth));
+        let top = r.bottom + 6;
+        if (top + menu.offsetHeight > window.innerHeight - 8) top = Math.max(8, r.top - menu.offsetHeight - 6);
+        menu.style.left = left + window.scrollX + 'px';
+        menu.style.top = top + window.scrollY + 'px';
+    }
+    function weClosePos() { let m = we$('#wePosMenu'); if (m) m.hidden = true; }
+    // ---- 批次貼上 ----
+    function weParseLine(line) {
+        let s = line.trim(); if (!s) return null;
+        let star = s.startsWith('*'); if (star) s = s.slice(1).trim();
+        let lang = getListLang(wordLists[lastSelectedList]);
+        let i = meaningStart(s);
+        let en = (i === -1 ? s : s.slice(0, i)).trim(), rest = i === -1 ? '' : s.slice(i).trim();
+        if (!en) return { error: '看不懂' + weLangName() };
+        if (lang === 'ko' ? RE_LATIN.test(en) : RE_HANGUL.test(en)) return { error: '不是' + weLangName() };
+        if (!rest) return { error: '缺少中文' };
+        let pm = parseMeaningPart(rest);
+        if (!pm.senses.length || pm.senses.some(x => !x.m.length)) return { error: '缺少中文' };
+        return { word: { star, en: en.replace(/\s+/g, ' '), means: pm.senses.map(x => ({ zh: x.m.join(' '), pos: x.p.slice() })), raw: '' } };
+    }
+    function weCheckPaste() {
+        let lines = we$('#wePasteBox').value.split('\n');
+        weParsed = []; let errors = [], dups = 0, seen = new Set(weWords.map(w => w.en.toLowerCase()));
+        lines.forEach((l, i) => {
+            let r = weParseLine(l); if (!r) return;
+            if (r.error) { errors.push('第 ' + (i + 1) + ' 行' + r.error); return; }
+            let k = r.word.en.toLowerCase();
+            if (seen.has(k)) { dups++; return; }
+            seen.add(k); weParsed.push(r.word);
+        });
+        let room = Math.max(0, weMax - weWords.length);
+        let over = Math.max(0, weParsed.length - room);
+        if (over) weParsed = weParsed.slice(0, room);
+        let st = we$('#wePasteStatus'); st.textContent = '';
+        if (weParsed.length) st.appendChild(weEl('span', 'we-chip we-chip--ok', '✓ 可加入 ' + weParsed.length + ' 個'));
+        errors.slice(0, 2).forEach(m => st.appendChild(weEl('span', 'we-chip we-chip--warn', '⚠ ' + m + '，會先略過')));
+        if (errors.length > 2) st.appendChild(weEl('span', 'we-chip we-chip--warn', '還有 ' + (errors.length - 2) + ' 行有問題'));
+        if (dups) st.appendChild(weEl('span', 'we-chip we-chip--warn', dups + ' 個已經在題庫裡，會略過'));
+        if (over) st.appendChild(weEl('span', 'we-chip we-chip--warn', '超過上限，' + over + ' 個沒加入'));
+        let btn = we$('#wePasteConfirm');
+        btn.disabled = !weParsed.length; btn.textContent = weParsed.length ? '加入 ' + weParsed.length + ' 個' : '加入';
+        weCount(weParsed.length);
+    }
+    function weOpenPaste() { we$('#wePasteBox').value = ''; weSetMode('paste'); weCheckPaste(); we$('#wePasteBox').focus(); }
+    function weConfirmPaste() {
+        if (!weParsed.length) return;
+        weWords = weParsed.concat(weWords); weDirty = true; weSort = null; we$('#weSortLabel').textContent = 'A-Z';
+        let n = weParsed.length; weSetMode('list'); weRenderRows(); weToast('已加入 ' + n + ' 個單字');
+        try { let c = document.getElementById('obCoach'); if (c) c.remove(); } catch (e) {}
+    }
+    // ---- 綁定事件（畫面元素是固定的，綁一次就好）----
+    (function weBind() {
+        let on = (sel, ev, fn) => { let n = we$(sel); if (n) n.addEventListener(ev, fn); };
+        on('#weBackBtn', 'click', () => backToListFromDetail());
+        on('#weSearch', 'input', weRenderRows);
+        on('#weSortBtn', 'click', () => { weSort = weSort === 'az' ? 'za' : 'az'; we$('#weSortLabel').textContent = weSort === 'az' ? 'A-Z' : 'Z-A'; weRenderRows(); });
+        on('#weSaveBtn', 'click', () => weSave(false));
+        on('#weToAdd', 'click', weOpenAdd);
+        on('#weToPaste', 'click', weOpenPaste);
+        on('#weDraftEn', 'input', (e) => { weDraft.en = e.target.value; weCheckDraft(); });
+        on('#weDraftEn', 'keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); let z = document.querySelector('#weDraftMeans .we-input'); if (z) z.focus(); } });
+        on('#weDraftStar', 'click', () => { weDraft.star = !weDraft.star; weRenderDraft(); });
+        on('#weAddMean', 'click', () => { weDraft.means.push({ zh: '', pos: [] }); weRenderDraft(); let ins = document.querySelectorAll('#weDraftMeans .we-input'); ins[ins.length - 1].focus(); });
+        on('#weAddConfirm', 'click', weConfirmDraft);
+        on('#weDelBtn', 'click', weDeleteDraft);
+        on('#wePasteBox', 'input', weCheckPaste);
+        on('#wePasteConfirm', 'click', weConfirmPaste);
+        document.querySelectorAll('#editorDetailView .js-cancel').forEach(b => b.addEventListener('click', () => { weEditAt = -1; weSetMode('list'); }));
+        document.addEventListener('click', (e) => { let m = we$('#wePosMenu'); if (m && !m.hidden && !m.contains(e.target)) weClosePos(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') weClosePos(); });
+    })();
 
     function renameListTitleFromMenu(idx) {
         let list = wordLists[idx];
@@ -1987,6 +2262,12 @@
     // ── 選題庫頁共用：每一列、精選／自訂切換、已選幾本、全選 ──
     function pickRowHTML(list, count, isSelected, fn) {
         let pack = isPackList(list);
+        if (fn !== 'toggleAdvCard') {        // 新版練習／測驗開始頁：一列 = 題庫名稱＋字數，選到的右邊打勾
+            return `<div class="select-card cp-book ${isSelected}" role="button" tabindex="0" data-kind="${pack ? 'pack' : 'custom'}" data-on-click='[["${fn}",[${list.originalIdx},"$this"]]]'>
+                    <span class="cp-book__text"><span class="cp-book__name">${pack ? packIconHTML(list.pack, 20) : ''}${escapeHTML(list.title)}</span><span class="cp-book__count">${count} 字</span></span>
+                    <svg class="cp-book__check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
+                </div>`;
+        }
         return `<div class="select-card pk-row ${isSelected}" data-kind="${pack ? 'pack' : 'custom'}" data-on-click='[["${fn}",[${list.originalIdx},"$this"]]]'>
                     <div class="select-card-info">
                         <div class="select-card-title">${pack ? packIconHTML(list.pack, 20) + ' ' : ''}${escapeHTML(list.title)}</div>
@@ -2025,10 +2306,13 @@
         grid.classList.toggle('seg-pack', cur === 'pack');
         grid.classList.toggle('seg-custom', cur === 'custom');
         let shown = rows.filter(r => r.dataset.kind === cur), lastRow = shown.length - (shown.length % 2 ? 1 : 2);
-        shown.forEach((r, i) => { r.classList.toggle('pk-first', i === 0); r.classList.toggle('pk-odd', i % 2 === 0); r.classList.toggle('pk-bb', i < lastRow); });
-        let seg = document.querySelector(`.pk-seg[data-grid="${gid}"]`);
+        shown.forEach((r, i) => { r.classList.toggle('pk-first', i === 0); r.classList.toggle('pk-odd', i % 2 === 0); r.classList.toggle('pk-bb', i < lastRow); r.classList.toggle('cp-l', i % 2 === 0 && i < shown.length - 1); });
+        let seg = document.querySelector(`[data-grid="${gid}"]`);
         let badge = n => n ? `<em>已選 ${n}</em>` : '';
-        if (seg) seg.innerHTML = `<button type="button" class="${cur === 'pack' ? 'on' : ''}" data-on-click='[["setPickSeg",["${gid}","pack"]]]'>精選單字庫${badge(sel('pack'))}</button><button type="button" class="${cur === 'custom' ? 'on' : ''}" data-on-click='[["setPickSeg",["${gid}","custom"]]]'>自訂單字庫${badge(sel('custom'))}</button>`;
+        if (seg && seg.classList.contains('cp-tabs')) {
+            let cb = n => n ? ` <span class="cp-badge">已選 ${n}</span>` : '';
+            seg.innerHTML = `<button class="cp-tab${cur === 'pack' ? ' is-active' : ''}" type="button"${cur === 'pack' ? ' aria-current="true"' : ''} data-on-click='[["setPickSeg",["${gid}","pack"]]]'>精選單字庫${cb(sel('pack'))}</button><button class="cp-tab${cur === 'custom' ? ' is-active' : ''}" type="button"${cur === 'custom' ? ' aria-current="true"' : ''} data-on-click='[["setPickSeg",["${gid}","custom"]]]'>自訂單字庫${cb(sel('custom'))}</button>`;
+        } else if (seg) seg.innerHTML = `<button type="button" class="${cur === 'pack' ? 'on' : ''}" data-on-click='[["setPickSeg",["${gid}","pack"]]]'>精選單字庫${badge(sel('pack'))}</button><button type="button" class="${cur === 'custom' ? 'on' : ''}" data-on-click='[["setPickSeg",["${gid}","custom"]]]'>自訂單字庫${badge(sel('custom'))}</button>`;
         let empty = grid.querySelector('.pk-empty');
         if (!cnt(cur)) { if (!empty) grid.insertAdjacentHTML('beforeend', '<div class="pk-empty"></div>'); grid.querySelector('.pk-empty').textContent = cur === 'pack' ? '還沒有精選單字庫' : '還沒有放了單字的自訂題庫'; }
         else if (empty) empty.remove();
@@ -2192,84 +2476,82 @@
         }
     }
 
-    function startFlashcardSession() {
-        let text = document.getElementById('flashcardPreviewTextarea').value.trim();
-        let words = parseWordsRaw(text);
-
-        if (document.getElementById('fcSettingStarred').checked) {
-            words = words.filter(w => w.starred);
+    // ═════════ 字卡練習（新版畫面；返回保留進度，開始頁可以繼續）═════════
+    let fcBooks = '', fcSeen = new Set();
+    function startFlashcardSession(resume) {
+        let words;
+        if (resume && Array.isArray(resume.words)) {
+            words = resume.words.map(l => parseWordsRaw(l)[0]).filter(Boolean);
+            fcBooks = resume.books || '';
+            fcSeen = new Set(resume.seen || []);
+        } else {
+            words = parseWordsRaw(document.getElementById('flashcardPreviewTextarea').value.trim());
+            if (document.getElementById('fcSettingStarred').checked) words = words.filter(w => w.starred);
+            if (document.getElementById('fcSettingShuffle').checked) words = words.sort(() => Math.random() - 0.5);
+            fcBooks = cpSelectedTitles('flashcardGrid');
+            fcSeen = new Set();
         }
-        if (document.getElementById('fcSettingShuffle').checked) {
-            words = words.sort(() => Math.random() - 0.5);
-        }
-
-        if (words.length === 0) {
-            alert('⚠️ 範圍內沒有符合條件的單字，請重新勾選！');
-            return;
-        }
-
+        if (words.length === 0) { alert('⚠️ 範圍內沒有符合條件的單字，請重新勾選！'); return; }
         requestWakeLock();
-
         flashcardActiveList = words;
-        currentFcIndex = 0;
+        currentFcIndex = resume ? Math.min(resume.idx || 0, words.length - 1) : 0;
         switchView('flashcardPlayView');
+        document.body.classList.add('cp-tall');
         updateFlashcardView();
     }
-
+    function fcSaveResume() {
+        try {
+            if (!flashcardActiveList.length) return;
+            localStorage.setItem('chicky_flash_resume', JSON.stringify({ words: flashcardActiveList.map(w => w.rawLine), idx: currentFcIndex, books: fcBooks, ts: Date.now(), lang: getLearningLanguage(), seen: [...fcSeen].slice(0, 500) }));
+        } catch (e) {}
+    }
     function backToFlashcardSetup() {
+        fcSaveResume();
         if (advPracDone()) return;
         releaseWakeLock();
-        switchView('flashcardSetupView');
+        goToFlashcardPage();
     }
-
+    function fcFinish() {
+        try { localStorage.removeItem('chicky_flash_resume'); } catch (e) {}
+        flashcardActiveList = [];
+        if (advPracDone()) return;
+        releaseWakeLock();
+        goToFlashcardPage();
+    }
+    function fcFlip() {
+        let el = document.getElementById('flashcardCardEl');
+        if (!el) return;
+        let f = el.classList.toggle('is-flipped');
+        el.setAttribute('aria-label', f ? '翻回英文' : '翻面看中文');
+    }
     function resetFlashcardFlipState() {
         const cardEl = document.getElementById('flashcardCardEl');
-        if (cardEl) {
-            cardEl.classList.remove('flipped');
-        }
+        if (cardEl) { cardEl.classList.remove('is-flipped'); cardEl.setAttribute('aria-label', '翻面看中文'); }
     }
-
     function updateFlashcardView() {
         if (flashcardActiveList.length === 0) return;
-        
         resetFlashcardFlipState();
-
-        let card = flashcardActiveList[currentFcIndex];
-        document.getElementById('fcCardEng').innerText = card.english;
-        if (card.senses && card.senses.length > 1) {
-            document.getElementById('fcCardChi').innerText = card.senses.map(s => s.m.join('、')).join(' ／ ');
-            document.getElementById('fcCardPos').innerText = card.senses.map(s => s.p.join('、') || '—').join(' ／ ');
-        } else {
-            document.getElementById('fcCardChi').innerText = card.chinese || '(無中文)';
-            document.getElementById('fcCardPos').innerText = card.pos || '單字';
-        }
-        document.getElementById('fcProgressText').innerText = `${currentFcIndex + 1} / ${flashcardActiveList.length} 題`;
-        
-        let percent = ((currentFcIndex + 1) / flashcardActiveList.length) * 100;
-        document.getElementById('fcProgressBar').style.width = `${percent}%`;
-
+        let card = flashcardActiveList[currentFcIndex], total = flashcardActiveList.length;
+        fcSeen.add(String(card.english).toLowerCase());
+        if (fcSeen.size >= 10) triggerTaskCheck('practice_done', { total: fcSeen.size });   // 同一場看過 10 張以上
+        let set = (id, v, html) => { let el = document.getElementById(id); if (el) el[html ? 'innerHTML' : 'textContent'] = v; };
+        set('fcBook', fcBooks ? `題庫 ${fcBooks}` : '題庫');
+        set('fcFrontChip', getLearningLanguage() === 'ko' ? '韓文' : '英文');
+        set('fcCardEng', card.english);
+        set('fcCardEngBack', card.english);
+        let senses = (card.senses && card.senses.length) ? card.senses : [{ m: card.meanings && card.meanings.length ? card.meanings : [card.chinese || '(無中文)'], p: card.posList || [] }];
+        set('fcCardChi', senses.map(x => (x.m || []).join('、')).join(' ／ '));
+        let pos = []; senses.forEach(x => (x.p || []).forEach(q => { if (pos.indexOf(q) === -1) pos.push(q); }));
+        set('fcCardPos', pos.map(q => `<span class="cp-pos">${escapeHTML(q)}</span>`).join(''), true);
+        set('fcProgressText', `${currentFcIndex + 1} <small>/ ${total}</small>`, true);
+        let bar = document.getElementById('fcProgressBar'); if (bar) bar.style.width = ((currentFcIndex + 1) / total * 100) + '%';
         let starBtn = document.getElementById('fcStarBtn');
-        if (card.starred) {
-            starBtn.classList.add('starred');
-            starBtn.innerText = '⭐';
-        } else {
-            starBtn.classList.remove('starred');
-            starBtn.innerText = '☆';
-        }
-
-        let prevBtn = document.getElementById('fcPrevBtn');
-        if (currentFcIndex === 0) {
-            prevBtn.disabled = true;
-        } else {
-            prevBtn.disabled = false;
-        }
-
-        let nextBtn = document.getElementById('fcNextBtn');
-        if (currentFcIndex === flashcardActiveList.length - 1) {
-            nextBtn.innerHTML = '結束 🏁';
-        } else {
-            nextBtn.innerHTML = '下一張 ▶';
-        }
+        if (starBtn) { starBtn.setAttribute('aria-pressed', card.starred ? 'true' : 'false'); starBtn.setAttribute('aria-label', card.starred ? '取消星號' : '加星號'); }
+        let prevBtn = document.getElementById('fcPrevBtn'); if (prevBtn) prevBtn.disabled = currentFcIndex === 0;
+        let last = currentFcIndex === total - 1;
+        set('fcNextLabel', last ? '完成' : '下一張');
+        let nb = document.getElementById('fcNextBtn'); if (nb) nb.setAttribute('aria-label', last ? '完成' : '下一張');
+        fcSaveResume();
     }
 
     function nextFlashcard() {
@@ -2277,7 +2559,7 @@
             currentFcIndex++;
             updateFlashcardView();
         } else {
-            backToFlashcardSetup();
+            fcFinish();
         }
     }
 
@@ -3192,6 +3474,7 @@
             attempts: speakQuestion.attempts,
             skipped: !best
         });
+        if (speakPracticeResults.length >= 10) triggerTaskCheck('practice_done', { total: speakPracticeResults.length });   // 每日任務：朗讀練習 10 題
     }
 
     function nextSpeakPracticeQuestion() {
@@ -3712,90 +3995,99 @@
     function openWordFormatModal() { document.getElementById('wordFormatModal').style.display = 'block'; }
     function closeWordFormatModal() { document.getElementById('wordFormatModal').style.display = 'none'; }
 
+    // ═════════ 聽力練習（新版畫面：開始頁＋練習頁，返回會保留進度）═════════
+    // 播放用「場次編號」把每一輪播放綁在一起：按暫停、返回、重新開始時編號 +1，
+    // 舊的那一輪（包括還在排隊的 setTimeout、被 cancel 後才觸發的 onend）一看到編號不同就直接停下，
+    // 這樣快速「暫停 → 繼續」也不會有兩段語音同時播放。
+    const LP_RESUME_KEY = 'chicky_listen_resume';
+    let lpGen = 0, lpGapTimer = null, lpRepeatNow = 1, lpBooks = '', lpDoneCount = 0;
+    function lpKill() {                       // 停掉目前所有的播放與排程
+        lpGen++;
+        clearTimeout(timeoutId); clearTimeout(lpGapTimer);
+        try { synth.cancel(); } catch (e) {}
+    }
     function toggleDictation() { isPlaying ? stopDictation() : checkAndStartDictation(); }
-    
     function checkAndStartDictation() {
-        let text = document.getElementById('wordList').value.trim();
-        let words = parseWordsRaw(text);
-        
-        if (words.length === 0) {
-            alert("⚠️ 目前勾選的範圍單字數為 0，無法開始聽力練習！請至題庫新增單字。");
-            return;
-        }
+        let words = parseWordsRaw(document.getElementById('wordList').value.trim());
+        if (words.length === 0) { alert("⚠️ 目前勾選的範圍單字數為 0，無法開始聽力練習！請至題庫新增單字。"); return; }
         startDictation();
     }
-
-    function startDictation() {
-        let text = document.getElementById('wordList').value.trim();
-        wordsData = parseWordsRaw(text);
-        
-        if (document.getElementById('onlyStarred').checked) {
-            wordsData = wordsData.filter(w => w.starred);
+    function cpSelectedTitles(gridId) {
+        return [...document.querySelectorAll(`#${gridId} .select-card.selected`)].map(c => {
+            let m = (c.getAttribute('data-on-click') || '').match(/\[(\d+),/);
+            return m && wordLists[parseInt(m[1])] ? wordLists[parseInt(m[1])].title : '';
+        }).filter(Boolean).join('、');
+    }
+    function lpShowPart(play) {
+        let s = document.getElementById('lpSetupPart'), p = document.getElementById('lpPlayPart');
+        if (s) s.hidden = !!play;
+        if (p) p.hidden = !play;
+        let v = document.getElementById('practiceView');
+        if (v) { v.classList.toggle('cp-playing', !!play); v.classList.remove('is-paused'); }
+        document.body.classList.toggle('cp-tall', !!play);
+        window.scrollTo(0, 0);
+    }
+    function startDictation(resume) {
+        lpKill();
+        if (resume) {
+            wordsData = resume.words.map(l => parseWordsRaw(l)[0]).filter(Boolean);
+            currentWordIndex = Math.min(resume.idx || 0, Math.max(0, wordsData.length - 1));
+            lpBooks = resume.books || '';
+            lpDoneCount = resume.done || 0;
+        } else {
+            wordsData = parseWordsRaw(document.getElementById('wordList').value.trim());
+            if (document.getElementById('onlyStarred').checked) wordsData = wordsData.filter(w => w.starred);
+            if (document.getElementById('enableShuffle').checked) wordsData = wordsData.sort(() => Math.random() - 0.5);
+            currentWordIndex = 0;
+            lpBooks = cpSelectedTitles('cardGrid');
+            lpDoneCount = 0;
         }
-        if (document.getElementById('enableShuffle').checked) {
-            wordsData = wordsData.sort(() => Math.random() - 0.5);
-        }
-
         if (wordsData.length === 0) { alert('找不到有效單字或無符合條件的單字！'); return; }
-        
         requestWakeLock();
-
-        currentWordIndex = 0; isPlaying = true; isPaused = false;
-        
-        document.getElementById('practiceRangeContainer').style.display = 'none';
-        document.getElementById('practiceStatsBar').style.display = 'none';
-        document.getElementById('practicePreviewContainer').style.display = 'none';
-        document.getElementById('advancedBtnContainer').style.display = 'none';
-        document.getElementById('practiceBackBtn').style.display = 'none';
-
-        document.getElementById('status').style.display = 'flex';
-        
-        let toggleBtn = document.getElementById('toggleDictationBtn');
-        toggleBtn.innerText = '⏹ 停止練習'; toggleBtn.className = 'action-btn btn-stop';
-        document.getElementById('pauseDictationBtn').style.display = 'block';
-        
+        isPlaying = true; isPaused = false;
+        lpShowPart(true);
         playNextWord();
     }
-
+    function lpRepeatTarget() { let n = parseInt(document.getElementById('repeatCount').value) || 1; return Math.max(1, n); }
+    function lpRender(item, rep) {
+        let total = wordsData.length, n = Math.min(currentWordIndex + 1, total), target = lpRepeatTarget();
+        let set = (id, v, html) => { let el = document.getElementById(id); if (el) el[html ? 'innerHTML' : 'textContent'] = v; };
+        set('lpBook', lpBooks ? `題庫 ${lpBooks}` : '題庫');
+        let loop = document.getElementById('lpLoop'); if (loop) loop.hidden = !document.getElementById('enableLoop').checked;
+        set('lpCount', `${n} <small>/ ${total}</small>`, true);
+        let fill = document.getElementById('lpFill'); if (fill) fill.style.width = (n / total * 100) + '%';
+        if (item) {
+            set('lpEn', item.english);
+            let senses = (item.senses && item.senses.length) ? item.senses : [{ m: item.meanings || [item.chinese], p: item.posList || [] }];
+            set('lpMeaning', senses.map(s => `<span class="cp-meaning__zh">${escapeHTML((s.m || []).join('、'))}</span>${(s.p || []).map(p => `<span class="cp-pos">${escapeHTML(p)}</span>`).join('')}`).join(''), true);
+        }
+        let r = Math.min(rep || 1, target);
+        set('lpDots', Array.from({ length: target }, (_, i) => `<span${i < r ? ' class="is-on"' : ''}></span>`).join(''), true);
+        set('lpRepNum', `${r}/${target}`);
+    }
+    function lpSaveResume() {
+        try {
+            if (!wordsData.length || currentWordIndex >= wordsData.length) { localStorage.removeItem(LP_RESUME_KEY); return; }
+            localStorage.setItem(LP_RESUME_KEY, JSON.stringify({ words: wordsData.map(w => w.rawLine), idx: currentWordIndex, books: lpBooks, ts: Date.now(), lang: getLearningLanguage(), done: lpDoneCount }));
+        } catch (e) {}
+    }
+    function lpNoteDone() {                   // 每聽完一個字算一題；同一場累積 10 題就完成每日任務
+        lpDoneCount++;
+        if (lpDoneCount >= 10) triggerTaskCheck('practice_done', { total: lpDoneCount });
+    }
     function playNextWord() {
         if (!isPlaying || isPaused) return;
-        
         if (currentWordIndex >= wordsData.length) {
-            let isLoop = document.getElementById('enableLoop').checked;
-            if (isLoop) {
-                currentWordIndex = 0;
-            } else {
-                stopDictation();
-                document.getElementById('status').style.display = 'flex';
-                document.getElementById('status').innerHTML = `<span>🎉 練習結束！</span>`;
-                return;
-            }
+            if (document.getElementById('enableLoop').checked) currentWordIndex = 0;
+            else { lpFinish(); return; }
         }
-
+        let gen = lpGen;
         let item = wordsData[currentWordIndex];
         let rate = parseFloat(document.getElementById('speakRate').value) || 0.8;
-        let isLoop = document.getElementById('enableLoop').checked;
-        let targetRepeat = parseInt(document.getElementById('repeatCount').value) || 1;
-        if (targetRepeat < 1) targetRepeat = 1;
-
-        let loopSymbolHtml = isLoop ? `<span style="color:#3B82F6; font-size:17px; margin-left:6px; font-weight:bold;">∞</span>` : '';
-        let leftPart = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${escapeHTML(item.english)}</strong> <span style="font-weight:600; color:#475569;">(第 1/${targetRepeat} 次)</span>`;
-        let rightPart = `<span style="color:#4F46E5; font-weight:700;">(${currentWordIndex + 1}/${wordsData.length})</span>${loopSymbolHtml}`;
-        
-        document.getElementById('status').innerHTML = `<div>${leftPart}</div><div style="display:flex; align-items:center;">${rightPart}</div>`;
-
+        let targetRepeat = lpRepeatTarget();
+        lpRender(item, 1);
         let queue = [];
-        for (let r = 1; r <= targetRepeat; r++) {
-            queue.push({
-                text: item.english,
-                isEng: true,
-                onPlay: () => {
-                    let newLeft = `📢 正在朗讀： ${item.starred ? '🌟 ' : ''}<strong style="color:#0F172A;">${escapeHTML(item.english)}</strong> <span style="font-weight:600; color:#475569;">(第 ${r}/${targetRepeat} 次)</span>`;
-                    document.getElementById('status').children[0].innerHTML = newLeft;
-                }
-            });
-        }
-
+        for (let r = 1; r <= targetRepeat; r++) queue.push({ text: item.english, isEng: true, onPlay: () => lpRender(null, r) });
         if (document.getElementById('enableSpell').checked && item.english) {
             let letters = (getLearningLanguage() === 'ko')
                 ? Array.from(item.english.replace(/\s+/g, '')).join(' - ')
@@ -3805,85 +4097,147 @@
         let sayChi = document.getElementById('enableChinese').checked && item.chinese;
         let sayPos = document.getElementById('enablePOS').checked && item.pos;
         if (sayChi && sayPos && item.senses && item.senses.length > 1) {
-            // 多組「意思＋詞性」：照順序一組一組念
             item.senses.forEach(s => { let t = [s.m.join('，'), s.p.join('，')].filter(Boolean).join('，'); if (t) queue.push({ text: t, isEng: false }); });
         } else {
             if (sayChi) queue.push({ text: (item.meanings && item.meanings.length ? item.meanings.join('，') : item.chinese), isEng: false });
             if (sayPos) queue.push({ text: item.pos, isEng: false });
         }
-
         playQueue(queue, rate, () => {
-            if (!isPlaying || isPaused) return;
+            if (gen !== lpGen || !isPlaying || isPaused) return;
             currentWordIndex++;
+            lpNoteDone();
+            lpSaveResume();
             let pauseSec = parseInt(document.getElementById('pauseTime').value);
             if (isNaN(pauseSec)) pauseSec = 2;
-            timeoutId = setTimeout(playNextWord, pauseSec * 1000);
-        });
+            timeoutId = setTimeout(() => { if (gen === lpGen) playNextWord(); }, pauseSec * 1000);
+        }, gen);
     }
-
-    function playQueue(queueItems, rate, onComplete) {
-        if (queueItems.length === 0) {
-            if (onComplete) onComplete();
-            return;
-        }
+    function playQueue(queueItems, rate, onComplete, gen) {
+        if (gen === undefined) gen = lpGen;
+        if (gen !== lpGen || !isPlaying || isPaused) return;     // 這一輪已經被暫停／取消
+        if (queueItems.length === 0) { if (onComplete) onComplete(); return; }
         let item = queueItems.shift();
         if (item.onPlay) item.onPlay();
-
         let utterance = new SpeechSynthesisUtterance(item.text);
         let learningLang = getLearningLanguage();
         let langCode = item.isEng ? ((learningLang === 'ko') ? 'ko-KR' : 'en-US') : 'zh-TW';
         let chosenVoice = item.isEng ? getSelectedVoiceForLearning() : getSelectedVoice('zh-TW');
-
         if (chosenVoice) utterance.voice = chosenVoice;
         utterance.lang = langCode;
         utterance.rate = rate;
-
         let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
-        let baseVol = (parseInt(sysVol) || 100) / 100;
-        utterance.volume = Math.max(0, Math.min(1.0, baseVol));
-
-        utterance.onend = () => {
-            if (!isPlaying || isPaused) return;
-            setTimeout(() => {
-                playQueue(queueItems, rate, onComplete);
-            }, 1000);
+        utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
+        let ended = false;
+        utterance.onend = utterance.onerror = () => {
+            if (ended) return; ended = true;
+            if (gen !== lpGen || !isPlaying || isPaused) return;
+            clearTimeout(lpGapTimer);
+            lpGapTimer = setTimeout(() => playQueue(queueItems, rate, onComplete, gen), 1000);
         };
         synth.speak(utterance);
     }
-
-    function stopDictation() {
-        isPlaying = false; isPaused = false; synth.cancel(); clearTimeout(timeoutId);
+    function lpFinish() {
+        lpKill();
+        isPlaying = false; isPaused = false;
+        try { localStorage.removeItem(LP_RESUME_KEY); } catch (e) {}
         releaseWakeLock();
-        
-        let fromAdv = !!advPrac;      // 從大冒險來的練習：不顯示選題庫（返回會回到大冒險）
-        document.getElementById('practiceRangeContainer').style.display = fromAdv ? 'none' : 'block';
-        document.getElementById('practiceStatsBar').style.display = fromAdv ? 'none' : 'flex';
-        document.getElementById('practicePreviewContainer').style.display = 'block';
-        document.getElementById('advancedBtnContainer').style.display = 'block';
-        document.getElementById('practiceBackBtn').style.display = 'inline-flex';
-
-        document.getElementById('status').innerText = '準備就緒 🔥';
-        document.getElementById('status').style.display = 'none';
-        
-        let toggleBtn = document.getElementById('toggleDictationBtn');
-        toggleBtn.innerText = '▶ 開始聽力練習'; toggleBtn.className = 'action-btn btn-start';
-        
-        let pauseBtn = document.getElementById('pauseDictationBtn');
-        pauseBtn.innerText = '⏸ 暫停'; pauseBtn.className = 'action-btn btn-pause';
-        pauseBtn.style.display = 'none';
+        let st = document.getElementById('lpStatus'); if (st) st.textContent = '🎉 練習結束！';
+        let v = document.getElementById('practiceView'); if (v) v.classList.add('is-paused');
+        setTimeout(() => { if (!isPlaying && document.getElementById('practiceView').classList.contains('active')) { lpShowPart(false); cpRenderResume('listen'); } }, 1600);
     }
-
-    function togglePauseDictation() {
-        let btn = document.getElementById('pauseDictationBtn');
+    // 停止（離開頁面時呼叫）：停掉語音；練習中的進度會保留
+    function stopDictation() {
+        if (isPlaying) lpSaveResume();
+        lpKill();
+        isPlaying = false; isPaused = false;
+        releaseWakeLock();
+        lpShowPart(false);
+        cpRenderResume('listen');
+    }
+    // 練習頁左上角返回：保留進度，回到開始頁
+    function lpBack() {
+        if (advPracDone && advPrac) { stopDictation(); advPracDone(); return; }
+        stopDictation();
+    }
+    function lpTogglePause() {
+        let v = document.getElementById('practiceView'), btn = document.getElementById('lpPlayBtn');
+        if (!isPlaying) return;
         if (!isPaused) {
-            isPaused = true; synth.cancel(); clearTimeout(timeoutId);
-            btn.innerText = '▶ 繼續'; btn.className = 'action-btn btn-resume';
+            isPaused = true; lpKill();
+            lpSaveResume();
+            if (v) v.classList.add('is-paused');
+            if (btn) btn.setAttribute('aria-label', '繼續');
         } else {
+            lpKill();                         // 保險：繼續前再清一次，確保不會有上一輪殘留
             isPaused = false;
-            btn.innerText = '⏸ 暫停'; btn.className = 'action-btn btn-pause';
+            if (v) v.classList.remove('is-paused');
+            if (btn) btn.setAttribute('aria-label', '暫停');
             playNextWord();
         }
     }
+    function togglePauseDictation() { lpTogglePause(); }
+
+    // ── 開始頁：繼續練習卡片、開始新練習（有未完成紀錄時先確認）──
+    const CP_RESUME_KEYS = { listen: LP_RESUME_KEY, flash: 'chicky_flash_resume' };
+    function cpGetResume(kind) {
+        try {
+            let r = JSON.parse(localStorage.getItem(CP_RESUME_KEYS[kind]));
+            if (r && Array.isArray(r.words) && r.words.length && r.idx < r.words.length && (r.lang || 'en') === getLearningLanguage()) return r;
+        } catch (e) {}
+        return null;
+    }
+    function cpAgo(ts) {
+        let m = Math.max(0, Math.round((Date.now() - (ts || 0)) / 60000));
+        if (m < 1) return '剛剛';
+        if (m < 60) return `${m} 分鐘前`;
+        let h = Math.round(m / 60); if (h < 24) return `${h} 小時前`;
+        return `${Math.round(h / 24)} 天前`;
+    }
+    function cpRenderResume(kind) {
+        let card = document.getElementById(kind + 'ResumeCard'), btn = document.getElementById(kind === 'listen' ? 'lpStartBtn' : 'fcStartBtn');
+        if (!card || !btn) return;
+        let r = cpGetResume(kind);
+        card.hidden = !r;
+        let PLUS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+        let PLAY = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>';
+        if (r) {
+            let done = kind === 'listen' ? r.idx : r.idx + 1, total = r.words.length;
+            document.getElementById(kind + 'ResumeTime').textContent = cpAgo(r.ts);
+            document.getElementById(kind + 'ResumeBooks').textContent = r.books || '';
+            document.getElementById(kind + 'ResumeFill').style.width = (done / total * 100) + '%';
+            document.getElementById(kind + 'ResumeCount').innerHTML = `${done} <small>/ ${total} 個</small>`;
+            btn.className = 'cp-btn cp-btn--secondary';
+            btn.innerHTML = PLUS + '開始新練習';
+        } else {
+            btn.className = 'cp-btn cp-btn--primary';
+            btn.innerHTML = PLAY + btn.getAttribute('data-cp-text');
+        }
+    }
+    function cpResume(kind) {
+        let r = cpGetResume(kind);
+        if (!r) { cpRenderResume(kind); return; }
+        if (kind === 'listen') startDictation(r); else startFlashcardSession(r);
+    }
+    let cpConfirmKind = '';
+    function cpAskNew(kind) {
+        let r = cpGetResume(kind);
+        if (!r) { if (kind === 'listen') checkAndStartDictation(); else startFlashcardSession(); return; }
+        cpConfirmKind = kind;
+        let done = kind === 'listen' ? r.idx : r.idx + 1;
+        document.getElementById('cpConfirmText').innerHTML = `上次 <b>${escapeHTML(r.books || '這次的範圍')}</b> 練到 <b class="cp-hl">${done} / ${r.words.length}</b> 個還沒完成，<br>開始新練習會取代這筆進度。`;
+        document.getElementById('cpConfirm').hidden = false;
+        try { document.getElementById('cpConfirmOk').focus(); } catch (e) {}
+    }
+    function cpStartNew() { cpAskNew('listen'); }
+    function cpStartNewFlash() { cpAskNew('flash'); }
+    function cpConfirmClose() { document.getElementById('cpConfirm').hidden = true; }
+    function cpConfirmBg(e) { if (e && e.target && e.target.id === 'cpConfirm') cpConfirmClose(); }
+    function cpConfirmOk() {
+        cpConfirmClose();
+        try { localStorage.removeItem(CP_RESUME_KEYS[cpConfirmKind]); } catch (e) {}
+        if (cpConfirmKind === 'listen') checkAndStartDictation(); else startFlashcardSession();
+    }
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { let d = document.getElementById('cpConfirm'); if (d && !d.hidden) cpConfirmClose(); } });
 
     function initExamCheckboxes() {}
 
@@ -5909,8 +6263,7 @@
         let ws = adv.wrongThis || [];
         if (!ws.length) return '';
         return `<div class="aw-wrong"><div class="aw-sec">這場答錯的字（${ws.length}）</div>
-            <div class="aw-box">${ws.map(w => `<div class="aw-row"><span class="aw-tx"><b>${escapeHTML(w.english)}</b><span class="cn">${escapeHTML(w.chinese || '')}</span></span><button type="button" class="aw-say" aria-label="聽發音" data-on-click='[["advSayWord",[${JSON.stringify(w.english).replace(/'/g, '&#39;')}]]]'>🔊</button></div>`).join('')}</div>
-            <div id="advWrongAct" style="margin-top:12px;"><button type="button" class="adv-plain-btn main" style="padding:12px;font-size:15px;" data-on-click='[["advWrongPick",[]]]'>用這 ${ws.length} 個字練習</button></div></div>`;
+            <div class="aw-box">${ws.map(w => `<div class="aw-row"><span class="aw-tx"><b>${escapeHTML(w.english)}</b><span class="cn">${escapeHTML(w.chinese || '')}</span></span><button type="button" class="aw-say" aria-label="聽發音" data-on-click='[["advSayWord",[${JSON.stringify(w.english).replace(/'/g, '&#39;')}]]]'>🔊</button></div>`).join('')}</div></div>`;
     }
     function advWrongPick() {
         let el = document.getElementById('advWrongAct');
@@ -6008,7 +6361,7 @@
                 bar = `<div class="adv-bar" title="目前體力 ${cur}／最大體力 ${s.hp}"><i class="adv-bar-max" style="width:${pct.toFixed(1)}%;background:${c}"></i><i class="adv-bar-cur" style="width:${Math.min(100, cur / ADV_BAR_MAX * 100).toFixed(1)}%;background:${c}"></i></div>`;
             } else {
                 let gb = advGearBonus(d.key);
-                tile = `<div class="adv-stat-tile">${d.label}<b>${s[d.key] + gb}${gb ? `<small class="adv-gear-plus">+${gb}</small>` : ''}</b></div>`;
+                tile = `<div class="adv-stat-tile">${d.label}<b>${s[d.key]}${gb ? `<small class="adv-gear-plus">+${gb}</small>` : ''}</b></div>`;
                 bar = `<div class="adv-bar" title="已強化 ${lvl}/${advUpMax(d.key)}${gb ? `（裝備 +${gb}）` : ''}"><i style="width:${Math.max(0, pct).toFixed(1)}%;background:${GREEN}"></i>${gb ? `<i style="position:absolute;left:${Math.min(100, pct).toFixed(1)}%;width:${Math.min(100 - Math.min(100, pct), gb / ADV_BAR_MAX * 100).toFixed(1)}%;top:0;bottom:0;background:#A78BFA"></i>` : ''}</div>`;
             }
             return `<div class="adv-stat-row adv-stat-click" data-stat="${d.key}" role="button" title="點一下看能力介紹" data-on-click='[["advOpenStatInfo",["${d.key}"]]]'>
@@ -7107,7 +7460,7 @@
             let n = (typeof farm !== 'undefined' && farm.items) ? (farm.items[k] || 0) : 0;
             if (!n) return;
             let it = FARM_ITEMS[k], used = adv.flowerUsed && adv.flowerUsed[k];
-            let can = !used && (k !== 'nectar' || adv.player.hp < adv.player.max);
+            let can = !used;
             itemBtn += `<button type="button" class="adv-item-btn" ${can ? '' : 'disabled'} data-on-click='[["advUseFlowerItem",["${k}"]]]'>${it.icon} ${it.name}　${it.desc.replace('戰鬥中 ', '').replace('這場戰鬥', '')} <small>${used ? '（這場已經用過了）' : `（持有 ${n}，一場 1 次，不消耗行動）`}</small></button>`;
         });
         if (advHasGear('tofu')) itemBtn += `<div class="adv-item-tip">${advTofuIcon(16)} 裝備烤焦臭豆腐：招式失敗時雙方各扣 1 點體力</div>`;
@@ -7118,19 +7471,17 @@
         if (!adv.active || adv.busy || adv.q || !FARM_ITEMS[k]) return;
         if (!adv.flowerUsed) adv.flowerUsed = {};
         if (adv.flowerUsed[k]) return;
-        if (k === 'nectar' && adv.player.hp >= adv.player.max) return;
         if (!farmUseItem(k)) return;
         adv.flowerUsed[k] = true;
         if (k === 'nectar') {
-            let before = adv.player.hp;
-            adv.player.hp = Math.min(adv.player.max, adv.player.hp + 3);
-            advData.hp = adv.player.hp; advSave();
-            advFloat(document.getElementById('advPlayer'), `+${adv.player.hp - before}`, '#10B981');
-            advShowMenu(); advSetLog(`🍯 喝了花蜜，HP +${adv.player.hp - before}！`);
+            adv.player.shield = (adv.player.shield || 0) + 2;            // 花蜜：護盾 +2（可以超過原本的上限）
+            adv.player.shieldMax = Math.max(adv.player.shieldMax || 0, adv.player.shield);
+            advFloat(document.getElementById('advPlayer'), '🛡️ +2', '#6366F1');
+            advUpdateHud(); advShowMenu(); advSetLog('🍯 喝了花蜜，護盾 +2！');
         } else {
-            adv.player.atk += 2;
-            advFloat(document.getElementById('advPlayer'), '攻擊 +2', '#DB2777');
-            advShowMenu(); advSetLog('🌸 戴上花環，這場攻擊力 +2！');
+            adv.player.atk += 1;
+            advFloat(document.getElementById('advPlayer'), '攻擊 +1', '#DB2777');
+            advShowMenu(); advSetLog('🌸 戴上花環，這場攻擊力 +1！');
         }
     }
     function advHasGear(k) { return Array.isArray(adv.gear) && adv.gear.includes(k); }
@@ -8036,7 +8387,8 @@
             plots, ownedDecor: owned, equippedDecor: eq,
             plantedToday: { date: typeof pt.date === 'string' ? pt.date : '', count: n0(pt.count) },
             fastTrackUsed: n0(d.fastTrackUsed), harvestTotal: n0(d.harvestTotal), flowers: n0(d.flowers),
-            items: { nectar: n0(d.items && d.items.nectar), crown: n0(d.items && d.items.crown) }      // 用花買的戰鬥道具
+            items: { nectar: n0(d.items && d.items.nectar), crown: n0(d.items && d.items.crown) },     // 用花買的戰鬥道具
+            loginFlowerDay: typeof d.loginFlowerDay === 'string' ? d.loginFlowerDay : ''               // 每日登入送花：最後領取日
         };
     }
     function farmSave() { try { localStorage.setItem(FARM_KEY, JSON.stringify(farm)); } catch (e) {} }
@@ -8065,6 +8417,7 @@
                 let m = String((e && e.message) || e || '');
                 farmSrv = false;
                 farmSrvMsg = /farm_act|function|schema/i.test(m) ? '後台還沒更新：請在 Supabase 執行 supabase_006_farm.sql' : '目前連不到雲端，進度先存在這台裝置';
+                if (!farmSync._told) { farmSync._told = true; try { if (document.getElementById('farmView').classList.contains('active')) farmToast('☁️ ' + farmSrvMsg); } catch (e2) {} }   // 只提示一次，不佔農場版面
             }
             farmSyncing = null;
             farmRefresh();
@@ -8212,12 +8565,13 @@
         fence_seal_posts: `<rect x="0" y="24" width="150" height="6" rx="3" fill="#e8d3ad"/><g><rect x="32" y="20" width="22" height="12" rx="6" fill="#a9c7e6"/><path d="M37 26 h12" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/></g><g><rect x="95" y="20" width="22" height="12" rx="6" fill="#a9c7e6"/><path d="M100 26 h12" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/></g><g><rect x="6" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="12" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="9.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="12" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><path d="M7.0 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><path d="M13.7 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><ellipse cx="12" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M10.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="9.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="9.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="14.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="15.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="5.9" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="18.1" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g><g><rect x="69" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="75" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="72.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="75" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><circle cx="71.7" cy="12.4" r="1.4" fill="#2e2650"/><circle cx="72.2" cy="11.9" r="0.5" fill="#fff"/><circle cx="78.3" cy="12.4" r="1.4" fill="#2e2650"/><circle cx="78.8" cy="11.9" r="0.5" fill="#fff"/><ellipse cx="75" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M73.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="72.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="72.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="77.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="78.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="69.0" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="81.0" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g><g><rect x="132" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="138" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="135.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="138" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><path d="M133.1 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><path d="M139.7 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><ellipse cx="138" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M136.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="135.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="135.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="140.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="141.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="131.9" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="144.1" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g>`
     };
     function farmFenceHTML(id) {
-        if (FARM_FENCE_ART[id]) return `<svg class="fm-fence-svg" viewBox="0 0 390 46" preserveAspectRatio="none" aria-hidden="true" style="overflow:visible"><g transform="translate(0 4)">${FARM_FENCE_ART[id]}</g><g transform="translate(240 4)">${FARM_FENCE_ART[id]}</g></svg>`;
+        // 版面 v11：左右兩段各 156×41.6，左段 x=18、右段 x=216（圍籬框從 x=18 開始，寬 354）
+        if (FARM_FENCE_ART[id]) return `<svg class="fm-fence-svg" viewBox="0 0 354 41.6" preserveAspectRatio="none" aria-hidden="true" style="overflow:visible"><g transform="scale(1.04)">${FARM_FENCE_ART[id]}</g><g transform="translate(198 0) scale(1.04)">${FARM_FENCE_ART[id]}</g></svg>`;
         let post = id === 'fence_lantern'
             ? (x) => `<g><rect x="${x}" y="8" width="13" height="34" rx="4" fill="#F4E3C1" stroke="#D8B98E" stroke-width="2"/><ellipse cx="${x + 6.5}" cy="6" rx="7" ry="8" fill="#E8483B"/><rect x="${x + 3}" y="-3" width="7" height="3" fill="#B9452F"/></g>`
             : (x) => `<rect x="${x}" y="6" width="13" height="36" rx="4" fill="#F4E3C1" stroke="#D8B98E" stroke-width="2"/>`;
         let side = (xs) => `<rect x="${xs[0] - 6}" y="18" width="${xs[xs.length - 1] - xs[0] + 26}" height="7" rx="2" fill="#E6CF9F"/>${xs.map(post).join('')}`;
-        return `<svg class="fm-fence-svg" viewBox="0 0 390 46" preserveAspectRatio="none" aria-hidden="true" style="overflow:visible">${side([7, 47, 87, 127])}${side([250, 290, 330, 370])}</svg>`;
+        return `<svg class="fm-fence-svg" viewBox="0 0 354 46" preserveAspectRatio="none" aria-hidden="true" style="overflow:visible">${side([6, 46, 86, 126])}${side([204, 244, 284, 324])}</svg>`;
     }
     function farmDecorArt(slot) {
         let id = farm.equippedDecor[slot];
@@ -8250,7 +8604,7 @@
         let left = (wrap.clientWidth - 390 * k) / 2;
         st.style.transform = `translate(${left.toFixed(1)}px, 0) scale(${k})`;
         wrap.style.height = Math.ceil(st.offsetHeight * k) + 'px';
-        let top = document.querySelector('#farmStage .fm-top'), py = ((top ? top.offsetHeight : 120) + 100) * k;
+        let py = 268 * k;
         wrap.style.background = `linear-gradient(#FFE6C4 0, #FFE6C4 ${py.toFixed(0)}px, #B9CF7C ${py.toFixed(0)}px)`;   // 兩邊空白跟背景同色
     }
     window.addEventListener('resize', () => { try { if (document.getElementById('farmView').classList.contains('active')) farmFit(); } catch (e) {} });
@@ -8275,8 +8629,8 @@
         let guardNone = farm.equippedDecor.guard === 'guard_none';
         let guardInner = guardNone ? (ed ? '<div class="fm-guard-empty"><b>＋</b>守衛</div>' : '') : farmDecorArt('guard');      // 空的守衛位置只在布置模式出現
         let helper = advData.cleared && advData.cleared[1]
-            ? `<div class="fm-helper"><span class="fm-helper-ic">${advEnemySVG('meatball')}</span><span><small>幫手</small><b>貢丸</b><em>忘記澆水時幫你顧一天</em></span></div>`
-            : `<div class="fm-helper"><span class="fm-helper-ic dim">${advEnemySVG('meatball')}</span><span><small>幫手</small><b>還沒有幫手</b><em>打倒大冒險第 1 關的貢丸就能邀請</em></span></div>`;
+            ? `<div class="fm-helper"><span class="fm-helper-ic">${advEnemySVG('meatball')}</span><span><b>幫手・貢丸</b><em>忘記澆水時幫你顧一天</em></span></div>`
+            : `<div class="fm-helper"><span class="fm-helper-ic dim">${advEnemySVG('meatball')}</span><span><b>還沒有幫手</b><em>打倒第 1 關的貢丸就能邀請</em></span></div>`;
         let plantOff = left <= 0 || empty < 0;
         box.innerHTML = `<div class="fm-wrap" id="farmStageWrap"><div class="fm-stage" id="farmStage"><div class="fm-top">
             <div class="fm-head${ed ? ' ed' : ''}">
@@ -8285,9 +8639,8 @@
                 <span class="fm-pills"><span class="fm-pill">${farmNuggetIcon(22)}<b>${(typeof wallet !== 'undefined' && wallet.balance != null) ? wallet.balance : 0}</b></span><button type="button" class="fm-pill" aria-label="花店" data-on-click='[["farmOpenShop",[]]]'>${farmFlowerIcon(22)}<b id="farmFlowerN">${farm.flowers}</b></button></span>
             </div>
             ${ed ? `<div class="fm-tip">點虛線框選擇要換的裝飾</div>`
-                 : (due ? `<div class="fm-remind">${farmCanSVG(52)}<span class="fm-remind-tx"><b>今天有 ${due} 株等你澆水</b><small>大約 1 分鐘・不計時</small></span><button type="button" class="fm-go" data-on-click='[["farmStartWater",[]]]'>去澆水</button></div>`
-                        : `<div class="fm-remind mini">${farmCanSVG(30)}<span class="fm-remind-tx"><b>目前沒有要澆水的作物</b><small>${farm.plots.some(Boolean) ? '種下或澆水 1 分鐘後就能再澆' : '先種一個字吧！'}</small></span></div>`)}
-            ${farmSrv === false && farmSrvMsg ? `<div class="fm-offline">☁️ ${farmSrvMsg}</div>` : ''}
+                 : (due ? `<div class="fm-remind">${farmCanSVG(36)}<span class="fm-remind-tx"><b>今天有 ${due} 株等你澆水</b><small>大約 1 分鐘・不計時</small></span><button type="button" class="fm-go" data-on-click='[["farmStartWater",[]]]'>去澆水</button></div>`
+                        : `<div class="fm-remind mini">${farmCanSVG(30)}<span class="fm-remind-tx"><b>${farm.plots.some(Boolean) ? '目前沒有要澆水的作物' : '先種一個字吧！'}</b><small>${empty < 0 ? '沒有空田了' : left > 0 ? `今天還能種 ${left} 顆` : '明天可再種'}</small></span><button type="button" class="fm-go" ${plantOff ? 'disabled' : ''} data-on-click='[["farmOpenPlant",[]]]'>種新的字</button></div>`)}
             </div>
             <div class="fm-scene">
                 <svg class="fm-hill" viewBox="0 0 3590 86" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="fmHillG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9D98A"/><stop offset=".72" stop-color="#C3D584"/><stop offset="1" stop-color="#B9CF7C"/></linearGradient></defs><path d="M0 36 Q200 16 400 36 Q600 56 800 36 Q1000 16 1200 36 Q1350 50 1450 46 Q1530 43 1600 40 Q1700 18 1800 42 Q1900 4 1990 22 Q2080 40 2190 36 Q2390 26 2590 40 Q2790 54 2990 36 Q3190 18 3390 34 Q3490 42 3590 36 V86 H0 Z" fill="url(#fmHillG)"/></svg>
@@ -8300,7 +8653,6 @@
             </div>
             <div class="fm-bottom${ed ? ' faded' : ''}">
                 ${helper}
-                <button type="button" class="fm-plant" ${plantOff ? 'disabled' : ''} data-on-click='[["farmOpenPlant",[]]]'>${farmSeedIcon(26)}<b>種新的字</b><small>${empty < 0 ? '沒有空田了' : left > 0 ? `今天還能種 ${left} 顆` : '明天可再種'}</small></button>
             </div>
         </div></div>`;
         if (farmShopOpen && !ed) farmOverlay(farmShopHTML());
@@ -8337,14 +8689,15 @@
             farm.harvestTotal += 1;
             farmSave();
         }
+        try { triggerTaskCheck('farm_care'); } catch (e) {}        // 每日任務：在農場收成
         farmRender();
         farmToast(farmUnlocked() > before ? `🌸 收成 1 朵花！累積 ${farm.harvestTotal} 株，解鎖新的田地了！` : `🌸 收成「${p.word}」，得到 1 朵花！`);
     }
 
     // ── 花店：用花買大冒險戰鬥中可以用的道具（一場戰鬥每種限用 1 次）──
     const FARM_ITEMS = {
-        nectar: { name: '花蜜', icon: '🍯', price: 5, desc: '戰鬥中 HP +3' },
-        crown: { name: '花環', icon: '🌸', price: 8, desc: '這場戰鬥攻擊力 +2' }
+        nectar: { name: '花蜜', icon: '🍯', price: 5, desc: '戰鬥中護盾 +2' },
+        crown: { name: '花環', icon: '🌸', price: 8, desc: '這場戰鬥攻擊力 +1' }
     };
     let farmShopOpen = false;
     function farmOpenShop() { if (farmEditing) return; farmShopOpen = true; farmOverlay(farmShopHTML()); }
@@ -8352,7 +8705,7 @@
     function farmShopHTML() {
         return `<div class="fm-sheet-bg" data-on-click='[["farmCloseShop",[]]]'></div><div class="fm-sheet">
             <div class="fm-grab"></div>
-            <div class="fm-sheet-head"><b>花店</b><span>花 ${farm.flowers} 朵</span></div>
+            <div class="fm-sheet-head"><button type="button" class="fm-x" aria-label="關閉" data-on-click='[["farmCloseShop",[]]]'><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg></button><b>花店</b><span>花 ${farm.flowers} 朵</span></div>
             ${Object.keys(FARM_ITEMS).map(k => { let it = FARM_ITEMS[k]; return `<div class="fm-shop-row"><span class="fm-shop-ic">${it.icon}</span><span class="fm-shop-tx"><b>${it.name}</b><small>${it.desc}・持有 ${farm.items[k] || 0}</small></span><button type="button" class="fm-shop-buy" ${farm.flowers < it.price ? 'disabled' : ''} data-on-click='[["farmBuyItem",["${k}"]]]'>${farmFlowerIcon(16)} ${it.price}</button></div>`; }).join('')}
             <div class="fm-shop-note">在大冒險戰鬥中使用，一場戰鬥每種限用 1 次。農場裝飾請按鉛筆進入布置模式。</div></div>`;
     }
@@ -8389,7 +8742,7 @@
         let items = FARM_DECOR.filter(x => x.slot === s);
         return `<div class="fm-sheet-bg" data-on-click='[["farmCloseSheet",[]]]'></div><div class="fm-sheet">
             <div class="fm-grab"></div>
-            <div class="fm-sheet-head"><b>換${FARM_SLOT_NAMES[s]}</b><span>花 ${farm.flowers} 朵</span></div>
+            <div class="fm-sheet-head"><button type="button" class="fm-x" aria-label="關閉" data-on-click='[["farmCloseSheet",[]]]'><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg></button><b>換${FARM_SLOT_NAMES[s]}</b><span>花 ${farm.flowers} 朵</span></div>
             <div class="fm-opts">${items.map(it => {
                 let own = farm.ownedDecor.includes(it.id), on = farm.equippedDecor[s] === it.id;
                 return `<button type="button" class="fm-opt${on ? ' on' : ''}" data-on-click='[["farmChooseDecor",["${it.id}"]]]'><span class="fm-opt-art">${farmDecorThumb(it)}</span><b>${it.name}</b><small>${on ? '使用中' : own ? '點一下換上' : `${farmLockIcon(12, '#8A8378')} ${it.price} 朵花`}</small></button>`;
@@ -8401,12 +8754,13 @@
         if (!farm.ownedDecor.includes(id)) {
             if (farm.flowers < it.price) { alert(`花不夠！「${it.name}」要 ${it.price} 朵花，目前有 ${farm.flowers} 朵。\n\n收成作物就能得到花。`); return; }
             if (!confirm(`要用 ${it.price} 朵花買「${it.name}」嗎？`)) return;
-            if (farmSrv === true) { farmCall('buy', { id }).then(r => { if (r) farmRender(); }); return; }
+            if (farmSrv === true) { farmCall('buy', { id }).then(r => { if (r) { farmEditSlot = ''; farmRender(); } }); return; }
             farm.flowers -= it.price;
             farm.ownedDecor.push(id);
         }
         farm.equippedDecor[it.slot] = id;
         farmSave();
+        farmEditSlot = '';             // 換好就關掉選單，直接回到農場
         farmRender();
         if (farmSrv === true) farmCall('equip', { id });
     }
@@ -8652,6 +9006,7 @@
         });
         farmSave();
         if (farmSrv === true) farmCall('water', { indices: (q.type === 'odd' ? fw.tasks[fw.k].idx : fw.tasks[fw.k].idx.slice(0, 1)), ok });
+        try { triggerTaskCheck('farm_care'); } catch (e) {}        // 每日任務：在農場澆花
         fw.done = true; fw.ok = ok;
         if (!ok && q.type !== 'tf') advSpeakWord(p0.word);      // 是非題答錯不唸發音
         farmRenderWater();
@@ -8674,9 +9029,9 @@
     const OB_DONE_KEY = 'chicky_onboard_done', OB_FORCE_KEY = 'chicky_onboard_force';
     const OB_ICONS = {
         lists: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7"/></svg>',
-        practice: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
-        exam: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
-        fun: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"/><path d="M4 4h13l-2 4 2 4H4"/></svg>'
+        practice: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12h8"/><rect x="5" y="6.5" width="3" height="11" rx="1"/><rect x="16" y="6.5" width="3" height="11" rx="1"/><rect x="2" y="9" width="3" height="6" rx="1"/><rect x="19" y="9" width="3" height="6" rx="1"/></svg>',
+        exam: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4z"/><path d="M14.5 5.5l4 4"/></svg>',
+        fun: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="10" r="6.5"/><path d="M12 10L7.4 5.4M12 10l4.6-4.6M12 10l-4.6 4.6M12 10l4.6 4.6"/><path d="M8.5 21L12 10l3.5 11"/><path d="M5.5 21h13"/><circle cx="12" cy="3.5" r="1.2" fill="#6366F1"/><circle cx="18.5" cy="10" r="1.2" fill="#6366F1"/><circle cx="5.5" cy="10" r="1.2" fill="#6366F1"/></svg>'
     };
     const OB_STEPS = [
         { tab: 'lists', title: '題庫', text: '第一步：把想背的單字放進來，一行一個字。沒有的話，也可以直接用精選單字庫。' },
@@ -8817,19 +9172,19 @@
         setTimeout(obShowCoach, 120);
     }
     function obShowCoach() {
-        let box = document.getElementById('editorWrapperBox');
+        let box = document.getElementById('weToAdd');          // 新版建立單字頁：指向「新增一列」
         if (!box || !box.offsetParent) return;
         let old = document.getElementById('obCoach'); if (old) old.remove();
         let r = box.getBoundingClientRect();
         document.body.insertAdjacentHTML('beforeend', `<div id="obCoach" role="note">
             <button type="button" class="ob-x" aria-label="關閉提示">✕</button>
             <b>✍️ 先放一個你想背的字吧</b>
-            <p>英文後面空一格寫中文，例如「meeting 會議」。存好之後到「練習」就能開始練。</p>
+            <p>按「新增一列」填上英文和中文，例如「meeting 會議」；一次很多個就用「批次貼上」。存好之後到「練習」就能開始練。</p>
             <button type="button" class="ob-pk">不想打字？先用精選單字庫 ›</button></div>`);
         let c = document.getElementById('obCoach');
-        c.style.left = Math.max(16, r.left + window.scrollX + 12) + 'px';
-        c.style.top = (r.top + window.scrollY + Math.min(64, r.height * 0.35)) + 'px';
-        let ta = document.getElementById('editorWordList');
+        c.style.left = Math.max(16, r.left + window.scrollX - 8) + 'px';
+        c.style.top = (r.bottom + window.scrollY + 12) + 'px';
+        let ta = null;
         let close = () => { c.remove(); if (ta) ta.removeEventListener('input', close); document.removeEventListener('click', away, true); };
         let away = ev => {
             if (!document.getElementById('obCoach')) return;
@@ -8849,6 +9204,7 @@
 
     const INLINE_ACTIONS = {
         copyAppUrl,
+        lpBack, lpTogglePause, cpResume, cpStartNew, cpStartNewFlash, cpConfirmClose, cpConfirmBg, cpConfirmOk, fcFlip,
         playSpeakPracticeSample,
         toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
         advSetMode, advOpenWords, advSayWord, advPracticeLevel, advWrongPick, advWrongPractice,
