@@ -2255,7 +2255,15 @@
         .sm-row.col .top { display: flex; align-items: center; justify-content: space-between; }
         .sm-row .speed-val { font-size: 14px; font-weight: 800; color: var(--primary); min-width: 0; }
         .sm-row .range-slider { width: 100%; margin: 0; }
-        input.sm-num { width: 66px !important; flex: 0 0 auto; text-align: center; font-size: 15px; font-weight: 800; padding: 6px 4px !important; margin: 0 !important; border: 1.5px solid var(--border-color) !important; border-radius: 10px !important; background: #F8FAFC !important; color: var(--text-main) !important; box-sizing: border-box; }
+        /* iOS：用 document 統一接收點擊時，span/div 這類「不是按鈕」的元素要有 cursor:pointer，iPhone 才會送出點擊事件 */
+        /* iOS Safari：全螢幕霧面背景（backdrop-filter）裡面放可捲動的內容時，裡面的按鈕可能點不到。
+           只在 iPhone / iPad 上關掉霧面，並讓視窗內容自成一層 */
+        @supports (-webkit-touch-callout: none) {
+            .modal { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background-color: rgba(15, 23, 42, 0.68); }
+            .modal-content { -webkit-transform: translateZ(0); transform: translateZ(0); -webkit-overflow-scrolling: touch; }
+        }
+        [data-on-click], label.switch, .slider-toggle { cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        input.sm-num { width: 66px !important; flex: 0 0 auto; text-align: center; font-size: 16px; font-weight: 800; padding: 6px 4px !important; margin: 0 !important; border: 1.5px solid var(--border-color) !important; border-radius: 10px !important; background: #F8FAFC !important; color: var(--text-main) !important; box-sizing: border-box; }
         body.power-saving-mode input.sm-num { background: #1B1E27 !important; border-color: #2B303C !important; color: #FFFFFF !important; }
         body.power-saving-mode .sm-list .slider-toggle { background-color: #3B3F4C; }
         body.power-saving-mode .sm-list input:checked + .slider-toggle { background-color: #10B981; }
