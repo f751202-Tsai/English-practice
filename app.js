@@ -498,7 +498,7 @@
     }
 
     function updateChickenModalUI() {
-        document.getElementById('chickenCountDisplay').innerText = wallet.balance;
+        let cd = document.getElementById('chickenCountDisplay'); if (cd) cd.innerText = wallet.balance;
         let rs = document.getElementById('rewardShardCount');
         if (rs) { try { rs.innerText = advData.shards; } catch (e) {} }
         let container = document.getElementById('rewardTasksContainer');
@@ -518,7 +518,7 @@
             if (t.done) done++;
             let right;
             if (isTaskClaimed(def.key)) right = `<span class="tk-done">✓ 已領取</span>`;
-            else if (t.done) right = `<button type="button" class="tk-claim" data-on-click='[["claimChickenReward",["${def.key}"]]]'>領取</button>`;
+            else if (t.done) right = `<button type="button" class="tk-claim" data-on-click='[["claimChickenReward",["${def.key}","$this"]]]'>領取</button>`;
             else right = `<button type="button" class="tk-todo" data-on-click='[["goDoTask",["${def.key}"]]]'>去做 ›</button>`;
             html += `<div class="tk-row"><span class="t">${def.title.replace(/^\d+\.\s*/, '')}<small>${def.desc || '雞塊 ×1'}</small></span>${right}</div>`;
         });
@@ -545,21 +545,39 @@
     }
 
     // 領取：向後端登記（同一天同一任務只會算一次），成功後以後端回傳的餘額為準
-    async function claimChickenReward(taskKey) {
+    // 領取特效：在按鈕的位置浮出拿到的道具（圖示＋數量），浮 1 秒後慢慢淡掉；每個道具並排，不會疊在一起
+    const TK_NUGGET_IMG = `<img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='10 10 80 80'><path d='M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z' fill='%23F3A63B' stroke='%23C27803' stroke-width='3'/><circle cx='46' cy='38' r='2' fill='%23C27803'/><circle cx='54' cy='68' r='2' fill='%23C27803'/><circle cx='64' cy='42' r='2.5' fill='%23C27803'/><circle cx='34' cy='58' r='2' fill='%23C27803'/><circle cx='48' cy='52' r='2.5' fill='%23C27803'/></svg>" alt="雞塊">`;
+    function claimFx(rect, items) {
+        if (!rect || !items.length) return;
+        let el = document.createElement('div');
+        el.className = 'tk-fx';
+        el.innerHTML = items.map(it => `<span>${it.icon}+${it.n}</span>`).join('');
+        el.style.left = (rect.left + rect.width / 2) + 'px';
+        el.style.top = (rect.top - 6) + 'px';
+        document.body.appendChild(el);
+        let w = el.getBoundingClientRect().width;      // 太靠右邊時往左移，整排都在畫面裡
+        let cx = Math.max(w / 2 + 8, Math.min(window.innerWidth - w / 2 - 8, rect.left + rect.width / 2));
+        el.style.left = cx + 'px';
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('up')));
+        setTimeout(() => el.classList.add('fade'), 1000);
+        setTimeout(() => el.remove(), 1800);
+    }
+    async function claimChickenReward(taskKey, btnEl) {
         checkDailyReset();
         let t = chickenData.tasks[taskKey];
         if (!t || !t.done || isTaskClaimed(taskKey) || walletBusy) return;
-        if (taskKey === 'dailyLogin' && !isLoginFlowerClaimed()) claimLoginFlower();     // 花 +1（存在農場；後台 farm_act login_flower 把關）
+        let fxRect = btnEl && btnEl.getBoundingClientRect ? btnEl.getBoundingClientRect() : null, fx = [];
+        if (taskKey === 'dailyLogin' && !isLoginFlowerClaimed()) { claimLoginFlower(); fx.push({ icon: farmFlowerIcon(22), n: 1, k: 'flower' }); }     // 花 +1（存在農場；後台 farm_act login_flower 把關）
         if (taskKey === 'dailyLogin' && !isLoginShardClaimed()) {
             // 碎片先發（存在本機進度）；雞塊下面照原本的方式向後端領
             advData.shards += LOGIN_SHARDS;
             advData.loginShardDay = chickenData.lastDate;
             advSave();
-            showChickenFloat('rewardShardCount', '+' + LOGIN_SHARDS, '#10B981');
+            fx.push({ icon: advShardIcon(22), n: LOGIN_SHARDS, k: 'shard' });
             try { advRenderShopBox(); } catch (e) {}
             updateChickenBadgeUI();
         }
-        if (taskKey === 'dailyLogin' && wallet.day === chickenData.lastDate && (wallet.claimedToday || []).indexOf('dailyLogin') !== -1) { updateChickenModalUI(); updateChickenBadgeUI(); return; }
+        if (taskKey === 'dailyLogin' && wallet.day === chickenData.lastDate && (wallet.claimedToday || []).indexOf('dailyLogin') !== -1) { claimFx(fxRect, fx); updateChickenModalUI(); updateChickenBadgeUI(); return; }
         walletBusy = true;
         try {
             let before = wallet.balance;
@@ -569,8 +587,10 @@
                 : await walletRpc('claim_reward', { p_task: taskKey, p_day: chickenData.lastDate });
             applyWallet(data, chickenData.lastDate);
             let gained = wallet.balance - before;
-            if (gained > 0) showChickenFloat('chickenCountDisplay', '+' + gained, '#EF4444');
+            fx.unshift({ icon: TK_NUGGET_IMG, n: Math.max(1, gained), k: 'nugget' });
+            claimFx(fxRect, fx); fx = [];
         } catch (e) {
+            claimFx(fxRect, fx);             // 雞塊沒領到也照樣顯示已經發出的碎片／花
             if (String((e && e.message) || '').includes('already_claimed')) {   // 同一個帳號在別台裝置已經領過
                 if (!Array.isArray(wallet.claimedToday)) wallet.claimedToday = [];
                 if (wallet.claimedToday.indexOf(taskKey) === -1) wallet.claimedToday.push(taskKey);
@@ -1597,6 +1617,8 @@
         document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
         document.body.classList.toggle('farm-on', viewId.indexOf('farm') === 0);     // 雞塊農場：整頁暖色背景
+        // 雞塊農場有自己的配色：在農場裡不套用省電模式（深色），離開農場再照設定恢復
+        try { let ps = document.getElementById('powerSavingToggle'); document.body.classList.toggle('power-saving-mode', viewId.indexOf('farm') !== 0 && !!(ps && ps.checked)); } catch (e) {}
         if (viewId !== 'farmView') { try { farmShopOpen = false; } catch (e) {} }
         if (viewId.indexOf('farm') !== 0) { let fo = document.getElementById('farmOverlay'); if (fo) fo.innerHTML = ''; }
         if (viewId === 'homeDashboardView') { try { homeAdvBadge(); } catch (e) {} }
@@ -1605,12 +1627,12 @@
         
         let wrapper = document.getElementById('mainScaleWrapper');
         // 新版練習頁（cp-）與建立單字頁（we-）：不放大，照設計稿的寬度（手機 480、電腦 780）
-        const CP_VIEWS = ['practiceView', 'examView', 'flashcardSetupView', 'flashcardPlayView', 'cardExamSetupView', 'speakPracticeSetupView'];
+        const CP_VIEWS = ['practiceView', 'examView', 'flashcardSetupView', 'flashcardPlayView', 'cardExamSetupView', 'speakPracticeSetupView', 'advLevelView'];
         let cpOn = CP_VIEWS.includes(viewId), weOn = viewId === 'editorDetailView';
         document.body.classList.toggle('cp-on', cpOn);
         document.body.classList.toggle('we-on', weOn);
         if (!weOn) document.body.classList.remove('we-sub');
-        document.body.classList.toggle('cp-tall', viewId === 'flashcardPlayView' || (viewId === 'practiceView' && typeof isPlaying !== 'undefined' && isPlaying));
+        document.body.classList.toggle('cp-tall', viewId === 'flashcardPlayView' || viewId === 'advLevelView' || (viewId === 'practiceView' && typeof isPlaying !== 'undefined' && isPlaying));
         if (cpOn || weOn) { wrapper.className = 'scale-wrapper-cp'; }
         else if (['practiceView', 'examView', 'flashcardPlayView', 'flashcardSetupView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'speakPracticePlayView', 'homeDashboardView', 'editorListView', 'editorDetailView', 'historyView'].includes(viewId)) {
             wrapper.className = 'scale-wrapper-practice';
@@ -1754,6 +1776,7 @@
             let ring = document.getElementById('acTaskRing'), dot = document.getElementById('acTaskDot');
             if (ring) ring.setAttribute('stroke-dasharray', `${(d0 / n0 * 106.8).toFixed(1)} 106.8`);
             if (dot) dot.style.display = CHICKEN_TASK_KEYS.some(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)) ? '' : 'none';
+            let ok = document.getElementById('acTaskOk'); if (ok) ok.style.display = d0 >= n0 ? '' : 'none';     // 今日任務 100%：雞塊上打綠勾
         } catch (e) {}
         let box = document.getElementById('homeToday');
         if (!box) return;
@@ -1803,7 +1826,7 @@
         let tag = lang => `<span class="lang-tag lang-tag-${lang}">${getLangName(lang)}</span>`;
         let html;
         if (listSeg === 'pack') {
-            // 分兩組：大冒險（照章節）／多益
+            // 分兩組：多益／大冒險（照章節）
             let row = ({ l, idx }) => {
                 let m = WORD_PACKS[l.pack] || {}, ch = m.chapter && ADV_CHAPTERS.find(c => c.id === m.chapter);
                 let sub = `${getListWordCount(l.content)} 字${ch ? `・第 ${ch.from}～${ch.to} 關` : ''}`;
@@ -1812,8 +1835,9 @@
             let advP = packs.filter(x => (WORD_PACKS[x.l.pack] || {}).kind === 'adv').sort((x, y) => (WORD_PACKS[x.l.pack].chapter || 0) - (WORD_PACKS[y.l.pack].chapter || 0));
             let others = packs.filter(x => (WORD_PACKS[x.l.pack] || {}).kind !== 'adv');
             let shop = `<div class="lst-row lst-shop" data-on-click='[["openChickenShopModal",[]]]'><span class="lst-no">🛒</span><span class="lst-tx"><b>到雞塊補給站看更多</b></span><span class="lst-ar">›</span></div>`;
-            html = (advP.length ? `<div class="lst-grp">大冒險</div><div class="lst-list">${advP.map(row).join('')}</div>` : '')
-                + `<div class="lst-grp">多益</div><div class="lst-list">${others.map(row).join('')}${shop}</div>`;
+            // 多益放上面；大冒險題庫比較不重要，放在下面
+            html = `<div class="lst-grp">多益</div><div class="lst-list">${others.map(row).join('')}${shop}</div>`
+                + (advP.length ? `<div class="lst-grp">大冒險</div><div class="lst-list">${advP.map(row).join('')}</div>` : '');
             container.classList.remove('two');
             container.classList.add('grouped');
         } else if ((container.classList.remove('grouped'), !mine.length)) {
@@ -1826,7 +1850,6 @@
                     <span class="lst-menu"><button class="list-card-menu-btn" data-on-click='[["$stop",[]],["toggleDropdownMenu",[${idx},"$event"]]]'>⋮</button>
                         <div class="dropdown-menu" id="dropdownMenu_${idx}">
                             <button class="dropdown-item" data-on-click='[["$stop",[]],["renameListTitleFromMenu",[${idx}]]]'>修改</button>
-                            <button class="dropdown-item" data-on-click='[["$stop",[]],["changeListLanguageFromMenu",[${idx}]]]'>更換語言</button>
                             <button class="dropdown-item" data-on-click='[["$stop",[]],["clearListContentFromMenu",[${idx}]]]'>清空</button>
                             <button class="dropdown-item danger" data-on-click='[["$stop",[]],["deleteListFromMenu",[${idx}]]]'>刪除</button>
                         </div></span></div>`;
@@ -2109,7 +2132,7 @@
         let lang = getListLang(wordLists[lastSelectedList]);
         let i = meaningStart(s);
         let en = (i === -1 ? s : s.slice(0, i)).trim(), rest = i === -1 ? '' : s.slice(i).trim();
-        if (!en) return { error: '看不懂' + weLangName() };
+        if (!en) return { error: '缺少' + weLangName() };
         if (lang === 'ko' ? RE_LATIN.test(en) : RE_HANGUL.test(en)) return { error: '不是' + weLangName() };
         if (!rest) return { error: '缺少中文' };
         let pm = parseMeaningPart(rest);
@@ -2262,7 +2285,7 @@
     // ── 選題庫頁共用：每一列、精選／自訂切換、已選幾本、全選 ──
     function pickRowHTML(list, count, isSelected, fn) {
         let pack = isPackList(list);
-        if (fn !== 'toggleAdvCard') {        // 新版練習／測驗開始頁：一列 = 題庫名稱＋字數，選到的右邊打勾
+        {                                    // 新版練習／測驗／大冒險開始頁：一列 = 題庫名稱＋字數，選到的右邊打勾
             return `<div class="select-card cp-book ${isSelected}" role="button" tabindex="0" data-kind="${pack ? 'pack' : 'custom'}" data-on-click='[["${fn}",[${list.originalIdx},"$this"]]]'>
                     <span class="cp-book__text"><span class="cp-book__name">${pack ? packIconHTML(list.pack, 20) : ''}${escapeHTML(list.title)}</span><span class="cp-book__count">${count} 字</span></span>
                     <svg class="cp-book__check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
@@ -2478,6 +2501,19 @@
 
     // ═════════ 字卡練習（新版畫面；返回保留進度，開始頁可以繼續）═════════
     let fcBooks = '', fcSeen = new Set();
+    // 單字太長（一個字、沒有空格）時把字縮小，讓它在一行內放得下
+    function cpFitWord(el) {
+        if (!el) return;
+        el.style.fontSize = ''; el.style.whiteSpace = '';
+        let t = el.textContent || '';
+        if (/\s/.test(t.trim()) || !el.offsetParent) return;         // 片語可以換行；看不到的元素先不量
+        el.style.whiteSpace = 'nowrap';
+        let box = el.closest('.cp-panel') || el.parentElement;
+        let cs = getComputedStyle(box), avail = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8;
+        let w = el.scrollWidth, fs = parseFloat(getComputedStyle(el).fontSize);
+        if (w > avail && avail > 0) el.style.fontSize = Math.max(14, Math.floor(fs * avail / w)) + 'px';
+    }
+    window.addEventListener('resize', () => { ['fcCardEng', 'fcCardEngBack', 'lpEn'].forEach(id => { try { cpFitWord(document.getElementById(id)); } catch (e) {} }); });
     function startFlashcardSession(resume) {
         let words;
         if (resume && Array.isArray(resume.words)) {
@@ -2522,6 +2558,7 @@
         let el = document.getElementById('flashcardCardEl');
         if (!el) return;
         let f = el.classList.toggle('is-flipped');
+        cpFitWord(document.getElementById(f ? 'fcCardEngBack' : 'fcCardEng'));
         el.setAttribute('aria-label', f ? '翻回英文' : '翻面看中文');
     }
     function resetFlashcardFlipState() {
@@ -2539,6 +2576,7 @@
         set('fcFrontChip', getLearningLanguage() === 'ko' ? '韓文' : '英文');
         set('fcCardEng', card.english);
         set('fcCardEngBack', card.english);
+        cpFitWord(document.getElementById('fcCardEng'));
         let senses = (card.senses && card.senses.length) ? card.senses : [{ m: card.meanings && card.meanings.length ? card.meanings : [card.chinese || '(無中文)'], p: card.posList || [] }];
         set('fcCardChi', senses.map(x => (x.m || []).join('、')).join(' ／ '));
         let pos = []; senses.forEach(x => (x.p || []).forEach(q => { if (pos.indexOf(q) === -1) pos.push(q); }));
@@ -4058,6 +4096,7 @@
         let fill = document.getElementById('lpFill'); if (fill) fill.style.width = (n / total * 100) + '%';
         if (item) {
             set('lpEn', item.english);
+            cpFitWord(document.getElementById('lpEn'));
             let senses = (item.senses && item.senses.length) ? item.senses : [{ m: item.meanings || [item.chinese], p: item.posList || [] }];
             set('lpMeaning', senses.map(s => `<span class="cp-meaning__zh">${escapeHTML((s.m || []).join('、'))}</span>${(s.p || []).map(p => `<span class="cp-pos">${escapeHTML(p)}</span>`).join('')}`).join(''), true);
         }
@@ -5125,10 +5164,12 @@
             if (!confirm('⚠️ 要把雞塊大冒險的進度、道具、裝備、能力全部重設成第一次開 App 的狀態嗎？')) return true;
             try { localStorage.removeItem(advStoreKey()); } catch (e) {}
             advData = advLoad();
+            advData.legendReset = true;          // 傳說招式全部回到補給站（熟練度跟著進度一起歸 0）
             advData.ts = Date.now();
             advSave();
             try { advRefreshViews(); } catch (e) {}
-            alert('🔄 雞塊大冒險已重設。');
+            try { advRenderShopBox(); } catch (e) {}
+            alert('🔄 雞塊大冒險已重設，傳說招式已回到補給站，熟練度歸 0。');
             return true;
         }
         if (code === 'newplayer') {
@@ -5144,10 +5185,10 @@
         }
         if (code === 'testmoney') {
             advData.shards += 500;
-            advData.sauce += 50; advData.tickets += 50; advData.potions += 50; advData.wipes += 50;
+            advData.sauce += 50; advData.potions += 50; advData.wipes += 50;
             advSave();
             try { advRefreshViews(); advRenderShopBox(); } catch (e) {}
-            alert('💰 已送出：糖醋醬碎片 +500、糖醋醬／冒險卷／恢復藥水／濕紙巾各 +50');
+            alert('💰 已送出：糖醋醬碎片 +500、糖醋醬／恢復藥水／濕紙巾各 +50');
             return true;
         }
         return false;
@@ -5196,7 +5237,7 @@
     const ADV_BASE_STATS = { hp: 3, atk: 0, agi: 3, def: 0, int: 1, luck: 0 };
     const ADV_MOVES_SHOWN = 4;               // 招式選擇一開始只顯示幾張，其餘收在「更多招式」
     let advMovesOpen = false;
-    const ADV_REPLAY_PER_DAY = 3;           // 每天最多重複挑戰「已通關的關卡」幾次（沒通關的關卡不限次數）
+    const ADV_REPLAY_PER_DAY = 3;           // 已通關的關卡可以無限重複挑戰；每天前 3 次打贏才有通關獎勵
     const ADV_UP_MAX = 10;
     const ADV_STAT_MAX = 10;                // 每項能力（含 HP、智慧）最多 10：能強化的次數 = 10 − 基礎值
     function advUpMax(key) { return Math.max(0, ADV_STAT_MAX - (ADV_BASE_STATS[key] || 0)); }
@@ -5458,6 +5499,7 @@
             replayDay: typeof d.replayDay === 'string' ? d.replayDay : '', // 重複挑戰次數是哪一天的
             replays: n0(d.replays),
             loginShardDay: typeof d.loginShardDay === 'string' ? d.loginShardDay : '',   // 每日登入碎片最後領取日
+            legendReset: d.legendReset === true,                           // testreset 過：以前用雞塊買的傳說招式也不算擁有（回到補給站）
             loseTipShown: d.loseTipShown === true,                         // 第一次戰敗時提醒過恢復藥水了
             wrongCnt: (() => { let o = {}; if (d.wrongCnt && typeof d.wrongCnt === 'object') Object.keys(d.wrongCnt).slice(-400).forEach(k => { let v = parseInt(d.wrongCnt[k]); if (v > 0) o[String(k).slice(0, 60)] = Math.min(999, v); }); return o; })(),   // 大冒險每個字答錯幾次
             lastWrong: (() => { let o = {}; if (d.lastWrong && typeof d.lastWrong === 'object') Object.keys(d.lastWrong).forEach(k => { if (Array.isArray(d.lastWrong[k])) o[k] = d.lastWrong[k].filter(x => typeof x === 'string').slice(0, 50); }); return o; })(),   // 每關上次打錯的字
@@ -5524,7 +5566,7 @@
         }
         return true;                             // 雲端還沒有進度：把本機的上傳
     }
-    // 每天最多重複挑戰已通關關卡 3 次
+    // 每天前 3 次重複通關有獎勵
     // 首頁「雞塊樂園」標題旁的小標籤：目前要打第幾關
     function homeAdvBadge() {
         let el = document.getElementById('funLvBadge');
@@ -5536,7 +5578,7 @@
     }
     function advDevDone() { advSave(); try { advRefreshViews(); } catch (e) {} }
 
-    function advReplayCap() { return ADV_REPLAY_PER_DAY + (advData.replayBonusDay === getLocalDateStr() ? advData.replayBonus : 0); }
+    function advReplayCap() { return ADV_REPLAY_PER_DAY; }      // 每天前 3 次重複通關有獎勵（冒險卷已移除）
     function advReplaysUsed() { return advData.replayDay === getLocalDateStr() ? advData.replays : 0; }
     function advReplaysLeft() { return Math.max(0, advReplayCap() - advReplaysUsed()); }
     // 這招有沒有擁有：一開始就有的、用碎片買的、用雞塊買的（雞塊的購買紀錄在後端錢包）
@@ -5545,6 +5587,7 @@
         if (!m) return false;
         if (m.buy.kind === 'free') return true;
         if (advData.own[key] === true) return true;
+        if (advData.legendReset && advRarityKey(key) === 'legend') return false;   // testreset 後：傳說招式要重新在補給站買
         return !!(m.buy.item && walletQty(m.buy.item) > 0);    // 以前用雞塊買過的
 
     }
@@ -6079,42 +6122,71 @@
         if (!advCustomTab) advCustomTab = (grid && grid.querySelector('.select-card[data-kind="custom"]')) ? 'mine' : 'pack';
         pickSeg['advGrid'] = advCustomTab === 'pack' ? 'pack' : 'custom';
     }
+    // 關卡副標：夜市篇・第 44–50 字／複習第 1–9 關・共 50 字
+    function advHeroSub(lv) {
+        let p = advPlanOf(lv.id), k = advAutoParts().night.length;
+        if (!Array.isArray(p)) return `複習第 ${p.review[0]}–${p.review[1]} 關・共 ${advAutoWords(lv).length} 字`;
+        return p[0] < k ? `夜市篇・第 ${p[0] + 1}–${p[1]} 字` : `便利商店篇・第 ${p[0] - k + 1}–${p[1] - k} 字`;
+    }
+    const ADV_WARN_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4"/></svg>';
+    const ADV_SWORD_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6M16 16l4 4M19 21l2-2"/></svg>';
     function advRenderLevelPage() {
         let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0];
         let auto = advMode() === 'auto';
         advSyncCustomTab();
         let words = auto ? advAutoWords(lv) : advGetWords();
         let n = words.length;
-        let stat = document.getElementById('advStatsText');
-        if (stat && !auto) setPickSummary('advStatsText', 'advGrid', n, words.filter(w => w.starred).length);
+        if (!auto) setPickSummary('advStatsText', 'advGrid', n, words.filter(w => w.starred).length);
         advRenderModeBox(lv, auto);
         advSyncDaily();
         let ok = auto || n >= lv.minWords;       // 冒險題庫：每關的字數照關卡設計
         let tired = advData.hp <= 0;
-        let max = advMaxHp();
-        let isCleared = !!advData.cleared[lv.id], left = advReplaysLeft();
-        let canGo = ok && !tired && !(isCleared && left <= 0);
-        let hearts = `♥ ${advData.hp}/${max}`;
-        let shardIcon = advShardIcon(14);
-        let first = lv.firstSauce ? `<span style="color:${ADV_SAUCE_COLOR};font-weight:800;">🍯 糖醋醬 ×${lv.firstSauce}</span>` : `${shardIcon} ×${lv.firstShards}`;
-        let html = `
-            <div class="adv-card adv-level">
-                <div class="adv-lv-sprite">${advEnemySVG(lv.sprite)}</div>
-                <div class="adv-lv-info">
-                    <b>第 ${lv.id} 關：${lv.name} ${advData.cleared[lv.id] ? '✅' : ''}</b>
-                    ${auto ? `<span class="adv-ok">出題範圍：${advAutoDesc(lv)} ✓</span><br>` : `<span class="${ok ? 'adv-ok' : 'adv-bad'}">攻略條件：選取至少 ${lv.minWords} 題以上的單字${ok ? ' ✓' : `（目前 ${n} 題）`}</span><br>`}
-                    <span class="${tired ? 'adv-bad' : ''}">體力：${hearts}${tired ? '　沒體力了，明天 00:00 恢復' : ''}</span><br>
-                    ${isCleared ? `<span class="${left <= 0 ? 'adv-bad' : ''}">🔁 今天還能重複挑戰已通關關卡 ${left}/${advReplayCap()} 次</span><br>` : ''}
-                    ${advData.cleared[lv.id] ? '' : `首次通關：${first}${lv.firstMaxHp ? '、❤️ 生命上限 +' + lv.firstMaxHp : ''}${lv.firstPotions ? '、🧪 恢復藥水 ×' + lv.firstPotions : ''}${lv.firstTickets ? '、' + advTicketIcon(15) + ' 冒險卷 ×' + lv.firstTickets : ''}${lv.firstItem ? '、' + ADV_ITEMS[lv.firstItem].icon(15) + ' ' + ADV_ITEMS[lv.firstItem].name : ''}<br>`}通關獎勵：${shardIcon} ×${lv.repeatShards}${lv.ticketChance ? `、${advTicketIcon(15)} 冒險卷（${Math.round(lv.ticketChance * 100)}% 機會）` : ''}${lv.potionChance ? `、🧪 恢復藥水（${Math.round(lv.potionChance * 100)}% 機會）` : ''}
-                    ${ADV_MOVES.filter(m => m.buy.kind === 'reward' && m.buy.level === lv.id && !advOwns(m.key)).map(m => `<br><span style="color:var(--primary);font-weight:700;">🎁 首次通關額外獎勵：學會「${m.name}」</span>`).join('')}
-                    ${lv.special ? `<br><span class="adv-special">⚠️ ${ADV_SPECIAL_TEXT[lv.special]}</span>` : ''}
-                </div>
-            </div>`;
+        let max = advMaxHp(), hp = Math.max(0, Math.min(advData.hp, max));
+        let isCleared = !!advData.cleared[lv.id];
+        let canGo = ok && !tired;                // 已通關的關卡可以一直重複挑戰（每天前 3 次有通關獎勵）
+        let used = advReplaysUsed(), cap = advReplayCap(), rewardLeft = Math.max(0, cap - used);
+        let item = (icon, cnt) => `<span class="aq-item"><span class="ic">${icon}</span>×${cnt}</span>`;
+        let rewards = [], tag = '', off = false;
+        if (!isCleared) {
+            tag = '<span class="aq-tag first">首勝</span>';
+            if (lv.firstPotions) rewards.push(item(advPotionIcon(22), lv.firstPotions));
+            if (lv.firstSauce) rewards.push(item(advSauceIcon(22), lv.firstSauce));
+            if (lv.firstShards) rewards.push(item(advShardIcon(22), lv.firstShards));
+            if (lv.firstMaxHp) rewards.push(`<span class="aq-item"><span class="ic">❤️</span>+${lv.firstMaxHp}</span>`);
+            if (lv.firstItem && ADV_ITEMS[lv.firstItem]) rewards.push(`<span class="aq-item" title="${ADV_ITEMS[lv.firstItem].name}"><span class="ic">${ADV_ITEMS[lv.firstItem].icon(22)}</span>×1</span>`);
+            ADV_MOVES.filter(m => m.buy.kind === 'reward' && m.buy.level === lv.id && !advOwns(m.key)).forEach(m => rewards.push(`<span class="aq-item" title="學會「${m.name}」"><span class="ic">${m.icon}</span>×1</span>`));
+        } else {
+            off = rewardLeft <= 0;
+            tag = off ? '<span class="aq-tag gone">今日已領完</span>' : `<span class="aq-tag today">今日 ${used} / ${cap}</span>`;
+            rewards.push(item(advShardIcon(22), lv.repeatShards));
+            if (lv.potionChance) rewards.push(`<span class="aq-item" title="${Math.round(lv.potionChance * 100)}% 機會"><span class="ic">${advPotionIcon(22)}</span>${Math.round(lv.potionChance * 100)}%</span>`);
+        }
+        let warns = [];
+        if (lv.special) warns.push(`<div class="aq-warn">${ADV_WARN_SVG}注意：${ADV_SPECIAL_TEXT[lv.special]}</div>`);
+        if (tired) warns.push(`<div class="aq-warn bad">${ADV_WARN_SVG}雞塊沒有體力了，明天 00:00 恢復</div>`);
         let box = document.getElementById('advLevelCard');
-        if (box) box.innerHTML = html;
+        if (box) box.innerHTML = `
+            <div class="aq-hero">
+                <div class="aq-sprite">${advEnemySVG(lv.sprite)}</div>
+                <div class="aq-info">
+                    <div class="aq-lv"><span>第 ${lv.id} 關</span>${isCleared ? '<span class="aq-badge done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>已通關</span>' : '<span class="aq-badge new">新關卡</span>'}</div>
+                    <span class="aq-name">${escapeHTML(lv.name)}</span>
+                    <span class="aq-sub">${auto ? advHeroSub(lv) : `自選題庫・至少 ${lv.minWords} 字`}</span>
+                </div>
+            </div>
+            <div class="aq-cards">
+                <div class="aq-hp"><span class="aq-k">體力</span><div class="aq-bar${hp / max < 0.34 ? ' low' : ''}"><i style="width:${(hp / max * 100).toFixed(0)}%"></i></div><span class="aq-num">${hp} <small>/ ${max}</small></span></div>
+                <div class="aq-rw${off ? ' off' : ''}"><div class="aq-rw-head"><span class="aq-k">通關獎勵</span>${tag}</div><div class="aq-items">${rewards.join('')}</div></div>
+            </div>
+            ${warns.join('')}`;
         advUpdateGearAlerts();
+        let st = document.getElementById('advStatsText');
+        if (st && !auto) {
+            if (!ok) st.insertAdjacentHTML('beforeend', `<br><span class="bad">這關至少要 ${lv.minWords} 個字（目前 ${n} 個）</span>`);
+        } else if (st) st.innerHTML = '';
+        let note = isCleared && rewardLeft <= 0 ? '<span class="aq-go-note">今天的通關獎勵領完了，再挑戰可以繼續累積招式熟練度</span>' : '';
         let bar = document.getElementById('advGoBar');
-        if (bar) bar.innerHTML = `<button type="button" class="adv-go adv-go-wide" ${canGo ? '' : 'disabled'} data-on-click='[["advStartBattle",[${lv.id}]]]'>開始戰鬥</button>`;
+        if (bar) bar.innerHTML = `<button type="button" class="aq-start" ${canGo ? '' : 'disabled'} data-on-click='[["advStartBattle",[${lv.id}]]]'>${ADV_SWORD_SVG}開始戰鬥</button>${note}`;
     }
     // ── 大冒險預設題庫：跟著關卡（每關自動用前 N 個字）──
     const ADV_MODE_KEY = 'chicky_adv_mode';
@@ -6168,28 +6240,24 @@
         advRenderLevelPage();
     }
     function advWrongOf(eng) { return (advData.wrongCnt || {})[String(eng || '').toLowerCase()] || 0; }
+    // 出題題庫：冒險題庫（推薦）／精選單字庫／自訂題庫（單選；自選時下面會出現題庫清單）
     function advRenderModeBox(lv, auto) {
-        let seg = document.getElementById('advModeSeg'), box = document.getElementById('advAutoBox'), cus = document.getElementById('advCustomBox');
-        if (!seg || !box || !cus) return;
-        // 一層分頁：冒險題庫（推薦）｜精選單字庫｜自訂題庫（自選時兩邊勾的都算）
+        let seg = document.getElementById('advModeSeg'), cus = document.getElementById('advCustomBox');
+        if (!seg || !cus) return;
         let grid = document.getElementById('advGrid');
         let cnt = k => grid ? grid.querySelectorAll(`.select-card.selected[data-kind="${k}"]`).length : 0;
-        let badge = n => (n && !auto) ? `<em>已選 ${n}</em>` : '';
-        seg.innerHTML = (advCanAuto() ? `<button type="button" class="${auto ? 'on' : ''}" data-on-click='[["advSetMode",["auto"]]]'>冒險題庫<small>推薦</small></button>` : '')
-            + `<button type="button" class="${!auto && advCustomTab === 'pack' ? 'on' : ''}" data-on-click='[["advSetMode",["pack"]]]'>精選單字庫${badge(cnt('pack'))}</button><button type="button" class="${!auto && advCustomTab !== 'pack' ? 'on' : ''}" data-on-click='[["advSetMode",["mine"]]]'>自訂題庫${badge(cnt('custom'))}</button>`;
-        box.style.display = auto ? '' : 'none';
-        cus.style.display = auto ? 'none' : '';
-        if (!auto) return;
-        let words = advAutoWords(lv), review = advIsReview(lv.id);
-        let key = advPlanOf(lv.id) && (Array.isArray(advPlanOf(lv.id)) ? advPlanOf(lv.id)[0] : advPlanOf(advPlanOf(lv.id).review[0])[0]) < advAutoParts().night.length ? 'adv_night' : 'adv_store';
-        box.innerHTML = `<div class="lst-list">
-                <div class="lst-row" style="cursor:default"><span class="lst-no pk">${packIconHTML(key, 30)}</span><span class="lst-tx"><b>${WORD_PACKS[key].title}</b></span></div>
-                <div class="lst-row lst-shop" data-on-click='[["advOpenWords",[]]]'><span class="lst-no">📖</span><span class="lst-tx"><b>這關單字</b></span><span class="lst-ar">›</span></div>
-            </div>`;
-        let n = words.length;
-        let last = ((advData.lastWrong || {})[lv.id] || []).length;
-        let stat = document.getElementById('advStatsText');
-        if (stat) stat.innerHTML = `這關範圍：<b>${n}</b> 個字${last ? `・上次答錯 <b style="color:#EA580C">${last}</b> 個` : ''}`;
+        let cur = auto ? 'auto' : (advCustomTab === 'pack' ? 'pack' : 'mine');
+        let opt = (key, name, extra) => `<button type="button" class="aq-opt${cur === key ? ' on' : ''}" role="radio" aria-checked="${cur === key}" data-on-click='[["advSetMode",["${key}"]]]'><span class="aq-ring"><i></i></span><span class="aq-opt-name">${name}</span>${extra || ''}</button>`;
+        let html = '';
+        if (advCanAuto()) {
+            let words = advAutoWords(lv), last = ((advData.lastWrong || {})[lv.id] || []).length;
+            let key = (Array.isArray(advPlanOf(lv.id)) ? advPlanOf(lv.id)[0] : advPlanOf(advPlanOf(lv.id).review[0])[0]) < advAutoParts().night.length ? 'adv_night' : 'adv_store';
+            html += opt('auto', `冒險・${(WORD_PACKS[key].title || '').replace(/^冒險・/, '')}`, `<span class="aq-rec">推薦</span>${auto ? `<span class="aq-link"><span class="cnt">${words.length} 個字${last ? `・上次錯 <b>${last}</b> 個` : ''}</span><span class="go" role="link" data-on-click='[["$stop",[]],["advOpenWords",[]]]'>${window.innerWidth < 420 ? `${words.length} 個字・` : ''}看單字<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></span></span>` : ''}`);
+        }
+        let sb = n => (n && !auto) ? `<span class="aq-badge-sel">已選 ${n}</span>` : '';
+        html += opt('pack', '精選單字庫', sb(cnt('pack'))) + opt('mine', '自訂題庫', sb(cnt('custom')));
+        seg.innerHTML = html;
+        cus.hidden = auto;
     }
     // 這關會考的字：新增的在上面、之前學過的在下面
     function advOpenWords() {
@@ -6545,7 +6613,7 @@
     const ADV_ALERT = '<span class="adv-alert" aria-label="還可以裝備">!</span>';
     function advUpdateGearAlerts() {
         let on = advGearAlert();
-        document.querySelectorAll('.adv-btn-sm[data-on-click*="goToAdvStats"]').forEach(b => {
+        document.querySelectorAll('.adv-btn-sm[data-on-click*="goToAdvStats"], .aq-stat-btn').forEach(b => {
             let a = b.querySelector('.adv-alert');
             if (on && !a) b.insertAdjacentHTML('beforeend', ADV_ALERT);
             else if (!on && a) a.remove();
@@ -6645,7 +6713,6 @@
         let defs = [
             { key: 'sauce',  kind: 'item', name: '糖醋醬',   icon: s => advSauceIcon(s),  n: advData.sauce,   desc: `使用後讓任一項能力 +1（每項能力最多 ${ADV_STAT_MAX}）`, act: '使用', fn: 'advBagSauce' },
             { key: 'potion', kind: 'item', name: '恢復藥水', icon: s => advPotionIcon(s), n: advData.potions, desc: `使用後 HP +${ADV_POTION_HEAL}（目前 ${advData.hp}/${advMaxHp()}）`, act: '使用', fn: 'advBagUsePotion' },
-            { key: 'ticket', kind: 'item', name: '冒險卷',   icon: s => advTicketIcon(s), n: advData.tickets, desc: `今天「重複挑戰已通關關卡」的次數 +1（今天還能挑戰 ${advReplaysLeft()} 次）`, act: '使用', fn: 'advBagUseTicket' },
             { key: 'wipe',   kind: 'item', name: '濕紙巾',   icon: s => advWipeIcon(s),   n: advData.wipes,   desc: '把 1 點已強化的能力，轉移到另一項能力', act: '使用', fn: 'advBagWipe' }
         ];
         Object.keys(ADV_ITEMS).forEach(k => {
@@ -6656,7 +6723,7 @@
         });
         return defs;
     }
-    function advBagCount() { return advData.sauce + advData.potions + advData.tickets + advData.wipes + Object.keys(advData.items).filter(k => advData.items[k]).length; }
+    function advBagCount() { return advData.sauce + advData.potions + advData.wipes + Object.keys(advData.items).filter(k => advData.items[k]).length; }
     let advBagGearOnly = false;     // 從「裝備欄」打開：只顯示裝備
     let advBagSlot = null;          // 從左手(0)／右手(1)打開時，裝備會放進那一手
     let advBagSel = '';             // 目前點選、在下方顯示說明的東西
@@ -6864,7 +6931,7 @@
         // 分頁 2：雞塊大冒險
         let cells = [];
         cells.push(advShopCell({ id: 'advCell_sauce', icon: advSauceIcon(46), name: '糖醋醬', sub: '選擇一個能力 +1', price: advShardPrice(ADV_SHARDS_PER_SAUCE), poor: advData.shards < ADV_SHARDS_PER_SAUCE, action: '[["advExchangeShards",[]]]' }));
-        cells.push(advShopCell({ id: 'advCell_potion', icon: '🧪', name: '恢復藥水', sub: `HP +${ADV_POTION_HEAL}`, price: advShardPrice(ADV_POTION_COST), poor: advData.shards < ADV_POTION_COST, action: '[["advBuyPotion",[]]]' }));
+        cells.push(advShopCell({ id: 'advCell_potion', icon: advPotionIcon(46), name: '恢復藥水', sub: `HP +${ADV_POTION_HEAL}`, price: advShardPrice(ADV_POTION_COST), poor: advData.shards < ADV_POTION_COST, action: '[["advBuyPotion",[]]]' }));
         cells.push(advShopCell({ id: 'advCell_wipe', icon: advWipeIcon(46), name: '濕紙巾', sub: '能力 1 點轉移', price: advShardPrice(ADV_WIPE_COST), poor: advData.shards < ADV_WIPE_COST, action: '[["advBuyWipe",[]]]' }));
         // 已經擁有的裝備、招式不顯示（只留還能買的）
         if (!advData.items.soda) cells.push(advShopCell({ id: 'advCell_soda', kind: 'gear', icon: advSodaIcon(46), name: '彈珠汽水', sub: `普通裝備｜${ADV_ITEMS.soda.desc}`, price: advShardPrice(ADV_SODA_PRICE), poor: advData.shards < ADV_SODA_PRICE, cls: 'rar-common', action: '[["advBuySoda",[]]]' }));
@@ -6873,9 +6940,10 @@
             cells.push(advShopCell({ id: 'advCell_coaster', kind: 'gear', icon: advCoasterIcon(46), name: '防燙杯墊', sub: ADV_ITEMS.coaster.desc, price: open ? advShardPrice(ADV_COASTER_PRICE) : '第 19 關解鎖', off: !open, poor: open && advData.shards < ADV_COASTER_PRICE, cls: 'rar-common' + (open ? '' : ' is-locked'), action: '[["advBuyCoaster",[]]]' }));
         }
         ADV_MOVES.filter(m => m.buy.kind === 'shards' && !advOwns(m.key)).forEach(m => {
-            let price = advShardPrice(m.buy.price);
-            let poor = advData.shards < m.buy.price;
-            cells.push(advShopCell({ id: 'shopItem_' + (m.buy.item || 'mv_' + m.key), kind: 'move', icon: m.icon, name: m.name, sub: `${advRarity(m.key).label} ｜ 威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題 ｜ ${ADV_TYPE_LABEL[m.type]}`, price: price, poor: poor, cls: 'rar-' + advRarityKey(m.key), action: `[["advBuyMove",["${m.key}"]]]` }));
+            let open = advMoveOpen(m);           // 傳說招式：第一章（第 10 關）破關後才能買，之前顯示「第 11 關解鎖」並變灰
+            let price = open ? advShardPrice(m.buy.price) : '第 11 關解鎖';
+            let poor = open && advData.shards < m.buy.price;
+            cells.push(advShopCell({ id: 'shopItem_' + (m.buy.item || 'mv_' + m.key), kind: 'move', icon: m.icon, name: m.name, sub: `${advRarity(m.key).label} ｜ 威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題 ｜ ${ADV_TYPE_LABEL[m.type]}`, price: price, off: !open, poor: poor, cls: 'rar-' + advRarityKey(m.key) + (open ? '' : ' is-locked'), action: `[["advBuyMove",["${m.key}"]]]` }));
         });
         // 篩選：全部／道具／裝備／招式（沒寫 kind 的是道具）
         let f = ADV_SHOP_FILTERS[advShopTab] || ADV_SHOP_FILTERS[0];
@@ -6942,10 +7010,13 @@
         advRenderShopBox();
         advShardFloat(-ADV_WIPE_COST);
     }
+    // 傳說招式要先破第一章（第 10 關）
+    function advMoveOpen(m) { return advRarityKey(m.key) !== 'legend' || !!advData.cleared[10]; }
     function advBuyMove(key) {
         let m = advMoveByKey(key);
         if (!m || m.buy.kind === 'free') return;
         if (advOwns(key)) { alert(`已經擁有「${m.name}」了。`); return; }
+        if (!advMoveOpen(m)) { alert(`「${m.name}」要打倒第 10 關、進入第 11 關後才能購買。`); return; }
         if (m.buy.kind === 'chicken') { buyShopItem(m.buy.item); return; }
         if (advData.shards < m.buy.price) { alert(`碎片不足！需要 ${m.buy.price} 個，目前有 ${advData.shards} 個。`); return; }
         if (!confirm(`要用 ${m.buy.price} 個碎片學會「${m.name}」嗎？\n\n${ADV_TYPE_LABEL[m.type]}｜威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''}｜${m.q} 題｜${m.desc}`)) return;
@@ -7235,13 +7306,7 @@
         advAbort();
         advSyncDaily();
         if (advData.hp <= 0) { alert('雞塊沒有體力了，明天 00:00 會恢復。'); advRenderLevelPage(); return; }
-        if (advData.cleared[lv.id]) {      // 已通關的關卡：每天只能重複挑戰 3 次（沒通關的關卡不限次數）
-            if (advReplaysLeft() <= 0) { alert(`今天重複挑戰已通關關卡的次數用完了（今天共 ${advReplayCap()} 次）。\n\n還沒通關的關卡可以一直挑戰；背包裡的「冒險卷」可以讓今天多挑戰 1 次。`); advRenderLevelPage(); return; }
-            let used = advReplaysUsed();
-            advData.replayDay = getLocalDateStr();
-            advData.replays = used + 1;
-            advSave();
-        }
+        // 已通關的關卡可以一直重複挑戰：每天前 3 次打贏有通關獎勵，之後只累積招式熟練度（在 advWin 計算）
         adv.words = words;
         adv.cnWords = words.filter(w => w.chinese);
         adv.decks = { all: [], cn: [] };
@@ -8197,25 +8262,25 @@
         releaseWakeLock();
         let lv = adv.level;
         let first = !advData.cleared[lv.id];
+        // 重複通關：每天前 3 次有通關獎勵；之後打贏只增加招式熟練度（熟練度在出招時就累積了）
+        let rewardOK = first || advReplaysUsed() < ADV_REPLAY_PER_DAY;
+        if (!first && rewardOK) { advData.replays = advReplaysUsed() + 1; advData.replayDay = getLocalDateStr(); }
         advData.cleared[lv.id] = true;
         advSaveLastWrong();
         try {   // 每日任務：在大冒險中打贏一場敵人
             checkDailyReset();
             if (chickenData.tasks.advWin && !chickenData.tasks.advWin.done && !isTaskClaimed('advWin')) { chickenData.tasks.advWin.done = true; saveChickenData(); }
         } catch (e) {}
-        let gainShards = first ? lv.firstShards : lv.repeatShards;
+        let gainShards = first ? lv.firstShards : (rewardOK ? lv.repeatShards : 0);
         let gainSauce = first ? lv.firstSauce : 0;
-        // 幸運的第二個用途：打贏後擲幣，每個正面碎片 +1（最多 +3）
-        let loot = advRollLuck(adv.player.luck, adv.enemy.luck);
-        let gotTicket = (!first && lv.ticketChance && Math.random() < lv.ticketChance) ? 1 : 0;
-        if (first && lv.firstTickets) gotTicket += lv.firstTickets;
-        if (gotTicket) advData.tickets += gotTicket;
-        let dropPotion = (!first && lv.potionChance && Math.random() < lv.potionChance) ? 1 : 0;    // IBON 機：重複通關 20% 掉恢復藥水
+        // 幸運的第二個用途：打贏後擲幣，每個正面碎片 +1（最多 +3）；今天的獎勵領完就不擲
+        let loot = rewardOK ? advRollLuck(adv.player.luck, adv.enemy.luck) : { flips: [], bonus: 0 };
+        let dropPotion = (!first && rewardOK && lv.potionChance && Math.random() < lv.potionChance) ? 1 : 0;    // IBON 機：重複通關 20% 掉恢復藥水
         if (dropPotion) advData.potions += dropPotion;
         let sodaHeal = 0;
         if (advHasGear('soda') && advData.hp > 0 && advData.hp < advMaxHp()) { sodaHeal = 1; advData.hp += 1; adv.player.hp = advData.hp; }
         gainShards += loot.bonus;
-        let clawBonus = (lv.special === 'claw' && Math.random() < 0.5) ? 1 : 0;   // 娃娃機：50% 機會碎片 +1
+        let clawBonus = (rewardOK && lv.special === 'claw' && Math.random() < 0.5) ? 1 : 0;   // 娃娃機：50% 機會碎片 +1
         gainShards += clawBonus;
         advData.shards += gainShards;
         advData.sauce += gainSauce;
@@ -8239,19 +8304,20 @@
             lines.push(`<div class="line" style="color:#B45309;font-weight:700;">🪙 幸運擲幣 ${advCoinText(loot.flips)}　${loot.bonus ? `正面 ${loot.bonus} 次，碎片多 +${loot.bonus}` : '沒有正面，沒有額外碎片'}</div>`);
             if (loot.bonus) pop.push(`🪙 幸運加成：糖醋醬碎片 +${loot.bonus}`);
         }
-        if (gotTicket) { pop.push(`${advTicketIcon(22)} 冒險卷 ×${gotTicket}`); lines.push(`<div class="line" style="font-weight:800;">${advTicketIcon(16)} ${first ? '首次通關獎勵' : '掉落'}：冒險卷 ×${gotTicket}（到背包使用：今天重複挑戰次數 +1）</div>`); }
-        if (dropPotion) { pop.push(`🧪 恢復藥水 ×1`); lines.push(`<div class="line" style="font-weight:800;">🧪 掉落恢復藥水 ×1</div>`); }
+        if (!rewardOK) lines.push(`<div class="line" style="color:var(--text-muted);font-weight:700;">今天的通關獎勵已經領完了（每天前 ${ADV_REPLAY_PER_DAY} 次），這場累積了招式熟練度</div>`);
+        else if (!first) lines.push(`<div class="line" style="color:var(--text-muted);font-size:12px;">今日通關獎勵 ${advReplaysUsed()} / ${ADV_REPLAY_PER_DAY}</div>`);
+        if (dropPotion) { pop.push(`${advPotionIcon(22)} 恢復藥水 ×1`); lines.push(`<div class="line" style="font-weight:800;">${advPotionIcon(16)} 掉落恢復藥水 ×1</div>`); }
         if (sodaHeal) lines.push(`<div class="line" style="color:#0369A1;font-weight:800;">${advSodaIcon(16)} 喝了彈珠汽水，HP +1</div>`);
         if (clawBonus) pop.push(`🧸 送你娃娃！糖醋醬碎片 +1`);
         if (gotItem) pop.push(`${ADV_ITEMS[gotItem].icon(22)} 獲得裝備：${ADV_ITEMS[gotItem].name}${hadGearBefore ? '' : '<br><small style="color:#EF4444;font-weight:800;">❗ 到「能力值 → 裝備」裝備它</small>'}`);
         if (first && lv.id === 2) pop.push(`🛒 補給站可以用碎片買裝備囉！<br><small style="color:var(--text-muted);font-weight:700;">首頁「雞塊補給站」→ 雞塊大冒險（彈珠汽水 ${ADV_SODA_PRICE} 碎片）</small>`);
         if (gainSauce > 0) pop.push(`${advSauceIcon(22)} 糖醋醬 ×${gainSauce}`);
         if (gotMaxHp) pop.push(`❤️ 生命上限 +${gotMaxHp}`);
-        if (gotPotions) pop.push(`🧪 恢復藥水 ×${gotPotions}`);
+        if (gotPotions) pop.push(`${advPotionIcon(22)} 恢復藥水 ×${gotPotions}`);
         gotMoves.forEach(m => pop.push(`${m.icon} 學會${m.name}`));
         if (gainSauce > 0) lines.push(`<div class="line" style="color:${ADV_SAUCE_COLOR};font-weight:800;">${advSauceIcon(16)} ${first ? '首次通關獎勵：' : ''}糖醋醬 +${gainSauce}</div>`);
         if (gotMaxHp) lines.push(`<div class="line" style="font-weight:800;">❤️ 首次通關獎勵：生命上限 +${gotMaxHp}</div>`);
-        if (gotPotions) lines.push(`<div class="line" style="font-weight:800;">🧪 首次通關獎勵：恢復藥水 ×${gotPotions}</div>`);
+        if (gotPotions) lines.push(`<div class="line" style="font-weight:800;">${advPotionIcon(16)} 首次通關獎勵：恢復藥水 ×${gotPotions}</div>`);
         if (clawBonus) lines.push(`<div class="line" style="font-weight:800;">🧸 送你娃娃！糖醋醬碎片多 +1</div>`);
         if (gotItem) lines.push(`<div class="line" style="font-weight:800;">🎁 首次通關獎勵：${ADV_ITEMS[gotItem].icon(16)} ${ADV_ITEMS[gotItem].name}</div>${hadGearBefore ? '' : '<div class="line" style="color:#EF4444;font-weight:800;">❗ 到「💪 能力值 → 裝備」把它裝備起來吧！</div>'}`);
         if (first && lv.id === 2) lines.push(`<div class="line" style="color:var(--primary);font-weight:800;">🛒 可以到「雞塊補給站」用碎片購買裝備囉！</div>`);
@@ -8315,7 +8381,7 @@
     const FARM_STEP_MS = 60 * 1000;          // 測試版：每一階段等 1 分鐘（正式版改成天數）
     const FARM_PLANT_PER_DAY = 500;          // 測試版：每天最多種 500 顆（正式版 3 顆；後台 farm_act 的 per_day 也要一起改）
     const FARM_FAST_N = 3;                   // 前 3 顆用新手速成（長葉後直接開花）
-    const FARM_START_PLOTS = 4, FARM_MAX_PLOTS = 9, FARM_UNLOCK_EVERY = 10;
+    const FARM_START_PLOTS = 3, FARM_MAX_PLOTS = 9;   // 固定 3 塊田可以種（取消收成解鎖新田）
     const FARM_STAGE_NAMES = ['種子', '發芽', '長葉', '含苞', '開花'];
     // 裝飾：一個物件一筆，新增裝飾只要加一筆（slot：house／scarecrow／fence／guard／mailbox）
     const FARM_DECOR = [
@@ -8357,7 +8423,19 @@
         let el = document.getElementById('farmOverlay');
         if (!el) { el = document.createElement('div'); el.id = 'farmOverlay'; document.body.appendChild(el); }
         el.innerHTML = html || '';
+        farmSheetFit();
     }
+    // 電腦版：底部選單（換裝飾、花店）最寬只到農場那張卡片的寬度，左右對齊卡片
+    function farmSheetFit() {
+        let sh = document.querySelector('#farmOverlay .fm-sheet'), card = document.querySelector('.paper-card-container');
+        if (!sh || !card) return;
+        if (window.innerWidth < 769) { sh.style.maxWidth = ''; sh.style.left = ''; sh.style.right = ''; return; }
+        let r = card.getBoundingClientRect();
+        sh.style.maxWidth = Math.round(r.width) + 'px';
+        sh.style.left = Math.round(r.left) + 'px'; sh.style.right = 'auto'; sh.style.margin = '0';
+        sh.style.width = Math.round(r.width) + 'px';
+    }
+    window.addEventListener('resize', () => { try { farmSheetFit(); } catch (e) {} });
     function farmLoad() {
         let d = {};
         try { d = JSON.parse(localStorage.getItem(FARM_KEY)) || {}; } catch (e) { d = {}; }
@@ -8388,7 +8466,8 @@
             plantedToday: { date: typeof pt.date === 'string' ? pt.date : '', count: n0(pt.count) },
             fastTrackUsed: n0(d.fastTrackUsed), harvestTotal: n0(d.harvestTotal), flowers: n0(d.flowers),
             items: { nectar: n0(d.items && d.items.nectar), crown: n0(d.items && d.items.crown) },     // 用花買的戰鬥道具
-            loginFlowerDay: typeof d.loginFlowerDay === 'string' ? d.loginFlowerDay : ''               // 每日登入送花：最後領取日
+            loginFlowerDay: typeof d.loginFlowerDay === 'string' ? d.loginFlowerDay : '',              // 每日登入送花：最後領取日
+            plantedWords: Array.isArray(d.plantedWords) ? d.plantedWords.filter(x => typeof x === 'string').map(x => x.toLowerCase().slice(0, 80)).slice(-3000) : []   // 種過的字（不能再種）
         };
     }
     function farmSave() { try { localStorage.setItem(FARM_KEY, JSON.stringify(farm)); } catch (e) {} }
@@ -8432,6 +8511,7 @@
             let m = String((e && e.message) || '');
             if (m.includes('insufficient')) farmToast('花不夠喔！');
             else if (m.includes('plant_limit')) farmToast('今天種的數量到上限了');
+            else if (m.includes('word_used')) farmToast('這個字已經種過了，換一個字吧');
             else if (!m.includes('not_ripe')) farmToast('雲端沒有存到，重新整理農場…');
             farmSync();
             return null;
@@ -8443,7 +8523,7 @@
             else if (document.getElementById('farmPlantView').classList.contains('active')) farmRenderPlant();
         } catch (e) {}
     }
-    function farmUnlocked() { return Math.min(FARM_MAX_PLOTS, FARM_START_PLOTS + Math.floor(farm.harvestTotal / FARM_UNLOCK_EVERY)); }
+    function farmUnlocked() { return FARM_START_PLOTS; }
     function farmPlantedToday() { return farm.plantedToday.date === farmToday() ? farm.plantedToday.count : 0; }
     function farmPlantLeft() { return Math.max(0, FARM_PLANT_PER_DAY - farmPlantedToday()); }
     function farmEmptyIndex() { for (let i = 0; i < farmUnlocked(); i++) if (!farm.plots[i]) return i; return -1; }
@@ -8451,7 +8531,11 @@
     function farmDueList() { return farm.plots.map((p, i) => ({ p, i })).filter(x => farmIsDue(x.p)); }
     // 下一個階段：新手速成的作物長葉後直接開花（跳過含苞）
     function farmNextStage(p) { return (p.fast && p.stage === 2) ? 4 : p.stage + 1; }
-    function farmPlantedWords() { return farm.plots.filter(Boolean).map(p => p.word.toLowerCase()); }
+    function farmPlantedWords() {          // 田裡現在的字＋以前種過的字（種過的字不能再種）
+        let out = farm.plots.filter(Boolean).map(p => p.word.toLowerCase());
+        (farm.plantedWords || []).forEach(w => { if (!out.includes(w)) out.push(w); });
+        return out;
+    }
 
     // ── 圖：全部是簡單的扁平插畫 ──
     function farmNuggetIcon(s) { return `<svg width="${s}" height="${s}" viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="20" rx="18" ry="16" fill="#F2A43A"/><ellipse cx="20" cy="20" rx="11" ry="8.5" fill="#F7C46B"/></svg>`; }
@@ -8600,21 +8684,24 @@
         let kw = wrap.clientWidth / 390 || 1, k = kw;
         let r = wrap.getBoundingClientRect(), sc = r.width / (wrap.clientWidth || 1) || 1;     // 電腦版整個畫面有放大
         let avail = (advViewportH() - (r.top + window.scrollY) - 10) / sc;
+        // 手機：畫面比農場高時，把多出來的高度分給各排之間的間距（房子↔田、田↔圍籬、圍籬↔信箱那排、最下面），整頁填滿但不超出畫面
+        let extra = 0;
+        if (window.innerWidth < 769) extra = Math.max(0, Math.min(360, Math.floor(avail / kw - 660 - 8)));
+        let g = [0.14, 0.26, 0.24, 0.22], acc = 0, fy = g.map(x => (acc += x * extra));   // 剩下 14% 留在最下面
+        ['--fy1', '--fy2', '--fy3', '--fy4'].forEach((v, i) => st.style.setProperty(v, fy[i].toFixed(1) + 'px'));
+        st.style.setProperty('--fh', extra + 'px');
         if (avail > 200 && st.offsetHeight * kw > avail) k = Math.max(kw * 0.78, avail / st.offsetHeight);
         let left = (wrap.clientWidth - 390 * k) / 2;
         st.style.transform = `translate(${left.toFixed(1)}px, 0) scale(${k})`;
         wrap.style.height = Math.ceil(st.offsetHeight * k) + 'px';
-        let py = 268 * k;
+        let py = (268 + fy[0]) * k;
         wrap.style.background = `linear-gradient(#FFE6C4 0, #FFE6C4 ${py.toFixed(0)}px, #B9CF7C ${py.toFixed(0)}px)`;   // 兩邊空白跟背景同色
     }
     window.addEventListener('resize', () => { try { if (document.getElementById('farmView').classList.contains('active')) farmFit(); } catch (e) {} });
     function farmSecLeft(p) { return Math.max(0, Math.ceil((p.readyAt - farmNow()) / 1000)); }
     function farmPlotHTML(p, i) {
         let unlocked = i < farmUnlocked();
-        if (!unlocked) {
-            let first = i === farmUnlocked();
-            return `<div class="fm-plot locked">${farmLockIcon(30)}${first ? `<small>收成 ${FARM_UNLOCK_EVERY} 株</small>` : ''}</div>`;
-        }
+        if (!unlocked && !p) return `<div class="fm-plot locked">${farmLockIcon(30)}</div>`;   // 舊版解鎖的田上還有作物：照常顯示，收成後就鎖起來
         if (!p) return `<button type="button" class="fm-plot empty" data-on-click='[["farmTapPlot",[${i}]]]'><span class="fm-empty">＋</span></button>`;
         let due = farmIsDue(p), ripe = p.stage >= 4;
         let badge = ripe ? '<span class="fm-ripe">收成</span>' : due ? `<span class="fm-drop">${farmDropIcon(18)}</span>` : `<span class="fm-wait">${farmSecLeft(p)} 秒</span>`;
@@ -8636,7 +8723,7 @@
             <div class="fm-head${ed ? ' ed' : ''}">
                 ${ed ? `<b class="fm-title">布置模式</b><button type="button" class="fm-done" data-on-click='[["farmEditDone",[]]]'>完成</button>`
                      : `<button type="button" class="fm-sq" aria-label="返回" data-on-click='[["farmBack",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E2650" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg></button><b class="fm-title">雞塊農場</b><button type="button" class="fm-sq" aria-label="布置農場" data-on-click='[["farmEditStart",[]]]'>${farmPencilIcon(22)}</button>`}
-                <span class="fm-pills"><span class="fm-pill">${farmNuggetIcon(22)}<b>${(typeof wallet !== 'undefined' && wallet.balance != null) ? wallet.balance : 0}</b></span><button type="button" class="fm-pill" aria-label="花店" data-on-click='[["farmOpenShop",[]]]'>${farmFlowerIcon(22)}<b id="farmFlowerN">${farm.flowers}</b></button></span>
+                <span class="fm-pills"><button type="button" class="fm-pill" aria-label="花店" data-on-click='[["farmOpenShop",[]]]'>${farmFlowerIcon(22)}<b id="farmFlowerN">${farm.flowers}</b></button></span>
             </div>
             ${ed ? `<div class="fm-tip">點虛線框選擇要換的裝飾</div>`
                  : (due ? `<div class="fm-remind">${farmCanSVG(36)}<span class="fm-remind-tx"><b>今天有 ${due} 株等你澆水</b><small>大約 1 分鐘・不計時</small></span><button type="button" class="fm-go" data-on-click='[["farmStartWater",[]]]'>去澆水</button></div>`
@@ -8679,7 +8766,6 @@
     async function farmHarvest(i) {
         let p = farm.plots[i];
         if (!p || p.stage < 4) return;
-        let before = farmUnlocked();
         if (farmSrv === true) {               // 後台確認真的開花了才給花
             let res = await farmCall('harvest', { index: i });
             if (!res) return;
@@ -8691,7 +8777,7 @@
         }
         try { triggerTaskCheck('farm_care'); } catch (e) {}        // 每日任務：在農場收成
         farmRender();
-        farmToast(farmUnlocked() > before ? `🌸 收成 1 朵花！累積 ${farm.harvestTotal} 株，解鎖新的田地了！` : `🌸 收成「${p.word}」，得到 1 朵花！`);
+        farmToast(`🌸 收成「${p.word}」，得到 1 朵花！`);
     }
 
     // ── 花店：用花買大冒險戰鬥中可以用的道具（一場戰鬥每種限用 1 次）──
@@ -8745,7 +8831,7 @@
             <div class="fm-sheet-head"><button type="button" class="fm-x" aria-label="關閉" data-on-click='[["farmCloseSheet",[]]]'><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg></button><b>換${FARM_SLOT_NAMES[s]}</b><span>花 ${farm.flowers} 朵</span></div>
             <div class="fm-opts">${items.map(it => {
                 let own = farm.ownedDecor.includes(it.id), on = farm.equippedDecor[s] === it.id;
-                return `<button type="button" class="fm-opt${on ? ' on' : ''}" data-on-click='[["farmChooseDecor",["${it.id}"]]]'><span class="fm-opt-art">${farmDecorThumb(it)}</span><b>${it.name}</b><small>${on ? '使用中' : own ? '點一下換上' : `${farmLockIcon(12, '#8A8378')} ${it.price} 朵花`}</small></button>`;
+                return `<button type="button" class="fm-opt${on ? ' on' : ''}" data-on-click='[["farmChooseDecor",["${it.id}"]]]'><span class="fm-opt-art">${farmDecorThumb(it)}</span><b>${it.name}</b>${on ? '<small>使用中</small>' : own ? '' : `<small>${farmLockIcon(12, '#8A8378')} ${it.price} 朵花</small>`}</button>`;
             }).join('')}</div></div>`;
     }
     function farmChooseDecor(id) {
@@ -8834,12 +8920,15 @@
     function farmPlantNow() {
         let w = farmLearnWord, i = farmEmptyIndex();
         if (!w || i < 0 || farmPlantLeft() <= 0) { farmLearnWord = null; goToFarmPage(); return; }
+        if (farmPlantedWords().includes(String(w.english).toLowerCase())) { farmToast('這個字已經種過了，換一個字吧'); farmLearnWord = null; farmRenderPlant(); return; }
         let fast = farm.fastTrackUsed < FARM_FAST_N;
         let plot = { word: w.english, cn: w.chinese || '', pos: w.pos || '', line: w.rawLine || w.line || '', lang: getLearningLanguage() === 'ko' ? 'ko' : 'en', stage: 0, readyAt: farmNow() + FARM_STEP_MS, wrong: 0, fast };
         farm.plots[i] = plot;
         if (fast) farm.fastTrackUsed += 1;
         let today = farmToday();
         farm.plantedToday = { date: today, count: farmPlantedToday() + 1 };
+        if (!farm.plantedWords) farm.plantedWords = [];
+        farm.plantedWords.push(String(w.english).toLowerCase());
         farmSave();
         if (farmSrv === true) farmCall('plant', Object.assign({ index: i, day: today }, plot)).then(() => farmRefresh());
         farmLearnWord = null;
