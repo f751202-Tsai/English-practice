@@ -2352,7 +2352,7 @@
         grid.classList.toggle('seg-pack', cur === 'pack');
         grid.classList.toggle('seg-custom', cur === 'custom');
         let shown = rows.filter(r => r.dataset.kind === cur), lastRow = shown.length - (shown.length % 2 ? 1 : 2);
-        shown.forEach((r, i) => { r.classList.toggle('pk-first', i === 0); r.classList.toggle('pk-odd', i % 2 === 0); r.classList.toggle('pk-bb', i < lastRow); r.classList.toggle('cp-l', i % 2 === 0 && i < shown.length - 1); });
+        shown.forEach((r, i) => { r.classList.toggle('pk-first', i === 0); r.classList.toggle('pk-odd', i % 2 === 0); r.classList.toggle('pk-bb', i < lastRow); r.classList.toggle('cp-l', i % 2 === 0 && i < shown.length - 1); r.classList.toggle('cp-last1', i === shown.length - 1); r.classList.toggle('cp-last2', i >= lastRow); });
         let seg = document.querySelector(`[data-grid="${gid}"]`);
         let badge = n => n ? `<em>已選 ${n}</em>` : '';
         if (seg && seg.classList.contains('cp-tabs')) {
