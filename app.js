@@ -1386,17 +1386,40 @@
 
     function getSelectedVoiceForLearning() {
         let lang = getLearningLanguage();
-        let langCode = (lang === 'ko') ? 'ko-KR' : 'en-US';
-        if (voices.length === 0) voices = synth.getVoices();
-        let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
-        return standardVoice || null;
-    }    
-
-    function getSelectedVoice(langCode) {
-        if (voices.length === 0) voices = synth.getVoices();
-        let standardVoice = voices.find(v => v.lang === langCode || v.lang.replace('_','-') === langCode || v.lang.toLowerCase() === langCode.toLowerCase());
-        return standardVoice || null;
+        return getSelectedVoice((lang === 'ko') ? 'ko-KR' : 'en-US');
     }
+
+    // iPhone / iPad（含 iPadOS 偽裝成 Mac 的情況）
+    const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    // iOS 會列出一堆「搞笑音效」聲音，也會列出還沒下載的高品質聲音；指定到這些聲音會整句沒聲音
+    const NOVELTY_VOICES = /albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|deranged|hysterical|pipe organ|eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley/i;
+    function getSelectedVoice(langCode) {
+        // iOS：不要指定聲音，只設定 utterance.lang，讓系統用已安裝的預設聲音（最穩定）
+        if (IS_IOS) return null;
+        if (voices.length === 0) voices = synth.getVoices();
+        let lc = langCode.toLowerCase();
+        let list = voices.filter(v => v.lang && v.lang.replace('_', '-').toLowerCase() === lc && !NOVELTY_VOICES.test(v.name));
+        if (!list.length) return null;
+        return list.find(v => v.default) || list.find(v => v.localService) || list[0];
+    }
+
+    // iOS 第一次發音必須在使用者點擊當下發生；之後在計時器裡唸才會有聲音。
+    // 所以第一次碰觸畫面時，先唸一個聽不到的空句子把語音「解鎖」。
+    (function unlockSpeechOnFirstTouch() {
+        if (!window.speechSynthesis) return;
+        const h = () => {
+            document.removeEventListener('touchend', h, true);
+            document.removeEventListener('click', h, true);
+            try {
+                let u = new SpeechSynthesisUtterance(' ');
+                u.volume = 0;
+                window.speechSynthesis.speak(u);
+                window.speechSynthesis.resume();
+            } catch (e) {}
+        };
+        document.addEventListener('touchend', h, true);
+        document.addEventListener('click', h, true);
+    })();
 
     // ── 重新整理後自動重新連線 ──
     // Google 給的存取權杖只存在記憶體，重新整理就消失（也會在約 1 小時後過期）。
