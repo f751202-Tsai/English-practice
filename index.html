@@ -3235,8 +3235,10 @@ body.cp-tall .paper-card-container { min-height: calc(100vh - 32px) !important; 
 .cp-part[hidden] { display: none !important; }
 .cp .pk-empty { padding: 22px 16px; text-align: center; font-size: 14px; color: #8b8fb5; grid-column: 1 / -1; }
 /* 題庫列：沿用 App 原本的選取邏輯（.select-card.selected），外觀照設計稿 .cp-book */
-.cp-books .select-card.cp-book { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: -1.5px; padding: 12px 18px; border-bottom: 1.5px solid #e6e8f2; background: #ffffff; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.cp-books .select-card.cp-book { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 0; padding: 12px 18px; border-bottom: 1.5px solid #e6e8f2; background: #ffffff; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .cp-books .select-card.cp-book.selected { background: #f3f5fd; }
+/* 分隔線：每列都有底線，只有最後一列不畫（外框已經有線）。手機一欄看最後一個，電腦兩欄看最後一排 */
+.cp-books .select-card.cp-book.cp-last1 { border-bottom: none; }
 .cp-books .select-card.cp-book.selected .cp-book__check { visibility: visible; }
 .cp-books .cp-book__name { display: flex; align-items: center; gap: 6px; }
 .cp-books.seg-custom .select-card[data-kind="pack"], .cp-books.seg-pack .select-card[data-kind="custom"] { display: none !important; }
@@ -3251,6 +3253,7 @@ body.cp-tall .paper-card-container { min-height: calc(100vh - 32px) !important; 
   .app-view.cp.active { gap: 20px; } .app-view.cp.active.cp-playing { gap: 22px; }
   .cp-books .select-card.cp-book { padding: 14px 20px; }
   .cp-books .select-card.cp-book.cp-l { border-right: 1.5px solid #e6e8f2; }
+  .cp-books .select-card.cp-book.cp-last2 { border-bottom: none; }
   .cp-books .select-card.cp-book:hover { background: #fafbff; }
   .cp-books .select-card.cp-book.selected:hover { background: #f3f5fd; }
 }
