@@ -16,7 +16,13 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_-WzDzNfADAl83FBpt2OsOg_vUV1b80s';
 
     // 初始化 Supabase 客戶端
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // supabase 套件沒載到（網路慢／被擋，或舊版 iOS 看不懂新版套件）時不能讓整個 app 停掉：
+    // 沒有它只是雞塊錢包連不上，其他功能照常（之後呼叫到時會被 try/catch 接住）
+    let supabaseClient = null;
+    try {
+        if (window.supabase && window.supabase.createClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        else console.error('⚠️ supabase 套件沒有載入，雞塊錢包暫時無法使用');
+    } catch (e) { console.error('⚠️ supabase 初始化失敗:', e); }
     let tokenClient, accessToken = null, isCloudSyncActive = false;
     let myDeviceId = localStorage.getItem('dictation_device_id');
     if (!myDeviceId) {
@@ -1430,6 +1436,14 @@
 
     function armReconnectOnNextClick() {
         if (reconnectClickArmed) return;
+        // iPhone：手指按下的瞬間開 Google 視窗、改畫面文字，iPhone 會把這次點擊吃掉（按鈕沒反應），
+        // 所以 iPhone 只在設定裡按「重新連線」才連。
+        if (IS_IOS) {
+            reconnectClickArmed = false;
+            updateCloudStatusText('🔑 雲端連線已中斷，請到設定按「重新連線」');
+            return;
+        }
+        // 安卓／電腦：維持原本做法，點畫面任何地方就自動重新連線
         reconnectClickArmed = true;
         updateCloudStatusText('🔑 雲端連線已中斷，點一下畫面任何地方即可重新連線');
         const h = () => {
