@@ -14,7 +14,7 @@
         object-src 'none';
         base-uri 'self';
         form-action 'self'">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="icon" href="data:,">
     <!-- 引入 Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -747,10 +747,6 @@
         .exam-stats { margin-top: 13px; padding: 13px; background: #E0E7FF; border-radius: 8px; font-weight: 600; color: #3730A3; font-size: 13.5px; border: 1px solid #A5B4FC; }
         body.power-saving-mode .exam-stats { background: #2E3147 !important; color: #C7D2FE !important; }
 
-        #examArea { margin-top: 16px; padding: 20px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 14px; display: none; position: relative; z-index: 40; box-sizing: border-box; }
-        body.power-saving-mode #examArea { background: #1B1E27 !important; }
-        #examTimer { font-size: 16.5px; color: #EF4444; font-weight: 700; text-align: right; margin-top: 5px; }
-        #cardExamTimer { font-size: 13.5px; color: #EF4444; font-weight: 700; }
 
         .pos-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; background: #fff; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 12px; box-sizing: border-box; }
         body.power-saving-mode .pos-checkbox-group { background: #1B1E27 !important; }
@@ -1845,6 +1841,11 @@
         .adv-car-center b { font-size: 15.5px; margin-top: 4px; color: var(--text-main); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         body.power-saving-mode .adv-car-center b { color: #FFFFFF; }
         .adv-car-center .adv-eq-tag { position: absolute; top: 5px; right: 6px; }
+        .adv-rar-tag { position: absolute; top: 5px; left: 5px; font-size: 10px; font-weight: 800; color: #FFFFFF; border-radius: 7px; padding: 1px 5px; line-height: 1.4; white-space: nowrap; }
+        .adv-car-center .adv-eq-tag { font-size: 10px !important; padding: 1px 5px !important; border-radius: 7px !important; top: 5px !important; right: 5px !important; line-height: 1.4; }
+        .adv-move-card.adv-car-center { height: 94px !important; padding-top: 18px !important; }
+        .adv-rar-tag.rar-common { background: #94A3B8; } .adv-rar-tag.rar-rare { background: #B8860B; } .adv-rar-tag.rar-legend { background: #C026D3; }
+        .adv-md-mrow small.max { font-size: 12px; font-weight: 800; color: var(--primary); margin-left: 2px; }
         .adv-car-center.go-r { animation: advCarR .22s ease-out; }
         .adv-car-center.go-l { animation: advCarL .22s ease-out; }
         @keyframes advCarR { from { transform: translateX(28px); opacity: .3; } to { transform: none; opacity: 1; } }
@@ -2665,6 +2666,7 @@
 }
 .cp-card-back { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .cp-card-back__en { font-family: var(--cp-font-en); font-size: 20px; font-weight: 800; color: var(--cp-muted-2); }
+#fcCardEngBack { display: none !important; }   /* 字卡練習：中文那面不出現英文 */
 .cp-card-back__zh { font-size: 44px; font-weight: 900; line-height: 1.2; }
 .cp-hint {
   display: flex;
@@ -3239,6 +3241,13 @@ body.cp-tall .paper-card-container { min-height: calc(100vh - 32px) !important; 
 .cp-books .select-card.cp-book.selected { background: #f3f5fd; }
 /* 分隔線：每列都有底線，只有最後一列不畫（外框已經有線）。手機一欄看最後一個，電腦兩欄看最後一排 */
 .cp-books .select-card.cp-book.cp-last1 { border-bottom: none; }
+/* 省電模式：題庫清單維持原本的淺色（不被省電模式的深色卡片樣式影響） */
+body.power-saving-mode .cp-books .select-card.cp-book { background: #ffffff !important; color: var(--cp-ink, #1e1b4b) !important; border-color: #e6e8f2 !important; border-top: none !important; border-left: none !important; }
+body.power-saving-mode .cp-books .select-card.cp-book:not(.cp-l) { border-right: none !important; }
+body.power-saving-mode .cp-books .select-card.cp-book.cp-last1 { border-bottom: none !important; }
+body.power-saving-mode .cp-books .select-card.cp-book.selected { background: #f3f5fd !important; }
+body.power-saving-mode .cp-books .select-card.cp-book .select-card-title, body.power-saving-mode .cp-books .select-card.cp-book .cp-book__name { color: var(--cp-ink, #1e1b4b) !important; }
+@media (min-width: 960px) { body.power-saving-mode .cp-books .select-card.cp-book.cp-last2 { border-bottom: none !important; } }
 .cp-books .select-card.cp-book.selected .cp-book__check { visibility: visible; }
 .cp-books .cp-book__name { display: flex; align-items: center; gap: 6px; }
 .cp-books.seg-custom .select-card[data-kind="pack"], .cp-books.seg-pack .select-card[data-kind="custom"] { display: none !important; }
@@ -3379,7 +3388,219 @@ body.we-sub .app-view.we.active { gap: 10px; }
   .aq-start { max-width: 420px; height: 62px; gap: 12px; font-size: 20px; }
 }
 
-    </style>
+    
+/* ═════════ 雞塊大冒險・戰鬥結算畫面（chicky-result：result.css）═════════ */
+.cr-overlay, .fa-layer, .fa-sheet-wrap {
+  --cr-indigo:#4f46e5; --cr-indigo-2:#6366f1; --cr-indigo-dark:#3730a3;
+  --cr-ink:#1e1b4b; --cr-sub:#545a75; --cr-muted:#6b7090; --cr-faint:#8a8fb0;
+  --cr-bg:#eef1f7; --cr-card:#ffffff; --cr-soft:#eef0ff;
+  --cr-green-bg:#ecf8f0; --cr-green:#1f8a4c;
+  --cr-gold:#ffd34d; --cr-amber-bg:#fff7e8; --cr-amber-ink:#92400e; --cr-amber-num:#b45309;
+  --cr-red-bg:#fff1f2; --cr-red-line:#fbd5d8; --cr-red-ink:#9f1239;
+  --cr-font:'Noto Sans TC', system-ui, sans-serif; --cr-num-font:Nunito, sans-serif;
+}
+.cr-overlay{position:fixed;inset:0;z-index:1500;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--cr-bg);font-family:var(--cr-font);color:var(--cr-ink)}
+.cr-overlay[hidden]{display:none}
+body.cr-open{overflow:hidden}
+.cr-overlay *{box-sizing:border-box}
+.cr-overlay button{font-family:inherit}
+.cr-screen{width:100%;max-width:430px;min-height:100%;margin:0 auto;padding:16px;padding-top:max(16px, env(safe-area-inset-top));padding-bottom:max(16px, env(safe-area-inset-bottom));display:flex}
+.cr-card{position:relative;flex:1;display:flex;flex-direction:column;gap:14px;padding:22px 16px 18px;background:var(--cr-card);border-radius:26px;box-shadow:0 10px 30px rgba(30,27,75,.08);overflow:hidden}
+.cr-card::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:linear-gradient(90deg,var(--cr-indigo-2),var(--cr-indigo))}
+.cr-top{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px}
+.cr-back{width:48px;height:48px;border:none;border-radius:16px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,var(--cr-indigo-2),var(--cr-indigo));box-shadow:0 6px 14px rgba(79,70,229,.35);padding:0}
+.cr-pill{justify-self:center;padding:8px 16px;border-radius:999px;background:var(--cr-soft);color:var(--cr-indigo);font-weight:900;font-size:15px;white-space:nowrap}
+.cr-hero{position:relative;overflow:hidden;border-radius:22px;padding:30px 16px 26px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.cr-hero > *:not(.cr-hero__fx){position:relative}
+.cr-hero__fx{position:absolute;inset:0;width:100%;height:100%}
+.cr-hero__title{margin:0;font-size:34px;font-weight:900;letter-spacing:3px;line-height:1.2;color:var(--cr-gold);text-shadow:0 3px 0 rgba(30,27,75,.35)}
+.cr-hero__sub{margin:0;font-size:13px;font-weight:700;color:#fff;opacity:.9}
+.cr-enemy{width:136px;height:136px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+.cr-enemy__art{width:104px;height:104px;display:flex;align-items:center;justify-content:center}
+.cr-enemy__art svg{width:100%;height:100%}
+.cr-enemy__badge{position:absolute;right:-6px;bottom:2px;padding:3px 9px;border-radius:999px;background:#22a06b;color:#fff;font-size:12px;font-weight:900;box-shadow:0 0 0 3px var(--cr-indigo)}
+.cr-hero--win{background:linear-gradient(135deg,var(--cr-indigo-2),var(--cr-indigo))}
+.cr-hero--lose{background:linear-gradient(135deg,#8a8db8,#64679a)}
+.cr-hero--lose .cr-hero__title{color:#fff}
+.cr-hero--first{padding:22px 16px;gap:10px;background:radial-gradient(120% 80% at 50% 38%,#8b7dff 0%,#5b50ef 45%,#4338ca 100%)}
+.cr-hero--first .cr-hero__title{font-size:42px;letter-spacing:4px;line-height:1.1;text-shadow:0 3px 0 #b45309,0 6px 14px rgba(30,27,75,.45)}
+.cr-hero--first .cr-enemy{background:rgba(255,255,255,.2);box-shadow:0 0 0 6px rgba(255,211,77,.35)}
+.cr-ribbon{margin-top:-2px;display:flex;align-items:center}
+.cr-ribbon span{height:32px;padding:0 18px;display:flex;align-items:center;background:linear-gradient(180deg,#fde68a,#fbbf24);color:#78350f;font-size:15px;font-weight:900;letter-spacing:2px;box-shadow:0 3px 0 #b45309}
+.cr-ribbon::before,.cr-ribbon::after{content:"";width:20px;height:24px;margin-top:8px;background:#d97706}
+.cr-ribbon::before{margin-right:-4px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,35% 50%)}
+.cr-ribbon::after{margin-left:-4px;clip-path:polygon(0 0,100% 0,65% 50%,100% 100%,0 100%)}
+.cr-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cr-stat{border-radius:16px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px}
+.cr-stat--score{background:var(--cr-soft)}
+.cr-stat--hp{background:var(--cr-green-bg)}
+.cr-stat__label{font-size:12px;font-weight:700;color:var(--cr-sub)}
+.cr-num{font-family:var(--cr-num-font);font-weight:900;font-size:24px;line-height:1.1;color:var(--cr-indigo)}
+.cr-num small{font-size:15px;color:var(--cr-muted)}
+.cr-num--hp{font-size:15px;color:var(--cr-green)}
+.cr-num--hp small{font-size:12px}
+.cr-num--hp.is-empty{color:#9a9db5}
+.cr-hpbar{width:100%;height:10px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1.5px #c8ead4;overflow:hidden}
+.cr-hpbar i{display:block;width:var(--hp);height:100%;border-radius:999px;background:linear-gradient(180deg,#34d27b,#1fae5c)}
+.cr-reward{border-radius:18px;background:var(--cr-amber-bg);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cr-reward__head{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.cr-reward__label{font-size:13px;font-weight:700;color:var(--cr-sub)}
+.cr-reward__items{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:4px 12px}
+.cr-item{display:flex;align-items:center;gap:2px}
+.cr-item svg{vertical-align:middle!important}
+.cr-item b{font-family:var(--cr-num-font);font-size:17px;font-weight:900;color:var(--cr-amber-num)}
+.cr-emo{font-size:21px;line-height:1;display:inline-flex}
+.cr-none{font-size:13px;font-weight:700;color:var(--cr-faint)}
+.cr-tag{padding:2px 9px;border-radius:999px;font-size:12px;font-weight:900;white-space:nowrap}
+.cr-tag--first{background:#fbbf24;color:#78350f}
+.cr-tag--today{background:#fff;border:1px solid #fcd9a6;color:var(--cr-amber-ink)}
+.cr-miss{border-radius:18px;background:var(--cr-red-bg);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.cr-miss__label{font-size:13px;font-weight:900;color:var(--cr-red-ink)}
+.cr-miss__words{display:flex;flex-wrap:wrap;gap:6px}
+.cr-word{padding:6px 10px;border-radius:10px;background:#fff;border:1.5px solid var(--cr-red-line);font-size:14px;font-weight:700;color:var(--cr-muted);white-space:nowrap}
+.cr-word b{font-family:var(--cr-num-font);font-weight:900;color:var(--cr-ink)}
+.cr-notes{display:flex;flex-direction:column;gap:4px;margin-top:-4px}
+.cr-notes span{font-size:12.5px;font-weight:700;color:var(--cr-sub);text-align:center}
+.cr-actions{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.cr-btn{border:none;cursor:pointer;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;font-family:var(--cr-font)}
+.cr-btn--primary{height:58px;border-radius:18px;font-size:18px;color:#fff;background:linear-gradient(135deg,var(--cr-indigo-2),var(--cr-indigo));box-shadow:0 6px 0 var(--cr-indigo-dark),0 10px 20px rgba(79,70,229,.3)}
+.cr-btn--primary:active{transform:translateY(4px);box-shadow:0 2px 0 var(--cr-indigo-dark)}
+.cr-btn--secondary{min-height:54px;border-radius:16px;font-size:16px;color:var(--cr-indigo);background:var(--cr-soft)}
+.cr-btn--secondary small{font-size:11px;font-weight:700;color:var(--cr-faint)}
+.cr-review__pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* 電腦版：卡片置中，不拉滿整個畫面高度 */
+@media (min-width: 769px){ .cr-screen{min-height:0;padding-top:40px;padding-bottom:40px} }
+
+/* ═════════ 首勝插旗動畫（chicky-result：flag-animation.css，疊在原本的夜市地圖上）═════════ */
+.fa-layer{position:absolute;inset:0;pointer-events:none;z-index:5}
+.fa-pathlayer{position:absolute;inset:0;pointer-events:none}
+.fa-pathsvg{position:absolute;inset:0;width:100%;height:100%}
+.fa-path{stroke-dasharray:var(--fa-len);stroke-dashoffset:var(--fa-len);opacity:.95}
+.fa-flag,.fa-lock,.fa-burst{position:absolute}
+.fa-flag{transform:translate(-8px,-100%);margin-left:14px;margin-top:-10px;opacity:0}
+.fa-burst{width:0;height:0}
+.fa-burst i{position:absolute;width:10px;height:10px;border-radius:3px;transform:rotate(45deg);opacity:0}
+.fa-lock{transform:translate(-50%,-50%);transform-origin:50% 20%}
+.fa-skip{position:absolute;left:0;right:0;bottom:12px;text-align:center;color:rgba(255,255,255,.8);font-size:13px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.adv-node.fa-hold{animation:none}
+.adv-node.fa-pop{animation:fa-node-pop .45s both}
+.fa-layer.is-run .fa-flag{animation:fa-drop .7s .5s cubic-bezier(.3,.7,.4,1) both}
+.fa-layer.is-run .fa-burst i{animation:fa-burst .8s 1.1s ease-out both}
+.fa-pathlayer.is-run .fa-path{animation:fa-path .9s 1.6s ease-in-out both}
+.fa-layer.is-run .fa-lock{animation:fa-lock .95s 2.4s both}
+.fa-layer.is-run .fa-skip{animation:fa-out .3s 3.8s both}
+.fa-layer.is-done .fa-flag{opacity:1}
+.fa-pathlayer.is-done .fa-path{stroke-dashoffset:0}
+.fa-layer.is-done .fa-lock,.fa-layer.is-done .fa-skip,.fa-layer.is-done .fa-burst{display:none}
+@keyframes fa-drop{0%{transform:translate(-8px,calc(-100% - 110px));opacity:0}20%{opacity:1}75%{transform:translate(-8px,calc(-100% + 6px));opacity:1}100%{transform:translate(-8px,-100%);opacity:1}}
+@keyframes fa-burst{0%{opacity:0;transform:rotate(45deg) scale(.3)}20%{opacity:1}100%{opacity:0;transform:rotate(45deg) scale(1.5)}}
+@keyframes fa-path{from{stroke-dashoffset:var(--fa-len)}to{stroke-dashoffset:0}}
+@keyframes fa-lock{0%{transform:translate(-50%,-50%) rotate(0);opacity:1}10%{transform:translate(-50%,-50%) rotate(-16deg)}25%{transform:translate(-50%,-50%) rotate(14deg)}40%{transform:translate(-50%,-50%) rotate(-10deg)}60%{transform:translate(-50%,-50%) rotate(0);opacity:1}100%{transform:translate(calc(-50% + 10px),calc(-50% - 46px)) rotate(30deg);opacity:0}}
+@keyframes fa-out{from{opacity:1}to{opacity:0}}
+@keyframes fa-node-pop{0%{transform:translate(-50%,-50%) scale(.8)}60%{transform:translate(-50%,-50%) scale(1.15)}100%{transform:translate(-50%,-50%) scale(1)}}
+@media (prefers-reduced-motion: reduce){ .fa-layer *, .fa-pathlayer *, .adv-node.fa-pop{animation:none!important} }
+/* 下一關卡片：從下面滑上來 */
+.fa-sheet-wrap{position:fixed;inset:0;z-index:1400;font-family:var(--cr-font);color:var(--cr-ink)}
+.fa-sheet-bg{position:absolute;inset:0;background:rgba(14,10,36,.35);animation:fa-out .3s reverse both}
+.fa-sheet{position:absolute;left:50%;bottom:0;width:100%;max-width:480px;transform:translateX(-50%);display:flex;flex-direction:column;gap:12px;padding:10px 16px 22px;padding-bottom:max(22px, env(safe-area-inset-bottom));background:#fff;border-radius:26px 26px 0 0;box-shadow:0 -10px 30px rgba(14,10,36,.35);animation:fa-sheet .6s cubic-bezier(.2,.9,.3,1.1) both;box-sizing:border-box}
+.fa-sheet__handle{align-self:center;width:40px;height:5px;border-radius:999px;background:#dfe1ec}
+.fa-sheet__head{display:flex;align-items:center;gap:14px}
+.fa-sheet__avatar{flex:none;width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--cr-indigo-2),var(--cr-indigo))}
+.fa-sheet__avatar svg{width:66px;height:66px}
+.fa-sheet__info{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fa-sheet__meta{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--cr-muted)}
+.fa-sheet__new{padding:2px 8px;border-radius:999px;background:#fbbf24;color:#78350f;font-size:11px;font-weight:900}
+.fa-sheet__name{font-size:26px;font-weight:900;letter-spacing:2px;color:var(--cr-ink)}
+.fa-sheet__desc{font-size:13px;font-weight:700;color:var(--cr-sub)}
+.fa-sheet__reward{border-radius:16px;background:var(--cr-amber-bg);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fa-sheet__rlabel{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--cr-sub);white-space:nowrap}
+.fa-sheet__rlabel .cr-tag{font-size:11px}
+.fa-sheet__items{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:4px 10px}
+.fa-sheet__items .cr-item b{font-size:15px;font-family:var(--cr-num-font);font-weight:900;color:var(--cr-amber-num)}
+@keyframes fa-sheet{0%{transform:translate(-50%,110%)}80%{transform:translate(-50%,-6px)}100%{transform:translate(-50%,0)}}
+
+/* ═════════ 聽力測驗／字卡測驗（chicky-quiz：quiz.css，沿用練習頁的 cp- 樣式）═════════ */
+:root { --qz-warn-bg: #fff7e8; --qz-warn-line: #fde3b5; --qz-warn: #b45309; --qz-danger-bg: #fff1f2; --qz-danger-line: #fecdd3; --qz-danger: #e11d48; --qz-ph: #9a9eb8; }
+#examArea.qz, .app-view.qz.active { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+#examArea.qz[style*="none"] { display: none !important; }
+/* 手機：作答中整張白卡＝可見高度（鍵盤打開會變矮），送出按鈕貼在最下面 */
+@media (max-width: 959px) {
+  body.qz-on { padding: 10px 12px !important; }
+  body.qz-on .paper-card-container { height: calc(var(--we-vh, 100dvh) - 20px) !important; min-height: 0 !important; padding: 16px 14px 12px !important; border-radius: 22px !important; }
+  body.qz-on .paper-card-container::before { height: 5px !important; }
+  body.qz-on .app-view.cp.active { gap: 10px; }
+  body.qz-on .cp-header { grid-template-columns: 42px minmax(0, 1fr) 42px; }
+  body.qz-on .cp-back, body.qz-on .cp-settings { width: 42px; height: 42px; border-radius: 14px; }
+  .qz .cp-progress__book { display: none; }
+  .qz .cp-progress { flex-direction: row-reverse; align-items: center; gap: 10px; }
+  .qz .cp-progress .cp-track { flex: 1; height: 6px; }
+  .qz .cp-count { font-size: 14px; }
+}
+.qz-card { flex: none; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; height: 64px; padding: 0 12px 0 10px; border: 1.5px solid var(--cp-line); border-radius: 18px; background: var(--cp-panel); box-sizing: border-box; }
+.qz-status { grid-column: 2; grid-row: 1; justify-self: start; border: none; background: none; padding: 0; font-weight: 900; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.qz-status.is-ok { color: #16a34a !important; }
+.qz-status.is-bad { color: var(--qz-danger) !important; }
+.qz-timer { grid-column: 3; grid-row: 1; display: flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--qz-warn-line); background: var(--qz-warn-bg); color: var(--qz-warn); font-size: 13px; font-weight: 900; white-space: nowrap; }
+.qz-timer b { font-family: var(--cp-font-en); font-size: 15px; }
+.qz-timer.is-danger { border-color: var(--qz-danger-line); background: var(--qz-danger-bg); color: var(--qz-danger); }
+.qz-visual { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; align-items: center; gap: 14px; min-width: 0; }
+.qz-ear { width: 42px; height: 42px; border-radius: 50%; background: var(--cp-primary-soft); color: var(--cp-primary); display: flex; align-items: center; justify-content: center; }
+.qz-ear svg { width: 22px; height: 22px; }
+.qz-bars { display: none; }
+.qz-word { padding-left: 6px; font-family: var(--cp-font-en); font-size: 28px; font-weight: 900; white-space: nowrap; color: var(--cp-ink); max-width: 100%; overflow: hidden; }
+.qz--flash .qz-status { display: none; }
+.qz--flash .qz-status.is-ok, .qz--flash .qz-status.is-bad { display: block; grid-column: 1 / 3; grid-row: 1; justify-self: end; z-index: 1; background: var(--cp-panel); padding-left: 8px; }
+.qz--flash .qz-visual { grid-column: 1 / 3; align-items: flex-start; }
+.qz-form { display: flex; flex-direction: column; gap: 10px; }
+.qz-field { display: flex; flex-direction: column; gap: 6px; }
+.qz-label { font-size: 13px; font-weight: 700; color: var(--cp-muted); margin: 0 !important; }
+.qz-label small { margin-left: 6px; font-size: 12px; color: var(--qz-ph); }
+.qz-row { display: flex; gap: 8px; align-items: flex-start; }
+.qz-chis { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.qz .qz-input, body.power-saving-mode .qz .qz-input { flex: 1; width: 100%; min-width: 0; height: 48px !important; min-height: 48px; padding: 0 16px !important; margin: 0 !important; box-sizing: border-box; border: 1.5px solid var(--cp-line-2) !important; border-radius: 14px !important; background: var(--cp-card) !important; font: 700 16px var(--cp-font) !important; color: var(--cp-ink) !important; outline: none; box-shadow: none; }
+.qz .qz-input::placeholder { color: var(--qz-ph); font-weight: 500; }
+.qz .qz-input:focus { border-color: var(--cp-primary-2) !important; box-shadow: 0 0 0 4px #e8e9ff; }
+.qz .qz-mic, body.power-saving-mode .qz .qz-mic { flex: none; width: 48px; height: 48px; min-height: 48px; border: none; border-radius: 14px; background: var(--cp-primary-soft); color: var(--cp-primary) !important; display: flex; align-items: center; justify-content: center; padding: 0; }
+.qz .qz-mic.recording { background: #F43F5E; color: #FFFFFF !important; }
+.qz .chi-input-tip { margin-top: 0; }
+.qz-pos { display: flex; flex-wrap: wrap; gap: 6px; }
+.qz-pos button { display: flex; align-items: center; gap: 4px; height: 34px; padding: 0 11px; border: 1.5px solid var(--cp-line-2); border-radius: 999px; background: var(--cp-card); color: var(--cp-muted) !important; font: 700 14px var(--cp-font); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.qz-pos button svg { display: none; }
+.qz-pos button[aria-pressed="true"] { border-color: #a5a8f5; background: var(--cp-primary-soft); color: var(--cp-primary-text) !important; font-weight: 900; }
+.qz-pos button[aria-pressed="true"] svg { display: block; }
+.qz-pos.is-remind { animation: qz-shake 0.4s; }
+@keyframes qz-shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.qz-submit { margin-top: auto; flex: none; height: 48px; width: 100%; border: none; border-radius: 16px; background: linear-gradient(135deg, var(--cp-primary-2), var(--cp-primary)); box-shadow: 0 4px 0 var(--cp-primary-dark); color: #fff !important; font: 900 16px var(--cp-font); display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
+.qz-submit:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--cp-primary-dark); }
+.qz-kbd { display: none; }
+body.power-saving-mode #examArea, body.power-saving-mode #cardExamPlayView { background: transparent !important; color: var(--cp-ink) !important; border: none !important; }
+@media (min-width: 960px) {
+  .qz .cp-progress__book { display: flex; font-size: 14px; }
+  .qz-card { height: auto; min-height: 250px; padding: 22px 24px; border-radius: 24px; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr; gap: 12px; }
+  .qz-status { grid-column: 1; border: 1px solid var(--cp-primary-border); background: var(--cp-card); padding: 6px 14px; font-weight: 700; justify-self: start; }
+  .qz-timer { grid-column: 2; }
+  .qz-visual { grid-column: 1 / 3; grid-row: 2; align-self: center; }
+  .qz-ear { width: 112px; height: 112px; box-shadow: 0 0 0 10px rgba(99, 102, 241, 0.08); }
+  .qz-ear svg { width: 56px; height: 56px; }
+  .qz-bars { display: flex; align-items: center; gap: 4px; height: 38px; visibility: hidden; }
+  .qz-card.is-playing .qz-bars { visibility: visible; }
+  .qz-bars span { width: 5px; height: 100%; border-radius: 3px; background: var(--cp-primary-2); animation: cp-wave 0.9s ease-in-out infinite; }
+  .qz-bars span:nth-child(2n) { animation-delay: 0.2s; } .qz-bars span:nth-child(3n) { animation-delay: 0.4s; }
+  .qz--flash .qz-card { min-height: 220px; }
+  .qz--flash .qz-status, .qz--flash .qz-status.is-ok, .qz--flash .qz-status.is-bad { display: flex; grid-column: 1; justify-self: start; padding: 6px 14px; background: var(--cp-card); }
+  .qz--flash .qz-visual { grid-column: 1 / 3; align-items: center; }
+  .qz-word { padding: 0; font-size: 72px; }
+  .qz-form { gap: 16px; }
+  .qz-field { gap: 10px; }
+  .qz-label { font-size: 14px; }
+  .qz .qz-input, .qz .qz-mic { height: 54px !important; }
+  .qz .qz-mic { width: 54px; }
+  .qz-pos { gap: 8px; }
+  .qz-pos button { height: 36px; padding: 0 12px; }
+  .qz-submit { margin-top: 0; align-self: center; width: 420px; height: 56px; border-radius: 18px; font-size: 17px; box-shadow: 0 5px 0 var(--cp-primary-dark), 0 10px 20px rgba(79, 70, 229, 0.25); }
+  .qz-kbd { display: inline; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.22); font-family: var(--cp-font-en); font-size: 12px; font-weight: 800; }
+}
+</style>
 </head>
 <body>
 
@@ -3523,7 +3744,7 @@ body.we-sub .app-view.we.active { gap: 10px; }
                 <div class="hm-list">
                         <div class="list-item" data-on-click='[["goToExamPage",[]]]'>
                             <div class="item-icon-box">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path><path d="M9.5 11.5l1.8 1.8 3.4-3.6"></path></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path><g transform="translate(5.5 6.9) scale(0.55)" stroke-width="3.6"><path d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4z"></path><path d="M14.5 5.5l4 4"></path></g></svg>
                             </div>
                             <div class="item-content">
                                 <div class="item-title">聽力測驗</div>
@@ -3671,7 +3892,7 @@ body.we-sub .app-view.we.active { gap: 10px; }
                 <span class="cp-flip__back">
                     <span class="cp-chip">中文</span>
                     <span class="cp-card-back">
-                        <span class="cp-card-back__en" id="fcCardEngBack"></span>
+                        <span class="cp-card-back__en" id="fcCardEngBack" hidden></span>
                         <span class="cp-card-back__zh" id="fcCardChi"></span>
                         <span class="cp-meaning" id="fcCardPos"></span>
                     </span>
@@ -3745,55 +3966,41 @@ body.we-sub .app-view.we.active { gap: 10px; }
         </div>
 
         <!-- ================= 📋 字卡測驗：執行介面 ================= -->
-        <div id="cardExamPlayView" class="app-view">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <div class="progress-indicator" id="cardExamProgressText" style="font-size: 13.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 3px 12px; border-radius: 20px;">1 / 1 題</div>
-            </div>
-
-            <div class="progress-bar-container" style="margin-bottom: 8px; height: 5px;">
-                <div class="progress-bar-fill" id="cardExamProgressBar"></div>
-            </div>
-
-            <div class="flashcard-perspective" style="margin-bottom: 2px;">
-                <div class="flashcard" style="transform: none !important; transition: none !important; min-height: 120px;">
-                    <div class="card-face card-front" style="position: relative; transform: none !important; padding: 16px 16px;">
-                        <div class="card-english" id="cardExamCardEng">Introduce</div>
-                    </div>
+        <div id="cardExamPlayView" class="app-view cp qz qz--flash">
+            <header class="cp-header">
+                <button class="cp-back" type="button" aria-label="結束測驗" data-on-click='[["quitCardExam",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                <div class="cp-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span data-t-en="英文字卡測驗" data-t-ko="韓文字卡測驗">英文字卡測驗</span></div>
+                <button class="cp-settings" type="button" aria-label="測驗設定" data-on-click='[["openCardExamSettingsModal",[]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="15" cy="6" r="2" fill="#fff"/><circle cx="9" cy="12" r="2" fill="#fff"/><circle cx="15" cy="18" r="2" fill="#fff"/></svg></button>
+            </header>
+            <section class="cp-progress">
+                <div class="cp-progress__meta"><span class="cp-progress__book" id="cardExamBookName"></span><span class="cp-count" id="cardExamProgressText">1 <small>/ 1</small></span></div>
+                <div class="cp-track"><div class="cp-fill" id="cardExamProgressBar" style="width: 0%"></div></div>
+            </section>
+            <section class="qz-card" id="cardExamCard">
+                <span class="cp-chip qz-status" id="cardExamStatus" data-t-en="英文" data-t-ko="韓文">英文</span>
+                <span class="qz-timer" id="cardExamTimer" aria-live="off"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9.5 2.5h5"/></svg><b id="cardExamTimeLeft">0</b> 秒</span>
+                <div class="qz-visual"><span class="qz-word" id="cardExamCardEng"></span></div>
+            </section>
+            <div class="qz-form" autocomplete="off">
+                <!-- 詞性在上、中文在下：先點詞性，再打中文，按鍵盤「送出」；只列出這次題目有出現的詞性 -->
+                <div class="qz-field" id="cardExamPosField">
+                    <span class="qz-label" id="cardExamPosLabel">詞性<small>可複選</small></span>
+                    <div class="qz-pos" id="cardExamPosCheckboxGroup"></div>
+                </div>
+                <div class="qz-field">
+                    <label class="qz-label" for="cardExamInputChi">中文意思</label>
+                    <span class="qz-row">
+                        <span class="qz-chis">
+                            <input class="qz-input" type="text" id="cardExamInputChi" placeholder="輸入中文" autocomplete="off" enterkeyhint="send" data-on-keydown='[["handleChiKeyDown",["$event","card",0]]]'>
+                            <input class="qz-input" type="text" id="cardExamInputChi2" placeholder="意思 2" autocomplete="off" enterkeyhint="send" data-on-keydown='[["handleChiKeyDown",["$event","card",1]]]' style="display: none;">
+                            <input class="qz-input" type="text" id="cardExamInputChi3" placeholder="意思 3" autocomplete="off" enterkeyhint="send" data-on-keydown='[["handleChiKeyDown",["$event","card",2]]]' style="display: none;">
+                        </span>
+                        <button type="button" class="qz-mic voice-chi-btn" id="cardExamVoiceBtn" aria-label="用說的輸入中文" style="display: none;" data-on-click='[["voiceChiToggle",["cardExamInputChi"]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3.5M8.5 21.5h7"/></svg></button>
+                    </span>
+                    <div class="chi-input-tip" id="cardExamInputChiTip"></div>
                 </div>
             </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0px; margin-bottom: 4px;">
-                <label style="margin: 0;">請輸入中文意思：</label>
-                <div id="cardExamTimer">作答剩餘時間：<span id="cardExamTimeLeft">17</span> 秒</div>
-            </div>
-            
-            <div class="chi-input-row">
-                <input type="text" id="cardExamInputChi" placeholder="輸入中文..." autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",0]]]' style="padding: 8px 12px;">
-                <input type="text" id="cardExamInputChi2" placeholder="意思 2" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",1]]]' style="padding: 8px 12px; display: none;">
-                <input type="text" id="cardExamInputChi3" placeholder="意思 3" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","card",2]]]' style="padding: 8px 12px; display: none;">
-                <button type="button" class="voice-chi-btn" id="cardExamVoiceBtn" title="語音輸入中文" aria-label="語音輸入中文" style="display: none;" data-on-click='[["voiceChiToggle",["cardExamInputChi"]]]'><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
-            </div>
-            <div class="chi-input-tip" id="cardExamInputChiTip"></div>
-
-            <label style="margin-top: 6px; margin-bottom: 4px;" id="cardExamPosLabel">詞性選擇（此單字無詞性，略過）：</label>
-            <div class="pos-checkbox-group" id="cardExamPosCheckboxGroup" style="padding: 6px 12px;">
-                <label><input type="checkbox" value="動詞" class="card-exam-pos-chk"> 動詞</label>
-                <label><input type="checkbox" value="名詞" class="card-exam-pos-chk"> 名詞</label>
-                <label><input type="checkbox" value="形容詞" class="card-exam-pos-chk"> 形容詞</label>
-                <label><input type="checkbox" value="副詞" class="card-exam-pos-chk"> 副詞</label>
-                <label><input type="checkbox" value="連接詞" class="card-exam-pos-chk"> 連接詞</label>
-                <label><input type="checkbox" value="介係詞" class="card-exam-pos-chk"> 介係詞</label>
-                <label><input type="checkbox" value="片語" class="card-exam-pos-chk"> 片語</label>
-                <label><input type="checkbox" value="代名詞" class="card-exam-pos-chk"> 代名詞</label>
-                <label><input type="checkbox" value="感嘆詞" class="card-exam-pos-chk"> 感嘆詞</label>
-            </div>
-
-            <button class="action-btn-primary" id="cardExamSubmitBtn" data-on-click='[["submitCardExamAnswer",[]]]' style="margin-top: 10px; padding: 11px;">
-                送出答案 (Enter)
-            </button>
-            <button class="action-btn btn-stop" style="margin-top: 6px; width: 100%; padding: 11px;" data-on-click='[["finishCardExamSession",[]]]'>
-                ■ 結束並停止測驗
-            </button>
+            <button type="button" class="qz-submit" id="cardExamSubmitBtn" data-on-click='[["submitCardExamAnswer",[]]]'>送出答案<span class="qz-kbd">Enter</span></button>
         </div>
 
         <!-- ================= 🎤 朗讀練習：範圍與設定頁面 ================= -->
@@ -4115,25 +4322,39 @@ body.we-sub .app-view.we.active { gap: 10px; }
 
             <button class="cp-btn cp-btn--primary" type="button" id="startExamBtn" data-on-click='[["startExamMode",[]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>開始聽力測驗</button>
 
-            <div id="examArea" style="display: none; margin-top: 0;">
-                <h3 style="margin-top:0; color:var(--primary); font-size:16.5px;">✍️ 考試作答中</h3>
-                <div id="examProgressStatus" style="font-weight: 600; color: var(--primary); margin-bottom: 8px; font-size: 14.3px;">🎧 正在進行考試... 請聆聽並於下方作答</div>
-                <div id="examTimer">作答剩餘時間：<span id="timeLeft">0</span> 秒</div>
-                
-                <label data-t-en="請輸入聽到的英文：" data-t-ko="請輸入聽到的韓文：">請輸入聽到的英文：</label>
-                <input type="text" id="examInputEng" placeholder="輸入英文..." data-p-en="輸入英文..." data-p-ko="輸入韓文..." autocomplete="off" data-on-keydown='[["handleInputKeyDown",["$event","eng"]]]' disabled>
-                
-                <label style="margin-top: 10px;">請輸入中文意思：</label>
-                <div class="chi-input-row">
-                    <input type="text" id="examInputChi" placeholder="輸入中文..." autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",0]]]' disabled>
-                    <input type="text" id="examInputChi2" placeholder="意思 2" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",1]]]' style="display: none;" disabled>
-                    <input type="text" id="examInputChi3" placeholder="意思 3" autocomplete="off" data-on-keydown='[["handleChiKeyDown",["$event","exam",2]]]' style="display: none;" disabled>
-                    <button type="button" class="voice-chi-btn" id="examVoiceBtn" title="語音輸入中文" aria-label="語音輸入中文" style="display: none;" data-on-click='[["voiceChiToggle",["examInputChi"]]]'><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
+            <!-- 聽力測驗作答（chicky-quiz 版面：手機精簡版、送出貼在最下面；960px 以上是電腦版大卡片） -->
+            <div id="examArea" class="qz qz--listen" style="display: none;">
+                <section class="cp-progress">
+                    <div class="cp-progress__meta"><span class="cp-progress__book" id="examBookName"></span><span class="cp-count" id="examCount">1 <small>/ 1</small></span></div>
+                    <div class="cp-track"><div class="cp-fill" id="examFill" style="width: 0%"></div></div>
+                </section>
+                <section class="qz-card" id="examCard" aria-label="題目">
+                    <span class="cp-chip qz-status" id="examProgressStatus"></span>
+                    <span class="qz-timer" id="examTimer" aria-live="off"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9.5 2.5h5"/></svg><b id="timeLeft">0</b> 秒</span>
+                    <div class="qz-visual" aria-hidden="true">
+                        <span class="qz-ear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-2a9 9 0 0118 0v2"/><rect x="3" y="14" width="4" height="7" rx="1.5" fill="currentColor"/><rect x="17" y="14" width="4" height="7" rx="1.5" fill="currentColor"/></svg></span>
+                        <span class="qz-bars"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>
+                    </div>
+                </section>
+                <div class="qz-form" autocomplete="off">
+                    <label class="qz-field">
+                        <span class="qz-label" data-t-en="聽到的英文" data-t-ko="聽到的韓文">聽到的英文</span>
+                        <span class="qz-row"><input class="qz-input" type="text" id="examInputEng" placeholder="輸入英文…" data-p-en="輸入英文…" data-p-ko="輸入韓文…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" data-on-keydown='[["handleInputKeyDown",["$event","eng"]]]'></span>
+                    </label>
+                    <div class="qz-field">
+                        <label class="qz-label" for="examInputChi">中文意思</label>
+                        <span class="qz-row">
+                            <span class="qz-chis">
+                                <input class="qz-input" type="text" id="examInputChi" placeholder="輸入中文" autocomplete="off" enterkeyhint="send" data-on-keydown='[["handleChiKeyDown",["$event","exam",0]]]'>
+                                <input class="qz-input" type="text" id="examInputChi2" placeholder="意思 2" autocomplete="off" enterkeyhint="send" data-on-keydown='[["handleChiKeyDown",["$event","exam",1]]]' style="display: none;">
+                                <input class="qz-input" type="text" id="examInputChi3" placeholder="意思 3" autocomplete="off" enterkeyhint="send" data-on-keydown='[["handleChiKeyDown",["$event","exam",2]]]' style="display: none;">
+                            </span>
+                            <button type="button" class="qz-mic voice-chi-btn" id="examVoiceBtn" aria-label="用說的輸入中文" style="display: none;" data-on-click='[["voiceChiToggle",["examInputChi"]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3.5M8.5 21.5h7"/></svg></button>
+                        </span>
+                        <div class="chi-input-tip" id="examInputChiTip"></div>
+                    </div>
                 </div>
-                <div class="chi-input-tip" id="examInputChiTip"></div>
-
-                <button id="examSubmitBtn" class="action-btn btn-start" style="margin-top: 20px; width: 100%;" data-on-click='[["submitExamAnswer",[]]]' disabled>送出答案 (Enter)</button>
-                <button class="action-btn btn-stop" style="margin-top: 10px; width: 100%;" data-on-click='[["finishExam",[]]]'>⏹ 結束並停止考試</button>
+                <button type="button" class="qz-submit" id="examSubmitBtn" data-on-click='[["submitExamAnswer",[]]]'>送出答案<span class="qz-kbd">Enter</span></button>
             </div>
 
             <div id="resultContainer" style="display: none;"></div>
@@ -4441,14 +4662,6 @@ body.we-sub .app-view.we.active { gap: 10px; }
         <div class="gsec" id="cloudSettingsBox"><button id="cloudAuthBtn" class="gbtn" data-on-click='[["handleAuthClick",[]]]'>登入 Google 雲端</button></div>
         
         <div class="config-group" style="margin-top: 12px;">
-            <label for="systemVolume" style="margin-top:0;">🔊 音量調整：</label>
-            <div class="slider-container">
-                <input type="range" id="systemVolume" min="0" max="100" value="100" data-on-input='[["updateVolumeDisplay",[]],["saveSystemSettings",[]],["updateSliderProgress",["$this"]]]' class="range-slider">
-                <span id="volumeValue" class="speed-val">100%</span>
-            </div>
-        </div>
-
-        <div class="config-group" style="margin-top: 12px;">
             <label for="learningLanguage" style="margin-top:0;">🌐 學習語言：</label>
             <select id="learningLanguage" data-on-change='[["onLearningLanguageChange",[]]]' style="margin-top: 4px;">
                 <option value="en" selected>英文 (English)</option>
@@ -4474,14 +4687,6 @@ body.we-sub .app-view.we.active { gap: 10px; }
                 <input type="checkbox" id="powerSavingToggle" data-on-change='[["togglePowerSavingMode",[]]]'>
                 <span class="slider-toggle"></span>
             </label>
-        </div>
-
-        <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
-            <div>
-                <label style="margin-top:0;">🔄 載入初始設定</label>
-                <span style="font-size: 12.5px; color: var(--text-muted);">一鍵重設所有資料</span>
-            </div>
-            <button class="cloud-btn" style="background: var(--primary-gradient);" data-on-click='[["loadInitialSettings",[]]]'>重設</button>
         </div>
 
         <!-- 💬 連絡我們區塊 (改為紫色主題) -->
@@ -4519,15 +4724,6 @@ body.we-sub .app-view.we.active { gap: 10px; }
             <div id="devLoginPanel" style="display: flex; gap: 8px; margin-top: 8px;">
                 <input type="password" id="devPasswordInput" placeholder="請輸入開發者密碼..." style="margin-top:0; flex:1;">
                 <button class="cloud-btn" style="background: var(--primary-gradient); white-space: nowrap;" data-on-click='[["verifyDevPassword",[]]]'>解鎖</button>
-            </div>
-            <div id="devContentPanel" style="display: none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px; flex-direction: column; gap: 8px;">
-                <button class="action-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); width: 100%; font-size: 13.5px; padding: 10px;" data-on-click='[["runStressTest",[]]]'>🚀 壓力測試</button>
-                <button class="action-btn" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); width: 100%; font-size: 13.5px; padding: 10px;" data-on-click='[["clearAllWordListsData",[]]]'>🧹 清空所有題庫</button>
-                <button class="action-btn" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); width: 100%; font-size: 13.5px; padding: 10px;" data-on-click='[["clearAllExamHistoryData",[]]]'>🗑️ 清空考試紀錄</button>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="devTestCodeInput" placeholder="測試密碼（testreset / testmoney）" style="margin-top:0; flex:1;" autocomplete="off">
-                    <button class="action-btn" style="width: auto; font-size: 13.5px; padding: 8px 14px;" data-on-click='[["advRunTestCodeInput",[]]]'>執行</button>
-                </div>
             </div>
         </div>
         <button class="action-btn btn-start" style="width: 100%; margin-top: 12px;" data-on-click='[["closeAboutModal",[]]]'>確定</button>
