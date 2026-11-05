@@ -254,6 +254,8 @@
     const LOGIN_SHARDS = 3;
     function isLoginShardClaimed() { try { return advData.loginShardDay === chickenData.lastDate; } catch (e) { return false; } }
     function isLoginFlowerClaimed() { try { return farm.loginFlowerDay === chickenData.lastDate; } catch (e) { return true; } }
+    // 任務算完成：這台裝置做過，或後台記錄今天已經領過（換裝置時本機沒有完成紀錄，但後台有領取紀錄）
+    function taskDoneOrClaimed(key) { return !!((chickenData.tasks[key] && chickenData.tasks[key].done) || isTaskClaimed(key)); }
     function isTaskClaimed(key) {
         if (key === 'dailyLogin' && (!isLoginShardClaimed() || !isLoginFlowerClaimed())) return false;   // 每日登入：雞塊、碎片、花都領了才算領完
         return wallet.day === chickenData.lastDate && (wallet.claimedToday || []).indexOf(key) !== -1;
@@ -521,7 +523,7 @@
         let html = '', done = 0;
         taskDefs.forEach(def => {
             let t = chickenData.tasks[def.key];
-            if (t.done) done++;
+            if (taskDoneOrClaimed(def.key)) done++;
             let right;
             if (isTaskClaimed(def.key)) right = `<span class="tk-done">✓ 已領取</span>`;
             else if (t.done) right = `<button type="button" class="tk-claim" data-on-click='[["claimChickenReward",["${def.key}","$this"]]]'>領取</button>`;
@@ -693,10 +695,7 @@
         // 單字上限：先選要擴增哪一本題庫
         if (key === 'word_cap_50') {
             if (cat.enabled === false) { alert('此商品目前無法兌換。'); return; }
-            if (wallet.balance < cat.price) {
-                alert(`🍗 雞塊不足！需要 ${cat.price} 個，目前有 ${wallet.balance} 個。`);
-                return;
-            }
+            if (wallet.balance < cat.price) return;          // 雞塊不夠：格子已經是灰底，不另外跳訊息
             openShopListPicker();
             return;
         }
@@ -705,10 +704,7 @@
             alert(`「${meta.name}」已達購買上限。`);
             return;
         }
-        if (wallet.balance < cat.price) {
-            alert(`🍗 雞塊不足！需要 ${cat.price} 個，目前有 ${wallet.balance} 個。`);
-            return;
-        }
+        if (wallet.balance < cat.price) return;              // 雞塊不夠：格子已經是灰底，不另外跳訊息
         if (!confirm(`要用 ${cat.price} 個雞塊兌換「${meta.name}」嗎？\n\n${meta.desc}`)) return;
 
         walletBusy = true;
@@ -1647,6 +1643,7 @@
     }
 
     function switchView(viewId) {
+        try { if (viewId !== 'adventureView') faStop(); if (viewId !== 'adventureBattleView') advHideResult(); } catch (e) {}
         // 戰鬥中打字：鍵盤蓋在畫面上，不要把整個遊戲畫面往上推
         try { if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = (viewId === 'adventureBattleView'); } catch (e) {}
         document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
@@ -1662,11 +1659,12 @@
         
         let wrapper = document.getElementById('mainScaleWrapper');
         // 新版練習頁（cp-）與建立單字頁（we-）：不放大，照設計稿的寬度（手機 480、電腦 780）
-        const CP_VIEWS = ['practiceView', 'examView', 'flashcardSetupView', 'flashcardPlayView', 'cardExamSetupView', 'speakPracticeSetupView', 'advLevelView'];
+        const CP_VIEWS = ['practiceView', 'examView', 'flashcardSetupView', 'flashcardPlayView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'advLevelView'];
         let cpOn = CP_VIEWS.includes(viewId), weOn = viewId === 'editorDetailView';
         document.body.classList.toggle('cp-on', cpOn);
         document.body.classList.toggle('we-on', weOn);
         if (!weOn) document.body.classList.remove('we-sub');
+        document.body.classList.toggle('qz-on', viewId === 'cardExamPlayView' || (viewId === 'examView' && typeof isExamRunning !== 'undefined' && isExamRunning));   // 測驗作答中：手機整頁高度跟著可見區域（鍵盤）
         document.body.classList.toggle('cp-tall', viewId === 'flashcardPlayView' || viewId === 'advLevelView' || (viewId === 'practiceView' && typeof isPlaying !== 'undefined' && isPlaying));
         if (cpOn || weOn) { wrapper.className = 'scale-wrapper-cp'; }
         else if (['practiceView', 'examView', 'flashcardPlayView', 'flashcardSetupView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'speakPracticePlayView', 'homeDashboardView', 'editorListView', 'editorDetailView', 'historyView'].includes(viewId)) {
@@ -1807,7 +1805,7 @@
     function renderHomeToday() {
         if (typeof chickenData === 'undefined') return;
         try {   // 右上角的雞塊：外圈是今日任務進度，有可以領的就亮紅點
-            let n0 = CHICKEN_TASK_KEYS.length, d0 = CHICKEN_TASK_KEYS.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done).length;
+            let n0 = CHICKEN_TASK_KEYS.length, d0 = CHICKEN_TASK_KEYS.filter(k => taskDoneOrClaimed(k)).length;
             let ring = document.getElementById('acTaskRing'), dot = document.getElementById('acTaskDot');
             if (ring) ring.setAttribute('stroke-dasharray', `${(d0 / n0 * 106.8).toFixed(1)} 106.8`);
             if (dot) dot.style.display = CHICKEN_TASK_KEYS.some(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)) ? '' : 'none';
@@ -1816,7 +1814,7 @@
         let box = document.getElementById('homeToday');
         if (!box) return;
         let keys = CHICKEN_TASK_KEYS, n = keys.length;
-        let done = keys.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done).length;
+        let done = keys.filter(k => taskDoneOrClaimed(k)).length;
         let unclaimed = keys.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)).length;
         let sub = unclaimed ? `有 ${unclaimed} 項可以領雞塊！` : done >= n ? '今天的任務全部完成了！' : `再完成 ${n - done} 項，就能多領雞塊`;
         box.innerHTML = `<div class="tx"><b>今日任務 ${done} / ${n}</b><small>${sub}</small><div class="bar"><i style="width:${(done / n * 100).toFixed(0)}%"></i></div></div>
@@ -1834,8 +1832,8 @@
     }
 
     function backToHomeFromExam() {
-        if (isExamRunning) {
-            alert("⚠️ 目前正在考試中，請先結束考試！");
+        if (isExamRunning) {               // 作答中按返回：先確認，再結束測驗（取代舊的紅色「結束並停止考試」）
+            if (confirm('要結束這次聽力測驗嗎？\n\n已經作答的題目會計分。')) finishExam();
             return;
         }
         stopExamMode();
@@ -2898,7 +2896,10 @@
         cardExamActiveList = words;
         currentCardExamIndex = 0;
         cardExamResults = [];
+        cardExamBuildPos(words);
+        let bk = document.getElementById('cardExamBookName'); if (bk) bk.textContent = currentCardExamRanges ? `題庫 ${currentCardExamRanges}・測驗` : '';
         switchView('cardExamPlayView');
+        qzFitViewport();
         playCurrentCardExamQuestion();
     }
 
@@ -2913,56 +2914,93 @@
         releaseWakeLock();
     }
 
+    // 詞性：只列出這次題目實際有出現的詞性（按鈕可複選，aria-pressed）
+    const QZ_POS_ORDER = ['動詞', '名詞', '形容詞', '副詞', '連接詞', '介係詞', '片語', '代名詞', '感嘆詞'];
+    const QZ_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>';
+    function cardPosOf(item) {
+        let arr = (item.posList || (item.pos ? item.pos.split(/\s+/) : [])).map(x => normPos(String(x).trim())).filter(Boolean);
+        return arr.filter((p, i) => arr.indexOf(p) === i);
+    }
+    function cardExamBuildPos(words) {
+        let seen = new Set();
+        words.forEach(w => cardPosOf(w).forEach(p => seen.add(p)));
+        let list = QZ_POS_ORDER.filter(p => seen.has(p)).concat([...seen].filter(p => !QZ_POS_ORDER.includes(p)));
+        let g = document.getElementById('cardExamPosCheckboxGroup');
+        if (!g) return;
+        g.innerHTML = list.map(p => `<button type="button" aria-pressed="false" data-pos="${escapeHTML(p)}">${QZ_CHECK}${escapeHTML(p)}</button>`).join('');
+        if (!g._bound) {
+            g._bound = true;
+            g.addEventListener('pointerdown', e => { if (e.target.closest('button')) e.preventDefault(); });   // 點詞性時保留輸入框焦點 → 鍵盤不收起
+            g.addEventListener('click', e => {
+                let b = e.target.closest('button'); if (!b) return;
+                b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+                cardExamEnterKey();
+            });
+        }
+    }
+    function cardExamHasPos() { return !!document.querySelector('#cardExamPosCheckboxGroup [aria-pressed="true"]'); }
+    function cardExamNeedsPos() { let it = cardExamActiveList[currentCardExamIndex]; return !!(it && cardPosOf(it).length); }
+    // 鍵盤右下角：已選詞性（或這題沒有詞性）顯示「送出」，還沒選顯示「下一步」
+    function cardExamEnterKey() {
+        let hint = (!cardExamNeedsPos() || cardExamHasPos()) ? 'send' : 'next';
+        chiInputIds('cardExamInputChi').forEach(id => { let el = document.getElementById(id); if (el) el.setAttribute('enterkeyhint', hint); });
+    }
+    function quitCardExam() {
+        if (confirm('要結束這次字卡測驗嗎？\n\n已經作答的題目會計分。')) finishCardExamSession();
+    }
+    let cardExamLocked = false;
     function playCurrentCardExamQuestion() {
         if (currentCardExamIndex >= cardExamActiveList.length) {
             finishCardExamSession();
             return;
         }
-
+        cardExamLocked = false;
         let card = cardExamActiveList[currentCardExamIndex];
-        document.getElementById('cardExamCardEng').innerText = card.english;
-        document.getElementById('cardExamProgressText').innerText = `${currentCardExamIndex + 1} / ${cardExamActiveList.length} 題`;
-        
-        let percent = ((currentCardExamIndex + 1) / cardExamActiveList.length) * 100;
-        document.getElementById('cardExamProgressBar').style.width = `${percent}%`;
+        let n = cardExamActiveList.length;
+        let w = document.getElementById('cardExamCardEng');
+        w.innerText = card.english;
+        try { cpFitWord(w); } catch (e) {}
+        document.getElementById('cardExamProgressText').innerHTML = `${currentCardExamIndex + 1} <small>/ ${n}</small>`;
+        document.getElementById('cardExamProgressBar').style.width = `${((currentCardExamIndex + 1) / n * 100).toFixed(1)}%`;
+        qzStatus('cardExamStatus', getLearningLanguage() === 'ko' ? '韓文' : '英文');
 
         voiceChiStop();
         setupChiInputs('cardExamInputChi', card);
-        document.querySelectorAll('.card-exam-pos-chk').forEach(c => c.checked = false);
-
-        let posGroup = document.getElementById('cardExamPosCheckboxGroup');
-        let posLabel = document.getElementById('cardExamPosLabel');
-        if (!card.pos || card.pos.trim() === '') {
-            posGroup.style.opacity = '0.4';
-            posGroup.style.pointerEvents = 'none';
-            if (posLabel) posLabel.innerText = '詞性選擇（此單字無詞性，略過）：';
-        } else {
-            posGroup.style.opacity = '1';
-            posGroup.style.pointerEvents = 'auto';
-            if (posLabel) posLabel.innerText = '詞性選擇（可複選）：';
-        }
-
-        try { document.getElementById('cardExamInputChi').focus(); } catch (e) {}
+        document.querySelectorAll('#cardExamPosCheckboxGroup button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+        let posField = document.getElementById('cardExamPosField');
+        let anyPos = !!document.querySelector('#cardExamPosCheckboxGroup button');
+        if (posField) posField.style.display = (anyPos && cardPosOf(card).length) ? '' : 'none';     // 這題沒有詞性：不用選
+        cardExamEnterKey();
+        try { document.getElementById('cardExamInputChi').focus({ preventScroll: true }); } catch (e) {}
 
         if (cardExamTimerId) clearInterval(cardExamTimerId);
         cardExamTimeLeft = parseInt(document.getElementById('cardExamAnswerTime').value) || 20;
-        document.getElementById('cardExamTimeLeft').innerText = cardExamTimeLeft;
+        qzShow('cardExamTimer', true); qzTimer('cardExamTimer', cardExamTimeLeft);
         cardExamTimerId = setInterval(() => {
             cardExamTimeLeft--;
-            document.getElementById('cardExamTimeLeft').innerText = cardExamTimeLeft;
+            qzTimer('cardExamTimer', Math.max(0, cardExamTimeLeft));
             if (cardExamTimeLeft <= 0) {
                 clearInterval(cardExamTimerId);
-                submitCardExamAnswer();
+                submitCardExamAnswer(true);
             }
         }, 1000);
     }
 
-    function submitCardExamAnswer() {
+    function submitCardExamAnswer(timeUp) {
+        if (cardExamLocked || currentCardExamIndex >= cardExamActiveList.length) return;
+        // 還沒選詞性就送出：收起鍵盤、詞性那排搖一下提醒，不送出（時間到則直接送出）
+        if (timeUp !== true && cardExamNeedsPos() && !cardExamHasPos()) {
+            try { document.activeElement && document.activeElement.blur(); } catch (e) {}
+            let g = document.getElementById('cardExamPosCheckboxGroup');
+            if (g) { g.classList.remove('is-remind'); void g.offsetWidth; g.classList.add('is-remind'); }
+            return;
+        }
+        cardExamLocked = true;
         if (cardExamTimerId) clearInterval(cardExamTimerId);
         let userChiArr = readChiInputs('cardExamInputChi');
         let userChi = userChiArr.filter(Boolean).join('、');
         let userPosArr = [];
-        document.querySelectorAll('.card-exam-pos-chk:checked').forEach(chk => userPosArr.push(normPos(chk.value.trim())));
+        document.querySelectorAll('#cardExamPosCheckboxGroup [aria-pressed="true"]').forEach(b => userPosArr.push(normPos(b.dataset.pos.trim())));
 
         let currentItem = cardExamActiveList[currentCardExamIndex];
         let chiMatch = matchChineseAnswers(userChiArr, currentItem);
@@ -3001,8 +3039,12 @@
             posMatch
         });
 
+        // 顯示對錯約 1 秒 → 自動換下一題（輸入框不 blur）
+        qzShow('cardExamTimer', false);
+        let ans = `${currentItem.senseText || currentItem.chinese || ''}${correctPosArr.length ? `（${correctPosArr.join('、')}）` : ''}`;
+        qzStatus('cardExamStatus', isCorrect ? '✓ 答對了' : `✗ ${escapeHTML(ans)}`, isCorrect ? 'is-ok' : 'is-bad');
         currentCardExamIndex++;
-        playCurrentCardExamQuestion();
+        setTimeout(() => { if (document.getElementById('cardExamPlayView').classList.contains('active')) playCurrentCardExamQuestion(); }, 1000);
     }
 
     function handleCardExamKeyDown(e) {
@@ -3014,6 +3056,7 @@
 
     function finishCardExamSession() {
         if (cardExamTimerId) clearInterval(cardExamTimerId);
+        cardExamLocked = true;
         releaseWakeLock();
         
         let total = cardExamResults.length;
@@ -4378,63 +4421,98 @@
         document.getElementById('examPreviewContainer').style.display = 'none';
         document.getElementById('examAdvancedBtnContainer').style.display = 'none';
         document.getElementById('startExamBtn').style.display = 'none';
-        document.getElementById('examBackBtn').style.display = 'none';
-        document.getElementById('examArea').style.display = 'block';
+        document.getElementById('examArea').style.display = 'flex';
+        let bk = document.getElementById('examBookName'); if (bk) bk.textContent = currentExamRanges ? `題庫 ${currentExamRanges}・測驗` : '';
+        document.body.classList.add('qz-on');
+        qzFitViewport();
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         playExamQuestion();
     }
 
+    // 測驗共用：題目卡上的狀態膠囊、計時膠囊
+    const QZ_WAVE = '<span class="cp-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>';
+    function qzStatus(id, html, cls) {
+        let el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = html;
+        el.classList.remove('is-ok', 'is-bad');
+        if (cls) el.classList.add(cls);
+    }
+    function qzTimer(id, secs) {
+        let box = document.getElementById(id);
+        if (!box) return;
+        let b = box.querySelector('b'); if (b) b.textContent = secs;
+        box.classList.toggle('is-danger', secs <= 5);
+    }
+    function qzShow(id, on) { let el = document.getElementById(id); if (el) el.style.visibility = on ? '' : 'hidden'; }
+    function qzFitViewport() { try { weFitViewport(); } catch (e) {} }
+    let examLocked = false;          // 送出後顯示對錯的那 1 秒：不能再送出
     function playExamQuestion() {
         if (!isPlaying || currentWordIndex >= wordsData.length) { finishExam(); return; }
-        
-        document.getElementById('examProgressStatus').innerText = `🎧 正在進行考試... 請聆聽並於下方作答 (${currentWordIndex + 1}/${wordsData.length})`;
-
+        examLocked = false;
         let item = wordsData[currentWordIndex];
+        let n = wordsData.length;
+        let cnt = document.getElementById('examCount'); if (cnt) cnt.innerHTML = `${currentWordIndex + 1} <small>/ ${n}</small>`;
+        let fill = document.getElementById('examFill'); if (fill) fill.style.width = `${((currentWordIndex + 1) / n * 100).toFixed(1)}%`;
+        qzStatus('examProgressStatus', QZ_WAVE + '正在播放');
+        document.getElementById('examCard').classList.add('is-playing');
+        let ansSecs = parseInt(document.getElementById('examAnswerTime').value) || 26;
+        qzShow('examTimer', true); qzTimer('examTimer', ansSecs);
         voiceChiStop();
+        let eng = document.getElementById('examInputEng'); eng.value = '';
         setupChiInputs('examInputChi', item);
-        setExamInputsDisabled(true);
+        setExamInputsDisabled(false);                 // 換題時不 disable／blur，手機鍵盤才不會收起又跳出
+        try { eng.focus({ preventScroll: true }); } catch (e) {}
         let rate = parseFloat(document.getElementById('examSpeakRate').value) || 0.8;
         let repeatCount = parseInt(document.getElementById('examRepeatCount').value) || 1;
-
-        let utteranceCount = 0;
+        let gen = currentWordIndex;
+        let utteranceCount = 0, started = false;
+        function startAnswerTimer() {
+            if (started || gen !== currentWordIndex || !isExamRunning || examLocked) return;
+            started = true;
+            document.getElementById('examCard').classList.remove('is-playing');
+            qzStatus('examProgressStatus', '請作答');
+            examTimeLeft = ansSecs;
+            qzTimer('examTimer', examTimeLeft);
+            if (examTimerId) clearInterval(examTimerId);
+            examTimerId = setInterval(() => {
+                examTimeLeft--;
+                qzTimer('examTimer', Math.max(0, examTimeLeft));
+                if (examTimeLeft <= 0) { clearInterval(examTimerId); submitExamAnswer(); }      // 時間到還沒送出：算答錯
+            }, 1000);
+        }
         function speakSingle() {
+            if (gen !== currentWordIndex || !isExamRunning) return;
             let utterance = new SpeechSynthesisUtterance(item.english);
             let learningLang = getLearningLanguage();
             let langCode = (learningLang === 'ko') ? 'ko-KR' : 'en-US';
             let chosenVoice = getSelectedVoiceForLearning();
             if (chosenVoice) utterance.voice = chosenVoice;
             utterance.lang = langCode;
-            
             utterance.rate = rate;
             let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
             utterance.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
-
-            utterance.onend = () => {
+            let done = false;
+            utterance.onend = utterance.onerror = () => {
+                if (done) return; done = true;
                 utteranceCount++;
-                if (utteranceCount < repeatCount) {
-                    setTimeout(speakSingle, 1000);
-                } else {
-                    setExamInputsDisabled(false);
-                    document.getElementById('examInputEng').focus();
-                    
-                    examTimeLeft = parseInt(document.getElementById('examAnswerTime').value) || 26;
-                    document.getElementById('timeLeft').innerText = examTimeLeft;
-                    examTimerId = setInterval(() => {
-                        examTimeLeft--;
-                        document.getElementById('timeLeft').innerText = examTimeLeft;
-                        if (examTimeLeft <= 0) { clearInterval(examTimerId); submitExamAnswer(); }
-                    }, 1000);
-                }
+                if (utteranceCount < repeatCount) setTimeout(speakSingle, 1000);
+                else startAnswerTimer();
             };
             synth.speak(utterance);
         }
         speakSingle();
+        // 保險：語音沒有回報播完（有些手機會這樣）時，最多等 6 秒就開始倒數
+        setTimeout(startAnswerTimer, 6000 * repeatCount);
     }
 
     function submitExamAnswer() {
+        if (!isExamRunning || examLocked) return;
+        examLocked = true;
         if (examTimerId) clearInterval(examTimerId);
+        try { synth.cancel(); } catch (e) {}
         let userEng = document.getElementById('examInputEng').value.trim();
         let userChiArr = readChiInputs('examInputChi');
         let userChi = userChiArr.filter(Boolean).join('、');
@@ -4459,15 +4537,14 @@
             chiMatch
         });
 
+        // 顯示對錯約 1 秒 → 自動換下一題（輸入框不 blur）
+        document.getElementById('examCard').classList.remove('is-playing');
+        qzShow('examTimer', false);
+        qzStatus('examProgressStatus', isCorrect ? '✓ 答對了' : `✗ ${escapeHTML(currentItem.english)}　${escapeHTML(currentItem.senseText || currentItem.chinese || '')}`, isCorrect ? 'is-ok' : 'is-bad');
         currentWordIndex++;
-
-        document.getElementById('examInputEng').value = '';
-        chiInputIds('examInputChi').forEach(id => { let el = document.getElementById(id); if (el) el.value = ''; });
-        setExamInputsDisabled(true);
-        
         let pauseSec = parseInt(document.getElementById('examPauseTime').value);
         if (isNaN(pauseSec)) pauseSec = 1;
-        setTimeout(playExamQuestion, pauseSec * 1000);
+        setTimeout(() => { if (isExamRunning) playExamQuestion(); }, Math.max(1000, pauseSec * 1000));
     }
 
     // 清掉上一次（或中途離開時）留在輸入框的字
@@ -4554,6 +4631,7 @@
         document.getElementById('examAdvancedBtnContainer').style.display = 'block';
         document.getElementById('startExamBtn').style.display = 'block';
         document.getElementById('examBackBtn').style.display = 'inline-flex';
+        document.body.classList.remove('qz-on');
     }
 
     function finishExam() {
@@ -4567,6 +4645,7 @@
         document.getElementById('examAdvancedBtnContainer').style.display = 'block';
         document.getElementById('startExamBtn').style.display = 'block';
         document.getElementById('examBackBtn').style.display = 'inline-flex';
+        document.body.classList.remove('qz-on');
         
         let total = examResults.length;
         if (total === 0) return;
@@ -5083,7 +5162,8 @@
     }
 
     function updateVolumeDisplay() {
-        document.getElementById('volumeValue').innerText = document.getElementById('systemVolume').value + '%';
+        let v = document.getElementById('systemVolume'), t = document.getElementById('volumeValue');
+        if (v && t) t.innerText = v.value + '%';
     }
 
     function updateSpeedDisplay(sliderId, displayId) {
@@ -5101,7 +5181,6 @@
 
     function saveSystemSettings() {
         let settings = {
-            volume: document.getElementById('systemVolume').value,
             powerSaving: document.getElementById('powerSavingToggle').checked,
             learningLanguage: document.getElementById('learningLanguage').value
         };
@@ -5112,7 +5191,6 @@
         let saved = localStorage.getItem('dictation_system_settings');
         if (saved) {
             let s = JSON.parse(saved);
-            if (s.volume) document.getElementById('systemVolume').value = s.volume;
             if (s.powerSaving) {
                 document.getElementById('powerSavingToggle').checked = true;
                 document.body.classList.add('power-saving-mode');
@@ -5236,12 +5314,7 @@
     }
     function verifyDevPassword() {
           if (advRunTestCode(document.getElementById('devPasswordInput').value)) { document.getElementById('devPasswordInput').value = ''; return; }
-          if (document.getElementById('devPasswordInput').value === 'freddy116') {
-            sessionStorage.setItem('dev_unlocked', 'true');
-            document.getElementById('devLoginPanel').style.display = 'none';
-            document.getElementById('devContentPanel').style.display = 'flex';
-            alert('🔓 開發者模式解鎖成功！');
-          } else { alert('❌ 密碼錯誤！'); }
+          alert('❌ 密碼錯誤！');
     }
 
     function runStressTest() { alert('壓力測試執行中'); }
@@ -5314,17 +5387,17 @@
         wave3: () => advSvg('0 0 52 30', '<circle cx="9" cy="15" r="10" fill="#FDE047" opacity="0.55"/><circle cx="9" cy="15" r="6.5" fill="#FACC15" stroke="#F59E0B" stroke-width="1.5"/><circle cx="9" cy="15" r="3" fill="#FFFFFF"/><path d="M 14 8 L 30 9 L 34 5 L 38 9 L 44 8 L 51 15 L 44 22 L 38 21 L 34 25 L 30 21 L 14 22 Z" fill="#FACC15" stroke="#F59E0B" stroke-width="1.3" stroke-linejoin="round"/><path d="M 15 12 H 46 L 49 15 L 46 18 H 15 Z" fill="#FFFFFF" opacity="0.9"/>')
     };
     // 招式說明只寫「怎麼答」：類型、題數、威力在畫面上已經有了
-    const ADV_LEGEND_PRICE = 25;            // 傳說招式：補給站 25 個碎片
+    const ADV_LEGEND_PRICE = 30;            // 傳說招式：補給站 30 個碎片（打倒第 20 關後才能買）
     const ADV_MOVES = [
-        { key: 'tackle',  name: '衝撞',         icon: '💥', type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                              desc: '選出正確的中文意思' },
-        { key: 'combo',   name: '連續衝撞',     icon: ADV_ICONS.combo(), type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 3 },                         desc: '選擇題' },
-        { key: 'charge',  name: '衝鋒撞擊',     icon: '🐗', type: 'card',   mode: 'typeCn',      fx: 'charge', power: 3, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_charge' }, desc: '輸入中文意思' },
-        { key: 'slash',   name: '斬擊',         icon: ADV_ICONS.slash(), type: 'listen', mode: 'listenChoice', fx: 'slash',  power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '聽發音，選出正確的單字' },
-        { key: 'slash2',  name: '連續斬擊',     icon: ADV_ICONS.slash2(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 4, item: 'mv_slash2' },       desc: '聽英文，選中文' },
-        { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 3, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_thrust' }, desc: '聽發音，拼出英文單字' },
-        { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 2, buy: { kind: 'free' },                                       desc: '按住麥克風唸出單字' },
-        { key: 'wave2',   name: '雙重衝擊波',   icon: ADV_ICONS.wave2(), type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 2, buy: { kind: 'reward', level: 5, item: 'mv_wave2' },        desc: '按住麥克風唸出單字' },
-        { key: 'wave3',   name: '雞塊氣功波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'speakCn',      fx: 'yellow', power: 3, hits: 1, q: 2, tries: 2, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_wave3' }, desc: '顯示中文，唸英文' }
+        { key: 'tackle',  name: '衝撞',         icon: '💥', type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                              desc: '看單字，選出正確的中文意思' },
+        { key: 'combo',   name: '連續衝撞',     icon: ADV_ICONS.combo(), type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 3 },                         desc: '看單字，選出正確的中文意思' },
+        { key: 'charge',  name: '衝鋒撞擊',     icon: '🐗', type: 'card',   mode: 'typeCn',      fx: 'charge', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_charge' }, desc: '看單字，寫出中文意思' },
+        { key: 'slash',   name: '斬擊',         icon: ADV_ICONS.slash(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '聽發音，選中文意思' },
+        { key: 'slash2',  name: '連續斬擊',     icon: ADV_ICONS.slash2(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 4, item: 'mv_slash2' },       desc: '聽發音，選中文意思' },
+        { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_thrust' }, desc: '聽發音，拼出英文單字' },
+        { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 2, buy: { kind: 'free' },                                       desc: '看單字，並唸出單字' },
+        { key: 'wave2',   name: '雙重衝擊波',   icon: ADV_ICONS.wave2(), type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 2, buy: { kind: 'reward', level: 5, item: 'mv_wave2' },        desc: '看單字，並唸出單字' },
+        { key: 'wave3',   name: '雞塊氣功波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'speakCn',      fx: 'yellow', power: 5, hits: 1, q: 2, tries: 2, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_wave3' }, desc: '顯示中文，唸英文' }
     ];
     const ADV_TYPE_LABEL = { card: '字卡', listen: '聽力', speak: '朗讀' };
     // 稀有度：普通（灰框，熟練度上限 1）／稀有（深金框，上限 2）／傳說（亮紫框，上限 3）
@@ -5333,6 +5406,7 @@
         rare:   { label: '稀有', color: '#B8860B', cap: 2 },
         legend: { label: '傳說', color: '#C026D3', cap: 3 }
     };
+    const ADV_RARITY_SKILL = { common: '一般技能', rare: '稀有技能', legend: '傳奇技能' };
     const ADV_MOVE_RARITY = { tackle: 'common', slash: 'common', wave: 'common', combo: 'rare', slash2: 'rare', wave2: 'rare', charge: 'legend', thrust: 'legend', wave3: 'legend' };
     // 熟練度：累積使用 20 次 → 1、100 次 → 2、300 次 → 3（不超過稀有度上限）；每 1 級這招攻擊 +1（傳說招式 +2）
     const ADV_MASTERY_STEPS = [20, 100, 300];
@@ -5370,8 +5444,8 @@
         { id: 5, name: '珍珠奶茶', sprite: 'boba',     minWords: 30, hp: 10, atk: 2, agi: 0, def: 1, luck: 0, moveName: '珍珠連射', movePower: 0, firstShards: 0, firstSauce: 1, repeatShards: 2, firstPotions: 2, firstTickets: 1, firstItem: 'boba', special: 'heal' },
         { id: 6, name: '娃娃機',   sprite: 'claw',     minWords: 30, hp: 12, atk: 2, agi: 0, def: 2, int: 0, luck: 1, moveName: '夾子抓抓', movePower: 0, firstShards: 3, firstSauce: 0, repeatShards: 3, firstPotions: 1, firstTickets: 1, special: 'claw' },
         { id: 7, name: '射飛鏢',   sprite: 'darts',    minWords: 40, hp: 13, atk: 2, agi: 2, def: 1, int: 0, luck: 1, moveName: '飛鏢連射', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, firstPotions: 1, special: 'darts' },
-        { id: 8, name: '夜市麻將', sprite: 'mahjong',  minWords: 40, hp: 13, atk: 2, agi: 1, def: 2, int: 3, luck: 3, moveName: '自摸', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, firstPotions: 1, special: 'mahjong' },
-        { id: 9, name: '套圈圈',   sprite: 'ring',     minWords: 50, hp: 15, atk: 3, agi: 3, def: 0, int: 0, luck: 1, moveName: '圈圈投擲', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 4, firstPotions: 1, firstTickets: 1, special: 'ring' },
+        { id: 8, name: '夜市麻將', sprite: 'mahjong',  minWords: 40, hp: 14, atk: 2, agi: 1, def: 2, int: 3, luck: 3, moveName: '自摸', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, firstPotions: 1, special: 'mahjong' },
+        { id: 9, name: '套圈圈',   sprite: 'ring',     minWords: 50, hp: 15, atk: 4, agi: 3, def: 0, int: 0, luck: 1, moveName: '圈圈投擲', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 4, firstPotions: 1, firstTickets: 1, special: 'ring' },
         { id: 10, name: '彈珠台',  sprite: 'pinball',  minWords: 50, hp: 15, atk: 4, agi: 1, def: 2, int: 1, luck: 6, moveName: '彈珠發射', movePower: 0, firstShards: 0, firstSauce: 1, repeatShards: 5, firstPotions: 2, firstTickets: 2, special: 'pinball' },
         // ── 第二章：便利商店 ──
         { id: 11, name: '茶葉蛋',   sprite: 'egg',     minWords: 60, hp: 17, atk: 3, agi: 3, def: 2, int: 6, luck: 2, moveName: '滾燙蛋汁', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 5, firstPotions: 1, special: 'egg' },
@@ -5391,7 +5465,7 @@
               { name: '愛珍食便當', sprite: 'bento2', hp: 40, atk: 7, agi: 6, def: 2, int: 6, luck: 6, moveName: '即期大反撲', special: 'expire' }
           ] },
         { id: 19, name: '美式咖啡', sprite: 'coffee', minWords: 90, hp: 30, atk: 5, agi: 5, def: 3, int: 2, luck: 2, moveName: '滾燙潑灑', movePower: 0, firstShards: 7, firstSauce: 0, repeatShards: 7, firstPotions: 1, firstTickets: 1, special: 'coffee' },
-        { id: 20, name: '全能便利商店員工', sprite: 'clerk', minWords: 100, hp: 40, atk: 6, agi: 4, def: 4, int: 4, luck: 2, moveName: '商品補貨', movePower: 0, firstShards: 0, firstSauce: 2, repeatShards: 8, firstPotions: 2, firstTickets: 2, special: 'clerk' }
+        { id: 20, name: '全能便利商店員工', sprite: 'clerk', minWords: 100, hp: 40, atk: 6, agi: 4, def: 4, int: 4, luck: 2, moveName: '商品補貨', movePower: 0, firstShards: 0, firstSauce: 1, repeatShards: 8, firstPotions: 2, firstTickets: 2, special: 'clerk' }
     ];
     const ADV_COFFEE_BURN = 6;              // 美式咖啡：開戰燙傷 = 6 − 雞塊的智慧（無視防禦、護盾，直接扣體力）
     // 全能便利商店員工：每回合換崗位（第一階段），各自免疫一類招式
@@ -5418,13 +5492,14 @@
         bill: { name: '繁瑣的繳費單', icon: (s) => advBillIcon(s), desc: '？？？' },
         bag: { name: '夜市塑膠袋', icon: (s) => advPlasticBagIcon(s), desc: '每場戰鬥開始時護盾 +1' },
         soda: { name: '彈珠汽水', icon: (s) => advSodaIcon(s), desc: '戰鬥勝利後 HP +1' },
-        coaster: { name: '防燙杯墊', icon: (s) => advCoasterIcon(s), desc: '智慧 +3' }
+        coaster: { name: '防燙杯套', icon: (s) => advCoasterIcon(s), desc: '智慧 +3' }
     };
-    const ADV_COASTER_PRICE = 20;           // 補給站：防燙杯墊 20 個碎片（打完第 18 關才能買）
+    const ADV_COASTER_PRICE = 20;           // 補給站：防燙杯套 20 個碎片（打完第 18 關才能買）
     const ADV_COASTER_INT = 3;
+    // 防燙杯套：外帶咖啡紙杯＋牛皮紙瓦楞杯套
     function advCoasterIcon(size) {
         size = size || 24;
-        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-4px;overflow:visible"><ellipse cx="16" cy="22" rx="14" ry="7" fill="#B45309" stroke="#78350F" stroke-width="1.6"/><ellipse cx="16" cy="21" rx="11" ry="5" fill="#F59E0B" stroke="#92400E" stroke-width="1.2" stroke-dasharray="2 2"/><path d="M10 11 Q8 8 10 5 M16 11 Q14 8 16 5 M22 11 Q20 8 22 5" stroke="#94A3B8" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M12 19 l3 3 l6 -6" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-4px;overflow:visible"><path d="M9 9.5 L23 9.5 L21 29 L11 29 Z" fill="#FFFFFF" stroke="#64748B" stroke-width="1.3" stroke-linejoin="round"/><rect x="10.2" y="3.4" width="11.6" height="2.8" rx="1.2" fill="#CBD5E1" stroke="#64748B" stroke-width="1.1"/><rect x="7.6" y="5.8" width="16.8" height="4.2" rx="1.6" fill="#E2E8F0" stroke="#64748B" stroke-width="1.3"/><path d="M9.7 14 L22.3 14 L21.5 23 L10.5 23 Z" fill="#C98A4B" stroke="#7C4A1E" stroke-width="1.2" stroke-linejoin="round"/><path d="M12.4 14.6 L12.25 22.4" stroke="#8B5A2B" stroke-width="0.9" opacity="0.7"/><path d="M14.2 14.6 L14.049999999999999 22.4" stroke="#8B5A2B" stroke-width="0.9" opacity="0.7"/><path d="M16 14.6 L16.15 22.4" stroke="#8B5A2B" stroke-width="0.9" opacity="0.7"/><path d="M17.8 14.6 L17.95 22.4" stroke="#8B5A2B" stroke-width="0.9" opacity="0.7"/><path d="M19.6 14.6 L19.75 22.4" stroke="#8B5A2B" stroke-width="0.9" opacity="0.7"/><path d="M13.6 17.2 C13.6 15.9 15.3 15.6 16 16.8 C16.7 15.6 18.4 15.9 18.4 17.2 C18.4 18.7 16 20.2 16 20.2 C16 20.2 13.6 18.7 13.6 17.2 Z" fill="#FFF7ED" stroke="#7C4A1E" stroke-width="0.8"/></svg>`;
     }
     const ADV_SODA_PRICE = 2;               // 補給站：彈珠汽水 2 個碎片
     const ADV_BAG_SHIELD = 1;               // 夜市塑膠袋：護盾 +1
@@ -6089,6 +6164,7 @@
         advRenderMap();
     }
     function advRenderMap() {
+        if (faState) return;           // 插旗動畫播放中：不要重畫地圖（會把動畫蓋掉）
         let ch = ADV_CHAPTERS.find(c => c.id === advMapChapter) || ADV_CHAPTERS[0];
         let prev = document.getElementById('advMapPrev'), next = document.getElementById('advMapNext');
         if (prev) prev.disabled = ch.id <= 1;
@@ -6508,7 +6584,7 @@
         if (advMoveFilter === 'eq') { let eq = advEquipped().map(m => m.key); return owned.filter(m => eq.includes(m.key)); }
         return owned.filter(m => m.type === advMoveFilter);
     }
-    function advCarTri(rot) { return `<svg viewBox="0 0 24 24" width="24" height="24" style="transform:rotate(${rot}deg)" aria-hidden="true"><path d="M7 3 L19 12 L7 21 Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg>`; }
+    function advCarTri(rot) { return `<svg viewBox="0 0 24 24" width="24" height="24" style="transform:rotate(${rot}deg)" aria-hidden="true"><path d="M7 3 L19 12 L7 21 Z" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg>`; }
     function advMovesTabHTML() {
         let eqKeys = advEquipped().map(m => m.key);
         let ownedMoves = ADV_MOVES.filter(m => advOwns(m.key));
@@ -6526,6 +6602,7 @@
                 <button type="button" class="adv-car-arr${n < 2 ? ' off' : ''}" aria-label="上一招" data-on-click='[["advMoveStep",[-1]]]'>${advCarTri(180)}</button>
                 ${side(L, -1)}
                 <div class="adv-move-card adv-car-center focus rar-${advRarityKey(m.key)}${on ? ' selected' : ''}${advCarDir ? (advCarDir > 0 ? ' go-r' : ' go-l') : ''}" data-move="${m.key}">
+                    <span class="adv-rar-tag rar-${advRarityKey(m.key)}">${ADV_RARITY_SKILL[advRarityKey(m.key)]}</span>
                     ${on ? '<span class="adv-eq-tag">已裝備</span>' : ''}
                     <span class="ic">${m.icon}</span>
                     <b>${m.name}${mi.lvl ? ` <span class="adv-lv-chip">Lv.${mi.lvl}</span>` : ''}</b>
@@ -6534,7 +6611,7 @@
                 <button type="button" class="adv-car-arr${n < 2 ? ' off' : ''}" aria-label="下一招" data-on-click='[["advMoveStep",[1]]]'>${advCarTri(0)}</button>
                 <div class="adv-car-dots">${shown.map((x, i) => `<i class="${i === idx ? 'on' : ''}"></i>`).join('')}</div>
             </div>
-            <div class="adv-car-hint">${n >= 2 ? `◀ 左右滑動選擇招式 ▶（${idx + 1} / ${n}）` : '（1 / 1）'}</div>`;
+            <div class="adv-car-hint">（${idx + 1} / ${n}）</div>`;
         }
         return `
             <div class="adv-sec-title">招式選擇　<span id="advEquipCount">已裝備 ${eqKeys.length}/${ADV_MAX_EQUIP}</span>
@@ -6596,7 +6673,7 @@
             </div>
             <div class="adv-md-desc">${m.desc}</div>
             <div class="adv-md-mastery">
-                <div class="adv-md-mrow"><span>熟練度 <b>${mi.lvl}</b><small>／${mi.cap}</small></span><small class="prog">${prog}</small></div>
+                <div class="adv-md-mrow"><span>熟練度 <b>${mi.lvl}</b>${mi.maxed ? '<small class="max">（Max）</small>' : ''}</span><small class="prog">${prog}</small></div>
                 <div class="adv-bar adv-md-bar"><i style="width:${pct.toFixed(1)}%;background:${r.color}"></i></div>
             </div>
             <button type="button" class="adv-md-btn${on ? ' off' : ''}" data-on-click='[["advToggleMove",["${key}"]]]'>${on ? '卸下這招' : '裝備這招'}</button>`;
@@ -6972,11 +7049,11 @@
         if (!advData.items.soda) cells.push(advShopCell({ id: 'advCell_soda', kind: 'gear', icon: advSodaIcon(46), name: '彈珠汽水', sub: `普通裝備｜${ADV_ITEMS.soda.desc}`, price: advShardPrice(ADV_SODA_PRICE), poor: advData.shards < ADV_SODA_PRICE, cls: 'rar-common', action: '[["advBuySoda",[]]]' }));
         if (!advData.items.coaster) {
             let open = !!advData.cleared[18];
-            cells.push(advShopCell({ id: 'advCell_coaster', kind: 'gear', icon: advCoasterIcon(46), name: '防燙杯墊', sub: ADV_ITEMS.coaster.desc, price: open ? advShardPrice(ADV_COASTER_PRICE) : '第 19 關解鎖', off: !open, poor: open && advData.shards < ADV_COASTER_PRICE, cls: 'rar-common' + (open ? '' : ' is-locked'), action: '[["advBuyCoaster",[]]]' }));
+            cells.push(advShopCell({ id: 'advCell_coaster', kind: 'gear', icon: advCoasterIcon(46), name: '防燙杯套', sub: ADV_ITEMS.coaster.desc, price: open ? advShardPrice(ADV_COASTER_PRICE) : '第 19 關解鎖', off: !open, poor: open && advData.shards < ADV_COASTER_PRICE, cls: 'rar-common' + (open ? '' : ' is-locked'), action: '[["advBuyCoaster",[]]]' }));
         }
         ADV_MOVES.filter(m => m.buy.kind === 'shards' && !advOwns(m.key)).forEach(m => {
-            let open = advMoveOpen(m);           // 傳說招式：第一章（第 10 關）破關後才能買，之前顯示「第 11 關解鎖」並變灰
-            let price = open ? advShardPrice(m.buy.price) : '第 11 關解鎖';
+            let open = advMoveOpen(m);           // 傳說招式：打倒第 20 關後才能買，之前顯示「第 21 關解鎖」並變灰
+            let price = open ? advShardPrice(m.buy.price) : '第 21 關解鎖';
             let poor = open && advData.shards < m.buy.price;
             cells.push(advShopCell({ id: 'shopItem_' + (m.buy.item || 'mv_' + m.key), kind: 'move', icon: m.icon, name: m.name, sub: `${advRarity(m.key).label} ｜ 威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題 ｜ ${ADV_TYPE_LABEL[m.type]}`, price: price, off: !open, poor: poor, cls: 'rar-' + advRarityKey(m.key) + (open ? '' : ' is-locked'), action: `[["advBuyMove",["${m.key}"]]]` }));
         });
@@ -6999,7 +7076,8 @@
     // 補給站右上角的碎片數字旁，跳出「-15」之類的紅色數字（跟雞塊一樣）
     function advShardFloat(n) { if (n) showChickenFloat('advShopShardCount', (n > 0 ? '+' : '-') + Math.abs(n), n > 0 ? '#10B981' : '#EF4444'); }
     function advExchangeShards() {
-        if (advData.shards < ADV_SHARDS_PER_SAUCE) { alert(`碎片不足！需要 ${ADV_SHARDS_PER_SAUCE} 個，目前有 ${advData.shards} 個。`); return; }
+        if (advData.shards < ADV_SHARDS_PER_SAUCE) return;        // 碎片不夠：格子已經是灰底，不另外跳訊息
+        if (!confirm(`要用 ${ADV_SHARDS_PER_SAUCE} 個碎片兌換 1 個糖醋醬嗎？`)) return;
         advData.shards -= ADV_SHARDS_PER_SAUCE;
         advData.sauce += 1;
         advSave();
@@ -7007,7 +7085,8 @@
         advShardFloat(-ADV_SHARDS_PER_SAUCE);
     }
     function advBuyPotion() {
-        if (advData.shards < ADV_POTION_COST) { alert(`碎片不足！需要 ${ADV_POTION_COST} 個，目前有 ${advData.shards} 個。`); return; }
+        if (advData.shards < ADV_POTION_COST) return;
+        if (!confirm(`要用 ${ADV_POTION_COST} 個碎片購買恢復藥水嗎？\n\nHP +${ADV_POTION_HEAL}`)) return;
         advData.shards -= ADV_POTION_COST;
         advData.potions += 1;
         advSave();
@@ -7016,7 +7095,8 @@
     }
     function advBuySoda() {
         if (advData.items.soda) { alert('已經擁有彈珠汽水了。'); return; }
-        if (advData.shards < ADV_SODA_PRICE) { alert(`碎片不足！需要 ${ADV_SODA_PRICE} 個，目前有 ${advData.shards} 個。`); return; }
+        if (advData.shards < ADV_SODA_PRICE) return;
+        if (!confirm(`要用 ${ADV_SODA_PRICE} 個碎片購買彈珠汽水嗎？\n\n${ADV_ITEMS.soda.desc}`)) return;
         advData.shards -= ADV_SODA_PRICE;
         advData.items.soda = true;
         advSave();
@@ -7026,34 +7106,36 @@
         alert('🥤 買到彈珠汽水了！\n到「💪 能力值 → 裝備」把它裝備起來吧。');
     }
     function advBuyCoaster() {
-        if (advData.items.coaster) { alert('已經擁有防燙杯墊了。'); return; }
-        if (!advData.cleared[18]) { alert('打完第 18 關，第 19 關解鎖後才能買。'); return; }
-        if (advData.shards < ADV_COASTER_PRICE) { alert(`碎片不足！需要 ${ADV_COASTER_PRICE} 個，目前有 ${advData.shards} 個。`); return; }
+        if (advData.items.coaster) { alert('已經擁有防燙杯套了。'); return; }
+        if (!advData.cleared[18]) return;                       // 還沒解鎖：格子上已經寫「第 19 關解鎖」
+        if (advData.shards < ADV_COASTER_PRICE) return;
+        if (!confirm(`要用 ${ADV_COASTER_PRICE} 個碎片購買防燙杯套嗎？\n\n${ADV_ITEMS.coaster.desc}`)) return;
         advData.shards -= ADV_COASTER_PRICE;
         advData.items.coaster = true;
         advSave();
         advRenderShopBox();
         advShardFloat(-ADV_COASTER_PRICE);
         advUpdateGearAlerts();
-        alert('☕ 買到防燙杯墊了！\n到「💪 能力值 → 裝備」把它裝備起來吧。');
+        alert('☕ 買到防燙杯套了！\n到「💪 能力值 → 裝備」把它裝備起來吧。');
     }
     function advBuyWipe() {
-        if (advData.shards < ADV_WIPE_COST) { alert(`碎片不足！需要 ${ADV_WIPE_COST} 個，目前有 ${advData.shards} 個。`); return; }
+        if (advData.shards < ADV_WIPE_COST) return;
+        if (!confirm(`要用 ${ADV_WIPE_COST} 個碎片購買濕紙巾嗎？\n\n可以把 1 點能力轉移到別的能力`)) return;
         advData.shards -= ADV_WIPE_COST;
         advData.wipes += 1;
         advSave();
         advRenderShopBox();
         advShardFloat(-ADV_WIPE_COST);
     }
-    // 傳說招式要先破第一章（第 10 關）
-    function advMoveOpen(m) { return advRarityKey(m.key) !== 'legend' || !!advData.cleared[10]; }
+    // 傳說招式要先打倒第 20 關
+    function advMoveOpen(m) { return advRarityKey(m.key) !== 'legend' || !!advData.cleared[20]; }
     function advBuyMove(key) {
         let m = advMoveByKey(key);
         if (!m || m.buy.kind === 'free') return;
         if (advOwns(key)) { alert(`已經擁有「${m.name}」了。`); return; }
-        if (!advMoveOpen(m)) { alert(`「${m.name}」要打倒第 10 關、進入第 11 關後才能購買。`); return; }
+        if (!advMoveOpen(m)) return;                            // 還沒解鎖：格子上已經寫「第 21 關解鎖」
         if (m.buy.kind === 'chicken') { buyShopItem(m.buy.item); return; }
-        if (advData.shards < m.buy.price) { alert(`碎片不足！需要 ${m.buy.price} 個，目前有 ${advData.shards} 個。`); return; }
+        if (advData.shards < m.buy.price) return;
         if (!confirm(`要用 ${m.buy.price} 個碎片學會「${m.name}」嗎？\n\n${ADV_TYPE_LABEL[m.type]}｜威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''}｜${m.q} 題｜${m.desc}`)) return;
         advData.shards -= m.buy.price;
         advData.own[key] = true;
@@ -7076,7 +7158,7 @@
     async function advWeeklyExchange() {
         let week = advWeekId();
         if (advData.weekDone === week) { alert('這週已經兌換過了，下週一（台灣時間）再來！'); return; }
-        if (advData.shards < ADV_WEEKLY_SHARDS) { alert(`碎片不足！需要 ${ADV_WEEKLY_SHARDS} 個，目前有 ${advData.shards} 個。`); return; }
+        if (advData.shards < ADV_WEEKLY_SHARDS) return;
         if (walletBusy) return;
         if (!ensureLoginBeforeSpend()) return;
         if (!confirm(`要用 ${ADV_WEEKLY_SHARDS} 個碎片兌換 ${ADV_WEEKLY_CHICKENS} 個雞塊嗎？\n\n每週只能兌換 1 次。`)) return;
@@ -7347,6 +7429,7 @@
         adv.decks = { all: [], cn: [] };
         adv.seen = new Set();          // 這場戰鬥已經出現過的單字
         adv.wrongThis = [];            // 這場戰鬥答錯的字
+        adv.stOk = 0; adv.stAll = 0;   // 這場戰鬥答對的題數／作答題數
         adv.plan = autoMode ? { review: advIsReview(lv.id), fresh: advAutoWords(lv), old: advIsReview(lv.id) ? [] : advOldWords(lv), queue: [], started: false } : null;
         let s = advPlayerStats();
         adv.level = lv;
@@ -7358,7 +7441,7 @@
         adv.sealed = [];
         adv.round = 1;
         adv.gear = advData.gear.filter(Boolean);    // 這場戰鬥帶的裝備（左手、右手）
-        if (advHasGear('coaster')) { adv.player.int += ADV_COASTER_INT; adv.player.shield = adv.player.shieldMax = advShieldMax(adv.player.int); }   // 防燙杯墊：智慧 +3
+        if (advHasGear('coaster')) { adv.player.int += ADV_COASTER_INT; adv.player.shield = adv.player.shieldMax = advShieldMax(adv.player.int); }   // 防燙杯套：智慧 +3
         if (advHasGear('bag')) { adv.player.shield += ADV_BAG_SHIELD; adv.player.shieldMax += ADV_BAG_SHIELD; }
         advData.hitPrev = advHitTotal();             // 命中的「比上次」用這個比較
         adv.itemUsed = false;
@@ -7558,7 +7641,7 @@
         }
         ['nectar', 'crown'].forEach(k => {
             let n = (typeof farm !== 'undefined' && farm.items) ? (farm.items[k] || 0) : 0;
-            if (!n) return;
+            if (!n || !FARM_ITEMS[k]) return;     // 下架的道具：戰鬥中先不顯示
             let it = FARM_ITEMS[k], used = adv.flowerUsed && adv.flowerUsed[k];
             let can = !used;
             itemBtn += `<button type="button" class="adv-item-btn" ${can ? '' : 'disabled'} data-on-click='[["advUseFlowerItem",["${k}"]]]'>${it.icon} ${it.name}　${it.desc.replace('戰鬥中 ', '').replace('這場戰鬥', '')} <small>${used ? '（這場已經用過了）' : `（持有 ${n}，一場 1 次，不消耗行動）`}</small></button>`;
@@ -7632,6 +7715,7 @@
     // 這一題答對了：還有下一題就繼續，題目答完就發動招式
     // 命中：每一題記一次（答對 1／答錯或時間到 0），各類與全部都只留最近 20 題
     function advRecordHit(ok) {
+        if (adv.active) { adv.stAll = (adv.stAll || 0) + 1; if (ok) adv.stOk = (adv.stOk || 0) + 1; }   // 結算畫面的「答對 x / y」
         let t = adv.move && adv.move.type;
         if (!t || !advData.hits[t]) return;
         [t, 'all'].forEach(k => { advData.hits[k].push(ok ? 1 : 0); if (advData.hits[k].length > ADV_HIT_N) advData.hits[k].splice(0, advData.hits[k].length - ADV_HIT_N); });
@@ -8358,16 +8442,25 @@
         if (first && lv.id === 2) lines.push(`<div class="line" style="color:var(--primary);font-weight:800;">🛒 可以到「雞塊補給站」用碎片購買裝備囉！</div>`);
         gotMoves.forEach(m => lines.push(`<div class="line" style="font-weight:800;">🎁 學會新招式：${m.icon} ${m.name}！</div>`));
         let nextLv = ADV_LEVELS.find(l => l.id === lv.id + 1);
+        // 戰鬥畫面下方保留簡單的結果（關掉結算畫面時看得到）
         document.getElementById('advPanel').innerHTML = `
-            <div class="adv-result">
-                <div class="big">🎉 勝利！</div>
-                ${lines.join('')}
-                <div class="line" style="color:var(--text-muted);font-size:12px;">體力剩 ${advData.hp}/${advMaxHp()}（每天 00:00 恢復）</div>
-                ${advWrongHTML()}
-            </div>
-            ${advData.hp > 0 ? `<button type="button" class="adv-plain-btn main" data-on-click='[["advRetry",[]]]'>再戰一次</button>` : ''}
-            ${nextLv ? `<button type="button" class="adv-plain-btn next" data-on-click='[["advNextLevel",[]]]'>挑戰下一關</button>` : `<button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`}`;
-        advShowReward(pop);
+            <div class="adv-result"><div class="big">🎉 勝利！</div>${lines.join('')}${advWrongHTML()}</div>
+            <button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`;
+        // 結算畫面的獎勵：只放 icon＋數量
+        let items = [];
+        if (gainSauce > 0) items.push({ icon: advSauceIcon(26), n: gainSauce, label: '糖醋醬' });
+        if (gainShards > 0) items.push({ icon: advShardIcon(26), n: gainShards, label: '糖醋醬碎片' });
+        if (gotPotions + dropPotion > 0) items.push({ icon: advPotionIcon(26), n: gotPotions + dropPotion, label: '恢復藥水' });
+        if (gotMaxHp) items.push({ icon: '<span class="cr-emo">❤️</span>', n: gotMaxHp, label: '生命上限' });
+        if (gotItem) items.push({ icon: ADV_ITEMS[gotItem].icon(26), n: 1, label: ADV_ITEMS[gotItem].name });
+        gotMoves.forEach(m => items.push({ icon: `<span class="cr-emo">${m.icon}</span>`, n: 1, label: '新招式：' + m.name }));
+        let notes = [];
+        if (gotMoves.length) notes.push(`學會新招式：${gotMoves.map(m => m.name).join('、')}`);
+        if (gotItem && !hadGearBefore) notes.push(`到「能力值 → 裝備」把${ADV_ITEMS[gotItem].name}裝備起來`);
+        if (first && lv.id === 2) notes.push('補給站可以用碎片買裝備囉！');
+        if (loot.bonus) notes.push(`幸運擲幣：碎片多 +${loot.bonus}`);
+        if (sodaHeal) notes.push('喝了彈珠汽水，體力 +1');
+        advShowResult({ state: first ? 'first' : 'replay', lv, nextLv, items, notes, rewardOK });
     }
     // 勝利後跳出的獎勵視窗：簡短列出拿到什麼
     function advShowReward(items) {
@@ -8382,6 +8475,192 @@
         advAbort();
         goToAdvLevel(id);
     }
+
+    // ═════════ 戰鬥結算畫面（首勝／已通關再打／輸了）＋ 首勝插旗動畫 ═════════
+    // 樣式：index.html 的 .cr-*（結算）和 .fa-*（插旗）
+    const CR_BACK_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>';
+    const CR_FX_FIRST = '<svg class="cr-hero__fx" viewBox="0 0 358 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><radialGradient id="cr-glow"><stop offset="0%" stop-color="#ffe58a" stop-opacity="0.75"/><stop offset="60%" stop-color="#ffd34d" stop-opacity="0.18"/><stop offset="100%" stop-color="#ffd34d" stop-opacity="0"/></radialGradient></defs><g fill="#ffe9a8" opacity="0.14"><path d="M179 175L110 -20h36z"/><path d="M179 175L212 -20h36z"/><path d="M179 175L-30 50v36z"/><path d="M179 175L388 50v36z"/><path d="M179 175L-30 230v36z"/><path d="M179 175L388 230v36z"/><path d="M179 175L60 340h40z"/><path d="M179 175L258 340h40z"/></g><circle cx="179" cy="175" r="120" fill="url(#cr-glow)"/><g class="cr-confetti"><rect x="171" y="83" width="7" height="4" rx="1.5" fill="#ffd34d" transform="rotate(12 171 83)"/><rect x="280" y="54" width="7" height="4" rx="1.5" fill="#ffffff" transform="rotate(14 280 54)"/><rect x="115" y="25" width="6" height="12" rx="1.5" fill="#ffd34d" transform="rotate(107 115 25)"/><rect x="129" y="52" width="8" height="12" rx="1.5" fill="#ffffff" transform="rotate(15 129 52)"/><rect x="69" y="120" width="8" height="4" rx="1.5" fill="#ffd34d" transform="rotate(149 69 120)"/><rect x="301" y="209" width="6" height="10" rx="1.5" fill="#ffffff" transform="rotate(11 301 209)"/><rect x="74" y="154" width="7" height="10" rx="1.5" fill="#ffd34d" transform="rotate(138 74 154)"/><rect x="298" y="163" width="8" height="4" rx="1.5" fill="#ffd34d" transform="rotate(46 298 163)"/><rect x="303" y="298" width="8" height="10" rx="1.5" fill="#ffd34d" transform="rotate(95 303 298)"/><rect x="286" y="38" width="8" height="10" rx="1.5" fill="#fb7185" transform="rotate(158 286 38)"/><rect x="260" y="278" width="7" height="12" rx="1.5" fill="#ffffff" transform="rotate(119 260 278)"/><rect x="98" y="130" width="6" height="4" rx="1.5" fill="#ffffff" transform="rotate(76 98 130)"/><rect x="259" y="181" width="8" height="12" rx="1.5" fill="#ffffff" transform="rotate(73 259 181)"/><rect x="43" y="66" width="8" height="12" rx="1.5" fill="#34d399" transform="rotate(42 43 66)"/><rect x="83" y="256" width="7" height="10" rx="1.5" fill="#ffd34d" transform="rotate(171 83 256)"/><rect x="291" y="299" width="7" height="12" rx="1.5" fill="#34d399" transform="rotate(177 291 299)"/><rect x="310" y="260" width="8" height="12" rx="1.5" fill="#ffd34d" transform="rotate(17 310 260)"/><rect x="346" y="39" width="6" height="4" rx="1.5" fill="#34d399" transform="rotate(179 346 39)"/><rect x="337" y="234" width="7" height="4" rx="1.5" fill="#f97316" transform="rotate(98 337 234)"/><rect x="183" y="17" width="7" height="12" rx="1.5" fill="#ffffff" transform="rotate(43 183 17)"/><rect x="65" y="258" width="6" height="10" rx="1.5" fill="#fb7185" transform="rotate(73 65 258)"/><rect x="206" y="260" width="6" height="10" rx="1.5" fill="#93c5fd" transform="rotate(114 206 260)"/><rect x="287" y="148" width="6" height="12" rx="1.5" fill="#34d399" transform="rotate(140 287 148)"/><rect x="83" y="48" width="6" height="10" rx="1.5" fill="#f97316" transform="rotate(59 83 48)"/><rect x="125" y="12" width="7" height="4" rx="1.5" fill="#34d399" transform="rotate(46 125 12)"/><rect x="150" y="8" width="6" height="12" rx="1.5" fill="#34d399" transform="rotate(136 150 8)"/><rect x="318" y="295" width="7" height="10" rx="1.5" fill="#ffffff" transform="rotate(176 318 295)"/><rect x="322" y="33" width="7" height="4" rx="1.5" fill="#93c5fd" transform="rotate(143 322 33)"/></g><g fill="#ffd34d"><path d="M48 96l3.5 8 8 3.5-8 3.5-3.5 8-3.5-8-8-3.5 8-3.5z"/><path d="M312 118l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><path d="M300 236l2.4 5.6 5.6 2.4-5.6 2.4-2.4 5.6-2.4-5.6-5.6-2.4 5.6-2.4z"/><path d="M60 230l2.4 5.6 5.6 2.4-5.6 2.4-2.4 5.6-2.4-5.6-5.6-2.4 5.6-2.4z"/></g></svg>';
+    const CR_FX_WIN = '<svg class="cr-hero__fx" viewBox="0 0 358 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="#ffffff" opacity="0.08"><path d="M179 120L120 -20h30z"/><path d="M179 120L210 -20h30z"/><path d="M179 120L-20 40v30z"/><path d="M179 120L378 40v30z"/><path d="M179 120L30 300h35z"/><path d="M179 120L300 300h35z"/></g><g fill="#ffd34d"><path d="M52 52l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><path d="M300 70l2.4 5.6 5.6 2.4-5.6 2.4-2.4 5.6-2.4-5.6-5.6-2.4 5.6-2.4z"/><path d="M290 190l2 4.6 4.6 2-4.6 2-2 4.6-2-4.6-4.6-2 4.6-2z"/><path d="M70 180l2 4.6 4.6 2-4.6 2-2 4.6-2-4.6-4.6-2 4.6-2z"/></g></svg>';
+    const CR_FX_LOSE = '<svg class="cr-hero__fx" viewBox="0 0 358 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="320" cy="20" r="80" fill="#ffffff" opacity="0.07"/><circle cx="30" cy="290" r="70" fill="#ffffff" opacity="0.06"/></svg>';
+    let crData = null;
+    function advResultEl() {
+        let el = document.getElementById('advResultView');
+        if (!el) { el = document.createElement('div'); el.id = 'advResultView'; el.className = 'cr-overlay'; el.hidden = true; document.body.appendChild(el); }
+        return el;
+    }
+    function advShowResult(d) {
+        crData = d;
+        let lv = d.lv || adv.level, st = d.state;
+        let el = advResultEl();
+        let hpMax = advMaxHp(), hp = Math.max(0, Math.min(hpMax, advData.hp));
+        let ok = adv.stOk || 0, all = Math.max(ok, adv.stAll || 0);
+        let used = advReplaysUsed();
+        let enemy = `<div class="cr-enemy"><span class="cr-enemy__art">${advEnemySVG(lv.sprite)}</span>${st === 'lose' ? '' : '<span class="cr-enemy__badge">已擊敗</span>'}</div>`;
+        let hero = st === 'first'
+            ? `<div class="cr-hero cr-hero--first">${CR_FX_FIRST}<h1 class="cr-hero__title">勝利！</h1><div class="cr-ribbon"><span>首次通關</span></div>${enemy}<p class="cr-hero__sub">第 ${lv.id} 關 ${escapeHTML(lv.name)}</p></div>`
+            : st === 'replay'
+            ? `<div class="cr-hero cr-hero--win">${CR_FX_WIN}<h1 class="cr-hero__title">勝利！</h1>${enemy}<p class="cr-hero__sub">第 ${lv.id} 關 ${escapeHTML(lv.name)}</p></div>`
+            : `<div class="cr-hero cr-hero--lose">${CR_FX_LOSE}<h1 class="cr-hero__title">${escapeHTML(d.title || '差一點！')}</h1>${enemy}<p class="cr-hero__sub">第 ${lv.id} 關 ${escapeHTML(lv.name)}</p></div>`;
+        let stats = `<div class="cr-stats">
+            <div class="cr-stat cr-stat--score"><span class="cr-stat__label">答對</span><span class="cr-num">${ok} <small>/ ${all}</small></span></div>
+            <div class="cr-stat cr-stat--hp"><span class="cr-stat__label">剩下體力</span><span class="cr-hpbar" style="--hp: ${hpMax ? (hp / hpMax * 100).toFixed(0) : 0}%"><i></i></span><span class="cr-num cr-num--hp${hp ? '' : ' is-empty'}">${hp} <small>/ ${hpMax}</small></span></div></div>`;
+        let mid;
+        if (st === 'lose') {
+            let ws = adv.wrongThis || [];
+            mid = `<div class="cr-miss"><span class="cr-miss__label">${ws.length ? `答錯 ${ws.length} 個字` : '這場沒有答錯的字'}</span>${ws.length ? `<div class="cr-miss__words">${ws.map(w => `<span class="cr-word"><b>${escapeHTML(w.english)}</b> ${escapeHTML(w.chinese || '')}</span>`).join('')}</div>` : ''}</div>`;
+        } else {
+            let tag = st === 'first' ? '<span class="cr-tag cr-tag--first">首勝</span>' : `<span class="cr-tag cr-tag--today">今日 ${Math.min(used, ADV_REPLAY_PER_DAY)} / ${ADV_REPLAY_PER_DAY}</span>`;
+            let its = (d.items || []).map(it => `<span class="cr-item" role="img" aria-label="${escapeHTML(it.label)} ×${it.n}">${it.icon}<b>×${it.n}</b></span>`).join('');
+            if (!its) its = `<span class="cr-none">${d.rewardOK === false ? '今日獎勵已領完' : '這次沒有獎勵'}</span>`;
+            mid = `<div class="cr-reward"><div class="cr-reward__head"><span class="cr-reward__label">獲得獎勵</span>${tag}</div><div class="cr-reward__items">${its}</div></div>`;
+        }
+        let notes = (d.notes || []).length ? `<div class="cr-notes">${d.notes.map(t => `<span>${escapeHTML(t)}</span>`).join('')}</div>` : '';
+        let doneToday = st === 'replay' && used >= ADV_REPLAY_PER_DAY;
+        let btns;
+        if (st === 'first') btns = `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crContinue",[]]]'>${d.nextLv ? `繼續・解鎖第 ${d.nextLv.id} 關` : '回地圖'}</button>
+            <button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crRetry",[]]]'>再打一次</button>`;
+        else if (st === 'replay') btns = `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crNext",[]]]'>${d.nextLv ? `下一關・${escapeHTML(d.nextLv.name)}` : '回地圖'}</button>
+            <button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crRetry",[]]]'>再打一次${doneToday ? '<small>今日獎勵已領完</small>' : ''}</button>`;
+        else btns = `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crRetry",[]]]'>再打一次</button>
+            ${(adv.wrongThis || []).length ? `<div class="cr-review" id="crReview"><button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crReviewPick",[]]]'>複習答錯的字</button></div>` : ''}`;
+        el.innerHTML = `<section class="cr-screen" data-state="${st}" aria-label="戰鬥結算"><div class="cr-card">
+            <header class="cr-top"><button type="button" class="cr-back" aria-label="返回" data-on-click='[["crBack",[]]]'>${CR_BACK_SVG}</button><span class="cr-pill">雞塊大冒險</span><span></span></header>
+            ${hero}${stats}${mid}${notes}<div class="cr-actions">${btns}</div></div></section>`;
+        el.hidden = false;
+        el.scrollTop = 0;
+        document.body.classList.add('cr-open');
+    }
+    function advHideResult() {
+        let el = document.getElementById('advResultView');
+        if (el) { el.hidden = true; el.innerHTML = ''; }
+        document.body.classList.remove('cr-open');
+    }
+    function crBack() { advHideResult(); advBackToMenu(); }
+    function crRetry() { advHideResult(); advRetry(); }
+    function crNext() {
+        let d = crData || {};
+        advHideResult();
+        if (d.nextLv) advNextLevel(); else goToAdventurePage(true);
+    }
+    function crReviewPick() {
+        let el = document.getElementById('crReview');
+        if (el) el.innerHTML = `<div class="cr-review__pick"><button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crReview",["card"]]]'>字卡練習</button><button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crReview",["listen"]]]'>聽力練習</button></div>`;
+    }
+    function crReview(kind) { advHideResult(); advWrongPractice(kind); }
+    // 首勝 →「繼續」：回地圖播插旗動畫
+    function crContinue() {
+        let d = crData || {}, lv = d.lv || adv.level;
+        advHideResult();
+        if (!lv) { goToAdventurePage(); return; }
+        adv.pickLevel = lv.id;
+        goToAdventurePage(true);
+        advFlagAnim(lv.id, d.nextLv || null);
+    }
+
+    // ── 首勝插旗動畫（沿用原本的夜市地圖，在地圖上疊動畫）──
+    //   時間（毫秒）照設計稿 flag-animation.css：旗子 0.5s → 節點變綠 1.1s → 路線 1.6s → 鎖頭 2.4s → 下一關解鎖 2.9s → 卡片 4.0s
+    const FA_T = { flag: 500, node: 1100, path: 1600, lock: 2400, open: 2900, sheet: 4000 };
+    var faTimers = [], faState = null;     // var：地圖重畫時可能比這行更早被呼叫
+    function advFlagAnim(id, nextLv) {
+        faStop();
+        let map = document.getElementById('advMap');
+        if (!map) return;
+        let ch = ADV_CHAPTERS.find(c => c.id === advMapChapter) || ADV_CHAPTERS[0];
+        if (id < ch.from || id > ch.to) return;
+        let pt = ADV_MAP_PTS[id - ch.from];
+        let nextIn = nextLv && nextLv.id <= ch.to ? ADV_MAP_PTS[nextLv.id - ch.from] : null;
+        let pct = (p) => ({ x: p[0] / ADV_MAP_W * 100, y: p[1] / ADV_MAP_H * 100 });
+        let a = pct(pt), b = nextIn ? pct(nextIn) : null;
+        let nodes = map.querySelectorAll('.adv-node');
+        let nA = nodes[id - ch.from], nB = nextIn ? nodes[nextLv.id - ch.from] : null;
+        // 動畫開始前：剛打贏的關卡還是黃色、下一關還鎖著
+        if (nA) { nA.classList.remove('cleared'); nA.classList.add('open', 'fa-hold'); }
+        if (nB) { nB.dataset.faLabel = nB.textContent; nB.classList.remove('open', 'cleared'); nB.classList.add('locked', 'fa-hold'); nB.textContent = ''; }
+        let fx = document.createElement('div');
+        fx.className = 'fa-layer';
+        let w = map.offsetWidth, h = map.offsetHeight;
+        let line = b ? `<svg class="fa-pathsvg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><line class="fa-path" x1="${(a.x * w / 100).toFixed(1)}" y1="${(a.y * h / 100).toFixed(1)}" x2="${(b.x * w / 100).toFixed(1)}" y2="${(b.y * h / 100).toFixed(1)}" stroke="#ffc83d" stroke-width="8" stroke-linecap="round" style="--fa-len:${Math.hypot((b.x - a.x) * w / 100, (b.y - a.y) * h / 100).toFixed(0)}"/></svg>` : '';
+        let burst = [0, 45, 90, 135, 180, 225, 270, 315].map((deg, i) => { let r = 42, x = Math.cos(deg * Math.PI / 180) * r, y = Math.sin(deg * Math.PI / 180) * r; return `<i style="left:calc(50% + ${x.toFixed(0)}px - 5px);top:calc(50% + ${y.toFixed(0)}px - 5px);background:${['#ffd34d', '#fb7185', '#34d399', '#93c5fd'][i % 4]}"></i>`; }).join('');
+        // 路線放在節點「下面」（插在第一個節點前），旗子、鎖頭放在上面
+        if (line) {
+            let pl = document.createElement('div'); pl.className = 'fa-pathlayer'; pl.innerHTML = line;
+            map.insertBefore(pl, map.querySelector('.adv-node'));
+        }
+        fx.innerHTML = `
+            <div class="fa-burst" style="left:${a.x}%;top:${a.y}%">${burst}</div>
+            <div class="fa-flag" style="left:${a.x}%;top:${a.y}%"><svg width="40" height="56" viewBox="0 0 46 64" aria-hidden="true"><rect x="6" y="2" width="5" height="60" rx="2.5" fill="#fff3d6" stroke="#5b3a00" stroke-width="1.5"/><path d="M11 5h30l-7 10 7 10H11z" fill="#ef4444" stroke="#7f1d1d" stroke-width="2" stroke-linejoin="round"/><path d="M20 10l1.8 3.6 4 .6-2.9 2.8.7 4-3.6-1.9-3.6 1.9.7-4-2.9-2.8 4-.6z" fill="#ffd34d"/></svg></div>
+            ${b ? `<div class="fa-lock" style="left:${b.x}%;top:${b.y}%"><svg width="26" height="30" viewBox="0 0 24 28" aria-hidden="true"><path d="M7 12V8a5 5 0 0110 0v4" fill="none" stroke="#e7e5f5" stroke-width="3" stroke-linecap="round"/><rect x="3" y="11" width="18" height="14" rx="3.5" fill="#e7e5f5" stroke="#45426b" stroke-width="1.5"/><circle cx="12" cy="18" r="2.2" fill="#45426b"/></svg></div>` : ''}
+            <span class="fa-skip">點一下畫面可跳過</span>`;
+        map.appendChild(fx);
+        faState = { id, nextLv, nA, nB, fx };
+        let reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) { faFinish(); return; }
+        fx.classList.add('is-run');
+        let plr = document.querySelector('.fa-pathlayer'); if (plr) plr.classList.add('is-run');
+        faTimers.push(setTimeout(() => { if (nA) { nA.classList.remove('open'); nA.classList.add('cleared', 'fa-pop'); } }, FA_T.node));
+        faTimers.push(setTimeout(() => { if (nB) { nB.classList.remove('locked'); nB.classList.add('open', 'fa-pop'); nB.textContent = nB.dataset.faLabel || String(nextLv.id); } }, FA_T.open + 450));
+        faTimers.push(setTimeout(faFinish, FA_T.sheet));
+        setTimeout(() => document.addEventListener('pointerdown', faSkip, true), 50);
+    }
+    function faSkip(e) {
+        if (!faState) return;
+        if (e && e.target && e.target.closest && e.target.closest('.fa-sheet')) return;
+        faFinish();
+    }
+    function faStop() {
+        faTimers.forEach(clearTimeout); faTimers = [];
+        document.removeEventListener('pointerdown', faSkip, true);
+        let old = document.querySelector('.fa-layer'); if (old) old.remove();
+        let oldp = document.querySelector('.fa-pathlayer'); if (oldp) oldp.remove();
+        let sh = document.getElementById('faSheet'); if (sh) sh.remove();
+        faState = null;
+    }
+    // 跳到結束畫面：節點變好、旗子插好、下一關卡片滑上來
+    function faFinish() {
+        let f = faState;
+        if (!f) return;
+        faTimers.forEach(clearTimeout); faTimers = [];
+        document.removeEventListener('pointerdown', faSkip, true);
+        if (f.nA) { f.nA.classList.remove('open', 'fa-hold'); f.nA.classList.add('cleared'); }
+        if (f.nB) { f.nB.classList.remove('locked', 'fa-hold'); f.nB.classList.add('open'); f.nB.textContent = f.nB.dataset.faLabel || String(f.nextLv.id); }
+        if (f.fx) { f.fx.classList.remove('is-run'); f.fx.classList.add('is-done'); }
+        let pl = document.querySelector('.fa-pathlayer'); if (pl) pl.classList.add('is-done');
+        faState = null;
+        if (f.nextLv) faShowSheet(f.nextLv);
+    }
+    function faShowSheet(lv) {
+        let old = document.getElementById('faSheet'); if (old) old.remove();
+        let r = advRewardItemsOf(lv);
+        let el = document.createElement('div');
+        el.id = 'faSheet';
+        el.className = 'fa-sheet-wrap';
+        el.innerHTML = `<div class="fa-sheet-bg" data-on-click='[["faCloseSheet",[]]]'></div><div class="fa-sheet">
+            <span class="fa-sheet__handle"></span>
+            <div class="fa-sheet__head">
+                <div class="fa-sheet__avatar">${advEnemySVG(lv.sprite)}</div>
+                <div class="fa-sheet__info">
+                    <div class="fa-sheet__meta"><span>第 ${lv.id} 關</span><span class="fa-sheet__new">新關卡</span></div>
+                    <strong class="fa-sheet__name">${escapeHTML(lv.name)}</strong>
+                    <span class="fa-sheet__desc">${escapeHTML(advHeroSub(lv))}</span>
+                </div>
+            </div>
+            ${r ? `<div class="fa-sheet__reward"><span class="fa-sheet__rlabel">通關獎勵<span class="cr-tag cr-tag--first">首勝</span></span><span class="fa-sheet__items">${r}</span></div>` : ''}
+            <button type="button" class="cr-btn cr-btn--primary" data-on-click='[["faGoLevel",[${lv.id}]]]'>開始挑戰</button>
+        </div>`;
+        document.body.appendChild(el);
+    }
+    function faCloseSheet() { let el = document.getElementById('faSheet'); if (el) el.remove(); }
+    function faGoLevel(id) { faStop(); goToAdvLevel(id); }
+    // 首勝獎勵的 icon＋數量（卡片用）
+    function advRewardItemsOf(lv) {
+        let out = [];
+        if (lv.firstSauce) out.push([advSauceIcon(22), lv.firstSauce, '糖醋醬']);
+        if (lv.firstShards) out.push([advShardIcon(22), lv.firstShards, '糖醋醬碎片']);
+        if (lv.firstPotions) out.push([advPotionIcon(22), lv.firstPotions, '恢復藥水']);
+        if (lv.firstMaxHp) out.push(['<span class="cr-emo">❤️</span>', lv.firstMaxHp, '生命上限']);
+        if (lv.firstItem && ADV_ITEMS[lv.firstItem]) out.push([ADV_ITEMS[lv.firstItem].icon(22), 1, ADV_ITEMS[lv.firstItem].name]);
+        return out.map(x => `<span class="cr-item" role="img" aria-label="${escapeHTML(x[2])} ×${x[1]}">${x[0]}<b>×${x[1]}</b></span>`).join('');
+    }
     async function advLose(id, why) {
         const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
         adv.active = false;
@@ -8394,6 +8673,7 @@
             document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">⏰ 打卡下班！</div>`;
             await advAnimate(E, [{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(60px)', opacity: 0 }], { duration: 700, fill: 'forwards' });
             if (id !== adv.runId) return;
+            setTimeout(() => { if (id === adv.runId) advShowResult({ state: 'lose', lv: adv.level, title: '下班了！', notes: ['雞塊的體力保留下來了，下次要在倒數結束前打倒店員！'] }); }, 0);
             document.getElementById('advPanel').innerHTML = `
             <div class="adv-result"><div class="big">🕘 店員下班了，明天請早</div><div class="line">雞塊的體力保留下來了（${adv.player.hp}/${adv.player.max}）。<br>下次要在倒數結束前打倒店員！${tip}</div>${advWrongHTML()}</div>
             <button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`;
@@ -8405,6 +8685,7 @@
         document.getElementById('advPanel').innerHTML = `
             <div class="adv-result"><div class="big">😵 挑戰失敗</div><div class="line">雞塊沒有體力了，明天 00:00 恢復。<br>先去練習單字，或用糖醋醬提升能力吧！${tip}</div>${advWrongHTML()}</div>
             <button type="button" class="adv-plain-btn sub" data-on-click='[["advBackToMenu",[]]]'>回關卡</button>`;
+        advShowResult({ state: 'lose', lv: adv.level, notes: tip ? ['背包裡的恢復藥水可以恢復體力喔！'] : [] });
     }
 
     // ═════════════════════════════════════════════════════════════
@@ -8444,6 +8725,7 @@
         { id: 'fence_cones', slot: 'fence', name: '三角錐圍籬', price: 50 },
         { id: 'fence_cat_posts', slot: 'fence', name: '貓頭圍籬', price: 60 },
         { id: 'fence_seal_posts', slot: 'fence', name: '睡覺海豹圍籬', price: 60 },
+        { id: 'fence_peach_heart', slot: 'fence', name: '桃桃貓花式圍籬', price: 50 },   // 2026/11 新增（後台價格見 supabase_010）
         { id: 'mailbox_capsule_toy', slot: 'mailbox', name: '扭蛋機信箱', price: 40 },
         { id: 'mailbox_pull_tab', slot: 'mailbox', name: '抽抽樂信箱', price: 40 },
         { id: 'mailbox_peach_cat', slot: 'mailbox', name: '粉粉貓信箱', price: 50 },
@@ -8680,6 +8962,7 @@
     const FARM_FENCE_ART = {
         fence_plastic_stools: `<rect x="0" y="22" width="150" height="4" fill="#e6cf9f"/><g transform="translate(4 6)"><rect x="2" y="0" width="30" height="7" rx="3.5" fill="#f2665c"/><path d="M5 7 L2 32 H8 L11 12 H23 L26 32 H32 L29 7Z" fill="#e2463c"/><rect x="9" y="18" width="16" height="3" rx="1.5" fill="#c23a30"/></g><g transform="translate(58 6)"><rect x="2" y="0" width="30" height="7" rx="3.5" fill="#f2665c"/><path d="M5 7 L2 32 H8 L11 12 H23 L26 32 H32 L29 7Z" fill="#e2463c"/><rect x="9" y="18" width="16" height="3" rx="1.5" fill="#c23a30"/></g><g transform="translate(112 6)"><rect x="2" y="0" width="30" height="7" rx="3.5" fill="#f2665c"/><path d="M5 7 L2 32 H8 L11 12 H23 L26 32 H32 L29 7Z" fill="#e2463c"/><rect x="9" y="18" width="16" height="3" rx="1.5" fill="#c23a30"/></g>`,
         fence_cones: `<rect x="16" y="14" width="54" height="7" rx="2" fill="#f7d14a"/><path d="M20 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M30 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M40 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M50 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M60 14 h5 l-4 7 h-5z" fill="#2e2650"/><rect x="80" y="14" width="54" height="7" rx="2" fill="#f7d14a"/><path d="M84 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M94 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M104 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M114 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M124 14 h5 l-4 7 h-5z" fill="#2e2650"/><g transform="translate(0 0)"><path d="M10 4 L18 34 H2Z" fill="#f28a2e"/><rect x="5" y="14" width="10" height="4" fill="#ffffff"/><rect x="3.5" y="24" width="13" height="4" fill="#ffffff"/><rect x="0" y="34" width="20" height="4" rx="1" fill="#c96a1e"/></g><g transform="translate(65 0)"><path d="M10 4 L18 34 H2Z" fill="#f28a2e"/><rect x="5" y="14" width="10" height="4" fill="#ffffff"/><rect x="3.5" y="24" width="13" height="4" fill="#ffffff"/><rect x="0" y="34" width="20" height="4" rx="1" fill="#c96a1e"/></g><g transform="translate(130 0)"><path d="M10 4 L18 34 H2Z" fill="#f28a2e"/><rect x="5" y="14" width="10" height="4" fill="#ffffff"/><rect x="3.5" y="24" width="13" height="4" fill="#ffffff"/><rect x="0" y="34" width="20" height="4" rx="1" fill="#c96a1e"/></g>`,
+        fence_peach_heart: `<path d="M9 34 L13 34 L11 41Z" fill="#FFF7FA" stroke="#E48AAE" stroke-width="1.1" stroke-linejoin="round"/><path d="M137 34 L141 34 L139 41Z" fill="#FFF7FA" stroke="#E48AAE" stroke-width="1.1" stroke-linejoin="round"/><rect x="1" y="13.5" width="148" height="3.6" rx="1.8" fill="#FFF7FA" stroke="#E48AAE" stroke-width="1.3"/><rect x="1" y="30.6" width="148" height="3.6" rx="1.8" fill="#FFF7FA" stroke="#E48AAE" stroke-width="1.3"/><g fill="none" stroke-linecap="round"><path d="M25 35 C22 32 14 28 14 21.5 C14 17 17.5 15 20.2 15 C22.5 15 24.2 16.3 25 18 C25.8 16.3 27.5 15 29.8 15 C32.5 15 36 17 36 21.5 C36 28 28 32 25 35 Z" stroke="#E48AAE" stroke-width="3.4" stroke-linejoin="round"/><path d="M23.4 21 C22 18.6 17.4 18.8 17.8 22 C18.1 24.4 20.8 24.4 20.7 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M26.6 21 C28 18.6 32.6 18.8 32.2 22 C31.9 24.4 29.2 24.4 29.3 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M23.4 30 C21.5 31 18.5 29.5 19.2 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M26.6 30 C28.5 31 31.5 29.5 30.8 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M25 17.5 V33" stroke="#E48AAE" stroke-width="3.4"/><path d="M22.6 29.5 H27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M25 35 C22 32 14 28 14 21.5 C14 17 17.5 15 20.2 15 C22.5 15 24.2 16.3 25 18 C25.8 16.3 27.5 15 29.8 15 C32.5 15 36 17 36 21.5 C36 28 28 32 25 35 Z" stroke="#FFF7FA" stroke-width="1.6" stroke-linejoin="round"/><path d="M23.4 21 C22 18.6 17.4 18.8 17.8 22 C18.1 24.4 20.8 24.4 20.7 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M26.6 21 C28 18.6 32.6 18.8 32.2 22 C31.9 24.4 29.2 24.4 29.3 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M23.4 30 C21.5 31 18.5 29.5 19.2 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M26.6 30 C28.5 31 31.5 29.5 30.8 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M25 17.5 V33" stroke="#FFF7FA" stroke-width="1.6"/><path d="M22.6 29.5 H27.4" stroke="#FFF7FA" stroke-width="1.28"/></g><g fill="none" stroke-linecap="round"><path d="M75 35 C72 32 64 28 64 21.5 C64 17 67.5 15 70.2 15 C72.5 15 74.2 16.3 75 18 C75.8 16.3 77.5 15 79.8 15 C82.5 15 86 17 86 21.5 C86 28 78 32 75 35 Z" stroke="#E48AAE" stroke-width="3.4" stroke-linejoin="round"/><path d="M73.4 21 C72 18.6 67.4 18.8 67.8 22 C68.1 24.4 70.8 24.4 70.7 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M76.6 21 C78 18.6 82.6 18.8 82.2 22 C81.9 24.4 79.2 24.4 79.3 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M73.4 30 C71.5 31 68.5 29.5 69.2 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M76.6 30 C78.5 31 81.5 29.5 80.8 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M75 17.5 V33" stroke="#E48AAE" stroke-width="3.4"/><path d="M72.6 29.5 H77.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M75 35 C72 32 64 28 64 21.5 C64 17 67.5 15 70.2 15 C72.5 15 74.2 16.3 75 18 C75.8 16.3 77.5 15 79.8 15 C82.5 15 86 17 86 21.5 C86 28 78 32 75 35 Z" stroke="#FFF7FA" stroke-width="1.6" stroke-linejoin="round"/><path d="M73.4 21 C72 18.6 67.4 18.8 67.8 22 C68.1 24.4 70.8 24.4 70.7 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M76.6 21 C78 18.6 82.6 18.8 82.2 22 C81.9 24.4 79.2 24.4 79.3 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M73.4 30 C71.5 31 68.5 29.5 69.2 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M76.6 30 C78.5 31 81.5 29.5 80.8 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M75 17.5 V33" stroke="#FFF7FA" stroke-width="1.6"/><path d="M72.6 29.5 H77.4" stroke="#FFF7FA" stroke-width="1.28"/></g><g fill="none" stroke-linecap="round"><path d="M125 35 C122 32 114 28 114 21.5 C114 17 117.5 15 120.2 15 C122.5 15 124.2 16.3 125 18 C125.8 16.3 127.5 15 129.8 15 C132.5 15 136 17 136 21.5 C136 28 128 32 125 35 Z" stroke="#E48AAE" stroke-width="3.4" stroke-linejoin="round"/><path d="M123.4 21 C122 18.6 117.4 18.8 117.8 22 C118.1 24.4 120.8 24.4 120.7 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M126.6 21 C128 18.6 132.6 18.8 132.2 22 C131.9 24.4 129.2 24.4 129.3 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M123.4 30 C121.5 31 118.5 29.5 119.2 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M126.6 30 C128.5 31 131.5 29.5 130.8 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M125 17.5 V33" stroke="#E48AAE" stroke-width="3.4"/><path d="M122.6 29.5 H127.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M125 35 C122 32 114 28 114 21.5 C114 17 117.5 15 120.2 15 C122.5 15 124.2 16.3 125 18 C125.8 16.3 127.5 15 129.8 15 C132.5 15 136 17 136 21.5 C136 28 128 32 125 35 Z" stroke="#FFF7FA" stroke-width="1.6" stroke-linejoin="round"/><path d="M123.4 21 C122 18.6 117.4 18.8 117.8 22 C118.1 24.4 120.8 24.4 120.7 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M126.6 21 C128 18.6 132.6 18.8 132.2 22 C131.9 24.4 129.2 24.4 129.3 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M123.4 30 C121.5 31 118.5 29.5 119.2 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M126.6 30 C128.5 31 131.5 29.5 130.8 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M125 17.5 V33" stroke="#FFF7FA" stroke-width="1.6"/><path d="M122.6 29.5 H127.4" stroke="#FFF7FA" stroke-width="1.28"/></g><path d="M18.8 6.8 L19.6 -0.6 L23.6 3.6Z" fill="#F6A5C0"/><path d="M31.2 6.8 L30.4 -0.6 L26.4 3.6Z" fill="#F6A5C0"/><path d="M19.8 5.4 L20.2 1.4 L22.4 3.6Z" fill="#FBD3E0"/><path d="M30.2 5.4 L29.8 1.4 L27.6 3.6Z" fill="#FBD3E0"/><ellipse cx="25" cy="8.4" rx="7.4" ry="6.4" fill="#F6A5C0"/><circle cx="22.3" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="22.7" cy="7.7" r="0.45" fill="#FFF"/><circle cx="27.7" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="28.1" cy="7.7" r="0.45" fill="#FFF"/><circle cx="20.2" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><circle cx="29.8" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><path d="M23.4 10.6 q0.8 1 1.6 0 q0.8 1 1.6 0" fill="none" stroke="#2E2650" stroke-width="0.6" stroke-linecap="round"/><path d="M68.8 6.8 L69.6 -0.6 L73.6 3.6Z" fill="#F6A5C0"/><path d="M81.2 6.8 L80.4 -0.6 L76.4 3.6Z" fill="#F6A5C0"/><path d="M69.8 5.4 L70.2 1.4 L72.4 3.6Z" fill="#FBD3E0"/><path d="M80.2 5.4 L79.8 1.4 L77.6 3.6Z" fill="#FBD3E0"/><ellipse cx="75" cy="8.4" rx="7.4" ry="6.4" fill="#F6A5C0"/><circle cx="72.3" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="72.7" cy="7.7" r="0.45" fill="#FFF"/><circle cx="77.7" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="78.1" cy="7.7" r="0.45" fill="#FFF"/><circle cx="70.2" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><circle cx="79.8" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><path d="M73.4 10.6 q0.8 1 1.6 0 q0.8 1 1.6 0" fill="none" stroke="#2E2650" stroke-width="0.6" stroke-linecap="round"/><path d="M118.8 6.8 L119.6 -0.6 L123.6 3.6Z" fill="#F6A5C0"/><path d="M131.2 6.8 L130.4 -0.6 L126.4 3.6Z" fill="#F6A5C0"/><path d="M119.8 5.4 L120.2 1.4 L122.4 3.6Z" fill="#FBD3E0"/><path d="M130.2 5.4 L129.8 1.4 L127.6 3.6Z" fill="#FBD3E0"/><ellipse cx="125" cy="8.4" rx="7.4" ry="6.4" fill="#F6A5C0"/><circle cx="122.3" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="122.7" cy="7.7" r="0.45" fill="#FFF"/><circle cx="127.7" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="128.1" cy="7.7" r="0.45" fill="#FFF"/><circle cx="120.2" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><circle cx="129.8" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><path d="M123.4 10.6 q0.8 1 1.6 0 q0.8 1 1.6 0" fill="none" stroke="#2E2650" stroke-width="0.6" stroke-linecap="round"/>`,
         fence_cat_posts: `<rect x="0" y="24" width="150" height="6" rx="3" fill="#f3c6d6"/><g fill="#e2789d" opacity="0.8"><ellipse cx="37" cy="25" rx="3" ry="2.4"/><circle cx="34" cy="21.4" r="1.2"/><circle cx="37" cy="20.5" r="1.2"/><circle cx="40" cy="21.4" r="1.2"/></g><g fill="#e2789d" opacity="0.8"><ellipse cx="112" cy="25" rx="3" ry="2.4"/><circle cx="109" cy="21.4" r="1.2"/><circle cx="112" cy="20.5" r="1.2"/><circle cx="115" cy="21.4" r="1.2"/></g><g><rect x="6" y="16" width="12" height="24" rx="3" fill="#fde3ec" stroke="#e8b6c8" stroke-width="2"/><path d="M4.8 9.8 L5.4 2.1 L10.3 5.9Z" fill="#f6a5c0"/><path d="M5.9 8.1 L6.2 4.3 L9.2 6.5Z" fill="#fde3ec"/><path d="M19.1 9.8 L18.6 2.1 L13.7 5.9Z" fill="#f6a5c0"/><path d="M18.1 8.1 L17.8 4.3 L14.8 6.5Z" fill="#fde3ec"/><ellipse cx="12" cy="12" rx="8.2" ry="7.2" fill="#f6a5c0"/><path d="M10.1 5.1 L10.1 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M12.0 5.1 L12.0 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M13.9 5.1 L13.9 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><circle cx="9.2" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="9.8" cy="11.4" r="0.6" fill="#fff"/><circle cx="14.8" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="15.3" cy="11.4" r="0.6" fill="#fff"/><path d="M11.1 14.0 L12.9 14.0 L12.0 15.0Z" fill="#e2789d"/><path d="M10.1 15.4 q0.9 1.1 1.9 0 q0.9 1.1 1.9 0" fill="none" stroke="#2e2650" stroke-width="0.7" stroke-linecap="round"/><circle cx="7.0" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/><circle cx="16.9" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/></g><g><rect x="69" y="16" width="12" height="24" rx="3" fill="#fde3ec" stroke="#e8b6c8" stroke-width="2"/><path d="M67.8 9.8 L68.4 2.1 L73.3 5.9Z" fill="#f6a5c0"/><path d="M69.0 8.1 L69.2 4.3 L72.2 6.5Z" fill="#fde3ec"/><path d="M82.2 9.8 L81.6 2.1 L76.7 5.9Z" fill="#f6a5c0"/><path d="M81.0 8.1 L80.8 4.3 L77.8 6.5Z" fill="#fde3ec"/><ellipse cx="75" cy="12" rx="8.2" ry="7.2" fill="#f6a5c0"/><path d="M73.1 5.1 L73.1 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M75.0 5.1 L75.0 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M76.9 5.1 L76.9 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><circle cx="72.2" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="72.8" cy="11.4" r="0.6" fill="#fff"/><circle cx="77.8" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="78.3" cy="11.4" r="0.6" fill="#fff"/><path d="M74.1 14.0 L75.9 14.0 L75.0 15.0Z" fill="#e2789d"/><path d="M73.1 15.4 q0.9 1.1 1.9 0 q0.9 1.1 1.9 0" fill="none" stroke="#2e2650" stroke-width="0.7" stroke-linecap="round"/><circle cx="70.0" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/><circle cx="80.0" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/></g><g><rect x="132" y="16" width="12" height="24" rx="3" fill="#fde3ec" stroke="#e8b6c8" stroke-width="2"/><path d="M130.8 9.8 L131.4 2.1 L136.3 5.9Z" fill="#f6a5c0"/><path d="M131.9 8.1 L132.2 4.3 L135.2 6.5Z" fill="#fde3ec"/><path d="M145.2 9.8 L144.6 2.1 L139.7 5.9Z" fill="#f6a5c0"/><path d="M144.1 8.1 L143.8 4.3 L140.8 6.5Z" fill="#fde3ec"/><ellipse cx="138" cy="12" rx="8.2" ry="7.2" fill="#f6a5c0"/><path d="M136.1 5.1 L136.1 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M138.0 5.1 L138.0 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M139.9 5.1 L139.9 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><circle cx="135.2" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="135.8" cy="11.4" r="0.6" fill="#fff"/><circle cx="140.8" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="141.3" cy="11.4" r="0.6" fill="#fff"/><path d="M137.1 14.0 L138.9 14.0 L138.0 15.0Z" fill="#e2789d"/><path d="M136.1 15.4 q0.9 1.1 1.9 0 q0.9 1.1 1.9 0" fill="none" stroke="#2e2650" stroke-width="0.7" stroke-linecap="round"/><circle cx="133.1" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/><circle cx="142.9" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/></g>`,
         fence_seal_posts: `<rect x="0" y="24" width="150" height="6" rx="3" fill="#e8d3ad"/><g><rect x="32" y="20" width="22" height="12" rx="6" fill="#a9c7e6"/><path d="M37 26 h12" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/></g><g><rect x="95" y="20" width="22" height="12" rx="6" fill="#a9c7e6"/><path d="M100 26 h12" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/></g><g><rect x="6" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="12" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="9.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="12" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><path d="M7.0 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><path d="M13.7 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><ellipse cx="12" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M10.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="9.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="9.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="14.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="15.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="5.9" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="18.1" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g><g><rect x="69" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="75" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="72.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="75" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><circle cx="71.7" cy="12.4" r="1.4" fill="#2e2650"/><circle cx="72.2" cy="11.9" r="0.5" fill="#fff"/><circle cx="78.3" cy="12.4" r="1.4" fill="#2e2650"/><circle cx="78.8" cy="11.9" r="0.5" fill="#fff"/><ellipse cx="75" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M73.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="72.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="72.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="77.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="78.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="69.0" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="81.0" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g><g><rect x="132" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="138" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="135.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="138" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><path d="M133.1 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><path d="M139.7 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><ellipse cx="138" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M136.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="135.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="135.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="140.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="141.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="131.9" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="144.1" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g>`
     };
@@ -8816,9 +9099,10 @@
     }
 
     // ── 花店：用花買大冒險戰鬥中可以用的道具（一場戰鬥每種限用 1 次）──
+    // 花蜜、花環先下架（之後要再上架，把下面兩行的註解拿掉即可）
     const FARM_ITEMS = {
-        nectar: { name: '花蜜', icon: '🍯', price: 5, desc: '戰鬥中護盾 +2' },
-        crown: { name: '花環', icon: '🌸', price: 8, desc: '這場戰鬥攻擊力 +1' }
+        // nectar: { name: '花蜜', icon: '🍯', price: 5, desc: '戰鬥中護盾 +2' },
+        // crown: { name: '花環', icon: '🌸', price: 8, desc: '這場戰鬥攻擊力 +1' }
     };
     let farmShopOpen = false;
     function farmOpenShop() { if (farmEditing) return; farmShopOpen = true; farmOverlay(farmShopHTML()); }
@@ -8828,7 +9112,7 @@
             <div class="fm-grab"></div>
             <div class="fm-sheet-head"><button type="button" class="fm-x" aria-label="關閉" data-on-click='[["farmCloseShop",[]]]'><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg></button><b>花店</b><span>花 ${farm.flowers} 朵</span></div>
             ${Object.keys(FARM_ITEMS).map(k => { let it = FARM_ITEMS[k]; return `<div class="fm-shop-row"><span class="fm-shop-ic">${it.icon}</span><span class="fm-shop-tx"><b>${it.name}</b><small>${it.desc}・持有 ${farm.items[k] || 0}</small></span><button type="button" class="fm-shop-buy" ${farm.flowers < it.price ? 'disabled' : ''} data-on-click='[["farmBuyItem",["${k}"]]]'>${farmFlowerIcon(16)} ${it.price}</button></div>`; }).join('')}
-            <div class="fm-shop-note">在大冒險戰鬥中使用，一場戰鬥每種限用 1 次。農場裝飾請按鉛筆進入布置模式。</div></div>`;
+            ${Object.keys(FARM_ITEMS).length ? '<div class="fm-shop-note">在大冒險戰鬥中使用，一場戰鬥每種限用 1 次。農場裝飾請按鉛筆進入布置模式。</div>' : '<div class="fm-shop-note">花店的道具暫時下架囉。花可以用來買農場裝飾：按右下角的鉛筆進入布置模式。</div>'}</div>`;
     }
     async function farmBuyItem(k) {
         let it = FARM_ITEMS[k];
@@ -9453,7 +9737,8 @@
         goToFarmPage, farmBack, farmTapPlot, farmEditStart, farmEditDone, farmPickSlot, farmCloseSheet, farmChooseDecor,
         farmOpenPlant, farmSetPlantList, farmLearn, farmLearnClose, farmSay, farmPlantNow,
         farmStartWater, farmTF, farmOdd, farmPick, farmUnpick, farmSubmit, farmNextTask, farmWaterQuit,
-        farmOpenShop, farmCloseShop, farmBuyItem, advUseFlowerItem
+        farmOpenShop, farmCloseShop, farmBuyItem, advUseFlowerItem,
+        crBack, crRetry, crNext, crContinue, crReviewPick, crReview, faCloseSheet, faGoLevel, quitCardExam
     };
 
     const inlineCallCache = new Map();
