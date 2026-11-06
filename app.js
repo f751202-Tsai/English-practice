@@ -6682,7 +6682,7 @@
             row('luck', '幸運', val('luck'), gearBar('luck'))
         ].join('');
         let statsBody = `${hit}<hr class="st-divider">
-            <div class="st-section-head"><span class="st-section-title">能力</span><button class="st-info" type="button" data-on-click='[["advOpenStatInfo",[""]]]'>${ST_INFO}說明</button></div>
+            <div class="st-section-head"><span class="st-section-title">能力</span><span class="st-head-btns">${advData.sauce > 0 ? `<button class="st-sauce" type="button" data-on-click='[["advOpenSauce",[]]]'>${advSauceIcon(18)}強化 <b>${advData.sauce}</b></button>` : ''}<button class="st-info" type="button" data-on-click='[["advOpenStatInfo",[""]]]'>${ST_INFO}說明</button></span></div>
             ${rows}`;
         let tab = (k, label, alert) => `<button type="button" role="tab" class="st-tab" aria-selected="${advStatsTab === k}" data-on-click='[["advSetStatsTab",["${k}"]]]'>${ST_TAB_ICONS[k]}${label}${alert || ''}</button>`;
         let body = advStatsTab === 'moves' ? advMovesTabHTML() : advStatsTab === 'gear' ? advGearTabHTML() : advStatsTab === 'bag' ? '<div id="advBagInline" class="st-bag"></div>' : statsBody;
@@ -6977,11 +6977,15 @@
         document.getElementById('advBagModal').style.display = 'block';
     }
     function advCloseBag() { document.getElementById('advBagModal').style.display = 'none'; }
-    function advBagBack() {
-        // 能力值頁的「背包」分頁：直接畫在分頁裡；選裝備欄（advOpenBag('gear')）時才用彈出視窗
+    // 背包畫在哪裡：能力值頁的「背包」分頁（沒開彈出視窗時），否則畫在背包彈出視窗
+    function advBagEl() {
         let modalOn = document.getElementById('advBagModal').style.display === 'block';
         let inline = !advBagGearOnly && !modalOn && advStatsTab === 'bag' && document.getElementById('advBagInline');
-        let body = inline || document.getElementById('advBagBody');
+        return inline || document.getElementById('advBagBody');
+    }
+    function advBagBack() {
+        // 能力值頁的「背包」分頁：直接畫在分頁裡；選裝備欄（advOpenBag('gear')）時才用彈出視窗
+        let body = advBagEl();
         if (!body) return;
         if (advBagGearOnly) advBagFilter = 'gear';
         let defs = advBagDefs().filter(d => d.kind === 'gear' || d.n > 0).filter(d => advBagFilter === 'all' || d.kind === advBagFilter);
@@ -7032,7 +7036,7 @@
     // 濕紙巾：把 1 點已強化的能力轉到另一項
     function advStatLabel(k) { let d = ADV_STAT_DEFS.find(x => x.key === k); return d ? d.label : k; }
     function advBagWipe() {
-        let body = document.getElementById('advBagBody');
+        let body = advBagEl();
         if (!body || advData.wipes < 1) return;
         let s = advPlayerStats();
         let rows = ADV_STAT_DEFS.map(d => {
@@ -7044,7 +7048,7 @@
             <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagBack",[]]]'>返回</button>`;
     }
     function advWipeFrom(from) {
-        let body = document.getElementById('advBagBody');
+        let body = advBagEl();
         if (!body || advData.wipes < 1 || !(advData.up[from] > 0)) return;
         let s = advPlayerStats();
         let rows = ADV_STAT_DEFS.filter(d => d.key !== from).map(d => {
@@ -7070,7 +7074,7 @@
         advRenderStatsPage();
     }
     function advBagSauce() {
-        let body = document.getElementById('advBagBody');
+        let body = advBagEl();
         if (!body || advData.sauce < 1) return;
         let s = advPlayerStats();
         let rows = ADV_STAT_DEFS.map(d => {
@@ -7083,8 +7087,17 @@
     }
     function advBagUseSauce(key) {
         if (advData.sauce < 1) return;
+        let d = ADV_STAT_DEFS.find(x => x.key === key);
         advUpgrade(key);
         advCloseBag();
+        try { farmToast(`💪 ${d ? d.label : ''} +1！`); } catch (e) {}
+    }
+    // 能力值頁：直接用糖醋醬強化（打開背包裡「要強化哪一項」）
+    function advOpenSauce() {
+        if (advData.sauce < 1) return;
+        advStatsTab = 'bag'; advBagGearOnly = false; advBagSlot = null; advBagFilter = 'all'; advBagSel = '';
+        advRenderStatsPage();
+        advBagSauce();
     }
     function advBagUsePotion() {
         advSyncDaily();
@@ -10205,7 +10218,7 @@
         playSpeakPracticeSample,
         toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
         advSetMode, advOpenWords, advSayWord, advPracticeLevel, advWrongPick, advWrongPractice,
-        advQuit, advRetry, advRedeemStamps, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
+        advOpenSauce, advQuit, advRetry, advRedeemStamps, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
         openMicHelpModal,
         closeMicHelpModal,
         recheckMicPermission,
