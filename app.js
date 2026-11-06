@@ -167,12 +167,14 @@
         basic_verb: { free: true, title: '多益-基礎動詞形容詞', oldTitles: ['基礎單字-動詞形容詞'], lang: 'en', words: 300, kind: 'toeic' },
         toeic_job: { item: 'pack_toeic_job', title: '多益-職場', lang: 'en', words: 300, kind: 'toeic' },
         adv_night: { free: true, title: '冒險・夜市篇', lang: 'en', words: 50, kind: 'adv', chapter: 1 },
-        adv_store: { free: true, title: '冒險・便利商店篇', lang: 'en', words: 80, kind: 'adv', chapter: 2 }
+        adv_store: { free: true, title: '冒險・便利商店篇', lang: 'en', words: 80, kind: 'adv', chapter: 2 },
+        farm_1_5: { free: true, title: '農場・Lv1～5', lang: 'en', words: 83, kind: 'farm' }    // 雞塊農場的題庫（蜜蜂採蜜也從這裡出題）
     };
     // 精選單字庫的圖示：同一類共用一張（多益：TOEIC 字樣／基礎：ABC 字樣），紫色實心
     function packIconHTML(packKey, size) {
         size = size || 30;
         let kind = (WORD_PACKS[packKey] || {}).kind || 'basic';
+        if (kind === 'farm') return `<svg class="pk-ic" width="${size}" height="${size}" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#22A06B"/><path d="M20 31 V18" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/><path d="M20 20 C20 13 14 10 9 11 C9 17 13 21 20 20 Z" fill="#FFFFFF"/><path d="M20 17 C20 11 25 8 31 9 C31 15 27 18 20 17 Z" fill="#D9F99D"/><path d="M10 31 H30" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/></svg>`;
         if (kind === 'adv') return `<svg class="pk-ic" width="${size}" height="${size}" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#F59E0B"/><path d="M8 12 L15 9.5 L25 12.5 L32 10 V28 L25 30.5 L15 27.5 L8 30 Z" fill="#FFFFFF"/><path d="M12 25 Q16 18 21 21 T28 14" stroke="#F59E0B" stroke-width="2" fill="none" stroke-dasharray="2.6 2.4" stroke-linecap="round"/><circle cx="28" cy="14" r="2.4" fill="#F59E0B"/></svg>`;
         let txt = kind === 'toeic' ? '<text x="20" y="24.2" text-anchor="middle" font-size="11" font-weight="900" fill="#FFFFFF" textLength="30" lengthAdjust="spacingAndGlyphs" font-family="Inter,Arial,sans-serif">TOEIC</text>'
                                    : '<text x="20" y="25.4" text-anchor="middle" font-size="14" font-weight="900" fill="#FFFFFF" textLength="27" lengthAdjust="spacingAndGlyphs" font-family="Inter,Arial,sans-serif">ABC</text>';
@@ -180,6 +182,7 @@
     }
     // 免費附贈的精選單字庫：直接放在 App 裡，不用下載
     const FREE_PACK_CONTENT = {
+        farm_1_5: "January 1月 名詞\nFebruary 2月 名詞\nMarch 3月 名詞\nApril 4月 名詞\nMay 5月 名詞\nJune 6月 名詞\nJuly 7月 名詞\nAugust 8月 名詞\nSeptember 9月 名詞\nOctober 10月 名詞\nNovember 11月 名詞\nDecember 12月 名詞\nMonday 星期一 名詞\nTuesday 星期二 名詞\nWednesday 星期三 名詞\nThursday 星期四 名詞\nFriday 星期五 名詞\nSaturday 星期六 名詞\nSunday 星期日 名詞\nspring 春天 名詞\nsummer 夏天 名詞\nautumn 秋天 名詞\nwinter 冬天 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\nyesterday 昨天 名詞 副詞\nmorning 早上 名詞\nnight 夜晚 名詞\nsun 太陽 名詞\nrain 雨 名詞\nwind 風 名詞\ncloud 雲 名詞\nsnow 雪 名詞\nwarm 溫暖的 形容詞\nseed 種子 名詞\nflower 花 名詞\nleaf 葉子 名詞\ntree 樹 名詞\ngrass 草 名詞\nroot 根 名詞\nfruit 水果 名詞\ncorn 玉米 名詞\nrice 米 名詞\npotato 馬鈴薯 名詞\ntomato 番茄 名詞\ncarrot 紅蘿蔔 名詞\napple 蘋果 名詞\nbanana 香蕉 名詞\nwatermelon 西瓜 名詞\nsunflower 向日葵 名詞\nchicken 雞 名詞\ndog 狗 名詞\ncat 貓 名詞\ncow 乳牛 名詞\npig 豬 名詞\nduck 鴨 名詞\nbird 鳥 名詞\nbee 蜜蜂 名詞\nhoney 蜂蜜 名詞\nplant 種植 動詞\nwater 澆水 動詞\ngrow 生長 動詞\npick 摘 動詞\ndig 挖 動詞\nfeed 餵 動詞\nwait 等待 動詞\nsell 賣 動詞\nharvest 收成 動詞\nfarm 農場 名詞\nfield 田地 名詞\ngarden 花園 名詞\nfence 圍籬 名詞\nhouse 房子 名詞\nbasket 籃子 名詞\nmarket 市場 名詞\nvegetable 蔬菜 名詞\nstrawberry 草莓 名詞\npineapple 鳳梨 名詞\nbutterfly 蝴蝶 名詞\nafternoon 下午 名詞\nbeautiful 美麗的 形容詞\ntemperature 溫度 名詞\nscarecrow 稻草人 名詞",
         adv_night: "hot 熱的 形容詞\ncup 杯子 名詞\nsoup 湯 名詞\nmeatball 貢丸 肉丸 名詞\neat 吃 動詞\ngood 好的 好吃的 形容詞\ncorn 玉米 名詞\ngrill 烤 動詞 烤架 名詞\nsalt 鹽 名詞\nbutter 奶油 名詞\nsweet 甜的 形容詞\nbuy 買 動詞\noyster 蚵仔 牡蠣 名詞\negg 蛋 名詞\nrice 飯 米 名詞\nsauce 醬料 名詞\nspicy 辣的 形容詞\norder 點餐 動詞\ntofu 豆腐 名詞\nstinky 臭的 形容詞\nbubble tea 珍珠奶茶 名詞\nmilk tea 奶茶 名詞\nice 冰塊 名詞\nsugar 糖 名詞\nstraw 吸管 名詞\ndoll 娃娃 名詞\ncoin 硬幣 名詞\ngrab 抓 動詞\ntry 嘗試 動詞\nprize 獎品 名詞\nplay 玩 動詞\ndart 飛鏢 名詞\nthrow 丟 投擲 動詞\nhit 打中 動詞\nmiss 沒打中 錯過 動詞\nscore 分數 名詞 得分 動詞\nlucky 幸運的 形容詞\nwin 贏 動詞\nlose 輸 動詞\neast 東方 名詞\nwest 西方 名詞\nsouth 南方 名詞\nnorth 北方 名詞\nring 圈圈 戒指 名詞\nstall 攤位 名詞\nline 隊伍 名詞 排隊 動詞\ncrowded 擁擠的 形容詞\ncheap 便宜的 形容詞\nprice 價格 名詞\nnight market 夜市 名詞",
         adv_store: "convenience store 便利商店 名詞\nopen 營業中的 形容詞 打開 動詞\nclose 關門 關閉 動詞\nwelcome 歡迎 動詞 形容詞\nclerk 店員 名詞\ntea egg 茶葉蛋 名詞\nboil 煮 煮沸 動詞\nhungry 餓的 形容詞\nsnack 零食 名詞\nbreakfast 早餐 名詞\nhot dog 熱狗 名詞\nbun 小圓麵包 名詞\nbread 麵包 名詞\nsandwich 三明治 名詞\nketchup 番茄醬 名詞\ncheese 起司 名詞\nnapkin 餐巾紙 名詞\ninstant noodles 泡麵 名詞\nfull 飽的 滿的 形容詞\ndelicious 好吃的 美味的 形容詞\nrice ball 飯糰 名詞\nseaweed 海苔 名詞\ntuna 鮪魚 名詞\nsalmon 鮭魚 名詞\ntriangle 三角形 名詞\nwrap 包裝 名詞 包起來 動詞\ntear 撕開 動詞\nplastic 塑膠 名詞\nfridge 冰箱 名詞\ncold 冰的 冷的 形容詞\nbottle 瓶子 名詞\nwater 水 名詞\ndrink 飲料 名詞 喝 動詞\nsugar-free 無糖的 形容詞\ngreen tea 綠茶 名詞\nprint 列印 動詞\nticket 票 名詞\nmachine 機器 名詞\nbill 帳單 名詞\nreceipt 收據 發票 名詞\nsalad 沙拉 名詞\nvegetable 蔬菜 名詞\nfresh 新鮮的 形容詞\nlid 蓋子 名詞\nfork 叉子 名詞\nhealthy 健康的 形容詞\nlettuce 生菜 萵苣 名詞\ntomato 番茄 名詞\ndressing 沙拉醬 名詞\nlight 清淡的 輕的 形容詞\nmicrowave 微波爐 名詞 微波加熱 動詞\nheat 加熱 動詞 熱度 名詞\nwarm 溫的 溫暖的 形容詞\nminute 分鐘 名詞\nsecond 秒 名詞\nbutton 按鈕 名詞\nwait 等待 動詞\ncareful 小心的 形容詞\nsteam 蒸氣 名詞\nnoise 噪音 聲音 名詞\nlunch box 便當 名詞\nchopsticks 筷子 名詞\nspoon 湯匙 名詞\nexpire 過期 動詞\ndiscount 折扣 名詞\nhalf price 半價 名詞\nsticker 貼紙 名詞\nmeat 肉 名詞\nchicken 雞肉 名詞\npoint 點數 名詞\ncoffee 咖啡 名詞\nlatte 拿鐵 名詞\niced 加冰的 形容詞\nbitter 苦的 形容詞\nsleepy 想睡的 形容詞\ncashier 收銀員 名詞\ncustomer 顧客 名詞\npay 付錢 動詞\ncash 現金 名詞\ncredit card 信用卡 名詞",
         basic_noun: "activity 活動 名詞\nafternoon 下午 名詞\nage 年齡 名詞\napplication form 申請表 名詞\narea 區域 名詞\nart 藝術 美術 名詞\nauditorium 禮堂 名詞\nback 後面 名詞\nbackpack 背包 名詞\nbag 包包 名詞\nbank 銀行 名詞\nbe late for 遲到 動詞\nbeginner 初學者 名詞\nbike 腳踏車 名詞\nbirthday 生日 名詞\nbook 書籍 名詞 預訂 動詞\nbookshelf 書架 名詞\nbookstore 書店 名詞\nboss 老闆 名詞\nbottle 瓶子 名詞\nbottom 底部 名詞\nbox 箱子 名詞\nbreakfast 早餐 名詞\nbuilding 建築物 名詞\nbus 公車 名詞\nbusiness card 名片 名詞\ncafeteria 自助餐廳 名詞\ncalendar 日曆 名詞\ncampus 校園 名詞\ncar 汽車 名詞\ncard 卡片 名詞\ncenter 中心 名詞\nchair 椅子 名詞\nchance 機會 名詞\nchapter 章節 名詞\nchild 小孩 名詞\ncity 城市 名詞\nclass 班級 課堂 名詞\nclassmate 同學 名詞\nclassroom 教室 名詞\nclock 時鐘 名詞\nclosing time 打烊時間 名詞\nclothes 衣服 名詞\nclub 社團 俱樂部 名詞\ncoffee 咖啡 名詞\ncoffee break 休息時間 名詞\ncoin 硬幣 名詞\ncollege 大學 學院 名詞\ncolor 顏色 名詞\ncompany 公司 名詞\ncomputer 電腦 名詞\ncontest 比賽 名詞\ncorner 角落 轉角 名詞\ncountry 國家 名詞\ncourse 課程 名詞\ncup 杯子 名詞\ndaily 每日的 形容詞 每天 副詞\ndate 日期 名詞\nday 天 名詞\nday shift 日班 名詞\ndebate 辯論 名詞 動詞\ndesk 書桌 名詞\ndictionary 字典 名詞\ndinner 晚餐 名詞\ndiscussion 討論 名詞\ndoctor 醫生 名詞\ndoor 門 名詞\ndormitory 宿舍 名詞\ndrawing 圖畫 名詞\ndream 夢想 名詞 做夢 動詞\ndriver 司機 名詞\neducation 教育 名詞\nelevator 電梯 名詞\nemail 電子郵件 名詞 寄電子郵件 動詞\nemail address 電子郵件地址 名詞\nenrollment 註冊 名詞\nentrance 入口 名詞\neraser 橡皮擦 名詞\nessay 短文 論文 名詞\nevening 傍晚 名詞\nevent 活動 事件 名詞\nexam 考試 名詞\nexample 例子 名詞\nexcited 興奮的 形容詞\nexit 出口 名詞 離開 動詞\nexperience 經驗 名詞\nextracurricular 課外的 形容詞\nfaculty 全體教職員 名詞\nfamily 家庭 名詞\nfirst day 第一天 名詞\nfirst job 第一份工作 名詞\nfirst name 名字 名詞\nfloor 地板 樓層 名詞\nfood 食物 名詞\nfriend 朋友 名詞\nfront 前面 名詞\nfull-time 全職的 形容詞\ngame 遊戲 比賽 名詞\ngift 禮物 名詞\ngoal 目標 名詞\ngrade 成績 年級 名詞\ngraduate 畢業 動詞 畢業生 名詞\ngraduation 畢業 畢業典禮 名詞\ngroup 群體 小組 名詞\ngroup project 小組作業 名詞\nguest 客人 來賓 名詞\nguidance 輔導 指導 名詞\ngym 體育館 健身房 名詞\nhabit 習慣 名詞\nhall 大廳 走廊 名詞\nhallway 走廊 名詞\nhand in 繳交 動詞\nhardworking 努力的 形容詞\nhat 帽子 名詞\nheadphones 耳機 名詞\nhealth 健康 名詞\nhelper 幫手 名詞\nhistory 歷史 名詞\nhobby 嗜好 名詞\nholiday 假日 名詞\nhometown 家鄉 名詞\nhomework 家庭作業 名詞\nhospital 醫院 名詞\nhour 小時 名詞\nidea 主意 想法 名詞\ninstructor 講師 名詞\ninternet 網際網路 名詞\nintroduction 介紹 名詞\njob 工作 名詞\njob hunting 找工作 名詞\njob title 職稱 名詞\nkey 鑰匙 關鍵 名詞\nkeyboard 鍵盤 名詞\nknowledge 知識 名詞\nlaboratory 實驗室 名詞\nlanguage 語言 名詞\nlaptop 筆記型電腦 名詞\nlast name 姓氏 名詞\nleader 領導者 名詞\nlecture 講課 名詞 演講 動詞\nlesson 課程 教訓 名詞\nletter 信件 字母 名詞\nlevel 程度 等級 名詞\nlibrarian 圖書館員 名詞\nlibrary 圖書館 名詞\nline 線 隊伍 名詞\nlist 清單 名詞 列出 動詞\nlocation 地點 位置 名詞\nlunch 午餐 名詞\nlunch break 午休 名詞\nlunchroom 員工餐廳 名詞\nlunchtime 午餐時間 名詞\nmagazine 雜誌 名詞\nmajor 主修 名詞 動詞\nmap 地圖 名詞\nmark 分數 名詞 打分數 動詞\nmarket 市場 名詞\nmath 數學 名詞\nmeal 餐點 名詞\nmeasure 測量 動詞 措施 名詞\nmember 成員 名詞\nmessage 訊息 名詞\nmiddle 中間 名詞\nminute 分鐘 名詞\nmistake 錯誤 名詞\nmoney 金錢 名詞\nmonth 月份 名詞\nmorning 早晨 名詞\nmusic 音樂 名詞\nnameplate 名牌 名詞\nnationality 國籍 名詞\nnervous 緊張的 形容詞\nnewcomer 新人 名詞\nnews 新聞 消息 名詞\nnewspaper 報紙 名詞\nnight 夜晚 名詞\nnight shift 夜班 名詞\nnote 筆記 名詞 記下 動詞\nnotebook 筆記本 名詞\nnumber 數字 號碼 名詞\nnurse 護士 名詞\noffice 辦公室 名詞\noffice worker 上班族 名詞\nowner 擁有者 老闆 名詞\npage 頁 名詞\npaper 紙張 報告 名詞\nparent 父母 名詞\npark 公園 名詞 停車 動詞\nparking lot 停車場 名詞\npart-time 兼職的 形容詞\npart-time job 打工 名詞\npartner 夥伴 名詞\nparty 派對 名詞\npassword 密碼 名詞\npay attention to 注意 動詞\npen 原子筆 名詞\npencil 鉛筆 名詞\npeople 人們 名詞\nperson 個人 名詞\nphone 電話 名詞\nphone number 電話號碼 名詞\nphoto 照片 名詞\nphysics 物理 名詞\npicture 圖片 照片 名詞\npiece 一片 一件 名詞\npost 郵件 名詞 張貼 動詞\npractice 練習 名詞 動詞\npresentation 簡報 名詞\nprice 價格 名詞\nprincipal 校長 名詞 主要的 形容詞\nprize 獎品 名詞\nproblem 問題 名詞\nprofessor 教授 名詞\nproject 專案 計畫 名詞\nquestion 問題 名詞 質問 動詞\nquiz 小考 名詞\nreason 原因 理由 名詞\nresearch 研究 名詞 動詞\nrestaurant 餐廳 名詞\nrestroom 洗手間 名詞\nresult 結果 名詞\nroad 道路 名詞\nroom 房間 空間 名詞\nroommate 室友 名詞\nrule 規則 名詞\nsalesclerk 店員 名詞\nsalesperson 售貨員 名詞\nscholarship 獎學金 名詞\nschool 學校 名詞\nscience 科學 名詞\nscore 分數 名詞 得分 動詞\nseat 座位 名詞\nsemester 學期 名詞\nseminar 研討會 名詞\nsentence 句子 名詞\nshape 形狀 名詞\nshirt 襯衫 名詞\nshoe 鞋子 名詞\nshop 商店 名詞 購物 動詞\nside 旁邊 一側 名詞\nsign 招牌 標誌 名詞 簽名 動詞\nsize 尺寸 名詞\nskill 技能 名詞\nsmart 聰明的 形容詞\nsnack 點心 名詞\nspace 空間 名詞\nspeaker 演講者 喇叭 名詞\nspeech 演講 名詞\nsport 運動 名詞\nstairs 樓梯 名詞\nstation 車站 名詞\nstep 步驟 名詞\nstore 商店 名詞 儲存 動詞\nstory 故事 樓層 名詞\nstreet 街道 名詞\nstudent 學生 名詞\nstudy group 讀書會 名詞\nsubject 科目 主題 名詞\nsubway 地鐵 名詞\ntable 桌子 表格 名詞\ntake notes 做筆記 動詞\ntaxi 計程車 名詞\ntea 茶 名詞\nteacher 老師 名詞\nteam 團隊 名詞\nteam member 團隊成員 名詞\nteammate 隊友 名詞\ntelephone 電話 名詞\nterm 學期 期限 名詞\ntest 測驗 名詞 測試 動詞\nticket 票 名詞\ntime 時間 次數 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\ntop 頂端 名詞\ntopic 主題 名詞\ntown 城鎮 名詞\ntrain 火車 名詞 訓練 動詞\ntranslate 翻譯 動詞\ntranslation 翻譯 名詞\ntype 類型 名詞 打字 動詞\numbrella 雨傘 名詞\nuniform 制服 名詞 一致的 形容詞\nvocabulary 字彙 名詞\nvolunteer 志工 名詞 自願 動詞\nwaiter 服務生 名詞\nwall 牆壁 名詞\nwater 水 名詞\nweather 天氣 名詞\nwebsite 網站 名詞\nweek 星期 名詞\nweekday 平日 名詞\nweekend 週末 名詞\nwindow 窗戶 名詞\nword 單字 名詞\nwork hours 工作時數 名詞\nworker 工人 員工 名詞\nyear 年 名詞\nyearly 每年的 形容詞\nyesterday 昨天 名詞 副詞",
@@ -240,7 +243,7 @@
         }
         // 冒險題庫：內容跟著 App 更新（每關分組有改過）
         let advUpd = false;
-        wordLists.forEach(l => { let m = isPackList(l) && WORD_PACKS[l.pack]; if (m && m.kind === 'adv' && FREE_PACK_CONTENT[l.pack] && l.content !== FREE_PACK_CONTENT[l.pack]) { l.content = FREE_PACK_CONTENT[l.pack]; advUpd = true; } });
+        wordLists.forEach(l => { let m = isPackList(l) && WORD_PACKS[l.pack]; if (m && (m.kind === 'adv' || m.kind === 'farm') && FREE_PACK_CONTENT[l.pack] && l.content !== FREE_PACK_CONTENT[l.pack]) { l.content = FREE_PACK_CONTENT[l.pack]; advUpd = true; } });
         if (advUpd) { localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists)); try { triggerAutoSaveToCloud(); refreshAllListViews(); } catch (e) {} }
         // 改名：舊的預設名稱換成新名稱（玩家自己改過名字的不動）
         let renamed = false;
@@ -365,15 +368,45 @@
         sessionPromise = null;
     }
 
+    // 這台裝置上「哪把錢包金鑰屬於哪個 Google 帳號」（換帳號登入時，用來避免兩個帳號共用同一個錢包／農場）
+    const WALLET_OWNERS_KEY = 'chicky_wallet_owners';
+    function walletOwners() { try { let o = JSON.parse(localStorage.getItem(WALLET_OWNERS_KEY)); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+    function setWalletOwner(key, email) { if (!key || !email) return; let o = walletOwners(); o[key] = email; try { localStorage.setItem(WALLET_OWNERS_KEY, JSON.stringify(o)); } catch (e) {} }
+    // 換成另一個錢包時：清掉這台裝置暫存的農場（不然會把上一個帳號的作物搬進新帳號）
+    function resetLocalFarmCache() {
+        try { localStorage.removeItem(FARM_KEY); } catch (e) {}
+        try { farm = farmParse({}); farmXpShown = null; } catch (e) {}
+    }
+    // 移除「目前錢包沒有買」的付費題庫（例如上一個帳號買的多益職場）；錢包讀取成功後才做
+    function prunePaidPacks() {
+        let before = wordLists.length;
+        wordLists = wordLists.filter(l => !(isPackList(l) && !WORD_PACKS[l.pack].free && !packOwned(l.pack)));
+        if (wordLists.length !== before) { localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists)); try { refreshAllListViews(); } catch (e) {} return true; }
+        return false;
+    }
+
     // 回傳「目前使用的金鑰」（連線失敗時回傳 null，下次登入會再試一次）
-    async function bindWalletAfterLogin(cloudKey) {
+    async function bindWalletAfterLogin(cloudKey, email) {
         let localKey = localStorage.getItem(WALLET_KEY_STORAGE);
-        let key = null, fresh = false;
+        let key = null, fresh = false, owners = walletOwners();
         if (isValidWalletKey(cloudKey)) {
             key = cloudKey;
+            let other = owners[cloudKey];
+            // 這個帳號雲端裡的錢包，其實是另一個帳號的（以前在這台裝置換帳號時被合併過）
+            if (email && other && other !== email) {
+                if (confirm(`這個 Google 帳號（${email}）的雞塊錢包，跟 ${other} 是同一個（以前在這台裝置換帳號登入時被合併了）。
+
+按「確定」：${email} 改用全新的錢包（雞塊、農場、買的題庫從頭開始；${other} 的東西不受影響）
+按「取消」：維持兩個帳號共用`)) { key = generateWalletKey(); fresh = true; }
+                else setWalletOwner(cloudKey, email);
+            }
+        } else if (isValidWalletKey(localKey) && email && owners[localKey] && owners[localKey] !== email) {
+            key = generateWalletKey(); fresh = true;     // 這台裝置的錢包屬於另一個帳號：新帳號直接用全新的錢包（不再問）
+        } else if (isValidWalletKey(localKey) && email && owners[localKey] === email) {
+            key = localKey;
         } else if (isValidWalletKey(localKey)) {
             // 這台裝置的錢包以前綁過 Google 帳號，但現在登入的帳號雲端裡沒有金鑰
-            if (confirm('這台裝置的雞塊錢包以前已綁定過 Google 帳號，但你現在登入的 Google 雲端裡沒有錢包資料。\n\n按「確定」：沿用這台裝置的錢包（同一個帳號重新登入請選這個）\n按「取消」：這個 Google 帳號改用全新的錢包')) {
+            if (confirm(`這台裝置的雞塊錢包，以前綁定過另一次 Google 登入，但 ${email || '這個帳號'} 的雲端裡沒有錢包資料。\n\n按「確定」：沿用這台裝置的錢包（只有「同一個帳號」重新登入才選這個）\n按「取消」：${email || '這個帳號'} 改用全新的錢包（換成另一個人的帳號請選這個，雞塊、農場、買的題庫會分開）`)) {
                 key = localKey;
             } else {
                 key = generateWalletKey(); fresh = true;
@@ -390,9 +423,12 @@
                 await switchToFreshAnonymousWallet();
                 r = await walletRpc('link_wallet', { p_key: key });
             }
+            if (key !== localKey && isValidWalletKey(localKey)) resetLocalFarmCache();    // 換了錢包：農場也跟著換
             localStorage.setItem(WALLET_KEY_STORAGE, key);
-            await refreshWallet();
+            setWalletOwner(key, email);
+            if (await refreshWallet()) { prunePaidPacks(); try { ensureWordPacks(); } catch (e) {} }
             refreshAllListViews();
+            try { farmSync(); } catch (e) {}
             return key;
         } catch (e) {
             console.warn('錢包綁定失敗（下次登入會再試）:', e && e.message || e);
@@ -505,33 +541,57 @@
         document.getElementById('chickenRewardModal').style.display = 'none';
     }
 
+    // 今日任務視窗（chicky-daily）：任務列狀態 todo＝去做／ready＝可領取／claimed＝已領取
+    const DT_TASKS = [
+        { key: 'dailyLogin', title: '每日登入' },
+        { key: 'practice10', title: '完成 10 題以上的任一練習' },
+        { key: 'exam10', title: '完成 10 題以上的任一測驗' },
+        { key: 'advWin', title: '在雞塊大冒險打敗任一敵人' },
+        { key: 'farmCare', title: '在雞塊農場澆花或收成' }
+    ];
+    function dtRewards(key) {
+        let r = [{ icon: TK_NUGGET_IMG, n: 1, label: '雞塊' }];
+        if (key === 'dailyLogin') { r.push({ icon: advShardIcon(18), n: LOGIN_SHARDS, label: '糖醋醬碎片' }); r.push({ icon: farmFlowerIcon(18), n: 1, label: '花' }); }
+        return r;
+    }
+    function dtResetText() {
+        let now = new Date(), next = new Date(now); next.setHours(24, 0, 0, 0);
+        let min = Math.max(1, Math.ceil((next - now) / 60000));
+        return min >= 60 ? `${Math.floor(min / 60)} 小時後更新` : `${min} 分鐘後更新`;
+    }
+    function dtState(key) { return isTaskClaimed(key) ? 'claimed' : (chickenData.tasks[key] && chickenData.tasks[key].done) ? 'ready' : 'todo'; }
     function updateChickenModalUI() {
         let cd = document.getElementById('chickenCountDisplay'); if (cd) cd.innerText = wallet.balance;
-        let rs = document.getElementById('rewardShardCount');
-        if (rs) { try { rs.innerText = advData.shards; } catch (e) {} }
         let container = document.getElementById('rewardTasksContainer');
         if (!container) return;
-
-        const taskDefs = [
-            { key: 'dailyLogin', title: '1. 每日登入', desc: `雞塊 ×1、糖醋醬碎片 ×${LOGIN_SHARDS}、花 ×1` },
-            { key: 'practice10', title: '2. 完成 10 題以上的任一練習', desc: '' },
-            { key: 'exam10', title: '3. 完成 10 題以上的任一測驗', desc: '' },
-            { key: 'advWin', title: '4. 在雞塊大冒險打敗任一敵人', desc: '' },
-            { key: 'farmCare', title: '5. 在雞塊農場澆花或收成', desc: '' }
-        ];
-
-        let html = '', done = 0;
-        taskDefs.forEach(def => {
-            let t = chickenData.tasks[def.key];
-            if (taskDoneOrClaimed(def.key)) done++;
-            let right;
-            if (isTaskClaimed(def.key)) right = `<span class="tk-done">✓ 已領取</span>`;
-            else if (t.done) right = `<button type="button" class="tk-claim" data-on-click='[["claimChickenReward",["${def.key}","$this"]]]'>領取</button>`;
-            else right = `<button type="button" class="tk-todo" data-on-click='[["goDoTask",["${def.key}"]]]'>去做 ›</button>`;
-            html += `<div class="tk-row"><span class="t">${def.title.replace(/^\d+\.\s*/, '')}<small>${def.desc || '雞塊 ×1'}</small></span>${right}</div>`;
-        });
-        container.innerHTML = `<div class="tk-head"><span>${done} / ${taskDefs.length} 完成</span></div><div class="tk-list">${html}</div>`;
+        let claimed = 0, ready = 0;
+        container.innerHTML = DT_TASKS.map(def => {
+            let st = dtState(def.key);
+            if (st === 'claimed') claimed++;
+            if (st === 'ready') ready++;
+            let rw = dtRewards(def.key).map(r => `<span class="dt-reward" role="img" aria-label="${r.label} ×${r.n}">${r.icon}<b>×${r.n}</b></span>`).join('');
+            return `<li class="dt-task" data-state="${st}" data-key="${def.key}">
+                <div class="dt-task__info"><span class="dt-task__name">${def.title}</span><span class="dt-rewards">${rw}</span></div>
+                <div class="dt-action">
+                    <button class="dt-btn dt-btn--go" type="button" data-on-click='[["goDoTask",["${def.key}"]]]'>前往 ›</button>
+                    <button class="dt-btn dt-btn--claim" type="button" data-on-click='[["claimChickenReward",["${def.key}","$this"]]]'>領取</button>
+                    <span class="dt-done">✓ 已領取</span>
+                </div></li>`;
+        }).join('');
+        let el;
+        if ((el = document.getElementById('dtDone'))) el.textContent = claimed;
+        if ((el = document.getElementById('dtFill'))) el.style.width = (claimed / DT_TASKS.length * 100) + '%';
+        if ((el = document.getElementById('dtReset'))) el.textContent = dtResetText();
+        if ((el = document.getElementById('dtClaimAll'))) el.hidden = ready < 2;      // 可領取 2 個以上才顯示「全部領取」
         try { renderHomeToday(); } catch (e) {}
+    }
+    function dtBackdrop(e) { if (e && e.target && e.target.id === 'chickenRewardModal') closeChickenRewardModal(); }
+    // 全部領取：每個可領取的任務都按一次領取（依序向後端登記，動畫一起播）
+    async function claimAllChickenRewards() {
+        let keys = DT_TASKS.map(d => d.key).filter(k => dtState(k) === 'ready');
+        let rects = {};
+        keys.forEach(k => { let b = document.querySelector(`#rewardTasksContainer [data-key="${k}"] .dt-btn--claim`); if (b) rects[k] = b.getBoundingClientRect(); });
+        for (let k of keys) { await claimChickenReward(k, null, rects[k]); }
     }
 
     // 每日登入的花 +1：連得到後台就由 farm_act('login_flower') 發（同一天只能一次），連不到先記在這台裝置
@@ -557,24 +617,25 @@
     const TK_NUGGET_IMG = `<img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='10 10 80 80'><path d='M 32 30 C 24 38, 20 50, 24 64 C 27 75, 36 82, 50 82 C 64 82, 76 76, 78 62 C 81 48, 76 35, 68 28 C 58 20, 40 22, 32 30 Z' fill='%23F3A63B' stroke='%23C27803' stroke-width='3'/><circle cx='46' cy='38' r='2' fill='%23C27803'/><circle cx='54' cy='68' r='2' fill='%23C27803'/><circle cx='64' cy='42' r='2.5' fill='%23C27803'/><circle cx='34' cy='58' r='2' fill='%23C27803'/><circle cx='48' cy='52' r='2.5' fill='%23C27803'/></svg>" alt="雞塊">`;
     function claimFx(rect, items) {
         if (!rect || !items.length) return;
-        let el = document.createElement('div');
-        el.className = 'tk-fx';
-        el.innerHTML = items.map(it => `<span>${it.icon}+${it.n}</span>`).join('');
-        el.style.left = (rect.left + rect.width / 2) + 'px';
-        el.style.top = (rect.top - 6) + 'px';
-        document.body.appendChild(el);
-        let w = el.getBoundingClientRect().width;      // 太靠右邊時往左移，整排都在畫面裡
-        let cx = Math.max(w / 2 + 8, Math.min(window.innerWidth - w / 2 - 8, rect.left + rect.width / 2));
-        el.style.left = cx + 'px';
-        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('up')));
-        setTimeout(() => el.classList.add('fade'), 1000);
-        setTimeout(() => el.remove(), 1800);
+        items.forEach((it, i) => {
+            let el = document.createElement('span');
+            el.className = 'dt-fly';
+            el.style.left = (rect.left + rect.width / 2) + 'px';
+            el.style.top = (rect.top + 2) + 'px';
+            el.style.animationDelay = (i * 0.15) + 's';
+            el.innerHTML = `${it.icon}<b>+${it.n}</b>`;
+            document.body.appendChild(el);
+            el.addEventListener('animationend', () => el.remove());
+            setTimeout(() => el.remove(), 2500);
+        });
     }
-    async function claimChickenReward(taskKey, btnEl) {
+    async function claimChickenReward(taskKey, btnEl, rectIn) {
         checkDailyReset();
         let t = chickenData.tasks[taskKey];
-        if (!t || !t.done || isTaskClaimed(taskKey) || walletBusy) return;
-        let fxRect = btnEl && btnEl.getBoundingClientRect ? btnEl.getBoundingClientRect() : null, fx = [];
+        if (!t || !t.done || isTaskClaimed(taskKey)) return;
+        for (let i = 0; walletBusy && i < 40; i++) await new Promise(r => setTimeout(r, 100));    // 全部領取：等上一個領完
+        if (walletBusy) return;
+        let fxRect = rectIn || (btnEl && btnEl.getBoundingClientRect ? btnEl.getBoundingClientRect() : null), fx = [];
         if (taskKey === 'dailyLogin' && !isLoginFlowerClaimed()) { claimLoginFlower(); fx.push({ icon: farmFlowerIcon(22), n: 1, k: 'flower' }); }     // 花 +1（存在農場；後台 farm_act login_flower 把關）
         if (taskKey === 'dailyLogin' && !isLoginShardClaimed()) {
             // 碎片先發（存在本機進度）；雞塊下面照原本的方式向後端領
@@ -898,7 +959,7 @@
                     accessToken = resp.access_token;
                     isCloudSyncActive = true;
                     updateCloudStatusText(`✅ 已連結 Google 雲端`);
-                    if (!renewing) { loadDataFromGoogleDrive(); cloudFetchEmail(); }
+                    if (!renewing) { loadDataFromGoogleDrive(); }
                 },
                 // 登入視窗打不開、被關閉等錯誤（例如 iOS 擋彈出視窗）
                 error_callback: (err) => {
@@ -1173,7 +1234,18 @@
         trySilentReconnect(true);
         cloudRender();
     }
-    // 取得登入的 Google 帳號 email（只用來顯示在設定頁）
+    // 取得登入的 Google 帳號 email（換帳號時用來分開題庫、錢包）
+    async function cloudGetEmail() {
+        if (!accessToken) return '';
+        try {
+            let r = await fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)', { headers: { 'Authorization': `Bearer ${accessToken}` } });
+            if (!r.ok) return '';
+            let j = await r.json();
+            let em = (j && j.user && j.user.emailAddress) || '';
+            if (em) { localStorage.setItem(GOOGLE_EMAIL_KEY, em); cloudRender(); }
+            return em;
+        } catch (e) { return ''; }
+    }
     async function cloudFetchEmail() {
         if (!accessToken) return;
         try {
@@ -1510,10 +1582,13 @@
         alert("🔒 已登出 Google 帳號。");
     }
 
+    const LOCAL_OWNER_KEY = 'chicky_local_owner';      // 這台裝置上的題庫、測驗紀錄是哪個 Google 帳號的
     async function loadDataFromGoogleDrive() {
         if (!accessToken) return;
         updateCloudStatusText(`☁️ 雲端資料同步中...`);
         let advNeedUpload = false;
+        let email = await cloudGetEmail();
+        let gotCloudLists = false;
         try {
             let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
             let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
@@ -1530,6 +1605,7 @@
                 if (cloudData) {
                     if (isValidWalletKey(cloudData.walletKey)) cloudWalletKey = cloudData.walletKey;
                     if (Array.isArray(cloudData.wordLists)) {
+                        gotCloudLists = true;
                         wordLists = cloudData.wordLists;
                         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
                         setTimeout(() => { try { ensureWordPacks(); } catch (e) {} }, 0);   // 雲端舊資料沒有免費單字庫：補上
@@ -1561,11 +1637,23 @@
                     advNeedUpload = advMergeFromCloud(cloudData.advData, isValidWalletKey(cloudData.walletKey) ? cloudData.walletKey : '');
                 } else advNeedUpload = advMergeFromCloud(null, '');
             } else advNeedUpload = advMergeFromCloud(null, '');
+            // 雲端還沒有題庫（新帳號）：這台裝置的題庫如果是「另一個帳號」的，就不要帶進來，從空白開始
+            let owner = '';
+            try { owner = localStorage.getItem(LOCAL_OWNER_KEY) || ''; } catch (e) {}
+            if (!gotCloudLists && email && owner && owner !== email) {
+                wordLists = []; examHistory = []; cardExamHistory = [];
+                localStorage.setItem('dictation_word_lists', '[]');
+                localStorage.setItem('dictation_exam_history', '[]');
+                localStorage.setItem('dictation_card_exam_history', '[]');
+                try { ensureWordPacks(); } catch (e) {}
+                try { refreshAllListViews(); initEditorListCards(); } catch (e) {}
+            }
+            if (email) try { localStorage.setItem(LOCAL_OWNER_KEY, email); } catch (e) {}
             advCloudReady = true;
             // 登入後第一次同步：把這台裝置的錢包和 Google 雲端的錢包綁在一起
             if (!walletBoundThisLogin) {
                 walletBoundThisLogin = true;
-                let usedKey = await bindWalletAfterLogin(cloudWalletKey);
+                let usedKey = await bindWalletAfterLogin(cloudWalletKey, email);
                 if (usedKey) {
                     let needUpload = usedKey !== cloudWalletKey;
                     cloudWalletKey = usedKey;
@@ -1650,8 +1738,8 @@
         document.getElementById(viewId).classList.add('active');
         document.body.classList.toggle('farm-on', viewId.indexOf('farm') === 0);     // 雞塊農場：整頁暖色背景
         // 雞塊農場有自己的配色：在農場裡不套用省電模式（深色），離開農場再照設定恢復
-        try { let ps = document.getElementById('powerSavingToggle'); document.body.classList.toggle('power-saving-mode', viewId.indexOf('farm') !== 0 && !!(ps && ps.checked)); } catch (e) {}
-        if (viewId !== 'farmView') { try { farmShopOpen = false; } catch (e) {} }
+        try { let ps = document.getElementById('powerSavingToggle'); document.body.classList.toggle('power-saving-mode', !/^(farm|adv)/.test(viewId) && !!(ps && ps.checked)); } catch (e) {}   // 遊戲（大冒險、農場）畫面不受省電模式影響
+        if (viewId !== 'farmView') { try { farmShopOpen = false; farmBeeOpen = false; } catch (e) {} }
         if (viewId.indexOf('farm') !== 0) { let fo = document.getElementById('farmOverlay'); if (fo) fo.innerHTML = ''; }
         if (viewId === 'homeDashboardView') { try { homeAdvBadge(); } catch (e) {} }
         try { syncHomeChrome(viewId); } catch (e) {}
@@ -1659,13 +1747,13 @@
         
         let wrapper = document.getElementById('mainScaleWrapper');
         // 新版練習頁（cp-）與建立單字頁（we-）：不放大，照設計稿的寬度（手機 480、電腦 780）
-        const CP_VIEWS = ['practiceView', 'examView', 'flashcardSetupView', 'flashcardPlayView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'advLevelView'];
+        const CP_VIEWS = ['practiceView', 'examView', 'flashcardSetupView', 'flashcardPlayView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'advLevelView', 'advStatsView'];
         let cpOn = CP_VIEWS.includes(viewId), weOn = viewId === 'editorDetailView';
         document.body.classList.toggle('cp-on', cpOn);
         document.body.classList.toggle('we-on', weOn);
         if (!weOn) document.body.classList.remove('we-sub');
         document.body.classList.toggle('qz-on', viewId === 'cardExamPlayView' || (viewId === 'examView' && typeof isExamRunning !== 'undefined' && isExamRunning));   // 測驗作答中：手機整頁高度跟著可見區域（鍵盤）
-        document.body.classList.toggle('cp-tall', viewId === 'flashcardPlayView' || viewId === 'advLevelView' || (viewId === 'practiceView' && typeof isPlaying !== 'undefined' && isPlaying));
+        document.body.classList.toggle('cp-tall', viewId === 'flashcardPlayView' || viewId === 'advLevelView' || viewId === 'advStatsView' || (viewId === 'practiceView' && typeof isPlaying !== 'undefined' && isPlaying));
         if (cpOn || weOn) { wrapper.className = 'scale-wrapper-cp'; }
         else if (['practiceView', 'examView', 'flashcardPlayView', 'flashcardSetupView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'speakPracticePlayView', 'homeDashboardView', 'editorListView', 'editorDetailView', 'historyView'].includes(viewId)) {
             wrapper.className = 'scale-wrapper-practice';
@@ -1866,11 +1954,13 @@
                 return `<div class="lst-row" data-on-click='[["openEditorDetail",[${idx}]]]'><span class="lst-no pk">${packIconHTML(l.pack, 30)}</span><span class="lst-tx"><b>${escapeHTML(l.title)}</b> ${tag(getListLang(l))}<small>${sub}</small></span><span class="lst-ar">›</span></div>`;
             };
             let advP = packs.filter(x => (WORD_PACKS[x.l.pack] || {}).kind === 'adv').sort((x, y) => (WORD_PACKS[x.l.pack].chapter || 0) - (WORD_PACKS[y.l.pack].chapter || 0));
-            let others = packs.filter(x => (WORD_PACKS[x.l.pack] || {}).kind !== 'adv');
+            let farmP = packs.filter(x => (WORD_PACKS[x.l.pack] || {}).kind === 'farm');
+            let others = packs.filter(x => ['adv', 'farm'].indexOf((WORD_PACKS[x.l.pack] || {}).kind) === -1);
             let shop = `<div class="lst-row lst-shop" data-on-click='[["openChickenShopModal",[]]]'><span class="lst-no">🛒</span><span class="lst-tx"><b>到雞塊補給站看更多</b></span><span class="lst-ar">›</span></div>`;
             // 多益放上面；大冒險題庫比較不重要，放在下面
             html = `<div class="lst-grp">多益</div><div class="lst-list">${others.map(row).join('')}${shop}</div>`
-                + (advP.length ? `<div class="lst-grp">大冒險</div><div class="lst-list">${advP.map(row).join('')}</div>` : '');
+                + (advP.length ? `<div class="lst-grp">大冒險</div><div class="lst-list">${advP.map(row).join('')}</div>` : '')
+                + (farmP.length ? `<div class="lst-grp">農場</div><div class="lst-list">${farmP.map(row).join('')}</div>` : '');
             container.classList.remove('two');
             container.classList.add('grouped');
         } else if ((container.classList.remove('grouped'), !mine.length)) {
@@ -4396,6 +4486,8 @@
         let words = getSelectedExamWords();
         if (words.length === 0) { alert('⚠️ 請至少勾選一個考試範圍或確認範圍內有符合條件的單字！'); return; }
         if (voiceChiChecking) return;
+        // 手機：語音要在「按下開始」的當下先唸一次（聽不到的空白），之後自動播放的題目才會有聲音
+        try { synth.cancel(); let u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.lang = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US'; synth.speak(u); } catch (e) {}
         voiceChiChecking = true;
         let micOk = await voiceChiPrepare('examInputChi');
         voiceChiChecking = false;
@@ -4428,7 +4520,14 @@
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        playExamQuestion();
+        // 第一題前先等 1.5 秒（手機的語音引擎剛啟動時，第一句常常被吃掉）
+        let n0 = wordsData.length;
+        let cnt = document.getElementById('examCount'); if (cnt) cnt.innerHTML = `1 <small>/ ${n0}</small>`;
+        qzStatus('examProgressStatus', '準備開始…');
+        qzShow('examTimer', false);
+        setExamInputsDisabled(false);
+        try { document.getElementById('examInputEng').focus({ preventScroll: true }); } catch (e) {}
+        setTimeout(() => { if (isExamRunning && currentWordIndex === 0) playExamQuestion(); }, 1500);
     }
 
     // 測驗共用：題目卡上的狀態膠囊、計時膠囊
@@ -6363,7 +6462,7 @@
         if (advCanAuto()) {
             let words = advAutoWords(lv), last = ((advData.lastWrong || {})[lv.id] || []).length;
             let key = (Array.isArray(advPlanOf(lv.id)) ? advPlanOf(lv.id)[0] : advPlanOf(advPlanOf(lv.id).review[0])[0]) < advAutoParts().night.length ? 'adv_night' : 'adv_store';
-            html += opt('auto', `冒險・${(WORD_PACKS[key].title || '').replace(/^冒險・/, '')}`, `<span class="aq-rec">推薦</span>${auto ? `<span class="aq-link"><span class="cnt">${words.length} 個字${last ? `・上次錯 <b>${last}</b> 個` : ''}</span><span class="go" role="link" data-on-click='[["$stop",[]],["advOpenWords",[]]]'>${window.innerWidth < 420 ? `${words.length} 個字・` : ''}看單字<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></span></span>` : ''}`);
+            html += opt('auto', `冒險・${(WORD_PACKS[key].title || '').replace(/^冒險・/, '')}`, `<span class="aq-rec">推薦</span>${auto ? `<span class="aq-link">${last ? `<span class="cnt">上次錯 <b>${last}</b> 個</span>` : ''}<span class="go" role="link" data-on-click='[["$stop",[]],["advOpenWords",[]]]'>看單字<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></span></span>` : ''}`);
         }
         let sb = n => (n && !auto) ? `<span class="aq-badge-sel">已選 ${n}</span>` : '';
         html += opt('pack', '精選單字庫', sb(cnt('pack'))) + opt('mine', '自訂題庫', sb(cnt('custom')));
@@ -6499,7 +6598,7 @@
     ];
     const ADV_BAR_MAX = 10;
     function goToAdvStats(tab) {
-        advStatsTab = ['moves', 'gear'].indexOf(tab) !== -1 ? tab : 'stats';   // 每次進來預設「基本素質」
+        advStatsTab = ['moves', 'gear', 'bag'].indexOf(tab) !== -1 ? tab : 'stats';   // 每次進來預設「基本素質」
         advAbort();
         advSyncDaily();
         advRenderStatsPage();
@@ -6524,50 +6623,79 @@
 
     let advStatsTab = 'stats';      // 能力值頁目前的分頁：stats 基本素質 / moves 招式
     let advMoveFocus = '';          // 招式分頁：正在看哪一招的詳細資料
-    function advSetStatsTab(t) { advStatsTab = ['moves', 'gear'].indexOf(t) !== -1 ? t : 'stats'; advRenderStatsPage(); }
+    function advSetStatsTab(t) { advStatsTab = ['moves', 'gear', 'bag'].indexOf(t) !== -1 ? t : 'stats'; if (t === 'bag') { advBagGearOnly = false; advBagSlot = null; advBagFilter = 'all'; advBagSel = ''; } advRenderStatsPage(); }
+    // ═════════ 雞塊能力值頁（chicky-stats：樣式 .st-*）═════════
+    const ST_COIN = '<svg class="st-coin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fbbf24" stroke="#b45309" stroke-width="1.6"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f59e0b" stroke-width="1.4"/><path d="M12 8.5v7" stroke="#b45309" stroke-width="1.8" stroke-linecap="round"/></svg>';
+    const ST_INFO = '<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 11v6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.3" fill="currentColor"/></svg>';
+    const ST_TAB_ICONS = {
+        stats: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-9"/></svg>',
+        moves: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6M16 16l4 4M19 21l2-2"/></svg>',
+        bag: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6a3 3 0 016 0"/><rect x="4" y="6" width="16" height="15" rx="3.5"/><path d="M4 11h16"/><rect x="10" y="9" width="4" height="4" rx="1"/></svg>',
+        gear: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/></svg>'
+    };
+    // 命中加成的狀態：ready＝三種都答滿 20 題；on＝而且總命中 ≥ 90%
+    function stCritState() {
+        let ready = advCritReady(), p = advHitPct(advHitAll());
+        return { ready, p, on: ready && p !== null && p >= ADV_CRIT_AT, gap: ready && p !== null ? Math.max(0, ADV_CRIT_AT - p) : null };
+    }
+    function stCritLabel(c) {
+        if (c.on) return `<span class="st-crit st-crit--on">${ST_COIN}爆擊判定+1</span>`;
+        if (c.ready) return `<span class="st-crit st-crit--off">${ST_COIN}差 ${c.gap}% 獲得能力加成</span>`;
+        return `<span class="st-crit st-crit--off">${ST_COIN}攻擊時 +1 爆擊判定</span>`;
+    }
     function advRenderStatsPage() {
         let s = advPlayerStats();
-        // 能力條統一綠色；HP 低於 30% 變紅色
-        const GREEN = '#10B981', RED = '#EF4444';
-        let rows = ADV_STAT_DEFS.map(d => {
-            let lvl = advData.up[d.key], maxed = lvl >= advUpMax(d.key);
-            let pct = Math.min(100, s[d.key] / ADV_BAR_MAX * 100);
-            let tile, bar;
-            if (d.key === 'hp') {
-                // HP：方塊顯示「目前 / 最大」；實心條 = 目前體力，淡色底 = 最大體力
-                let cur = Math.max(0, Math.min(advData.hp, s.hp)), low = cur / s.hp < 0.3, c = low ? RED : GREEN;
-                tile = `<div class="adv-stat-tile${low ? ' low' : ''}">${d.label}<b>${cur}/${s.hp}</b></div>`;
-                bar = `<div class="adv-bar" title="目前體力 ${cur}／最大體力 ${s.hp}"><i class="adv-bar-max" style="width:${pct.toFixed(1)}%;background:${c}"></i><i class="adv-bar-cur" style="width:${Math.min(100, cur / ADV_BAR_MAX * 100).toFixed(1)}%;background:${c}"></i></div>`;
-            } else {
-                let gb = advGearBonus(d.key);
-                tile = `<div class="adv-stat-tile">${d.label}<b>${s[d.key]}${gb ? `<small class="adv-gear-plus">+${gb}</small>` : ''}</b></div>`;
-                bar = `<div class="adv-bar" title="已強化 ${lvl}/${advUpMax(d.key)}${gb ? `（裝備 +${gb}）` : ''}"><i style="width:${Math.max(0, pct).toFixed(1)}%;background:${GREEN}"></i>${gb ? `<i style="position:absolute;left:${Math.min(100, pct).toFixed(1)}%;width:${Math.min(100 - Math.min(100, pct), gb / ADV_BAR_MAX * 100).toFixed(1)}%;top:0;bottom:0;background:#A78BFA"></i>` : ''}</div>`;
-            }
-            return `<div class="adv-stat-row adv-stat-click" data-stat="${d.key}" role="button" title="點一下看能力介紹" data-on-click='[["advOpenStatInfo",["${d.key}"]]]'>
-                ${tile}${bar}
-                ${maxed ? '<span class="adv-maxed">滿</span>' : ''}<span class="adv-hit-chev">›</span>
-            </div>`;
-        }).join('');
+        let pct = v => Math.min(100, Math.max(0, v) / ADV_BAR_MAX * 100).toFixed(1) + '%';   // 所有能力條共用同一把尺；超過上限停在滿格，數字照實顯示
+        let c = stCritState();
         let nav = document.getElementById('advNavCounts');
-        if (nav) nav.innerHTML = `<div class="adv-count">${advShardIcon(15)} <b id="advShardCount2">${advData.shards}</b></div>`;
+        if (nav) nav.innerHTML = `<span class="st-gem">${advShardIcon(20)}<span id="advShardCount2">${advData.shards}</span></span>`;
         let box = document.getElementById('advStatsBox');
         if (!box) return;
+        box.dataset.crit = c.on ? 'on' : 'off';
         let oldGrid = document.getElementById('advMoveGrid'), keepScroll = oldGrid ? oldGrid.scrollTop : 0;
-        let statsBody = `${advHitRowHTML()}<hr class="adv-hit-divider">${rows}`;
+        // 命中區
+        let hitTxt = c.p === null ? '—' : c.p + '%';
+        let hit = `<div class="st-section-head"><span class="st-section-title">命中 ${stCritLabel(c)}</span>
+                <button class="st-info" type="button" data-on-click='[["advOpenHit",[]]]'>${ST_INFO}說明</button></div>
+            <button class="st-row st-row--hit" type="button" data-on-click='[["advOpenHit",[]]]'>
+                <span class="st-box"><span class="st-box__label">命中</span><span class="st-box__value">${hitTxt}</span></span>
+                <span class="st-hitbar"><span class="st-bar"><i style="width:${c.p === null ? 0 : c.p}%"></i></span><span class="st-threshold" title="90% 爆擊門檻"></span></span>
+            </button>`;
+        // 能力區
+        let shield = advShieldMax(s.int);
+        let cur = Math.max(0, Math.min(advData.hp, s.hp));
+        let row = (key, label, value, bar, extra) => `<button class="st-row" type="button" data-on-click='[["advOpenStatInfo",["${key}"]]]'>
+                <span class="st-box"><span class="st-box__label">${label}</span><span class="st-box__value">${value}</span>${extra || ''}</span>${bar}</button>`;
+        let gearBar = (k) => {
+            let gb = advGearBonus(k), base = Math.max(0, s[k] - gb);
+            return `<span class="st-bar"><i style="width:${pct(base)}"></i>${gb ? `<i class="st-bar-gear" style="left:${pct(base)};width:${(Math.min(100, s[k] / ADV_BAR_MAX * 100) - Math.min(100, base / ADV_BAR_MAX * 100)).toFixed(1)}%"></i>` : ''}</span>`;
+        };
+        let val = k => { let gb = advGearBonus(k); return `${s[k]}${gb ? `<small class="st-gear-plus">+${gb}</small>` : ''}`; };
+        let rows = [
+            row('hp', 'HP', `${cur}/${s.hp}`,
+                `<span class="st-hpbars">${shield ? `<span class="st-shieldbar"><i style="width:${pct(shield)}"></i></span>` : ''}<span class="st-bar${cur / s.hp < 0.3 ? ' is-low' : ''}"><i style="width:${pct(cur)}"></i></span></span>`,
+                shield ? `<span class="st-badge-shield" title="護盾 ${shield}"><svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l9 3.5v6.5c0 5-3.8 9-9 10-5.2-1-9-5-9-10V5.5z" fill="#fff"/></svg>${shield}</span>` : ''),
+            row('atk', '攻擊', val('atk'), gearBar('atk'), c.on ? `<span class="st-badge-crit" role="img" aria-label="爆擊判定+1">${ST_COIN}</span>` : ''),
+            row('agi', '敏捷', val('agi'), gearBar('agi')),
+            row('def', '防禦', val('def'), gearBar('def')),
+            row('int', '智慧', val('int'), gearBar('int')),
+            row('luck', '幸運', val('luck'), gearBar('luck'))
+        ].join('');
+        let statsBody = `${hit}<hr class="st-divider">
+            <div class="st-section-head"><span class="st-section-title">能力</span><button class="st-info" type="button" data-on-click='[["advOpenStatInfo",[""]]]'>${ST_INFO}說明</button></div>
+            ${rows}`;
+        let tab = (k, label, alert) => `<button type="button" role="tab" class="st-tab" aria-selected="${advStatsTab === k}" data-on-click='[["advSetStatsTab",["${k}"]]]'>${ST_TAB_ICONS[k]}${label}${alert || ''}</button>`;
+        let body = advStatsTab === 'moves' ? advMovesTabHTML() : advStatsTab === 'gear' ? advGearTabHTML() : advStatsTab === 'bag' ? '<div id="advBagInline" class="st-bag"></div>' : statsBody;
         box.innerHTML = `
-            <div class="adv-hero">
-                <div class="adv-avatar">${advChickenSVG()}</div>
-                <div class="adv-mini-gear">${[0, 1].map(i => advMiniGearHTML(i)).join('')}</div>
-                <button type="button" class="adv-bag-btn" title="背包" aria-label="背包" data-on-click='[["advOpenBag",[]]]'>${advBagIcon(54)}</button>
-            </div>
-            <div class="adv-card adv-stats-panel">
-                <div class="adv-tabs" role="tablist">
-                    <button type="button" role="tab" class="adv-tab${advStatsTab === 'stats' ? ' on' : ''}" data-on-click='[["advSetStatsTab",["stats"]]]'>基本素質</button>
-                    <button type="button" role="tab" class="adv-tab${advStatsTab === 'moves' ? ' on' : ''}" data-on-click='[["advSetStatsTab",["moves"]]]'>招式</button>
-                    <button type="button" role="tab" class="adv-tab${advStatsTab === 'gear' ? ' on' : ''}" data-on-click='[["advSetStatsTab",["gear"]]]'>裝備${advGearAlert() ? ADV_ALERT : ''}</button>
-                </div>
-                ${advStatsTab === 'moves' ? advMovesTabHTML() : advStatsTab === 'gear' ? advGearTabHTML() : statsBody}
+            <section class="st-hero">
+                <div class="st-avatar">${advChickenSVG()}</div>
+                <div class="st-items">${[0, 1].map(i => advMiniGearHTML(i)).join('')}</div>
+            </section>
+            <div>
+                <nav class="st-tabs" role="tablist">${tab('stats', '基本素質')}${tab('moves', '招式')}${tab('bag', '背包')}${tab('gear', '裝備', advGearAlert() ? ADV_ALERT : '')}</nav>
+                <section class="st-panel${advStatsTab === 'stats' ? '' : ' st-panel--other'}" role="tabpanel">${body}</section>
             </div>`;
+        if (advStatsTab === 'bag') advBagBack();
         let g = document.getElementById('advMoveGrid');
         if (g) g.scrollTop = keepScroll;
         advFitMoveGrid();
@@ -6759,21 +6887,30 @@
             : `<div class="adv-bar"><i style="width:${t}%;background:#EAB308"></i></div>`;
         return `<div class="adv-stat-row adv-hit-row" data-stat="hit" role="button" title="點一下看字卡、聽力、朗讀的命中" data-on-click='[["advOpenHit",[]]]'>${tile}${bar}<span class="adv-hit-chev">›</span></div>`;
     }
-    // ── 能力介紹：全部能力放同一頁，順序跟能力值頁一樣（只說用途，不寫公式）──
-    const ADV_STAT_INFO = {
-        hp:   '每點一次，HP 上限 +1。',
-        atk:  '每點一次，攻擊力 +1。',
-        agi:  '比對手快，一回合就能多出幾招。',
-        def:  '減少每次被打到的傷害。',
-        int:  '智慧越高護盾越高，護盾扣完才扣 HP；能增加作答時間。',
-        luck: '攻擊時會擲幣，擲到正面就多打 1 點；打贏後也有機會多拿碎片。'
-    };
+    // ── 能力介紹（固定位置的彈出視窗；從某一行點進來 → 那一項高亮）──
+    const ADV_STAT_INFO_LIST = [
+        ['hp', 'HP', '#10b981', '每上升一點，HP 上限 +1。'],
+        ['shield', '護盾', '#0ea5e9', '先扣護盾再扣 HP，戰鬥結束後回滿護盾。'],
+        ['atk', '攻擊', '#f43f5e', '每上升一點，攻擊 +1。'],
+        ['agi', '敏捷', '#3b82f6', '每比對手高 2 點，一回合多攻擊一次。'],
+        ['def', '防禦', '#f59e0b', '每點減 1 傷害，至少受 1 點。'],
+        ['int', '智慧', '#14b8a6', '每 2 點 +1 護盾（最多 5），比對手低時作答時間會變短。'],
+        ['luck', '幸運', '#a855f7', '每比對手高 2 點多 1 次爆擊判定（最多 3 次）。']
+    ];
+    const ST_CLOSE = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>';
+    function stModalOpen(inner) {
+        let m = document.getElementById('stModal');
+        if (!m) { m = document.createElement('div'); m.id = 'stModal'; m.className = 'st-modal'; m.setAttribute('data-on-click', '[["stModalBg",["$event"]]]'); document.body.appendChild(m); }
+        m.innerHTML = `<section class="st-dialog" role="dialog" aria-modal="true">${inner}</section>`;
+        m.hidden = false;
+    }
+    function stModalClose() { let m = document.getElementById('stModal'); if (m) { m.hidden = true; m.innerHTML = ''; } }
+    function stModalBg(e) { if (e && e.target && e.target.id === 'stModal') stModalClose(); }
+    function stDialogHead(title, sub) {
+        return `<header class="st-dialog__head"><h2 class="st-dialog__title"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</h2><button class="st-close" type="button" aria-label="關閉" data-on-click='[["stModalClose",[]]]'>${ST_CLOSE}</button></header>`;
+    }
     function advOpenStatInfo(key) {
-        let body = document.getElementById('advHitBody');
-        if (!body) return;
-        body.innerHTML = `<div class="adv-hit-title">📖 能力介紹</div>
-            <div class="adv-si-list">${ADV_STAT_DEFS.map(d => `<div class="adv-si-row${d.key === key ? ' on' : ''}" data-stat="${d.key}"><span class="adv-si-lab" style="background:${d.color}">${d.label}</span><p>${ADV_STAT_INFO[d.key]}</p></div>`).join('')}</div>`;
-        document.getElementById('advHitModal').style.display = 'block';
+        stModalOpen(stDialogHead('📖 能力介紹') + `<ul class="st-guide">${ADV_STAT_INFO_LIST.map(r => `<li class="${r[0] === key ? 'is-active' : ''}"><span class="st-tag" style="background:${r[2]}">${r[1]}</span><p>${r[3]}</p></li>`).join('')}</ul>`);
     }
     // 命中率的評價（黃色框）
     function advHitComment(p) {
@@ -6786,34 +6923,25 @@
     }
     const ADV_HIT_TIPS = { card: '「字卡練習」或「字卡測驗」', listen: '「聽力練習」或「聽力測驗」', speak: '「朗讀練習」' };
     function advOpenHit() {
-        let body = document.getElementById('advHitBody');
-        if (!body) return;
-        let a = advHitAll(), t = advHitTotal(), cur = advHitPct(a);
-        let big, sub;
-        if (t !== null) {
-            let diff = advData.hitPrev === null ? 0 : t - advData.hitPrev;
-            big = `${t}%`; sub = `總命中${diff ? `　<span class="${diff > 0 ? 'up' : 'down'}">${diff > 0 ? '↑' : '↓'} 比上次 ${diff > 0 ? '+' : ''}${diff}%</span>` : ''}`;
-        } else if (a.length) {
-            big = `${cur}%`; sub = `總命中（目前 ${a.length}/${ADV_HIT_N} 題，還在累積）`;
-        } else {
-            big = '—'; sub = '還沒有紀錄，去大冒險打一場吧！';
+        let a = advHitAll(), cur = advHitPct(a), c = stCritState();
+        let numTxt = cur === null ? '—' : cur + '%';
+        let diffTxt = '';
+        if (cur !== null && advData.hitPrev !== null && advData.hitPrev !== undefined) {
+            let d = cur - advData.hitPrev;
+            if (d) diffTxt = `<span class="st-total__diff ${d < 0 ? 'is-down' : 'is-up'}">${d < 0 ? '↓' : '↑'} 比上次 ${d > 0 ? '+' : ''}${d}%</span>`;
         }
-        let weakest = null;
-        let lines = ['card', 'listen', 'speak'].map(k => {
-            let arr = advData.hits[k], p = advHitPct(arr), full = arr.length >= ADV_HIT_N;
-            if (!full) return `<div class="adv-hit-line"><span class="lab">${ADV_TYPE_LABEL[k]}</span><div class="adv-bar"><i class="adv-hit-wait" style="width:${(arr.length / ADV_HIT_N * 100).toFixed(1)}%"></i></div><span class="val">累積中<small>${arr.length}/${ADV_HIT_N} 題</small></span></div>`;
-            if (weakest === null || p < weakest.p) weakest = { k, p };
-            return { k, p, html: (low) => `<div class="adv-hit-line"><span class="lab">${ADV_TYPE_LABEL[k]}</span><div class="adv-bar"><i style="width:${p}%;background:${low ? '#F97316' : '#EAB308'}"></i></div><span class="val${low ? ' low' : ''}">${p}%<small>${arr.reduce((x, y) => x + y, 0)}/${ADV_HIT_N} 題</small></span></div>` };
-        });
-        let weakKey = weakest && weakest.p < 70 ? weakest.k : '';
-        let html = lines.map(l => typeof l === 'string' ? l : l.html(l.k === weakKey)).join('');
-        let tip = t !== null ? advHitComment(t) : a.length ? advHitComment(cur) : '🗡️ 去大冒險打一場，就會開始累積命中！';
-        body.innerHTML = `<div class="adv-hit-title">🎯 命中</div>
-            <div class="adv-hit-sub">字卡、聽力、朗讀各算最近 ${ADV_HIT_N} 題</div>
-            <div class="adv-hit-total">${big}<small>${sub}</small></div>
-            ${html}
-            <div class="adv-hit-tip">${tip}</div>`;
-        document.getElementById('advHitModal').style.display = 'block';
+        let bonus = c.on ? `<div class="st-bonus st-bonus--on">${ST_COIN}獲得攻擊時額外 1 次爆擊判定</div>`
+            : c.ready ? `<div class="st-bonus st-bonus--off">${ST_COIN}差 ${c.gap}% 獲得能力加成</div>`
+            : `<div class="st-bonus st-bonus--off">${ST_COIN}<span>字卡、聽力、朗讀各答滿 20 題，命中 90% 以上：攻擊時 +1 爆擊判定</span></div>`;
+        let modes = ['card', 'listen', 'speak'].map(k => {
+            let arr = advData.hits[k] || [], okN = arr.reduce((x, y) => x + y, 0), full = arr.length >= ADV_HIT_N, p = advHitPct(arr);
+            return `<div class="st-mode"><span class="st-mode__name">${ADV_TYPE_LABEL[k]}</span><span class="st-bar${full ? '' : ' is-wait'}"><i style="width:${full ? p : arr.length / ADV_HIT_N * 100}%"></i></span>
+                <span class="st-mode__num">${full ? p + '%' : '累積中'}<small>${full ? okN : arr.length}/${ADV_HIT_N} 題</small></span></div>`;
+        }).join('');
+        let cheer = cur !== null ? advHitComment(cur) : '🗡️ 去大冒險打一場，就會開始累積命中！';
+        stModalOpen(stDialogHead('🎯 命中', `字卡、聽力、朗讀各算最近 ${ADV_HIT_N} 題`) + `
+            <div class="st-total"><span class="st-total__num">${numTxt}</span><span class="st-total__meta">總命中${diffTxt}</span></div>
+            ${bonus}<div class="st-modes">${modes}</div><div class="st-cheer"><span>${escapeHTML(cheer)}</span></div>`);
     }
     function advCloseHit() { document.getElementById('advHitModal').style.display = 'none'; }
 
@@ -6850,7 +6978,10 @@
     }
     function advCloseBag() { document.getElementById('advBagModal').style.display = 'none'; }
     function advBagBack() {
-        let body = document.getElementById('advBagBody');
+        // 能力值頁的「背包」分頁：直接畫在分頁裡；選裝備欄（advOpenBag('gear')）時才用彈出視窗
+        let modalOn = document.getElementById('advBagModal').style.display === 'block';
+        let inline = !advBagGearOnly && !modalOn && advStatsTab === 'bag' && document.getElementById('advBagInline');
+        let body = inline || document.getElementById('advBagBody');
         if (!body) return;
         if (advBagGearOnly) advBagFilter = 'gear';
         let defs = advBagDefs().filter(d => d.kind === 'gear' || d.n > 0).filter(d => advBagFilter === 'all' || d.kind === advBagFilter);
@@ -7430,6 +7561,7 @@
         adv.seen = new Set();          // 這場戰鬥已經出現過的單字
         adv.wrongThis = [];            // 這場戰鬥答錯的字
         adv.stOk = 0; adv.stAll = 0;   // 這場戰鬥答對的題數／作答題數
+        adv.critOn = advCritOn();      // 命中加成：開戰時決定這場有沒有爆擊判定
         adv.plan = autoMode ? { review: advIsReview(lv.id), fresh: advAutoWords(lv), old: advIsReview(lv.id) ? [] : advOldWords(lv), queue: [], started: false } : null;
         let s = advPlayerStats();
         adv.level = lv;
@@ -7723,6 +7855,10 @@
     function advHitPct(arr) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 100) : null; }
     // 總命中 = 字卡、聽力、朗讀各自最近 20 題合起來算（不會只看最近 20 題而忽略比較弱的類別）
     function advHitAll() { return ['card', 'listen', 'speak'].reduce((x, k) => x.concat(advData.hits[k] || []), []); }
+    // 爆擊加成：字卡、聽力、朗讀「各」答滿 20 題，而且三種合計命中 ≥ 90%
+    const ADV_CRIT_AT = 90;
+    function advCritReady() { return ['card', 'listen', 'speak'].every(k => (advData.hits[k] || []).length >= ADV_HIT_N); }
+    function advCritOn() { return advCritReady() && advHitPct(advHitAll()) >= ADV_CRIT_AT; }
     function advHitTotal() { let a = advHitAll(); return a.length >= ADV_HIT_N ? advHitPct(a) : null; }
     function advQuestionPassed() {
         advRecordHit(true);
@@ -8150,8 +8286,9 @@
     }
 
     // 幸運擲幣：硬幣飄在攻擊者上方，每個「正面」傷害 +1（最多 +3）
-    async function advShowCoins(actorEl, luck, who) {
-        advSetLog(`🪙 ${who || ''}幸運擲幣中…`);
+    async function advShowCoins(actorEl, luck, who, title) {
+        title = title || '幸運擲幣';
+        advSetLog(`🪙 ${who || ''}${title}中…`);
         let fx = document.getElementById('advFx');
         let row = null;
         if (fx && actorEl) {
@@ -8173,7 +8310,7 @@
         } else {
             await advWait(600);
         }
-        advSetLog(`🪙 ${who || ''}幸運擲幣：${advCoinText(luck.flips)}${luck.bonus ? `　正面 ${luck.bonus} 次！傷害 +${luck.bonus}` : '　沒有正面'}`);
+        advSetLog(`🪙 ${who || ''}${title}：${advCoinText(luck.flips)}${luck.bonus ? `　正面 ${luck.bonus} 次！傷害 +${luck.bonus}` : '　沒有正面'}`);
         await advWait(550);
         if (row) await advAnimate(row, [{ opacity: 1 }, { opacity: 0 }], { duration: 220 }).then(() => row.remove());
         if (luck.bonus) { advFloat(actorEl, `+${luck.bonus}`, '#B45309'); await advWait(250); }
@@ -8213,6 +8350,13 @@
                     await advShowCoins(P, luck, m.hits > 1 ? `第 ${h + 1} 下` : '');
                     if (id !== adv.runId) return;
                     dmg += luck.bonus;
+                }
+                // 命中加成：字卡、聽力、朗讀各答滿 20 題且總命中 ≥ 90% → 每次攻擊多 1 次爆擊判定（跟幸運的 3 枚硬幣分開算）
+                if (adv.critOn) {
+                    let f = Math.random() < 0.5, crit = { flips: [f], bonus: f ? 1 : 0 };
+                    await advShowCoins(P, crit, m.hits > 1 ? `第 ${h + 1} 下` : '', '爆擊判定');
+                    if (id !== adv.runId) return;
+                    dmg += crit.bonus;
                 }
                 let immune = advImmuneType() === m.type;
                 let guarded = immune || ADV_RESIST[adv.enemy.special] === m.type;
@@ -8518,10 +8662,11 @@
         let doneToday = st === 'replay' && used >= ADV_REPLAY_PER_DAY;
         let btns;
         if (st === 'first') btns = `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crContinue",[]]]'>${d.nextLv ? `繼續・解鎖第 ${d.nextLv.id} 關` : '回地圖'}</button>
-            <button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crRetry",[]]]'>再打一次</button>`;
+            ${hp > 0 ? `<button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crRetry",[]]]'>再打一次</button>` : ''}`;
         else if (st === 'replay') btns = `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crNext",[]]]'>${d.nextLv ? `下一關・${escapeHTML(d.nextLv.name)}` : '回地圖'}</button>
-            <button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crRetry",[]]]'>再打一次${doneToday ? '<small>今日獎勵已領完</small>' : ''}</button>`;
-        else btns = `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crRetry",[]]]'>再打一次</button>
+            ${hp > 0 ? `<button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crRetry",[]]]'>再打一次${doneToday ? '<small>今日獎勵已領完</small>' : ''}</button>` : ''}`;
+        else btns = (hp > 0 ? `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crRetry",[]]]'>再打一次</button>`
+                            : `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crBack",[]]]'>回關卡頁</button>`) + `
             ${(adv.wrongThis || []).length ? `<div class="cr-review" id="crReview"><button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crReviewPick",[]]]'>複習答錯的字</button></div>` : ''}`;
         el.innerHTML = `<section class="cr-screen" data-state="${st}" aria-label="戰鬥結算"><div class="cr-card">
             <header class="cr-top"><button type="button" class="cr-back" aria-label="返回" data-on-click='[["crBack",[]]]'>${CR_BACK_SVG}</button><span class="cr-pill">雞塊大冒險</span><span></span></header>
@@ -8699,6 +8844,15 @@
     const FARM_FAST_N = 3;                   // 前 3 顆用新手速成（長葉後直接開花）
     const FARM_START_PLOTS = 3, FARM_MAX_PLOTS = 9;   // 固定 3 塊田可以種（取消收成解鎖新田）
     const FARM_STAGE_NAMES = ['種子', '發芽', '長葉', '含苞', '開花'];
+    // 農場等級：總經驗 3／15／40／80 升到 LV2～LV5；LV2 起田變 4 格、開放蜜蜂採蜜
+    //   經驗：種種子 +1、澆水答對 +1、收成 +1、採蜜成功 +3（後台 supabase_011 也照這個算）
+    const FARM_LV_XP = [0, 3, 15, 40, 80];
+    const FARM_HONEY_FULL = 5, FARM_HONEY_STEP_MS = 60 * 1000;   // 測試版：每 1 分鐘隨機累積 1～3 份蜂蜜（正式版改成每天）
+    function farmLevel(xp) { xp = xp === undefined ? farm.xp : xp; let lv = 1; FARM_LV_XP.forEach((t, i) => { if (xp >= t) lv = i + 1; }); return lv; }
+    function farmLvInfo(xp) {
+        let lv = farmLevel(xp), cur = FARM_LV_XP[lv - 1], next = FARM_LV_XP[lv];
+        return { lv, cur, next, max: next === undefined, pct: next === undefined ? 100 : Math.max(0, Math.min(100, (xp - cur) / (next - cur) * 100)) };
+    }
     // 裝飾：一個物件一筆，新增裝飾只要加一筆（slot：house／scarecrow／fence／guard／mailbox）
     const FARM_DECOR = [
         { id: 'house_chicken', slot: 'house', name: '雞頭小屋', price: 0 },
@@ -8784,7 +8938,11 @@
             fastTrackUsed: n0(d.fastTrackUsed), harvestTotal: n0(d.harvestTotal), flowers: n0(d.flowers),
             items: { nectar: n0(d.items && d.items.nectar), crown: n0(d.items && d.items.crown) },     // 用花買的戰鬥道具
             loginFlowerDay: typeof d.loginFlowerDay === 'string' ? d.loginFlowerDay : '',              // 每日登入送花：最後領取日
-            plantedWords: Array.isArray(d.plantedWords) ? d.plantedWords.filter(x => typeof x === 'string').map(x => x.toLowerCase().slice(0, 80)).slice(-3000) : []   // 種過的字（不能再種）
+            plantedWords: Array.isArray(d.plantedWords) ? d.plantedWords.filter(x => typeof x === 'string').map(x => x.toLowerCase().slice(0, 80)).slice(-3000) : [],   // 種過的字（不能再種）
+            xp: n0(d.xp),                                   // 農場經驗值（等級由這個算）
+            honey: Math.min(FARM_HONEY_FULL, n0(d.honey)),  // 蜂蜜（滿 5 可以採）
+            honeyAt: Number(d.honeyAt) || 0,               // 上次累積蜂蜜的時間
+            beeStep: n0(d.beeStep) % 3                      // 採蜜題型輪流：0 連連看／1 找出不是的意思／2 聽寫
         };
     }
     function farmSave() { try { localStorage.setItem(FARM_KEY, JSON.stringify(farm)); } catch (e) {} }
@@ -8829,6 +8987,8 @@
             if (m.includes('insufficient')) farmToast('花不夠喔！');
             else if (m.includes('plant_limit')) farmToast('今天種的數量到上限了');
             else if (m.includes('word_used')) farmToast('這個字已經種過了，換一個字吧');
+            else if (m.includes('honey_not_full') || m.includes('locked_honey')) farmToast('🐝 蜂蜜還沒滿喔');
+            else if (m.includes('invalid_action')) farmToast('後台還沒更新：請在 Supabase 執行 supabase_011');
             else if (!m.includes('not_ripe')) farmToast('雲端沒有存到，重新整理農場…');
             farmSync();
             return null;
@@ -8840,7 +9000,7 @@
             else if (document.getElementById('farmPlantView').classList.contains('active')) farmRenderPlant();
         } catch (e) {}
     }
-    function farmUnlocked() { return FARM_START_PLOTS; }
+    function farmUnlocked() { return farmLevel() >= 2 ? 4 : FARM_START_PLOTS; }      // LV1：3 格；LV2 起：4 格
     function farmPlantedToday() { return farm.plantedToday.date === farmToday() ? farm.plantedToday.count : 0; }
     function farmPlantLeft() { return Math.max(0, FARM_PLANT_PER_DAY - farmPlantedToday()); }
     function farmEmptyIndex() { for (let i = 0; i < farmUnlocked(); i++) if (!farm.plots[i]) return i; return -1; }
@@ -8962,7 +9122,160 @@
     const FARM_FENCE_ART = {
         fence_plastic_stools: `<rect x="0" y="22" width="150" height="4" fill="#e6cf9f"/><g transform="translate(4 6)"><rect x="2" y="0" width="30" height="7" rx="3.5" fill="#f2665c"/><path d="M5 7 L2 32 H8 L11 12 H23 L26 32 H32 L29 7Z" fill="#e2463c"/><rect x="9" y="18" width="16" height="3" rx="1.5" fill="#c23a30"/></g><g transform="translate(58 6)"><rect x="2" y="0" width="30" height="7" rx="3.5" fill="#f2665c"/><path d="M5 7 L2 32 H8 L11 12 H23 L26 32 H32 L29 7Z" fill="#e2463c"/><rect x="9" y="18" width="16" height="3" rx="1.5" fill="#c23a30"/></g><g transform="translate(112 6)"><rect x="2" y="0" width="30" height="7" rx="3.5" fill="#f2665c"/><path d="M5 7 L2 32 H8 L11 12 H23 L26 32 H32 L29 7Z" fill="#e2463c"/><rect x="9" y="18" width="16" height="3" rx="1.5" fill="#c23a30"/></g>`,
         fence_cones: `<rect x="16" y="14" width="54" height="7" rx="2" fill="#f7d14a"/><path d="M20 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M30 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M40 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M50 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M60 14 h5 l-4 7 h-5z" fill="#2e2650"/><rect x="80" y="14" width="54" height="7" rx="2" fill="#f7d14a"/><path d="M84 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M94 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M104 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M114 14 h5 l-4 7 h-5z" fill="#2e2650"/><path d="M124 14 h5 l-4 7 h-5z" fill="#2e2650"/><g transform="translate(0 0)"><path d="M10 4 L18 34 H2Z" fill="#f28a2e"/><rect x="5" y="14" width="10" height="4" fill="#ffffff"/><rect x="3.5" y="24" width="13" height="4" fill="#ffffff"/><rect x="0" y="34" width="20" height="4" rx="1" fill="#c96a1e"/></g><g transform="translate(65 0)"><path d="M10 4 L18 34 H2Z" fill="#f28a2e"/><rect x="5" y="14" width="10" height="4" fill="#ffffff"/><rect x="3.5" y="24" width="13" height="4" fill="#ffffff"/><rect x="0" y="34" width="20" height="4" rx="1" fill="#c96a1e"/></g><g transform="translate(130 0)"><path d="M10 4 L18 34 H2Z" fill="#f28a2e"/><rect x="5" y="14" width="10" height="4" fill="#ffffff"/><rect x="3.5" y="24" width="13" height="4" fill="#ffffff"/><rect x="0" y="34" width="20" height="4" rx="1" fill="#c96a1e"/></g>`,
-        fence_peach_heart: `<path d="M9 34 L13 34 L11 41Z" fill="#FFF7FA" stroke="#E48AAE" stroke-width="1.1" stroke-linejoin="round"/><path d="M137 34 L141 34 L139 41Z" fill="#FFF7FA" stroke="#E48AAE" stroke-width="1.1" stroke-linejoin="round"/><rect x="1" y="13.5" width="148" height="3.6" rx="1.8" fill="#FFF7FA" stroke="#E48AAE" stroke-width="1.3"/><rect x="1" y="30.6" width="148" height="3.6" rx="1.8" fill="#FFF7FA" stroke="#E48AAE" stroke-width="1.3"/><g fill="none" stroke-linecap="round"><path d="M25 35 C22 32 14 28 14 21.5 C14 17 17.5 15 20.2 15 C22.5 15 24.2 16.3 25 18 C25.8 16.3 27.5 15 29.8 15 C32.5 15 36 17 36 21.5 C36 28 28 32 25 35 Z" stroke="#E48AAE" stroke-width="3.4" stroke-linejoin="round"/><path d="M23.4 21 C22 18.6 17.4 18.8 17.8 22 C18.1 24.4 20.8 24.4 20.7 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M26.6 21 C28 18.6 32.6 18.8 32.2 22 C31.9 24.4 29.2 24.4 29.3 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M23.4 30 C21.5 31 18.5 29.5 19.2 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M26.6 30 C28.5 31 31.5 29.5 30.8 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M25 17.5 V33" stroke="#E48AAE" stroke-width="3.4"/><path d="M22.6 29.5 H27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M25 35 C22 32 14 28 14 21.5 C14 17 17.5 15 20.2 15 C22.5 15 24.2 16.3 25 18 C25.8 16.3 27.5 15 29.8 15 C32.5 15 36 17 36 21.5 C36 28 28 32 25 35 Z" stroke="#FFF7FA" stroke-width="1.6" stroke-linejoin="round"/><path d="M23.4 21 C22 18.6 17.4 18.8 17.8 22 C18.1 24.4 20.8 24.4 20.7 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M26.6 21 C28 18.6 32.6 18.8 32.2 22 C31.9 24.4 29.2 24.4 29.3 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M23.4 30 C21.5 31 18.5 29.5 19.2 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M26.6 30 C28.5 31 31.5 29.5 30.8 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M25 17.5 V33" stroke="#FFF7FA" stroke-width="1.6"/><path d="M22.6 29.5 H27.4" stroke="#FFF7FA" stroke-width="1.28"/></g><g fill="none" stroke-linecap="round"><path d="M75 35 C72 32 64 28 64 21.5 C64 17 67.5 15 70.2 15 C72.5 15 74.2 16.3 75 18 C75.8 16.3 77.5 15 79.8 15 C82.5 15 86 17 86 21.5 C86 28 78 32 75 35 Z" stroke="#E48AAE" stroke-width="3.4" stroke-linejoin="round"/><path d="M73.4 21 C72 18.6 67.4 18.8 67.8 22 C68.1 24.4 70.8 24.4 70.7 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M76.6 21 C78 18.6 82.6 18.8 82.2 22 C81.9 24.4 79.2 24.4 79.3 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M73.4 30 C71.5 31 68.5 29.5 69.2 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M76.6 30 C78.5 31 81.5 29.5 80.8 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M75 17.5 V33" stroke="#E48AAE" stroke-width="3.4"/><path d="M72.6 29.5 H77.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M75 35 C72 32 64 28 64 21.5 C64 17 67.5 15 70.2 15 C72.5 15 74.2 16.3 75 18 C75.8 16.3 77.5 15 79.8 15 C82.5 15 86 17 86 21.5 C86 28 78 32 75 35 Z" stroke="#FFF7FA" stroke-width="1.6" stroke-linejoin="round"/><path d="M73.4 21 C72 18.6 67.4 18.8 67.8 22 C68.1 24.4 70.8 24.4 70.7 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M76.6 21 C78 18.6 82.6 18.8 82.2 22 C81.9 24.4 79.2 24.4 79.3 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M73.4 30 C71.5 31 68.5 29.5 69.2 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M76.6 30 C78.5 31 81.5 29.5 80.8 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M75 17.5 V33" stroke="#FFF7FA" stroke-width="1.6"/><path d="M72.6 29.5 H77.4" stroke="#FFF7FA" stroke-width="1.28"/></g><g fill="none" stroke-linecap="round"><path d="M125 35 C122 32 114 28 114 21.5 C114 17 117.5 15 120.2 15 C122.5 15 124.2 16.3 125 18 C125.8 16.3 127.5 15 129.8 15 C132.5 15 136 17 136 21.5 C136 28 128 32 125 35 Z" stroke="#E48AAE" stroke-width="3.4" stroke-linejoin="round"/><path d="M123.4 21 C122 18.6 117.4 18.8 117.8 22 C118.1 24.4 120.8 24.4 120.7 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M126.6 21 C128 18.6 132.6 18.8 132.2 22 C131.9 24.4 129.2 24.4 129.3 22.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M123.4 30 C121.5 31 118.5 29.5 119.2 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M126.6 30 C128.5 31 131.5 29.5 130.8 27.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M125 17.5 V33" stroke="#E48AAE" stroke-width="3.4"/><path d="M122.6 29.5 H127.4" stroke="#E48AAE" stroke-width="2.72"/><path d="M125 35 C122 32 114 28 114 21.5 C114 17 117.5 15 120.2 15 C122.5 15 124.2 16.3 125 18 C125.8 16.3 127.5 15 129.8 15 C132.5 15 136 17 136 21.5 C136 28 128 32 125 35 Z" stroke="#FFF7FA" stroke-width="1.6" stroke-linejoin="round"/><path d="M123.4 21 C122 18.6 117.4 18.8 117.8 22 C118.1 24.4 120.8 24.4 120.7 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M126.6 21 C128 18.6 132.6 18.8 132.2 22 C131.9 24.4 129.2 24.4 129.3 22.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M123.4 30 C121.5 31 118.5 29.5 119.2 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M126.6 30 C128.5 31 131.5 29.5 130.8 27.4" stroke="#FFF7FA" stroke-width="1.28"/><path d="M125 17.5 V33" stroke="#FFF7FA" stroke-width="1.6"/><path d="M122.6 29.5 H127.4" stroke="#FFF7FA" stroke-width="1.28"/></g><path d="M18.8 6.8 L19.6 -0.6 L23.6 3.6Z" fill="#F6A5C0"/><path d="M31.2 6.8 L30.4 -0.6 L26.4 3.6Z" fill="#F6A5C0"/><path d="M19.8 5.4 L20.2 1.4 L22.4 3.6Z" fill="#FBD3E0"/><path d="M30.2 5.4 L29.8 1.4 L27.6 3.6Z" fill="#FBD3E0"/><ellipse cx="25" cy="8.4" rx="7.4" ry="6.4" fill="#F6A5C0"/><circle cx="22.3" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="22.7" cy="7.7" r="0.45" fill="#FFF"/><circle cx="27.7" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="28.1" cy="7.7" r="0.45" fill="#FFF"/><circle cx="20.2" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><circle cx="29.8" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><path d="M23.4 10.6 q0.8 1 1.6 0 q0.8 1 1.6 0" fill="none" stroke="#2E2650" stroke-width="0.6" stroke-linecap="round"/><path d="M68.8 6.8 L69.6 -0.6 L73.6 3.6Z" fill="#F6A5C0"/><path d="M81.2 6.8 L80.4 -0.6 L76.4 3.6Z" fill="#F6A5C0"/><path d="M69.8 5.4 L70.2 1.4 L72.4 3.6Z" fill="#FBD3E0"/><path d="M80.2 5.4 L79.8 1.4 L77.6 3.6Z" fill="#FBD3E0"/><ellipse cx="75" cy="8.4" rx="7.4" ry="6.4" fill="#F6A5C0"/><circle cx="72.3" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="72.7" cy="7.7" r="0.45" fill="#FFF"/><circle cx="77.7" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="78.1" cy="7.7" r="0.45" fill="#FFF"/><circle cx="70.2" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><circle cx="79.8" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><path d="M73.4 10.6 q0.8 1 1.6 0 q0.8 1 1.6 0" fill="none" stroke="#2E2650" stroke-width="0.6" stroke-linecap="round"/><path d="M118.8 6.8 L119.6 -0.6 L123.6 3.6Z" fill="#F6A5C0"/><path d="M131.2 6.8 L130.4 -0.6 L126.4 3.6Z" fill="#F6A5C0"/><path d="M119.8 5.4 L120.2 1.4 L122.4 3.6Z" fill="#FBD3E0"/><path d="M130.2 5.4 L129.8 1.4 L127.6 3.6Z" fill="#FBD3E0"/><ellipse cx="125" cy="8.4" rx="7.4" ry="6.4" fill="#F6A5C0"/><circle cx="122.3" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="122.7" cy="7.7" r="0.45" fill="#FFF"/><circle cx="127.7" cy="8.2" r="1.35" fill="#2E2650"/><circle cx="128.1" cy="7.7" r="0.45" fill="#FFF"/><circle cx="120.2" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><circle cx="129.8" cy="10.4" r="1.4" fill="#E2789D" opacity="0.45"/><path d="M123.4 10.6 q0.8 1 1.6 0 q0.8 1 1.6 0" fill="none" stroke="#2E2650" stroke-width="0.6" stroke-linecap="round"/>`,
+        fence_peach_heart: `<path d="M13.2 33 L16.8 33 L15.5 39.6 L14.5 39.6Z" fill="#fffaf7" stroke="#e58aab" stroke-width=".8" stroke-linejoin="round"/>
+<path d="M133.2 33 L136.8 33 L135.5 39.6 L134.5 39.6Z" fill="#fffaf7" stroke="#e58aab" stroke-width=".8" stroke-linejoin="round"/>
+<rect x="1.5" y="10.6" width="147" height="3" rx="1.5" fill="#fffaf7" stroke="#e58aab" stroke-width="0.9"/>
+<rect x="1.5" y="30.4" width="147" height="3" rx="1.5" fill="#fffaf7" stroke="#e58aab" stroke-width="0.9"/>
+<path d="M15 12 V31" fill="none" stroke="#e58aab" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15 12 V31" fill="none" stroke="#fffaf7" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15 15.6 C13 12.6 5.5 13.4 5.5 19.2 C5.5 23.6 11.6 25.8 15 29.2" fill="none" stroke="#e58aab" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15 15.6 C13 12.6 5.5 13.4 5.5 19.2 C5.5 23.6 11.6 25.8 15 29.2" fill="none" stroke="#fffaf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.4 17.6 C12 15.6 9 16.8 9.8 19 C10.4 20.4 12 20 11.8 18.9" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.4 17.6 C12 15.6 9 16.8 9.8 19 C10.4 20.4 12 20 11.8 18.9" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.4 30.6 C11.6 30.6 8.8 29.6 8.8 27.8 C8.8 26.6 10.4 26.6 10.4 27.6" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.4 30.6 C11.6 30.6 8.8 29.6 8.8 27.8 C8.8 26.6 10.4 26.6 10.4 27.6" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15 15.6 C17 12.6 24.5 13.4 24.5 19.2 C24.5 23.6 18.4 25.8 15 29.2" fill="none" stroke="#e58aab" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15 15.6 C17 12.6 24.5 13.4 24.5 19.2 C24.5 23.6 18.4 25.8 15 29.2" fill="none" stroke="#fffaf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.6 17.6 C18 15.6 21 16.8 20.2 19 C19.6 20.4 18 20 18.2 18.9" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.6 17.6 C18 15.6 21 16.8 20.2 19 C19.6 20.4 18 20 18.2 18.9" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.6 30.6 C18.4 30.6 21.2 29.6 21.2 27.8 C21.2 26.6 19.6 26.6 19.6 27.6" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.6 30.6 C18.4 30.6 21.2 29.6 21.2 27.8 C21.2 26.6 19.6 26.6 19.6 27.6" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="13.1" y="17" width="3.8" height="2" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<rect x="13.1" y="27.6" width="3.8" height="2" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<rect x="13.2" y="9.6" width="3.6" height="2.6" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<path d="M9.80 5.80 L10.20 0.20 L13.80 3.00Z" fill="#f6a5c0"/>
+<path d="M10.60 4.60 L10.80 1.80 L13.00 3.40Z" fill="#fde3ec"/>
+<path d="M20.20 5.80 L19.80 0.20 L16.20 3.00Z" fill="#f6a5c0"/>
+<path d="M19.40 4.60 L19.20 1.80 L17.00 3.40Z" fill="#fde3ec"/>
+<ellipse cx="15" cy="7.4" rx="6.00" ry="5.20" fill="#f6a5c0"/>
+<circle cx="13.00" cy="7.40" r="1.20" fill="#2e2650"/>
+<circle cx="13.40" cy="6.96" r="0.40" fill="#fff"/>
+<circle cx="17.00" cy="7.40" r="1.20" fill="#2e2650"/>
+<circle cx="17.40" cy="6.96" r="0.40" fill="#fff"/>
+<path d="M14.36 8.84 L15.64 8.84 L15.00 9.56Z" fill="#e2789d"/>
+<path d="M13.64 9.88 q0.68 0.80 1.36 0 q0.68 0.80 1.36 0" fill="none" stroke="#2e2650" stroke-width="0.48" stroke-linecap="round"/>
+<circle cx="11.40" cy="9.00" r="1.04" fill="#e2789d" opacity="0.45"/>
+<circle cx="18.60" cy="9.00" r="1.04" fill="#e2789d" opacity="0.45"/>
+<path d="M45 12 V31" fill="none" stroke="#e58aab" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M45 12 V31" fill="none" stroke="#fffaf7" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M45 15.6 C43 12.6 35.5 13.4 35.5 19.2 C35.5 23.6 41.6 25.8 45 29.2" fill="none" stroke="#e58aab" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M45 15.6 C43 12.6 35.5 13.4 35.5 19.2 C35.5 23.6 41.6 25.8 45 29.2" fill="none" stroke="#fffaf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M44.4 17.6 C42 15.6 39 16.8 39.8 19 C40.4 20.4 42 20 41.8 18.9" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M44.4 17.6 C42 15.6 39 16.8 39.8 19 C40.4 20.4 42 20 41.8 18.9" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M44.4 30.6 C41.6 30.6 38.8 29.6 38.8 27.8 C38.8 26.6 40.4 26.6 40.4 27.6" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M44.4 30.6 C41.6 30.6 38.8 29.6 38.8 27.8 C38.8 26.6 40.4 26.6 40.4 27.6" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M45 15.6 C47 12.6 54.5 13.4 54.5 19.2 C54.5 23.6 48.4 25.8 45 29.2" fill="none" stroke="#e58aab" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M45 15.6 C47 12.6 54.5 13.4 54.5 19.2 C54.5 23.6 48.4 25.8 45 29.2" fill="none" stroke="#fffaf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M45.6 17.6 C48 15.6 51 16.8 50.2 19 C49.6 20.4 48 20 48.2 18.9" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M45.6 17.6 C48 15.6 51 16.8 50.2 19 C49.6 20.4 48 20 48.2 18.9" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M45.6 30.6 C48.4 30.6 51.2 29.6 51.2 27.8 C51.2 26.6 49.6 26.6 49.6 27.6" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M45.6 30.6 C48.4 30.6 51.2 29.6 51.2 27.8 C51.2 26.6 49.6 26.6 49.6 27.6" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="43.1" y="17" width="3.8" height="2" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<rect x="43.1" y="27.6" width="3.8" height="2" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<rect x="43.2" y="9.6" width="3.6" height="2.6" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<path d="M39.80 5.80 L40.20 0.20 L43.80 3.00Z" fill="#f6a5c0"/>
+<path d="M40.60 4.60 L40.80 1.80 L43.00 3.40Z" fill="#fde3ec"/>
+<path d="M50.20 5.80 L49.80 0.20 L46.20 3.00Z" fill="#f6a5c0"/>
+<path d="M49.40 4.60 L49.20 1.80 L47.00 3.40Z" fill="#fde3ec"/>
+<ellipse cx="45" cy="7.4" rx="6.00" ry="5.20" fill="#f6a5c0"/>
+<circle cx="43.00" cy="7.40" r="1.20" fill="#2e2650"/>
+<circle cx="43.40" cy="6.96" r="0.40" fill="#fff"/>
+<circle cx="47.00" cy="7.40" r="1.20" fill="#2e2650"/>
+<circle cx="47.40" cy="6.96" r="0.40" fill="#fff"/>
+<path d="M44.36 8.84 L45.64 8.84 L45.00 9.56Z" fill="#e2789d"/>
+<path d="M43.64 9.88 q0.68 0.80 1.36 0 q0.68 0.80 1.36 0" fill="none" stroke="#2e2650" stroke-width="0.48" stroke-linecap="round"/>
+<circle cx="41.40" cy="9.00" r="1.04" fill="#e2789d" opacity="0.45"/>
+<circle cx="48.60" cy="9.00" r="1.04" fill="#e2789d" opacity="0.45"/>
+<path d="M75 12 V31" fill="none" stroke="#e58aab" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M75 12 V31" fill="none" stroke="#fffaf7" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M75 15.6 C73 12.6 65.5 13.4 65.5 19.2 C65.5 23.6 71.6 25.8 75 29.2" fill="none" stroke="#e58aab" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M75 15.6 C73 12.6 65.5 13.4 65.5 19.2 C65.5 23.6 71.6 25.8 75 29.2" fill="none" stroke="#fffaf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M74.4 17.6 C72 15.6 69 16.8 69.8 19 C70.4 20.4 72 20 71.8 18.9" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M74.4 17.6 C72 15.6 69 16.8 69.8 19 C70.4 20.4 72 20 71.8 18.9" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M74.4 30.6 C71.6 30.6 68.8 29.6 68.8 27.8 C68.8 26.6 70.4 26.6 70.4 27.6" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M74.4 30.6 C71.6 30.6 68.8 29.6 68.8 27.8 C68.8 26.6 70.4 26.6 70.4 27.6" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M75 15.6 C77 12.6 84.5 13.4 84.5 19.2 C84.5 23.6 78.4 25.8 75 29.2" fill="none" stroke="#e58aab" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M75 15.6 C77 12.6 84.5 13.4 84.5 19.2 C84.5 23.6 78.4 25.8 75 29.2" fill="none" stroke="#fffaf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M75.6 17.6 C78 15.6 81 16.8 80.2 19 C79.6 20.4 78 20 78.2 18.9" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M75.6 17.6 C78 15.6 81 16.8 80.2 19 C79.6 20.4 78 20 78.2 18.9" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M75.6 30.6 C78.4 30.6 81.2 29.6 81.2 27.8 C81.2 26.6 79.6 26.6 79.6 27.6" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M75.6 30.6 C78.4 30.6 81.2 29.6 81.2 27.8 C81.2 26.6 79.6 26.6 79.6 27.6" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="73.1" y="17" width="3.8" height="2" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<rect x="73.1" y="27.6" width="3.8" height="2" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<rect x="73.2" y="9.6" width="3.6" height="2.6" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<path d="M69.80 5.80 L70.20 0.20 L73.80 3.00Z" fill="#f6a5c0"/>
+<path d="M70.60 4.60 L70.80 1.80 L73.00 3.40Z" fill="#fde3ec"/>
+<path d="M80.20 5.80 L79.80 0.20 L76.20 3.00Z" fill="#f6a5c0"/>
+<path d="M79.40 4.60 L79.20 1.80 L77.00 3.40Z" fill="#fde3ec"/>
+<ellipse cx="75" cy="7.4" rx="6.00" ry="5.20" fill="#f6a5c0"/>
+<circle cx="73.00" cy="7.40" r="1.20" fill="#2e2650"/>
+<circle cx="73.40" cy="6.96" r="0.40" fill="#fff"/>
+<circle cx="77.00" cy="7.40" r="1.20" fill="#2e2650"/>
+<circle cx="77.40" cy="6.96" r="0.40" fill="#fff"/>
+<path d="M74.36 8.84 L75.64 8.84 L75.00 9.56Z" fill="#e2789d"/>
+<path d="M73.64 9.88 q0.68 0.80 1.36 0 q0.68 0.80 1.36 0" fill="none" stroke="#2e2650" stroke-width="0.48" stroke-linecap="round"/>
+<circle cx="71.40" cy="9.00" r="1.04" fill="#e2789d" opacity="0.45"/>
+<circle cx="78.60" cy="9.00" r="1.04" fill="#e2789d" opacity="0.45"/>
+<path d="M105 12 V31" fill="none" stroke="#e58aab" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M105 12 V31" fill="none" stroke="#fffaf7" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M105 15.6 C103 12.6 95.5 13.4 95.5 19.2 C95.5 23.6 101.6 25.8 105 29.2" fill="none" stroke="#e58aab" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M105 15.6 C103 12.6 95.5 13.4 95.5 19.2 C95.5 23.6 101.6 25.8 105 29.2" fill="none" stroke="#fffaf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M104.4 17.6 C102 15.6 99 16.8 99.8 19 C100.4 20.4 102 20 101.8 18.9" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M104.4 17.6 C102 15.6 99 16.8 99.8 19 C100.4 20.4 102 20 101.8 18.9" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M104.4 30.6 C101.6 30.6 98.8 29.6 98.8 27.8 C98.8 26.6 100.4 26.6 100.4 27.6" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M104.4 30.6 C101.6 30.6 98.8 29.6 98.8 27.8 C98.8 26.6 100.4 26.6 100.4 27.6" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M105 15.6 C107 12.6 114.5 13.4 114.5 19.2 C114.5 23.6 108.4 25.8 105 29.2" fill="none" stroke="#e58aab" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M105 15.6 C107 12.6 114.5 13.4 114.5 19.2 C114.5 23.6 108.4 25.8 105 29.2" fill="none" stroke="#fffaf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M105.6 17.6 C108 15.6 111 16.8 110.2 19 C109.6 20.4 108 20 108.2 18.9" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M105.6 17.6 C108 15.6 111 16.8 110.2 19 C109.6 20.4 108 20 108.2 18.9" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M105.6 30.6 C108.4 30.6 111.2 29.6 111.2 27.8 C111.2 26.6 109.6 26.6 109.6 27.6" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M105.6 30.6 C108.4 30.6 111.2 29.6 111.2 27.8 C111.2 26.6 109.6 26.6 109.6 27.6" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="103.1" y="17" width="3.8" height="2" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<rect x="103.1" y="27.6" width="3.8" height="2" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<rect x="103.2" y="9.6" width="3.6" height="2.6" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<path d="M99.80 5.80 L100.20 0.20 L103.80 3.00Z" fill="#f6a5c0"/>
+<path d="M100.60 4.60 L100.80 1.80 L103.00 3.40Z" fill="#fde3ec"/>
+<path d="M110.20 5.80 L109.80 0.20 L106.20 3.00Z" fill="#f6a5c0"/>
+<path d="M109.40 4.60 L109.20 1.80 L107.00 3.40Z" fill="#fde3ec"/>
+<ellipse cx="105" cy="7.4" rx="6.00" ry="5.20" fill="#f6a5c0"/>
+<circle cx="103.00" cy="7.40" r="1.20" fill="#2e2650"/>
+<circle cx="103.40" cy="6.96" r="0.40" fill="#fff"/>
+<circle cx="107.00" cy="7.40" r="1.20" fill="#2e2650"/>
+<circle cx="107.40" cy="6.96" r="0.40" fill="#fff"/>
+<path d="M104.36 8.84 L105.64 8.84 L105.00 9.56Z" fill="#e2789d"/>
+<path d="M103.64 9.88 q0.68 0.80 1.36 0 q0.68 0.80 1.36 0" fill="none" stroke="#2e2650" stroke-width="0.48" stroke-linecap="round"/>
+<circle cx="101.40" cy="9.00" r="1.04" fill="#e2789d" opacity="0.45"/>
+<circle cx="108.60" cy="9.00" r="1.04" fill="#e2789d" opacity="0.45"/>
+<path d="M135 12 V31" fill="none" stroke="#e58aab" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M135 12 V31" fill="none" stroke="#fffaf7" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M135 15.6 C133 12.6 125.5 13.4 125.5 19.2 C125.5 23.6 131.6 25.8 135 29.2" fill="none" stroke="#e58aab" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M135 15.6 C133 12.6 125.5 13.4 125.5 19.2 C125.5 23.6 131.6 25.8 135 29.2" fill="none" stroke="#fffaf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M134.4 17.6 C132 15.6 129 16.8 129.8 19 C130.4 20.4 132 20 131.8 18.9" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M134.4 17.6 C132 15.6 129 16.8 129.8 19 C130.4 20.4 132 20 131.8 18.9" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M134.4 30.6 C131.6 30.6 128.8 29.6 128.8 27.8 C128.8 26.6 130.4 26.6 130.4 27.6" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M134.4 30.6 C131.6 30.6 128.8 29.6 128.8 27.8 C128.8 26.6 130.4 26.6 130.4 27.6" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M135 15.6 C137 12.6 144.5 13.4 144.5 19.2 C144.5 23.6 138.4 25.8 135 29.2" fill="none" stroke="#e58aab" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M135 15.6 C137 12.6 144.5 13.4 144.5 19.2 C144.5 23.6 138.4 25.8 135 29.2" fill="none" stroke="#fffaf7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M135.6 17.6 C138 15.6 141 16.8 140.2 19 C139.6 20.4 138 20 138.2 18.9" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M135.6 17.6 C138 15.6 141 16.8 140.2 19 C139.6 20.4 138 20 138.2 18.9" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M135.6 30.6 C138.4 30.6 141.2 29.6 141.2 27.8 C141.2 26.6 139.6 26.6 139.6 27.6" fill="none" stroke="#e58aab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M135.6 30.6 C138.4 30.6 141.2 29.6 141.2 27.8 C141.2 26.6 139.6 26.6 139.6 27.6" fill="none" stroke="#fffaf7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="133.1" y="17" width="3.8" height="2" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<rect x="133.1" y="27.6" width="3.8" height="2" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<rect x="133.2" y="9.6" width="3.6" height="2.6" rx=".8" fill="#fffaf7" stroke="#e58aab" stroke-width=".7"/>
+<path d="M129.80 5.80 L130.20 0.20 L133.80 3.00Z" fill="#f6a5c0"/>
+<path d="M130.60 4.60 L130.80 1.80 L133.00 3.40Z" fill="#fde3ec"/>
+<path d="M140.20 5.80 L139.80 0.20 L136.20 3.00Z" fill="#f6a5c0"/>
+<path d="M139.40 4.60 L139.20 1.80 L137.00 3.40Z" fill="#fde3ec"/>
+<ellipse cx="135" cy="7.4" rx="6.00" ry="5.20" fill="#f6a5c0"/>
+<circle cx="133.00" cy="7.40" r="1.20" fill="#2e2650"/>
+<circle cx="133.40" cy="6.96" r="0.40" fill="#fff"/>
+<circle cx="137.00" cy="7.40" r="1.20" fill="#2e2650"/>
+<circle cx="137.40" cy="6.96" r="0.40" fill="#fff"/>
+<path d="M134.36 8.84 L135.64 8.84 L135.00 9.56Z" fill="#e2789d"/>
+<path d="M133.64 9.88 q0.68 0.80 1.36 0 q0.68 0.80 1.36 0" fill="none" stroke="#2e2650" stroke-width="0.48" stroke-linecap="round"/>
+<circle cx="131.40" cy="9.00" r="1.04" fill="#e2789d" opacity="0.45"/>
+<circle cx="138.60" cy="9.00" r="1.04" fill="#e2789d" opacity="0.45"/>`,
         fence_cat_posts: `<rect x="0" y="24" width="150" height="6" rx="3" fill="#f3c6d6"/><g fill="#e2789d" opacity="0.8"><ellipse cx="37" cy="25" rx="3" ry="2.4"/><circle cx="34" cy="21.4" r="1.2"/><circle cx="37" cy="20.5" r="1.2"/><circle cx="40" cy="21.4" r="1.2"/></g><g fill="#e2789d" opacity="0.8"><ellipse cx="112" cy="25" rx="3" ry="2.4"/><circle cx="109" cy="21.4" r="1.2"/><circle cx="112" cy="20.5" r="1.2"/><circle cx="115" cy="21.4" r="1.2"/></g><g><rect x="6" y="16" width="12" height="24" rx="3" fill="#fde3ec" stroke="#e8b6c8" stroke-width="2"/><path d="M4.8 9.8 L5.4 2.1 L10.3 5.9Z" fill="#f6a5c0"/><path d="M5.9 8.1 L6.2 4.3 L9.2 6.5Z" fill="#fde3ec"/><path d="M19.1 9.8 L18.6 2.1 L13.7 5.9Z" fill="#f6a5c0"/><path d="M18.1 8.1 L17.8 4.3 L14.8 6.5Z" fill="#fde3ec"/><ellipse cx="12" cy="12" rx="8.2" ry="7.2" fill="#f6a5c0"/><path d="M10.1 5.1 L10.1 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M12.0 5.1 L12.0 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M13.9 5.1 L13.9 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><circle cx="9.2" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="9.8" cy="11.4" r="0.6" fill="#fff"/><circle cx="14.8" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="15.3" cy="11.4" r="0.6" fill="#fff"/><path d="M11.1 14.0 L12.9 14.0 L12.0 15.0Z" fill="#e2789d"/><path d="M10.1 15.4 q0.9 1.1 1.9 0 q0.9 1.1 1.9 0" fill="none" stroke="#2e2650" stroke-width="0.7" stroke-linecap="round"/><circle cx="7.0" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/><circle cx="16.9" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/></g><g><rect x="69" y="16" width="12" height="24" rx="3" fill="#fde3ec" stroke="#e8b6c8" stroke-width="2"/><path d="M67.8 9.8 L68.4 2.1 L73.3 5.9Z" fill="#f6a5c0"/><path d="M69.0 8.1 L69.2 4.3 L72.2 6.5Z" fill="#fde3ec"/><path d="M82.2 9.8 L81.6 2.1 L76.7 5.9Z" fill="#f6a5c0"/><path d="M81.0 8.1 L80.8 4.3 L77.8 6.5Z" fill="#fde3ec"/><ellipse cx="75" cy="12" rx="8.2" ry="7.2" fill="#f6a5c0"/><path d="M73.1 5.1 L73.1 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M75.0 5.1 L75.0 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M76.9 5.1 L76.9 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><circle cx="72.2" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="72.8" cy="11.4" r="0.6" fill="#fff"/><circle cx="77.8" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="78.3" cy="11.4" r="0.6" fill="#fff"/><path d="M74.1 14.0 L75.9 14.0 L75.0 15.0Z" fill="#e2789d"/><path d="M73.1 15.4 q0.9 1.1 1.9 0 q0.9 1.1 1.9 0" fill="none" stroke="#2e2650" stroke-width="0.7" stroke-linecap="round"/><circle cx="70.0" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/><circle cx="80.0" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/></g><g><rect x="132" y="16" width="12" height="24" rx="3" fill="#fde3ec" stroke="#e8b6c8" stroke-width="2"/><path d="M130.8 9.8 L131.4 2.1 L136.3 5.9Z" fill="#f6a5c0"/><path d="M131.9 8.1 L132.2 4.3 L135.2 6.5Z" fill="#fde3ec"/><path d="M145.2 9.8 L144.6 2.1 L139.7 5.9Z" fill="#f6a5c0"/><path d="M144.1 8.1 L143.8 4.3 L140.8 6.5Z" fill="#fde3ec"/><ellipse cx="138" cy="12" rx="8.2" ry="7.2" fill="#f6a5c0"/><path d="M136.1 5.1 L136.1 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M138.0 5.1 L138.0 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><path d="M139.9 5.1 L139.9 7.6" stroke="#e2789d" stroke-width="1.0" stroke-linecap="round"/><circle cx="135.2" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="135.8" cy="11.4" r="0.6" fill="#fff"/><circle cx="140.8" cy="12.0" r="1.7" fill="#2e2650"/><circle cx="141.3" cy="11.4" r="0.6" fill="#fff"/><path d="M137.1 14.0 L138.9 14.0 L138.0 15.0Z" fill="#e2789d"/><path d="M136.1 15.4 q0.9 1.1 1.9 0 q0.9 1.1 1.9 0" fill="none" stroke="#2e2650" stroke-width="0.7" stroke-linecap="round"/><circle cx="133.1" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/><circle cx="142.9" cy="14.2" r="1.4" fill="#e2789d" opacity="0.45"/></g>`,
         fence_seal_posts: `<rect x="0" y="24" width="150" height="6" rx="3" fill="#e8d3ad"/><g><rect x="32" y="20" width="22" height="12" rx="6" fill="#a9c7e6"/><path d="M37 26 h12" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/></g><g><rect x="95" y="20" width="22" height="12" rx="6" fill="#a9c7e6"/><path d="M100 26 h12" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/></g><g><rect x="6" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="12" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="9.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="12" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><path d="M7.0 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><path d="M13.7 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><ellipse cx="12" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M10.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="9.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="9.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="14.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="15.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="5.9" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="18.1" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g><g><rect x="69" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="75" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="72.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="75" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><circle cx="71.7" cy="12.4" r="1.4" fill="#2e2650"/><circle cx="72.2" cy="11.9" r="0.5" fill="#fff"/><circle cx="78.3" cy="12.4" r="1.4" fill="#2e2650"/><circle cx="78.8" cy="11.9" r="0.5" fill="#fff"/><ellipse cx="75" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M73.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="72.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="72.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="77.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="78.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="69.0" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="81.0" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g><g><rect x="132" y="18" width="12" height="22" rx="6" fill="#fbefd9" stroke="#e8d3ad" stroke-width="2"/><ellipse cx="138" cy="13" rx="8.8" ry="7.7" fill="#d5dde7"/><ellipse cx="135.2" cy="9.1" rx="2.8" ry="1.4" fill="#eef2f6" opacity="0.8"/><ellipse cx="138" cy="15.8" rx="4.4" ry="3.0" fill="#ffffff"/><path d="M133.1 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><path d="M139.7 12.4 q1.7 1.4 3.3 0" fill="none" stroke="#2e2650" stroke-width="0.8" stroke-linecap="round"/><ellipse cx="138" cy="14.4" rx="1.2" ry="0.8" fill="#2e2650"/><path d="M136.3 16.3 q0.8 0.9 1.7 0 q0.8 0.9 1.7 0" fill="none" stroke="#2e2650" stroke-width="0.6" stroke-linecap="round"/><circle cx="135.8" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="135.0" cy="16.9" r="0.4" fill="#b8c4d3"/><circle cx="140.2" cy="15.8" r="0.4" fill="#b8c4d3"/><circle cx="141.0" cy="16.9" r="0.4" fill="#b8c4d3"/><ellipse cx="131.9" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/><ellipse cx="144.1" cy="15.2" rx="1.5" ry="1.0" fill="#f4a6b8" opacity="0.7"/></g>`
     };
@@ -8986,12 +9299,14 @@
     function goToFarmPage() {
         farmEditing = false; farmEditSlot = '';
         switchView('farmView');
+        farmHoneyCheck();
         farmRender();
         window.scrollTo(0, 0);
         farmSync();
         clearInterval(farmTick);
         farmTick = setInterval(() => {      // 每 5 秒更新一次（倒數、可以澆水的水滴）
             if (!document.getElementById('farmView').classList.contains('active')) { clearInterval(farmTick); farmTick = null; return; }
+            farmHoneyCheck();
             if (!farmEditing) farmRender();
         }, 5000);
     }
@@ -9040,7 +9355,7 @@
         box.innerHTML = `<div class="fm-wrap" id="farmStageWrap"><div class="fm-stage" id="farmStage"><div class="fm-top">
             <div class="fm-head${ed ? ' ed' : ''}">
                 ${ed ? `<b class="fm-title">布置模式</b><button type="button" class="fm-done" data-on-click='[["farmEditDone",[]]]'>完成</button>`
-                     : `<button type="button" class="fm-sq" aria-label="返回" data-on-click='[["farmBack",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E2650" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg></button><b class="fm-title">雞塊農場</b><button type="button" class="fm-sq" aria-label="布置農場" data-on-click='[["farmEditStart",[]]]'>${farmPencilIcon(22)}</button>`}
+                     : `<button type="button" class="fm-sq" aria-label="返回" data-on-click='[["farmBack",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E2650" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg></button>${farmLvHTML()}<button type="button" class="fm-sq" aria-label="布置農場" data-on-click='[["farmEditStart",[]]]'>${farmPencilIcon(22)}</button>`}
                 <span class="fm-pills"><button type="button" class="fm-pill" aria-label="花店" data-on-click='[["farmOpenShop",[]]]'>${farmFlowerIcon(22)}<b id="farmFlowerN">${farm.flowers}</b></button></span>
             </div>
             ${ed ? `<div class="fm-tip">點虛線框選擇要換的裝飾</div>`
@@ -9052,6 +9367,7 @@
                 ${slot('house', '', farmDecorArt('house'))}
                 ${slot('scarecrow', '', farmDecorArt('scarecrow'))}
                 <div class="fm-field${ed ? ' faded' : ''}">${farm.plots.map((p, i) => farmPlotHTML(p, i)).join('')}</div>
+                ${ed ? '' : farmHiveHTML()}
                 ${slot('fence', '', farmDecorArt('fence'))}
                 ${slot('guard', '', guardInner)}
                 ${slot('mailbox', '', farmDecorArt('mailbox'))}
@@ -9061,15 +9377,17 @@
             </div>
         </div></div>`;
         if (farmShopOpen && !ed) farmOverlay(farmShopHTML());
+        else if (farmBeeOpen && !ed) farmOverlay(farmBeeHTML());
         else farmOverlay(ed && farmEditSlot ? farmSheetHTML(farmEditSlot) : '');
         farmFit();
+        farmXpAnimate();
     }
     function farmBack() { clearInterval(farmTick); farmTick = null; farmEditing = false; setHomeTab('fun'); }
     function farmTapPlot(i) {
         if (farmEditing) return;
         let p = farm.plots[i];
         if (!p) { farmOpenPlant(); return; }
-        if (p.stage >= 4) { farmHarvest(i); return; }
+        if (p.stage >= 4) { farmStartHarvest(i); return; }
         if (farmIsDue(p)) { farmStartWater(); return; }
         farmToast(`「${p.word}」${FARM_STAGE_NAMES[p.stage]}中，${farmSecLeft(p)} 秒後可以澆水`);
     }
@@ -9091,11 +9409,11 @@
             farm.plots[i] = null;
             farm.flowers += 1;                // 一株開花 = 一朵花
             farm.harvestTotal += 1;
+            farm.xp += 1;                     // 收成：經驗 +1
             farmSave();
         }
         try { triggerTaskCheck('farm_care'); } catch (e) {}        // 每日任務：在農場收成
-        farmRender();
-        farmToast(`🌸 收成「${p.word}」，得到 1 朵花！`);
+        farmToast(`🌸 收成「${p.word}」，得到 1 朵花！經驗 +1`);
     }
 
     // ── 花店：用花買大冒險戰鬥中可以用的道具（一場戰鬥每種限用 1 次）──
@@ -9248,11 +9566,12 @@
         farm.plantedToday = { date: today, count: farmPlantedToday() + 1 };
         if (!farm.plantedWords) farm.plantedWords = [];
         farm.plantedWords.push(String(w.english).toLowerCase());
+        farm.xp += 1;                         // 種種子：經驗 +1（後台也會加）
         farmSave();
         if (farmSrv === true) farmCall('plant', Object.assign({ index: i, day: today }, plot)).then(() => farmRefresh());
         farmLearnWord = null;
         goToFarmPage();
-        farmToast(`🌱 種下「${w.english}」！1 分鐘後就能第一次澆水`);
+        farmToast(`🌱 種下「${w.english}」！經驗 +1，1 分鐘後就能第一次澆水`);
     }
 
     // ── 澆水：一題 = 一株（找出不在上面的：一題 = 三株）──
@@ -9325,6 +9644,7 @@
             let shownCn = right ? farmCnOf(p) : (farmSimilarCn(p) || farmDistractors([p.word], 1)[0] || farmCnOf(p));
             if (shownCn === farmCnOf(p)) right = true;
             fw.q = { type: 'tf', p, shownCn, answer: right };
+            setTimeout(() => { if (fw && fw.q && fw.q.p === p) farmSay(p.word); }, 350);    // 澆水 1：聽英文 → 判斷中文對不對
         } else if (t.type === 'scramble') {
             let isPhrase = /\s/.test(p.word.trim());
             let parts = isPhrase ? p.word.trim().split(/\s+/) : Array.from(p.word.trim());
@@ -9332,12 +9652,16 @@
             let sh = advShuffle(tiles.slice());
             if (sh.length > 1 && sh.every((x, i) => x.i === i)) sh.reverse();     // 不要剛好是正確順序
             fw.q = { type: 'scramble', p, parts, isPhrase, pool: sh, picked: [] };
+        } else if (t.type === 'dict') {
+            fw.q = { type: 'dict', p, typed: '' };
+            setTimeout(() => { if (fw && fw.q && fw.q.p === p) farmSay(p.word); }, 350);    // 收成：聽英文 → 拼出單字（沒有中文提示）
         } else {
             let cns = ps.map(farmCnOf);
             let odd = farmDistractors(ps.map(x => x.word), 1)[0] || '（沒有干擾選項）';
             fw.q = { type: 'odd', ps, opts: advShuffle(cns.concat([odd])), odd };
         }
         farmRenderWater();
+        if (fw.q.type === 'dict') setTimeout(() => { let el = document.getElementById('fwDictIn'); if (el) try { el.focus({ preventScroll: true }); } catch (e) {} }, 60);
     }
     function farmStageLabel(p) {
         let nx = farmNextStage(p);
@@ -9349,7 +9673,9 @@
         let q = fw.q, p = q.p || q.ps[0];
         let body = '', canSubmit = false;
         if (q.type === 'tf') {
-            body = `<div class="fw-ask">這個意思對嗎？</div><div class="fw-big"><span class="en">${escapeHTML(p.word)}</span> = ${escapeHTML(q.shownCn)}？</div>
+            body = `<div class="fw-ask">聽到的單字，是這個意思嗎？</div>
+                <button type="button" class="fw-listen" aria-label="再聽一次" data-on-click='[["farmSay",[${JSON.stringify(p.word).replace(/'/g, '&#39;')}]]]'>${FW_SPEAKER}<span>再聽一次</span></button>
+                <div class="fw-big">${fw.done ? `<span class="en">${escapeHTML(p.word)}</span> = ` : ''}${escapeHTML(q.shownCn)}？</div>
                 <div class="fw-tf">${[[true, '○'], [false, '×']].map(o => `<button type="button" class="fw-tfb${fw.sel === o[0] ? ' sel' : ''}${fw.done && q.answer === o[0] ? ' right' : ''}" ${fw.done ? 'disabled' : ''} data-on-click='[["farmTF",[${o[0]}]]]'>${o[1]}</button>`).join('')}</div>`;
             canSubmit = fw.sel !== null;
         } else if (q.type === 'scramble') {
@@ -9362,6 +9688,13 @@
             body = `<div class="fw-ask">${q.isPhrase ? '把單字排回正確的片語' : '把字母排回正確的單字'}</div><div class="fw-big">${escapeHTML(farmCnOf(p))}</div>
                 <div class="fw-slots${q.parts.length > 8 ? ' many' : ''}">${slots}</div><div class="fw-tiles">${tiles}</div>`;
             canSubmit = q.picked.length === q.parts.length;
+        } else if (q.type === 'dict') {
+            body = `<div class="fw-ask">聽發音，拼出這個單字</div>
+                <button type="button" class="fw-listen big" aria-label="再聽一次" data-on-click='[["farmSay",[${JSON.stringify(p.word).replace(/'/g, '&#39;')}]]]'>${FW_SPEAKER}<span>再聽一次</span></button>
+                <label class="fw-dict"><span class="fw-boxes" id="fwDictBoxes">${farmDictBoxes(p.word, q.typed, fw.done)}</span>
+                <input class="fw-dict-in" id="fwDictIn" type="text" inputmode="latin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" maxlength="${farmLetters(p.word).length}" value="${escapeHTML(q.typed)}" ${fw.done ? 'disabled' : ''} aria-label="輸入聽到的單字" data-on-input='[["farmDictInput",["$value"]]]' data-on-keydown='[["farmDictKey",["$event"]]]'></label>
+                <div class="fw-dict-hint">共 ${farmLetters(p.word).length} 個字母${/\s/.test(p.word.trim()) ? '（空格不用打）' : ''}</div>`;
+            canSubmit = q.typed.length === farmLetters(p.word).length;
         } else {
             body = `<div class="fw-ask">下面哪一個意思，不在上面的單字裡？</div>
                 <div class="fw-words">${q.ps.map(x => `<span>${escapeHTML(x.word)}</span>`).join('')}</div>
@@ -9371,19 +9704,23 @@
         let fb = '';
         if (fw.done) {
             let ans = q.type === 'odd' ? q.ps.map(x => `${escapeHTML(x.word)} ${escapeHTML(farmCnOf(x))}`).join('、') : `${escapeHTML(p.word)} ${escapeHTML(p.cn)}`;
-            fb = fw.ok ? `<div class="fw-fb ok">🌱 答對了！${q.type === 'odd' ? '三株一起長大一階' : `長大一階：${fw.label}`}</div>`
+            if (q.type === 'dict') fb = fw.ok ? `<div class="fw-fb ok">🌸 拼對了！收成「${escapeHTML(p.word)}」，花 +1、經驗 +1</div>`
+                                             : `<div class="fw-fb bad">差一點！正確答案：${escapeHTML(p.word)} ${escapeHTML(p.cn)}<br><small>作物還在田裡，回農場再點一次就能重新收成</small></div>`;
+            else fb = fw.ok ? `<div class="fw-fb ok">🌱 答對了！${q.type === 'odd' ? '三株一起長大一階' : `長大一階：${fw.label}`}　經驗 +1</div>`
                        : `<div class="fw-fb bad">差一點！正確答案：${ans}<br><small>沒關係，作物不會退階，1 分鐘後再澆一次（正式版是隔天）</small></div>`;
         }
         let last = fw.k >= fw.tasks.length - 1;
-        box.innerHTML = `<div class="fw-head"><button type="button" class="fm-sq" aria-label="回農場" data-on-click='[["farmWaterQuit",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E2650" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg></button><b>澆水中　${fw.k + 1} / ${fw.tasks.length}</b><span class="fm-sq ghost"></span></div>
-            <div class="fw-card"><div class="fw-art">${farmPotSVG(fw.done && fw.ok ? Math.min(4, farmNextStage(p)) : p.stage, 120)}${farmCanSVG(110)}</div><span class="fw-pill">${q.type === 'odd' ? `${FARM_STAGE_NAMES[p.stage]}・3 株一起澆` : (fw.done && fw.ok ? fw.label : farmStageLabel(p))}　答對就長大</span></div>
+        let isH = q.type === 'dict';
+        box.innerHTML = `<div class="fw-head"><button type="button" class="fm-sq" aria-label="回農場" data-on-click='[["farmWaterQuit",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E2650" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg></button><b>${isH ? '收成' : `澆水中　${fw.k + 1} / ${fw.tasks.length}`}</b><span class="fm-sq ghost"></span></div>
+            <div class="fw-card"><div class="fw-art">${isH ? farmPotSVG(4, 120) : farmPotSVG(fw.done && fw.ok ? Math.min(4, farmNextStage(p)) : p.stage, 120)}${isH ? '' : farmCanSVG(110)}</div><span class="fw-pill">${isH ? '開花了・拼對就收成' : `${q.type === 'odd' ? `${FARM_STAGE_NAMES[p.stage]}・3 株一起澆` : (fw.done && fw.ok ? fw.label : farmStageLabel(p))}　答對就長大`}</span></div>
             ${body}${fb}
             <div class="fw-foot">
-                ${fw.done ? `<button type="button" class="fm-big" data-on-click='[["farmNextTask",[]]]'>${last ? '回農場' : '下一株'}</button>`
-                          : `<button type="button" class="fm-big" ${canSubmit ? '' : 'disabled'} data-on-click='[["farmSubmit",[]]]'>澆水！</button>`}
+                ${fw.done ? `<button type="button" class="fm-big" data-on-click='[["farmNextTask",[]]]'>${last || isH ? '回農場' : '下一株'}</button>`
+                          : `<button type="button" class="fm-big" id="fwSubmit" ${canSubmit ? '' : 'disabled'} data-on-click='[["farmSubmit",[]]]'>${isH ? '收成！' : '澆水！'}</button>`}
                 ${q.type === 'scramble' ? `<button type="button" class="fm-link" data-on-click='[["farmSay",[${JSON.stringify(p.word).replace(/'/g, '&#39;')}]]]'>聽發音提示</button>` : ''}
             </div>`;
     }
+    const FW_SPEAKER = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 9a4 4 0 010 6"/><path d="M18.5 6.5a7.5 7.5 0 010 11"/></svg>';
     function farmTF(v) { if (!fw || fw.done) return; fw.sel = !!v; farmRenderWater(); }
     function farmOdd(k) { if (!fw || fw.done) return; fw.sel = parseInt(k); farmRenderWater(); }
     function farmPick(k) {
@@ -9398,9 +9735,18 @@
         fw.q.picked.splice(i, 1);           // 拿掉這格（後面的往前補）
         farmRenderWater();
     }
-    function farmSubmit() {
+    async function farmSubmit() {
         if (!fw || fw.done) return;
         let q = fw.q, ok = false;
+        if (q.type === 'dict') {
+            if (q.typed.length !== farmLetters(q.p.word).length) return;
+            ok = q.typed.toLowerCase() === farmLetters(q.p.word).join('').toLowerCase();
+            fw.done = true; fw.ok = ok;
+            if (ok) await farmHarvest(fw.harvest);
+            else advSpeakWord(q.p.word);
+            farmRenderWater();
+            return;
+        }
         if (q.type === 'tf') { if (fw.sel === null) return; ok = fw.sel === q.answer; }
         else if (q.type === 'scramble') { if (q.picked.length !== q.parts.length) return; ok = q.picked.map(t => t.c).join(q.isPhrase ? ' ' : '').toLowerCase() === q.parts.join(q.isPhrase ? ' ' : '').toLowerCase(); }
         else { if (fw.sel === null) return; ok = q.opts[fw.sel] === q.odd; }
@@ -9412,6 +9758,7 @@
             else p.wrong += 1;                  // 第一版：答錯不退階
             p.readyAt = farmNow() + FARM_STEP_MS;
         });
+        if (ok) farm.xp += 1;                   // 澆水答對：經驗 +1
         farmSave();
         if (farmSrv === true) farmCall('water', { indices: (q.type === 'odd' ? fw.tasks[fw.k].idx : fw.tasks[fw.k].idx.slice(0, 1)), ok });
         try { triggerTaskCheck('farm_care'); } catch (e) {}        // 每日任務：在農場澆花
@@ -9421,11 +9768,253 @@
     }
     function farmNextTask() {
         if (!fw) { goToFarmPage(); return; }
+        if (fw.harvest !== undefined) { fw = null; goToFarmPage(); return; }
         fw.k += 1;
         if (fw.k >= fw.tasks.length) { fw = null; goToFarmPage(); farmToast('💧 今天的澆水完成了！'); return; }
         farmNewQuestion();
     }
-    function farmWaterQuit() { fw = null; goToFarmPage(); }
+    function farmWaterQuit() { fw = null; fb = null; goToFarmPage(); }
+
+    // ── 收成：聽英文 → 拼出單字（格子告訴你有幾個字母；可以重複聽）──
+    function farmLetters(word) { return Array.from(String(word || '')).filter(ch => /[A-Za-z]/.test(ch)); }
+    function farmDictBoxes(word, typed, done) {
+        let k = 0;
+        return Array.from(String(word || '').trim()).map(ch => {
+            if (/[A-Za-z]/.test(ch)) { let c = typed[k] || ''; let cls = done ? (c.toLowerCase() === ch.toLowerCase() ? ' ok' : ' bad') : (k === typed.length ? ' cur' : ''); k++; return `<span class="fw-box${c ? ' fill' : ''}${cls}">${escapeHTML(c)}</span>`; }
+            if (/\s/.test(ch)) return '<span class="fw-gap"></span>';
+            return `<span class="fw-fix">${escapeHTML(ch)}</span>`;
+        }).join('');
+    }
+    function farmStartHarvest(i) {
+        let p = farm.plots[i];
+        if (!p || p.stage < 4 || farmEditing) return;
+        fw = { tasks: [{ type: 'dict', idx: [i] }], k: 0, harvest: i };
+        switchView('farmWaterView');
+        farmNewQuestion();
+        window.scrollTo(0, 0);
+    }
+    function farmDictInput(v) {
+        if (!fw || fw.done || !fw.q || fw.q.type !== 'dict') return;
+        let max = farmLetters(fw.q.p.word).length;
+        let clean = String(v || '').replace(/[^A-Za-z]/g, '').slice(0, max);
+        fw.q.typed = clean;
+        let el = document.getElementById('fwDictIn'); if (el && el.value !== clean) el.value = clean;
+        let bx = document.getElementById('fwDictBoxes'); if (bx) bx.innerHTML = farmDictBoxes(fw.q.p.word, clean, false);
+        let b = document.getElementById('fwSubmit'); if (b) b.disabled = clean.length !== max;
+    }
+    function farmDictKey(e) { if (e && e.key === 'Enter') { e.preventDefault(); farmSubmit(); } }
+
+    // ── 農場等級（左上角）：LV＋經驗條；拿到經驗時經驗條會動態長上去 ──
+    let farmXpShown = null;
+    function farmLvHTML() {
+        let x = farmXpShown === null ? farm.xp : Math.min(farmXpShown, farm.xp);
+        let info = farmLvInfo(x);
+        return `<div class="fm-lv" aria-label="農場等級 LV${farmLevel()}，經驗 ${farm.xp}">
+            <b class="fm-lv-chip" id="farmLvChip">LV${info.lv}</b>
+            <span class="fm-lv-bar"><i id="farmXpFill" style="width:${info.pct.toFixed(1)}%"></i></span>
+            <small class="fm-lv-num" id="farmXpNum">${info.max ? 'MAX' : `${x}/${info.next}`}</small>
+        </div>`;
+    }
+    function farmXpAnimate() {
+        if (farmXpShown === null) { farmXpShown = farm.xp; return; }
+        if (farm.xp === farmXpShown) return;
+        let from = farmXpShown, to = farm.xp, gain = to - from;
+        farmXpShown = to;
+        if (gain <= 0) return;
+        let fill = document.getElementById('farmXpFill'), num = document.getElementById('farmXpNum'), chip = document.getElementById('farmLvChip');
+        if (!fill) return;
+        let a = farmLvInfo(from), b = farmLvInfo(to);
+        let fx = document.createElement('span'); fx.className = 'fm-xp-float'; fx.textContent = `+${gain} EXP`;
+        let lvBox = fill.closest('.fm-lv'); if (lvBox) lvBox.appendChild(fx);
+        setTimeout(() => fx.remove(), 1400);
+        requestAnimationFrame(() => {
+            if (b.lv > a.lv) {           // 升級：先長滿，再從新的等級開始
+                fill.style.width = '100%';
+                setTimeout(() => {
+                    fill.style.transition = 'none'; fill.style.width = '0%'; void fill.offsetWidth; fill.style.transition = '';
+                    fill.style.width = b.pct.toFixed(1) + '%';
+                    if (chip) { chip.textContent = 'LV' + b.lv; chip.classList.add('up'); }
+                    if (num) num.textContent = b.max ? 'MAX' : `${to}/${b.next}`;
+                    farmToast(`🎉 農場升到 LV${b.lv}！${b.lv === 2 ? '多了第 4 塊田，還開放蜜蜂採蜜！' : ''}`);
+                    if (b.lv === 2) setTimeout(() => farmRender(), 900);
+                }, 650);
+            } else {
+                fill.style.width = b.pct.toFixed(1) + '%';
+                if (num) num.textContent = b.max ? 'MAX' : `${to}/${b.next}`;
+            }
+        });
+    }
+
+    // ── 蜜蜂採蜜（LV2 開放）：每 1 分鐘（測試版）隨機累積 1～3 份蜂蜜，滿 5 份可以採 ──
+    const FARM_HIVE_SVG = '<svg viewBox="30 30 112 110" aria-hidden="true"><ellipse cx="75" cy="136" rx="46" ry="8" fill="#9DB35F"/><rect x="52" y="118" width="46" height="14" rx="5" fill="#9A6538"/><path d="M34 112 C34 70 48 36 75 36 C102 36 116 70 116 112 Z" fill="#F5B83D"/><path d="M40 92 H110" stroke="#D9951F" stroke-width="4" stroke-linecap="round"/><path d="M37 106 H113" stroke="#D9951F" stroke-width="4" stroke-linecap="round"/><path d="M45 76 H105" stroke="#D9951F" stroke-width="4" stroke-linecap="round"/><path d="M55 58 H95" stroke="#D9951F" stroke-width="4" stroke-linecap="round"/><path d="M66 112 C66 98 70 92 75 92 C80 92 84 98 84 112 Z" fill="#6B3F1D"/><ellipse cx="62" cy="72" rx="3.2" ry="4" fill="#2A2150"/><ellipse cx="88" cy="72" rx="3.2" ry="4" fill="#2A2150"/><ellipse cx="54" cy="80" rx="6" ry="4" fill="#F4A3BC" opacity="0.85"/><ellipse cx="96" cy="80" rx="6" ry="4" fill="#F4A3BC" opacity="0.85"/><path d="M70 79 Q75 84 80 79" stroke="#2A2150" stroke-width="2" fill="none" stroke-linecap="round"/><g class="fm-bee"><ellipse cx="124" cy="52" rx="6" ry="9" fill="#fff" opacity="0.9" transform="rotate(-25 124 52)"/><ellipse cx="134" cy="54" rx="6" ry="9" fill="#fff" opacity="0.9" transform="rotate(25 134 54)"/><ellipse cx="129" cy="62" rx="11" ry="8.5" fill="#FFD84D"/><path d="M125 54.5 V69.5 M131 54.5 V69.5" stroke="#2A2150" stroke-width="3"/><circle cx="136" cy="60" r="1.6" fill="#2A2150"/></g></svg>';
+    function farmHexSVG(full) {
+        return `<svg viewBox="4 4 32 36" aria-hidden="true"><polygon points="33.9,13.8 33.9,30.2 19.6,38.5 5.3,30.2 5.3,13.7 19.6,5.5" fill="${full ? '#F5B83D' : '#EFE3C8'}" stroke="${full ? '#D9951F' : '#DCCBA3'}" stroke-width="2" stroke-linejoin="round"/>${full ? '<ellipse cx="15.6" cy="17" rx="4" ry="2.6" fill="#FFE29A"/>' : ''}</svg>`;
+    }
+    let farmBeeOpen = false;
+    // 沒連到後台時，在這台裝置自己累積蜂蜜（連到後台時以後台為準）
+    function farmHoneyTick() {
+        if (farmLevel() < 2 || farm.honey >= FARM_HONEY_FULL) return false;
+        let now = farmNow(), changed = false;
+        if (!farm.honeyAt) { farm.honeyAt = now; return true; }
+        while (farm.honey < FARM_HONEY_FULL && now >= farm.honeyAt + FARM_HONEY_STEP_MS) {
+            farm.honey += 1 + Math.floor(Math.random() * 3);
+            farm.honeyAt += FARM_HONEY_STEP_MS;
+            changed = true;
+        }
+        if (farm.honey >= FARM_HONEY_FULL) { farm.honey = FARM_HONEY_FULL; farm.honeyAt = now; }
+        return changed;
+    }
+    let farmHoneySyncAt = 0;
+    function farmHoneyCheck() {
+        if (farmLevel() < 2 || farm.honey >= FARM_HONEY_FULL) return;
+        if (farmSrv === true) {           // 後台算蜂蜜：到時間了就跟後台同步一次
+            if (farm.honeyAt && farmNow() >= farm.honeyAt + FARM_HONEY_STEP_MS && Date.now() - farmHoneySyncAt > 20000) { farmHoneySyncAt = Date.now(); farmSync(); }
+        } else if (farmHoneyTick()) farmSave();
+    }
+    function farmHiveHTML() {
+        let lv2 = farmLevel() >= 2, full = farm.honey >= FARM_HONEY_FULL;
+        return `<button type="button" class="fm-hive${lv2 ? '' : ' locked'}${full ? ' full' : ''}" aria-label="${lv2 ? `蜂巢，蜂蜜 ${farm.honey}/${FARM_HONEY_FULL}` : '蜂巢（農場 LV2 開放）'}" data-on-click='[["farmOpenBee",[]]]'>
+            ${full ? '<span class="fm-hive-ready">可採蜜</span>' : ''}
+            <span class="fm-hive-art">${FARM_HIVE_SVG}</span>
+            <span class="fm-hive-n">${lv2 ? `${farm.honey} / ${FARM_HONEY_FULL}` : 'LV2'}</span></button>`;
+    }
+    function farmOpenBee() {
+        if (farmEditing) return;
+        if (farmLevel() < 2) { farmToast('🐝 農場升到 LV2 就能請蜜蜂來採蜜（總經驗 3）'); return; }
+        farmBeeOpen = true; farmOverlay(farmBeeHTML());
+    }
+    function farmCloseBee() { farmBeeOpen = false; farmOverlay(''); }
+    function farmBeeHTML() {
+        let n = farm.honey, full = n >= FARM_HONEY_FULL;
+        let cells = Array.from({ length: FARM_HONEY_FULL }, (_, i) => `<span class="bee-hex">${farmHexSVG(i < n)}</span>`).join('');
+        return `<div class="fm-sheet-bg" data-on-click='[["farmCloseBee",[]]]'></div><div class="fm-sheet bee-panel" role="dialog" aria-label="蜜蜂採蜜">
+            <div class="fm-grab"></div>
+            <div class="bee-head"><b>${full ? '蜂蜜滿了！' : '蜜蜂打工中'}</b><button type="button" class="fm-x" aria-label="關閉" data-on-click='[["farmCloseBee",[]]]'><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg></button></div>
+            <div class="bee-cells">${cells}</div>
+            <div class="bee-txt">${full ? `已存 ${FARM_HONEY_FULL} / ${FARM_HONEY_FULL}，答對題目就能採蜜（經驗 +3、花 +1）` : `已存 ${n} / ${FARM_HONEY_FULL}，還差 ${FARM_HONEY_FULL - n} 份`}</div>
+            <button type="button" class="bee-btn" ${full ? '' : 'disabled'} data-on-click='[["farmStartBee",[]]]'>${full ? '採蜜！' : '還沒滿'}</button>
+            <div class="bee-note">${full ? `這次的題目：${['連連看', '找出不是的意思', '聽寫'][farm.beeStep % 3]}・有 2 次機會` : '蜜蜂每 1 分鐘會帶回 1～3 份蜂蜜（測試版）'}</div>
+        </div>`;
+    }
+
+    // ── 採蜜題目：三種題型輪流（連連看 → 找出不是的意思 → 聽寫），每次有 2 次機會；失敗這次採蜜就沒了（蜂蜜歸 0、不扣東西）──
+    let fb = null;
+    function farmBeePool() {
+        let seen = {}, out = [];
+        parseWordsRaw(FREE_PACK_CONTENT.farm_1_5 || '').forEach(w => { let k = String(w.english || '').toLowerCase(); if (k && w.chinese && !seen[k]) { seen[k] = true; out.push(w); } });
+        return out;
+    }
+    function farmBeeCn(w) { return String(w.chinese || '').split(/[、,，；;\/／\s]/).filter(Boolean)[0] || w.chinese; }
+    function farmStartBee() {
+        if (farm.honey < FARM_HONEY_FULL) return;
+        let pool = advShuffle(farmBeePool().slice());
+        let type = farm.beeStep % 3;
+        // 中文意思不能重複（避免兩個字都是「明天」之類的選項）
+        let pick = (n, avoid) => { let out = [], cns = (avoid || []).slice(); for (let w of pool) { let c = farmBeeCn(w); if (out.length >= n) break; if (!cns.includes(c) && !out.includes(w)) { out.push(w); cns.push(c); } } return out; };
+        if (type === 0) {
+            let ws = pick(5);
+            fb = { type: 'match', ws, en: advShuffle(ws.slice()), cn: advShuffle(ws.slice()), done: [], selEn: null, selCn: null, tries: 2 };
+        } else if (type === 1) {
+            let ws = pick(3), odd = pick(1, ws.map(farmBeeCn))[0];
+            fb = { type: 'odd', ws, odd, opts: advShuffle(ws.map(farmBeeCn).concat([farmBeeCn(odd)])), sel: null, tries: 2 };
+        } else {
+            let w = pick(1)[0], others = pick(3, [farmBeeCn(w)]);
+            fb = { type: 'dict', w, typed: '', opts: advShuffle([farmBeeCn(w)].concat(others.map(farmBeeCn))), sel: null, tries: 2 };
+            setTimeout(() => { if (fb && fb.w === w) farmSay(w.english); }, 400);
+        }
+        fb.state = 'play'; fb.msg = '';
+        farmBeeOpen = false;
+        farmOverlay('');
+        switchView('farmWaterView');
+        farmRenderBee();
+        window.scrollTo(0, 0);
+    }
+    function farmRenderBee() {
+        let box = document.getElementById('farmWaterBody');
+        if (!box || !fb) return;
+        let hearts = `<span class="bee-tries" aria-label="還有 ${fb.tries} 次機會">${[0, 1].map(i => `<i class="${i < fb.tries ? 'on' : ''}">♥</i>`).join('')}</span>`;
+        let body = '', canSubmit = false, play = fb.state === 'play';
+        if (fb.type === 'match') {
+            let enB = fb.en.map((w, k) => { let d = fb.done.includes(w); return `<button type="button" class="bm-cell en${d ? ' ok' : ''}${fb.selEn === k ? ' sel' : ''}" ${d || !play ? 'disabled' : ''} data-on-click='[["farmBeeMatch",["en",${k}]]]'>${escapeHTML(w.english)}</button>`; }).join('');
+            let cnB = fb.cn.map((w, k) => { let d = fb.done.includes(w); return `<button type="button" class="bm-cell cn${d ? ' ok' : ''}${fb.selCn === k ? ' sel' : ''}" ${d || !play ? 'disabled' : ''} data-on-click='[["farmBeeMatch",["cn",${k}]]]'>${escapeHTML(farmBeeCn(w))}</button>`; }).join('');
+            body = `<div class="fw-ask">把英文和中文連起來（先點左邊，再點右邊）</div><div class="bm-grid"><div class="bm-col">${enB}</div><div class="bm-col">${cnB}</div></div>`;
+        } else if (fb.type === 'odd') {
+            body = `<div class="fw-ask">下面哪一個，<b>不是</b>這三個單字的意思？</div>
+                <div class="fw-words">${fb.ws.map(w => `<span>${escapeHTML(w.english)}</span>`).join('')}</div>
+                <div class="fw-opts">${fb.opts.map((o, k) => `<button type="button" class="fw-opt${fb.sel === k ? ' sel' : ''}${!play && o === farmBeeCn(fb.odd) ? ' right' : ''}" ${play ? '' : 'disabled'} data-on-click='[["farmBeeSel",[${k}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
+            canSubmit = fb.sel !== null;
+        } else {
+            let wd = fb.w.english;
+            body = `<div class="fw-ask">聽發音，拼出單字，再選出中文意思</div>
+                <button type="button" class="fw-listen big" aria-label="再聽一次" data-on-click='[["farmSay",[${JSON.stringify(wd).replace(/'/g, '&#39;')}]]]'>${FW_SPEAKER}<span>再聽一次</span></button>
+                <label class="fw-dict"><span class="fw-boxes" id="fwDictBoxes">${farmDictBoxes(wd, fb.typed, !play)}</span>
+                <input class="fw-dict-in" id="fwDictIn" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" maxlength="${farmLetters(wd).length}" value="${escapeHTML(fb.typed)}" ${play ? '' : 'disabled'} aria-label="輸入聽到的單字" data-on-input='[["farmBeeDictInput",["$value"]]]'></label>
+                <div class="fw-dict-hint">共 ${farmLetters(wd).length} 個字母</div>
+                <div class="fw-opts">${fb.opts.map((o, k) => `<button type="button" class="fw-opt${fb.sel === k ? ' sel' : ''}${!play && o === farmBeeCn(fb.w) ? ' right' : ''}" ${play ? '' : 'disabled'} data-on-click='[["farmBeeSel",[${k}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
+            canSubmit = fb.sel !== null && fb.typed.length === farmLetters(wd).length;
+        }
+        let msg = fb.msg ? `<div class="fw-fb ${fb.state === 'win' ? 'ok' : fb.state === 'lose' ? 'bad' : 'warn'}">${fb.msg}</div>` : '';
+        let foot = !play ? `<button type="button" class="fm-big" data-on-click='[["farmBeeExit",[]]]'>回農場</button>`
+            : fb.type === 'match' ? '' : `<button type="button" class="fm-big" id="fwSubmit" ${canSubmit ? '' : 'disabled'} data-on-click='[["farmBeeSubmit",[]]]'>送出</button>`;
+        box.innerHTML = `<div class="fw-head"><button type="button" class="fm-sq" aria-label="回農場" data-on-click='[["farmBeeQuit",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E2650" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg></button><b>蜜蜂採蜜</b>${hearts}</div>
+            <div class="fw-card bee"><div class="fw-art"><span class="bee-art">${FARM_HIVE_SVG}</span></div><span class="fw-pill">${['連連看', '找出不是的意思', '聽寫'][['match', 'odd', 'dict'].indexOf(fb.type)]}・答對就能採蜜</span></div>
+            ${body}${msg}<div class="fw-foot">${foot}</div>`;
+    }
+    function farmBeeMatch(side, k) {
+        if (!fb || fb.state !== 'play' || fb.type !== 'match') return;
+        if (side === 'en') fb.selEn = fb.selEn === k ? null : k; else fb.selCn = fb.selCn === k ? null : k;
+        if (fb.selEn !== null && fb.selCn !== null) {
+            let a = fb.en[fb.selEn], b = fb.cn[fb.selCn];
+            if (a === b) { fb.done.push(a); fb.msg = ''; farmSay(a.english); }
+            else { fb.tries -= 1; fb.msg = fb.tries > 0 ? `連錯了：${escapeHTML(a.english)} 不是「${escapeHTML(farmBeeCn(b))}」，還有 ${fb.tries} 次機會` : ''; }
+            fb.selEn = null; fb.selCn = null;
+            if (fb.done.length === fb.ws.length) return farmBeeEnd(true);
+            if (fb.tries <= 0) return farmBeeEnd(false);
+        }
+        farmRenderBee();
+    }
+    function farmBeeSel(k) { if (!fb || fb.state !== 'play') return; fb.sel = parseInt(k); farmRenderBee(); }
+    function farmBeeDictInput(v) {
+        if (!fb || fb.state !== 'play' || fb.type !== 'dict') return;
+        let max = farmLetters(fb.w.english).length, clean = String(v || '').replace(/[^A-Za-z]/g, '').slice(0, max);
+        fb.typed = clean;
+        let el = document.getElementById('fwDictIn'); if (el && el.value !== clean) el.value = clean;
+        let bx = document.getElementById('fwDictBoxes'); if (bx) bx.innerHTML = farmDictBoxes(fb.w.english, clean, false);
+        let b = document.getElementById('fwSubmit'); if (b) b.disabled = !(fb.sel !== null && clean.length === max);
+    }
+    function farmBeeSubmit() {
+        if (!fb || fb.state !== 'play') return;
+        let ok;
+        if (fb.type === 'odd') { if (fb.sel === null) return; ok = fb.opts[fb.sel] === farmBeeCn(fb.odd); }
+        else { if (fb.sel === null) return; ok = fb.typed.toLowerCase() === farmLetters(fb.w.english).join('').toLowerCase() && fb.opts[fb.sel] === farmBeeCn(fb.w); }
+        if (ok) return farmBeeEnd(true);
+        fb.tries -= 1;
+        if (fb.tries <= 0) return farmBeeEnd(false);
+        fb.sel = null; fb.msg = `答錯了，還有 ${fb.tries} 次機會`;
+        if (fb.type === 'dict') { fb.typed = ''; farmSay(fb.w.english); }
+        farmRenderBee();
+    }
+    async function farmBeeEnd(win) {
+        fb.state = win ? 'win' : 'lose';
+        let ans = fb.type === 'match' ? '' : fb.type === 'odd' ? `正確答案：「${escapeHTML(farmBeeCn(fb.odd))}」不是 ${fb.ws.map(w => escapeHTML(w.english)).join('、')} 的意思`
+            : `正確答案：${escapeHTML(fb.w.english)} ${escapeHTML(farmBeeCn(fb.w))}`;
+        fb.msg = win ? '🍯 採蜜成功！經驗 +3、花 +1' : `採蜜失敗，這次的蜂蜜飛走了（蜂蜜歸 0，不會扣東西）${ans ? '<br><small>' + ans + '</small>' : ''}`;
+        // 結果寫進農場（連得到後台就由後台記錄）
+        if (farmSrv === true) await farmCall('honey', { ok: !!win });
+        else {
+            if (win) { farm.xp += 3; farm.flowers += 1; }
+            farm.honey = 0; farm.honeyAt = farmNow(); farm.beeStep = (farm.beeStep + 1) % 3;
+            farmSave();
+        }
+        if (win) try { triggerTaskCheck('farm_care'); } catch (e) {}
+        farmRenderBee();
+    }
+    function farmBeeExit() { fb = null; goToFarmPage(); }
+    function farmBeeQuit() {
+        if (fb && fb.state === 'play' && !confirm('現在離開，這次採蜜就算失敗（蜂蜜歸 0）。要離開嗎？')) return;
+        if (fb && fb.state === 'play') { farmBeeEnd(false).then(() => { fb = null; goToFarmPage(); }); return; }
+        fb = null; goToFarmPage();
+    }
 
     // 只有登記在 INLINE_ACTIONS 的函式能被呼叫（白名單）
     // ═════════════════════════════════════════════════════════════
@@ -9643,7 +10232,7 @@
         backToHome,
         backToHomeFromExam,
         backToListFromDetail,
-        claimChickenReward,
+        claimChickenReward, claimAllChickenRewards, dtBackdrop,
         clearAllExamHistoryData,
         clearAllWordListsData,
         clearListContentFromMenu,
@@ -9737,7 +10326,9 @@
         goToFarmPage, farmBack, farmTapPlot, farmEditStart, farmEditDone, farmPickSlot, farmCloseSheet, farmChooseDecor,
         farmOpenPlant, farmSetPlantList, farmLearn, farmLearnClose, farmSay, farmPlantNow,
         farmStartWater, farmTF, farmOdd, farmPick, farmUnpick, farmSubmit, farmNextTask, farmWaterQuit,
+        farmDictInput, farmDictKey, farmOpenBee, farmCloseBee, farmStartBee, farmBeeMatch, farmBeeSel, farmBeeDictInput, farmBeeSubmit, farmBeeExit, farmBeeQuit,
         farmOpenShop, farmCloseShop, farmBuyItem, advUseFlowerItem,
+        stModalClose, stModalBg,
         crBack, crRetry, crNext, crContinue, crReviewPick, crReview, faCloseSheet, faGoLevel, quitCardExam
     };
 
