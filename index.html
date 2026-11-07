@@ -1428,8 +1428,6 @@
             70% { box-shadow: 0 0 0 22px rgba(244, 63, 94, 0); }
             100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
         }
-        #speakMicHint { font-size: 13px; color: var(--text-muted); min-height: 38px; text-align: center; line-height: 1.5; padding: 0 6px; }
-        #speakMicHint.warn { color: #D97706; }
         .mic-help-note { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px; }
         .mic-help-status { font-size: 13.5px; font-weight: 700; margin-bottom: 8px; }
         .mic-help-block { font-size: 13px; line-height: 1.7; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; color: var(--text-main); }
@@ -3241,13 +3239,6 @@ body.cp-tall .paper-card-container { min-height: calc(100vh - 32px) !important; 
 .cp-books .select-card.cp-book.selected { background: #f3f5fd; }
 /* 分隔線：每列都有底線，只有最後一列不畫（外框已經有線）。手機一欄看最後一個，電腦兩欄看最後一排 */
 .cp-books .select-card.cp-book.cp-last1 { border-bottom: none; }
-/* 省電模式：題庫清單維持原本的淺色（不被省電模式的深色卡片樣式影響） */
-body.power-saving-mode .cp-books .select-card.cp-book { background: #ffffff !important; color: var(--cp-ink, #1e1b4b) !important; border-color: #e6e8f2 !important; border-top: none !important; border-left: none !important; }
-body.power-saving-mode .cp-books .select-card.cp-book:not(.cp-l) { border-right: none !important; }
-body.power-saving-mode .cp-books .select-card.cp-book.cp-last1 { border-bottom: none !important; }
-body.power-saving-mode .cp-books .select-card.cp-book.selected { background: #f3f5fd !important; }
-body.power-saving-mode .cp-books .select-card.cp-book .select-card-title, body.power-saving-mode .cp-books .select-card.cp-book .cp-book__name { color: var(--cp-ink, #1e1b4b) !important; }
-@media (min-width: 960px) { body.power-saving-mode .cp-books .select-card.cp-book.cp-last2 { border-bottom: none !important; } }
 .cp-books .select-card.cp-book.selected .cp-book__check { visibility: visible; }
 .cp-books .cp-book__name { display: flex; align-items: center; gap: 6px; }
 .cp-books.seg-custom .select-card[data-kind="pack"], .cp-books.seg-pack .select-card[data-kind="custom"] { display: none !important; }
@@ -3836,8 +3827,8 @@ body.power-saving-mode #examArea, body.power-saving-mode #cardExamPlayView { bac
 .fm-lv-bar { flex: 1; min-width: 30px; height: 10px; border-radius: 999px; background: #EFE6D6; overflow: hidden; }
 .fm-lv-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #F7C948, #F59E0B); transition: width .6s cubic-bezier(.3,.8,.4,1); }
 .fm-lv-num { flex: none; font: 800 12px Inter, sans-serif; color: #6F6253; }
-.fm-xp-float { position: absolute; left: 50%; top: -4px; transform: translateX(-50%); font: 900 14px Inter, sans-serif; color: #D97706; text-shadow: 0 1px 0 #fff; pointer-events: none; animation: fm-xpf 1.3s ease-out forwards; white-space: nowrap; z-index: 5; }
-@keyframes fm-xpf { 0% { opacity: 0; transform: translate(-50%, 8px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -22px); } }
+.fm-xp-float { position: fixed; transform: translateX(-50%); font: 900 15px Inter, sans-serif; color: #D97706; text-shadow: 0 1px 0 #fff, 0 0 6px #fff; pointer-events: none; animation: fm-xpf 2.2s ease-out forwards; white-space: nowrap; z-index: 3000; }
+@keyframes fm-xpf { 0% { opacity: 0; transform: translate(-50%, 8px); } 12% { opacity: 1; transform: translate(-50%, 0); } 70% { opacity: 1; transform: translate(-50%, -14px); } 100% { opacity: 0; transform: translate(-50%, -24px); } }
 .fm-hive { position: absolute; left: 6px; top: calc(300px + var(--fy2, 0px)); width: 72px; border: none; background: none; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; font-family: inherit; z-index: 2; }
 .fm-hive-art { width: 64px; height: 64px; display: block; }
 .fm-hive-art svg { width: 100%; height: 100%; }
@@ -3855,13 +3846,14 @@ body.power-saving-mode #examArea, body.power-saving-mode #cardExamPlayView { bac
 .bee-hex { width: 52px; height: 58px; display: block; }
 .bee-hex svg { width: 100%; height: 100%; }
 .bee-txt { text-align: center; font-weight: 800; font-size: 15px; color: #2A2150; margin: 14px 0 12px; }
-.bee-btn { width: 100%; height: 52px; border: none; border-radius: 16px; background: linear-gradient(135deg, #8B7CF6, #6355E8); color: #FFFFFF; font: 900 17px inherit; font-family: inherit; cursor: pointer; box-shadow: 0 4px 0 #4338CA; }
+.bee-btn { width: 100%; height: 58px; border: none; border-radius: 18px; background: linear-gradient(135deg, #8B7CF6, #6355E8); color: #FFFFFF; font-weight: 900; font-size: 22px; letter-spacing: 1px; font-family: inherit; cursor: pointer; box-shadow: 0 4px 0 #4338CA; }
 .bee-btn:disabled { background: #BCB3E8; box-shadow: none; cursor: default; }
 .bee-note { text-align: center; font-size: 12.5px; font-weight: 700; color: #7A6A55; margin-top: 10px; }
 .fw-listen { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px auto 10px; border: none; background: #EEF0FF; color: #4F46E5; border-radius: 999px; padding: 10px 18px; font: 900 15px inherit; font-family: inherit; cursor: pointer; }
 .fw-listen.big { padding: 14px 24px; font-size: 16px; }
 .fw-dict { display: block; position: relative; margin: 6px auto 4px; cursor: text; }
-.fw-boxes { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.fw-boxes { display: flex; flex-wrap: nowrap; justify-content: center; gap: 5px; }
+.fw-boxes .fw-box { width: var(--bx, 30px); height: calc(var(--bx, 30px) * 1.33); font-size: calc(var(--bx, 30px) * 0.66); }
 .fw-box { width: 30px; height: 40px; border-radius: 9px; background: #FFFFFF; border: 2.5px solid #DCD6FF; display: inline-flex; align-items: center; justify-content: center; font: 900 20px Inter, Arial, sans-serif; color: #2E2650; text-transform: lowercase; box-sizing: border-box; }
 .fw-box.cur { border-color: #6355E8; box-shadow: 0 0 0 3px #E8E5FF; }
 .fw-box.ok { border-color: #22C55E; background: #DCFCE7; }
@@ -3878,7 +3870,7 @@ body.power-saving-mode #examArea, body.power-saving-mode #cardExamPlayView { bac
 .fw-card.bee .bee-art svg { width: 100%; height: 100%; }
 .bm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
 .bm-col { display: flex; flex-direction: column; gap: 8px; }
-.bm-cell { min-height: 46px; border: 2.5px solid #DCD6FF; background: #FFFFFF; border-radius: 14px; font: 900 15.5px inherit; font-family: inherit; color: #2E2650; cursor: pointer; padding: 6px; }
+.bm-cell { position: relative; min-height: 40px; border: 2px solid #DCD6FF; background: #FFFFFF; border-radius: 12px; font-weight: 900; font-size: 15px; font-family: inherit; color: #2E2650; cursor: pointer; padding: 4px 8px; }
 .bm-cell.en { font-family: Inter, Arial, sans-serif; }
 .bm-cell.sel { border-color: #6355E8; background: #EEF0FF; }
 .bm-cell.ok { border-color: #22C55E; background: #DCFCE7; color: #166534; cursor: default; }
@@ -3886,6 +3878,271 @@ body.power-saving-mode #examArea, body.power-saving-mode #cardExamPlayView { bac
 .st-head-btns { display: flex; align-items: center; gap: 6px; }
 .st-sauce { display: flex; align-items: center; gap: 4px; height: 30px; padding: 0 10px; border: 1.5px solid #FCD9A6; border-radius: 999px; background: #FFF7E8; color: #B45309; font-size: 13px; font-weight: 800; cursor: pointer; animation: dt-pop 1.6s ease-in-out infinite; }
 .st-sauce b { font-family: var(--st-num, Nunito, sans-serif); }
+
+/* ═════════ 省電模式（深色）：練習、測驗等一般頁面跟著變深色；遊戲畫面（大冒險、農場）不受影響 ═════════
+   遊戲畫面在 switchView 會把 body 的 power-saving-mode 拿掉，所以這裡只會套到一般頁面 */
+body.power-saving-mode.cp-on {
+  --cp-bg: #12141b; --cp-card: #1b1e27; --cp-ink: #e8eaf6; --cp-muted: #a7acc6; --cp-muted-2: #9095b0; --cp-faint: #737892;
+  --cp-line: #2d3140; --cp-line-2: #363a4a; --cp-track: #2d3140; --cp-panel: #22263280; --cp-selected: #272b3d;
+  --cp-primary-text: #a5b4fc; --cp-primary-soft: #2a2d4a; --cp-primary-border: #3b3f6a; --cp-primary-border-2: #4c5186;
+  --cp-pos-bg: #3a2d1c; --cp-pos-text: #fbbf24; --cp-star-bg: #3a321c;
+  background: #0f1117 !important;
+}
+body.power-saving-mode.cp-on .paper-card-container { background: #1b1e27 !important; color: #e8eaf6 !important; box-shadow: 0 10px 30px rgba(0,0,0,.35) !important; }
+body.power-saving-mode.cp-on .app-view.cp.active { color: #e8eaf6; }
+body.power-saving-mode.cp-on .cp-books .select-card.cp-book { background: var(--cp-card) !important; color: var(--cp-ink) !important; border-color: var(--cp-line) !important; border-top: none !important; border-left: none !important; }
+body.power-saving-mode.cp-on .cp-books .select-card.cp-book:not(.cp-l) { border-right: none !important; }
+body.power-saving-mode.cp-on .cp-books .select-card.cp-book.cp-last1 { border-bottom: none !important; }
+body.power-saving-mode.cp-on .cp-books .select-card.cp-book.selected { background: var(--cp-selected) !important; }
+body.power-saving-mode.cp-on .cp-books .select-card .select-card-title, body.power-saving-mode.cp-on .cp-books .cp-book__name { color: var(--cp-ink) !important; }
+body.power-saving-mode.cp-on .cp-books { border-color: var(--cp-line) !important; background: var(--cp-card) !important; }
+@media (min-width: 960px) { body.power-saving-mode.cp-on .cp-books .select-card.cp-book.cp-last2 { border-bottom: none !important; } }
+
+/* 能力值頁：分頁標籤只有文字（矮一點）；裝備改成上下兩張卡片 */
+.st-view .st-tab { min-height: 40px; height: 40px; padding: 0 4px; font-size: 14px; }
+.st-view .adv-gear-slots { grid-template-columns: 1fr; gap: 12px; }
+.st-view .adv-gear-slot { min-height: 96px; padding: 14px 16px; gap: 14px; text-align: left; }
+.st-view .adv-gear-slot .ico { flex: 0 0 56px; }
+.st-view .adv-gear-slot .ico svg { width: 52px; height: 52px; }
+.st-view .adv-gear-slot .txt b { font-size: 17px; }
+.st-view .adv-gear-slot .txt small { font-size: 13.5px; line-height: 1.5; }
+.st-view .adv-gear-slot.empty { min-height: 72px; justify-content: center; }
+
+/* 蜜蜂採蜜：頁面撐到手機底部、內容平均分配（不用上下捲動） */
+#farmWaterBody.bee-mode { display: flex; flex-direction: column; min-height: calc(100vh - 56px); min-height: calc(100dvh - 56px - env(safe-area-inset-bottom)); box-sizing: border-box; }
+#farmWaterBody.bee-mode .fw-head { margin-bottom: 10px; }
+#farmWaterBody.bee-mode .fw-card { padding: 8px 12px 10px; }
+#farmWaterBody.bee-mode .fw-card.bee .bee-art { width: 84px; height: 84px; }
+#farmWaterBody.bee-mode .fw-ask { margin-top: 18px; margin-bottom: 4px; }
+#farmWaterBody.bee-mode .fw-listen.big { margin: 12px auto 14px; }
+#farmWaterBody.bee-mode .fw-dict { margin: 4px auto 6px; }
+#farmWaterBody.bee-mode .fw-box { width: var(--bx, 42px); height: calc(var(--bx, 42px) * 1.33); font-size: calc(var(--bx, 42px) * 0.66); border-radius: 12px; }
+#farmWaterBody.bee-mode .fw-dict-hint { margin-bottom: 18px; }
+#farmWaterBody.bee-mode .fw-opts { gap: 10px; }
+#farmWaterBody.bee-mode .fw-opt { padding: 10px 6px; font-size: 16px; border-radius: 14px; }
+#farmWaterBody.bee-mode .fw-words { margin: 14px 0 18px; }
+#farmWaterBody.bee-mode .fw-fb { margin-top: 14px; }
+#farmWaterBody.bee-mode .fw-foot { margin-top: auto; padding-top: 18px; }
+/* 連連看：兩欄中間留空間畫線 */
+.bm-grid { position: relative; grid-template-columns: 1fr 1fr !important; column-gap: 46px !important; margin-top: 14px !important; }
+.bm-col { gap: 10px !important; position: relative; z-index: 1; }
+.bm-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; overflow: visible; }
+.bm-dot { position: absolute; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border-radius: 50%; background: #C9C2F5; }
+.bm-cell.en .bm-dot { right: -6px; } .bm-cell.cn .bm-dot { left: -6px; }
+.bm-cell.sel .bm-dot { background: #6355E8; } .bm-cell.ok .bm-dot { background: #22C55E; }
+.bm-cell.ok { opacity: 1; }
+/* ============================================================
+   Chicky Vocab・朗讀練習（加在 chicky-practice.css 後面）
+   只放朗讀頁才有的樣式；頂部、進度、單字卡、圓形按鈕都沿用 cp-
+   class 一律 sp- 開頭
+   狀態：.cp[data-state="idle | rec | done"]
+   ============================================================ */
+:root {
+  --sp-rec: #ef4444;
+  --sp-rec-2: #f87171;
+  --sp-rec-dark: #b91c1c;
+  --sp-rec-text: #dc2626;
+  --sp-rec-line: #fecaca;
+  --sp-rec-panel: #fffafa;
+  --sp-ok: #1f8a4c;
+  --sp-ok-bg: #e7f8ee;
+  --sp-ok-line: #b7e6c9;
+  --sp-ok-panel: #f6fcf8;
+}
+
+/* ---------- 只在對應狀態顯示 ---------- */
+.cp:not([data-state="idle"]) .sp-on-idle:not(.sp-on-rec),
+.cp:not([data-state="rec"])  .sp-on-rec:not(.sp-on-idle),
+.cp:not([data-state="done"]) .sp-on-done,
+.cp[data-state="done"] .sp-on-idle,
+.cp[data-state="done"] .sp-on-rec { display: none !important; }
+
+/* ---------- 單字卡 ---------- */
+.sp-panel { transition: border-color 0.2s, background 0.2s; }
+.cp[data-state="rec"]  .sp-panel { border-color: var(--sp-rec-line); background: var(--sp-rec-panel); }
+.cp[data-state="done"] .sp-panel { border-color: var(--sp-ok-line);  background: var(--sp-ok-panel); }
+.sp-meaning { gap: 8px; margin-bottom: auto; }
+.sp-panel .cp-hint { margin-top: 0; }
+
+/* 狀態膠囊 */
+.sp-chip--rec { border-color: var(--sp-rec-line); color: var(--sp-rec-text); }
+.sp-chip--rec .cp-wave span { background: var(--sp-rec); }
+.sp-chip--done { border-color: var(--sp-ok-line); background: var(--sp-ok-bg); color: var(--sp-ok); font-weight: 900; }
+.sp-score { font-family: var(--cp-font-en); font-size: 16px; font-weight: 900; }
+
+/* 聽我的錄音 */
+.sp-replay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--cp-line);
+  background: var(--cp-card);
+  color: var(--cp-primary-text) !important;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---------- 底部按鈕：3 格 ---------- */
+.sp-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
+.sp-tool--skip .cp-tool__btn { background: #f3f4f8; color: var(--cp-faint) !important; }
+.sp-tool--skip .cp-tool__label { color: var(--cp-faint); }
+.cp[data-state="rec"] .sp-tool--skip { opacity: 0.55; pointer-events: none; }
+.sp-tool--next .cp-tool__btn { width: 66px; height: 66px; }
+
+/* 麥克風（最大顆） */
+.sp-mic {
+  position: relative;
+  width: 78px !important;
+  height: 78px !important;
+  border: 2px solid var(--cp-primary) !important;
+  background: var(--cp-grad) !important;
+  box-shadow: 0 5px 0 var(--cp-primary-dark);
+  color: #fff !important;
+  touch-action: none;           /* 按住時不要捲動畫面 */
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sp-mic__body { fill: currentColor; }
+.sp-tool--mic .cp-tool__label { color: var(--cp-primary-text); }
+
+/* 錄音中：紅色 + 擴散光圈 */
+.cp[data-state="rec"] .sp-mic {
+  border-color: var(--sp-rec) !important;
+  background: linear-gradient(145deg, var(--sp-rec-2), var(--sp-rec)) !important;
+  box-shadow: 0 2px 0 var(--sp-rec-dark);
+  transform: translateY(3px);
+}
+.cp[data-state="rec"] .sp-tool--mic .cp-tool__label { color: var(--sp-rec-text); }
+.sp-ring { display: none; position: absolute; inset: -2px; border-radius: 50%; border: 4px solid var(--sp-rec-2); pointer-events: none; }
+.cp[data-state="rec"] .sp-ring { display: block; animation: sp-ring 1.4s ease-out infinite; }
+.cp[data-state="rec"] .sp-ring + .sp-ring { animation-delay: 0.7s; }
+@keyframes sp-ring { 0% { transform: scale(1); opacity: 0.55; } 100% { transform: scale(1.55); opacity: 0; } }
+
+/* 出分數後：麥克風變淺色「再唸一次」，主角換成「下一個」 */
+.cp[data-state="done"] .sp-mic {
+  width: 60px !important;
+  height: 60px !important;
+  border: none !important;
+  background: var(--cp-primary-soft) !important;
+  box-shadow: none;
+  color: var(--cp-primary) !important;
+}
+.cp[data-state="done"] .sp-mic svg { width: 28px; height: 28px; }
+.cp[data-state="done"] .sp-mic__body { fill: none; }
+
+/* ---------- 電腦版（跟 chicky-practice.css 同一個斷點） ---------- */
+@media (min-width: 960px) {
+  .sp-tools { display: grid; grid-template-columns: repeat(3, 110px); justify-content: center; gap: 0; }
+  .cp[data-state="done"] .sp-mic { width: 64px !important; height: 64px !important; }
+  .sp-tool--next .cp-tool__btn { width: 70px; height: 70px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp[data-state="rec"] .sp-ring { animation: none; opacity: 0.4; transform: scale(1.2); }
+}
+
+/* 專案整合：訊息列（錯誤 / 辨識結果）有內容時取代預設小字 */
+.sp-msg:empty { display: none; }
+.sp-panel.sp-has-msg .sp-dflt { display: none !important; }
+.sp-msg.warn { color: #d97706; }
+.cp[data-state="done"] .sp-chip--done.is-fail { border-color: #fde2b5; background: #fff6e6; color: #c2410c; }
+.sp-replay[hidden] { display: none !important; }
+body.power-saving-mode .cp[data-state="rec"] .sp-panel { background: #2a1d22 !important; }
+body.power-saving-mode .cp[data-state="done"] .sp-panel { background: #18261e !important; }
+body.power-saving-mode .sp-tool--skip .cp-tool__btn { background: #262a36; }
+
+
+/* ============================================================
+   雞塊大冒險・新版戰鬥畫面（前後透視視角）— 先套用在第 1、9 關
+   縮放規則照 chicky-battle/battle.css：設計稿 390×844，--u = 設計稿的 1px
+   ============================================================ */
+body.bt-on .scale-wrapper, body.bt-on .scale-wrapper-practice, body.bt-on .scale-wrapper-cp, body.bt-on .paper-card-container { transform: none !important; filter: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body.bt-on { overflow: hidden; }
+#adventureBattleView.bt-view::before { content: ''; position: fixed; inset: 0; background: #14102b; z-index: 899; }
+.adv-battle.bt {
+  --bt-max-w: 480px;
+  --u: clamp(0.8px, min(min(100vw, var(--bt-max-w)) / 390, 100vh / 844), 1.2px);
+  position: fixed; z-index: 900; left: 0; right: 0; margin: 0 auto;
+  top: var(--bt-top, 0px); height: var(--bt-h, 100vh); min-height: 0;
+  width: 100%; max-width: var(--bt-max-w);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: #231c47; font-family: Inter, 'Noto Sans TC', system-ui, sans-serif; color: #1e1b4b;
+}
+@supports (height: 100dvh) { .adv-battle.bt { --u: clamp(0.8px, min(min(100vw, var(--bt-max-w)) / 390, 100dvh / 844), 1.2px); } }
+/* 頂部：浮在場景上 */
+.adv-battle.bt .adv-topbar { position: absolute; z-index: 4; left: calc(16 * var(--u)); right: calc(16 * var(--u)); top: calc(16 * var(--u)); margin: 0; }
+.adv-battle.bt .adv-topbar .back-home-btn { width: calc(48 * var(--u)); height: calc(48 * var(--u)); min-width: 44px; min-height: 44px; border: none; border-radius: calc(16 * var(--u)); background: linear-gradient(145deg, #6366f1, #4f46e5) !important; box-shadow: 0 6px 14px rgba(0,0,0,.35); color: #fff !important; display: flex; align-items: center; justify-content: center; padding: 0; }
+.adv-battle.bt .adv-topbar .back-home-btn svg { width: calc(20 * var(--u)); height: calc(20 * var(--u)); }
+.adv-battle.bt .adv-topinfo { padding: calc(8 * var(--u)) calc(14 * var(--u)); border-radius: 999px; background: rgba(255,255,255,.95); color: #4f46e5; font-family: 'Noto Sans TC', system-ui, sans-serif; font-size: calc(14 * var(--u)); font-weight: 900; white-space: nowrap; }
+.adv-battle.bt .adv-topinfo span { color: #c7caf7; }
+/* 上：戰鬥場景佔剩下的高度 */
+.adv-battle.bt .adv-stage { flex: 1 1 auto; min-height: 0; height: auto; border: none; border-radius: 0; overflow: hidden; container-type: size; }
+.adv-battle.bt .adv-stage {
+  --bt-bgtop: calc(58 * var(--u));
+  background:
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(46 * var(--u)), rgba(0,0,0,.28) calc(46 * var(--u)), rgba(0,0,0,.28) calc(49 * var(--u))),
+    linear-gradient(to bottom, #120E30 0, #120E30 var(--bt-bgtop), #4A2E22 var(--bt-bgtop), #1F110C 100%);
+}
+/* 背景：寬度鋪滿、上方對齊（不會被放大裁掉招牌），下面接木頭地板 */
+.adv-battle.bt .adv-stage-bg { position: absolute; left: 0; right: 0; top: var(--bt-bgtop); bottom: auto; width: 100%; height: auto; aspect-ratio: 340 / 150; }
+.adv-battle.bt .adv-stage::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: var(--bt-bgtop); background: #120E30; z-index: 0; }
+.adv-battle.bt .bt-scene {
+  position: absolute; left: 0; right: 0; margin: 0 auto; bottom: 0;
+  width: min(100cqw, 100cqh * 390 / 560); aspect-ratio: 390 / 560;
+  container-type: inline-size;
+}
+.adv-battle.bt .bt-plat { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* 敵人（主角）：右上、站在台子上；雞塊（背面）：左下、比敵人小（比設計稿再小 5%），腳藏在招式抽屜後面 */
+.adv-battle.bt .adv-enemy { left: 50%; right: auto; top: 36.7%; bottom: auto; width: 43.6%; max-width: none; }
+.adv-battle.bt .adv-player { left: 10.3%; right: auto; top: auto; bottom: 1.6%; width: 39%; max-width: none; }
+/* 血條卡 */
+.adv-battle.bt .bt-hp {
+  position: absolute; z-index: 3; width: 43cqw; min-width: 0; padding: 2.3cqw 3cqw 2.6cqw; border-radius: 3.6cqw;
+  background: #fffaf0; color: #1e1b4b; box-shadow: 0 1.5cqw 4cqw rgba(0,0,0,.3);
+  display: flex; flex-direction: column; gap: 1.4cqw; font-size: 3.85cqw;
+}
+.adv-battle.bt .bt-hp--enemy { left: 4.1cqw; right: auto; top: 31.4%; bottom: auto; }
+.adv-battle.bt .bt-hp--player { right: 4.1cqw; left: auto; top: 73.6%; bottom: auto; }
+.adv-battle.bt .bt-hp__name { display: flex; align-items: center; gap: 1.5cqw; font-family: 'Noto Sans TC', system-ui, sans-serif; font-size: 3.85cqw; font-weight: 900; white-space: nowrap; }
+.adv-battle.bt .bt-hp__name b { font-family: Inter, system-ui, sans-serif; }
+.adv-battle.bt .bt-bar { display: block; height: 2.6cqw; margin: 0; border-radius: 999px; background: #e3e7ef; overflow: hidden; }
+.adv-battle.bt .bt-bar .adv-hpfill { display: block; height: 100%; background: #10b981; }
+.adv-battle.bt .bt-bar .adv-hpfill.low { background: linear-gradient(90deg, #FB7185, #F43F5E); }
+.adv-battle.bt .bt-shieldbar { display: block; height: 1.3cqw; }
+.adv-battle.bt .bt-shieldbar > i { display: block; height: 100%; max-width: 100%; border-radius: 999px; background: #38bdf8; }
+.adv-battle.bt .bt-badge-shield { display: inline-flex; align-items: center; gap: .5cqw; padding: .2cqw 1.5cqw .2cqw 1cqw; border-radius: 999px; background: #0ea5e9; color: #fff; font-size: 3.1cqw; font-weight: 800; }
+.adv-battle.bt .bt-badge-shield svg { width: 2.6cqw; height: 2.6cqw; }
+.adv-battle.bt [hidden] { display: none !important; }
+.adv-battle.bt .adv-enemy-tag { align-self: flex-start; margin: 0; font-size: 2.8cqw; }
+/* 下：招式抽屜（白色，蓋在場景上） */
+.adv-battle.bt .adv-panel {
+  position: relative; z-index: 3; flex: 0 0 auto; max-height: 68%; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  margin-top: calc(-26 * var(--u));
+  padding: calc(16 * var(--u)) calc(16 * var(--u)) calc(24 * var(--u) + env(safe-area-inset-bottom, 0px));
+  border-radius: calc(26 * var(--u)) calc(26 * var(--u)) 0 0;
+  background: #fff; box-shadow: 0 -10px 30px rgba(0,0,0,.3);
+  gap: calc(12 * var(--u)); font-family: 'Noto Sans TC', system-ui, sans-serif;
+}
+.adv-battle.bt .adv-log { padding: calc(9 * var(--u)) calc(12 * var(--u)); border-radius: calc(14 * var(--u)); background: #eef0ff; color: #4f46e5; font-size: calc(15 * var(--u)); font-weight: 900; }
+.adv-battle.bt .adv-moves { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: calc(92 * var(--u)); gap: calc(10 * var(--u)); }
+.adv-battle.bt .adv-move {
+  min-width: 0; min-height: 44px; padding: calc(8 * var(--u)) calc(10 * var(--u));
+  border-width: 2px; border-style: solid; border-radius: calc(16 * var(--u)); background: #fff;
+  display: flex; flex-direction: column; justify-content: center; gap: calc(1 * var(--u));
+}
+.adv-battle.bt .adv-move.rar-common { border-color: #94a3b8; }
+.adv-battle.bt .adv-move.rar-rare { border-color: #c9971c; }
+.adv-battle.bt .adv-move b { font-size: calc(16 * var(--u)); font-weight: 900; color: #1e1b4b; }
+.adv-battle.bt .adv-move .dmg { font-size: calc(16 * var(--u)); font-weight: 900; color: #5b5bd6; }
+.adv-battle.bt .adv-move small { font-size: calc(12 * var(--u)); color: #6b7090; }
+.adv-battle.bt .adv-lv-chip { padding: 0 calc(5 * var(--u)); border-radius: 999px; background: #6366f1; color: #fff; font-size: calc(10.5 * var(--u)); font-weight: 800; }
+@media (max-height: 640px) {
+  .adv-battle.bt .adv-log { padding: calc(5 * var(--u)) calc(10 * var(--u)); font-size: calc(13 * var(--u)); }
+  .adv-battle.bt .adv-moves { grid-auto-rows: calc(84 * var(--u)); }
+}
+
 </style>
 </head>
 <body>
@@ -4297,6 +4554,14 @@ body.power-saving-mode #examArea, body.power-saving-mode #cardExamPlayView { bac
                 <button class="cp-settings" type="button" aria-label="練習設定" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="15" cy="6" r="2" fill="#fff"/><circle cx="9" cy="12" r="2" fill="#fff"/><circle cx="15" cy="18" r="2" fill="#fff"/></svg></button>
             </header>
 
+            <section class="cp-resume" id="speakResumeCard" aria-label="未完成的練習" hidden>
+                <div class="cp-resume__info">
+                    <div class="cp-resume__head"><span class="cp-resume__title">上次的練習還沒完成</span><span class="cp-resume__time" id="speakResumeTime"></span></div>
+                    <div class="cp-resume__row"><span class="cp-resume__books" id="speakResumeBooks"></span><div class="cp-track"><div class="cp-fill" id="speakResumeFill"></div></div><span class="cp-count" id="speakResumeCount"></span></div>
+                </div>
+                <button class="cp-btn cp-btn--primary" type="button" data-on-click='[["cpResume",["speak"]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>繼續練習</button>
+            </section>
+
             <div class="cp-stack">
                 <nav class="cp-tabs" data-grid="speakPracticeGrid" aria-label="單字庫"></nav>
                 <div class="cp-section-head"><span class="cp-section-head__label">請勾選練習範圍（可複選）</span><button class="cp-pill-btn" type="button" data-on-click='[["pickSelectAll",["speakPracticeGrid"]]]'>全選</button></div>
@@ -4332,45 +4597,60 @@ body.power-saving-mode #examArea, body.power-saving-mode #cardExamPlayView { bac
 
             <button class="btn-advanced pk-hide" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'>⚙️ 朗讀練習進階設定</button>
 
-            <button class="cp-btn cp-btn--primary" type="button" id="spStartBtn" data-on-click='[["startSpeakPracticeSession",[]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>開始朗讀練習</button>
+            <button class="cp-btn cp-btn--primary" type="button" id="spStartBtn" data-cp-kind="speak" data-cp-text="開始朗讀練習" data-on-click='[["cpStartNewSpeak",[]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>開始朗讀練習</button>
         </div>
 
         <!-- ================= 🎤 朗讀練習：執行介面 ================= -->
-        <div id="speakPracticePlayView" class="app-view">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <div class="progress-indicator" id="speakPracticeProgressText" style="font-size: 13.5px; font-weight: 700; color: var(--primary); background: #EEF2FF; padding: 3px 12px; border-radius: 20px;">1 / 1 題</div>
-                <button type="button" id="speakSampleBtn" style="width: auto; border: none; border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 700; background: #EEF2FF; color: var(--primary); cursor: pointer;" data-on-click='[["playSpeakPracticeSample",[]]]'>🔊 聽標準發音</button>
-            </div>
-
-            <div class="progress-bar-container" style="margin-bottom: 8px; height: 5px;">
-                <div class="progress-bar-fill" id="speakPracticeProgressBar"></div>
-            </div>
-
-            <div class="flashcard-perspective" style="margin-bottom: 2px;">
-                <div class="flashcard" style="transform: none !important; transition: none !important; min-height: 120px;">
-                    <div class="card-face card-front" style="position: relative; transform: none !important; padding: 16px 16px;">
-                        <div class="card-english" id="speakPracticeCardEng">Introduce</div>
-                        <div id="speakPracticeCardChi" style="margin-top: 6px; font-size: 14px; color: var(--text-muted); text-align: center; min-height: 20px;"></div>
-                    </div>
+        <div id="speakPracticePlayView" class="app-view cp cp-playing sp" data-state="idle">
+            <header class="cp-header">
+                <button class="cp-back" type="button" aria-label="返回（保留進度）" data-on-click='[["leaveSpeakPractice",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                <div class="cp-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3.5M8.5 21.5h7"/></svg><span data-t-en="英文朗讀練習" data-t-ko="韓文朗讀練習">英文朗讀練習</span></div>
+                <button class="cp-settings" type="button" aria-label="練習設定" data-on-click='[["openSpeakPracticeSettingsModal",[]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="15" cy="6" r="2" fill="#fff"/><circle cx="9" cy="12" r="2" fill="#fff"/><circle cx="15" cy="18" r="2" fill="#fff"/></svg></button>
+            </header>
+            <section class="cp-progress">
+                <div class="cp-progress__meta">
+                    <span class="cp-progress__book" id="speakBook">題庫</span>
+                    <span class="cp-count" id="speakPracticeProgressText">1 <small>/ 1</small></span>
+                </div>
+                <div class="cp-track"><div class="cp-fill" id="speakPracticeProgressBar"></div></div>
+            </section>
+            <section class="cp-panel sp-panel" id="speakPanel" aria-live="polite">
+                <span class="cp-chip sp-on-idle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3.5"/></svg>請朗讀</span>
+                <span class="cp-chip sp-chip--rec sp-on-rec"><span class="cp-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>正在聽…</span>
+                <span class="cp-chip sp-chip--done sp-on-done" id="speakScoreChip"><span id="speakScoreLabel">很棒！</span><b class="sp-score" id="speakScore">0</b> 分</span>
+                <div class="cp-word">
+                    <div class="cp-word__en" id="speakPracticeCardEng"></div>
+                    <div class="cp-word__ipa" id="speakPracticeCardIpa" hidden></div>
+                </div>
+                <div class="cp-divider"></div>
+                <div class="cp-meaning sp-meaning">
+                    <span class="cp-meaning__zh" id="speakPracticeCardChi"></span>
+                    <span id="speakPracticeCardPos" style="display:contents"></span>
+                </div>
+                <span class="cp-hint sp-msg" id="speakMicHint"></span>
+                <span class="cp-hint sp-dflt sp-on-idle cp-hint--mobile">說完單字後，再多按 2 秒才放開</span>
+                <span class="cp-hint sp-dflt sp-on-idle cp-hint--desktop">按住麥克風或空白鍵朗讀，說完再多按 2 秒才放開</span>
+                <span class="cp-hint sp-dflt sp-on-rec">說完放開就送出</span>
+                <button class="sp-replay sp-on-done" type="button" id="speakReplayBtn" hidden data-on-click='[["playSpeakMyRecording",[]]]'><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14a1 1 0 001.5.86l11-7a1 1 0 000-1.72l-11-7A1 1 0 007 5z"/></svg>聽我的錄音</button>
+            </section>
+            <div class="cp-tools sp-tools">
+                <div class="cp-tool cp-tool--sound">
+                    <button class="cp-tool__btn" type="button" id="speakSampleBtn" aria-label="聽標準發音" data-on-click='[["playSpeakPracticeSample",[]]]'><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a10 10 0 010 14"/></svg></button>
+                    <span class="cp-tool__label">發音</span>
+                </div>
+                <div class="cp-tool sp-tool--mic">
+                    <button class="cp-tool__btn sp-mic" type="button" id="speakMicBtn" aria-label="按住朗讀"><span class="sp-ring" aria-hidden="true"></span><span class="sp-ring" aria-hidden="true"></span><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect class="sp-mic__body" x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3.5M8.5 21.5h7"/></svg></button>
+                    <span class="cp-tool__label"><span class="sp-on-idle">按住朗讀</span><span class="sp-on-rec">放開送出</span><span class="sp-on-done">再唸一次</span></span>
+                </div>
+                <div class="cp-tool sp-tool--skip sp-on-idle sp-on-rec">
+                    <button class="cp-tool__btn" type="button" aria-label="略過此題" data-on-click='[["nextSpeakPracticeQuestion",[]]]'><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5.5v13a1 1 0 001.5.86L15 14.2V18a1 1 0 002 0V6a1 1 0 00-2 0v3.8L6.5 4.64A1 1 0 005 5.5z"/></svg></button>
+                    <span class="cp-tool__label">略過</span>
+                </div>
+                <div class="cp-tool cp-tool--next sp-tool--next sp-on-done">
+                    <button class="cp-tool__btn" type="button" id="speakPracticeNextBtn" aria-label="下一個" data-on-click='[["nextSpeakPracticeQuestion",[]]]'><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14a1 1 0 001.5.86l11-7a1 1 0 000-1.72l-11-7A1 1 0 007 5z"/></svg></button>
+                    <span class="cp-tool__label" id="speakNextLabel">下一個</span>
                 </div>
             </div>
-
-            <div class="speak-mic-wrap">
-                <button type="button" class="speak-mic-btn" id="speakMicBtn" aria-label="按住麥克風說話" title="按住說話，放開後評分">
-                    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
-                </button>
-                <div id="speakMicHint">按住麥克風朗讀上面的單字，說完再放開</div>
-                <div id="speakTip">💡 小技巧：說完單字後，<b>再多按住約 2 秒</b>才放開，辨識通常更準、分數也更高。</div>
-            </div>
-
-            <div class="speak-result-box" id="speakResultBox"></div>
-
-            <button class="action-btn-primary" id="speakPracticeNextBtn" data-on-click='[["nextSpeakPracticeQuestion",[]]]' style="margin-top: 10px; padding: 11px;">
-                略過此題 ⏭
-            </button>
-            <button class="action-btn btn-stop" style="margin-top: 6px; width: 100%; padding: 11px;" data-on-click='[["finishSpeakPracticeSession",[]]]'>
-                ■ 結束並停止練習
-            </button>
         </div>
 
         <!-- ================= 🏰 雞塊大冒險 第 1 頁：關卡地圖 ================= -->
