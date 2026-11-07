@@ -895,6 +895,37 @@
     let speakStarting = false;
     let speakRec = null, speakListening = false, speakPressAt = 0, speakShortTap = false, speakIgnoreResult = false, speakStarted = false, speakLatched = false, speakSkipUp = false;
     let speakHeardAlts = [], speakLastError = '', speakWatchdog = null;
+
+    // 🔧 朗讀診斷模式：網址後面加上 ?speakdebug=1 才會啟動（一般玩家看不到）
+    // 失敗時會在畫面底部列出事件順序與時間，例如：press@0 → audiostart@420 → sound@610 → speech@640 → result×1 → end@2100
+    //   沒有 sound：麥克風開太晚／聲音被切掉　有 sound 沒 speech：聲音太短被當雜音　有 speech 沒 result：聽到了但被丟掉
+    const SPEAK_DEBUG = (function () { try { return /[?&]speakdebug=1/.test(location.search) || localStorage.getItem('speakdebug') === '1'; } catch (e) { return false; } })();
+    let speakDbg = null, advDbg = null;
+    function speakDbgNew() { return { t0: Date.now(), ev: [] }; }
+    function speakDbgMark(d, name) { if (SPEAK_DEBUG && d) d.ev.push(name + '@' + (Date.now() - d.t0)); }
+    function speakDbgShow(d, extra) {
+        if (!SPEAK_DEBUG || !d) return;
+        let box = document.getElementById('speakDbgBox');
+        if (!box) {
+            box = document.createElement('div');
+            box.id = 'speakDbgBox';
+            box.style.cssText = 'position:fixed;left:6px;right:6px;bottom:6px;z-index:99999;background:rgba(0,0,0,.85);color:#9f9;font:11px/1.5 monospace;padding:6px 8px;border-radius:6px;pointer-events:none;white-space:pre-wrap;word-break:break-all;';
+            document.body.appendChild(box);
+        }
+        box.textContent = '[診斷] ' + d.ev.join(' → ') + (extra ? '\n' + extra : '');
+    }
+    function speakDbgAlts(alts) {
+        return alts.length ? alts.slice(0, 6).map(a => String(a.transcript).trim() + '(' + (a.confidence != null ? (+a.confidence).toFixed(2) : '?') + ')').join(', ') : '(無)';
+    }
+    function speakDbgHook(rec, d) {
+        if (!SPEAK_DEBUG) return;
+        rec.onsoundstart = () => speakDbgMark(d, 'sound');
+        rec.onspeechstart = () => speakDbgMark(d, 'speech');
+        rec.onspeechend = () => speakDbgMark(d, 'speechend');
+        rec.onsoundend = () => speakDbgMark(d, 'soundend');
+        rec.onaudioend = () => speakDbgMark(d, 'audioend');
+        rec.onnomatch = () => speakDbgMark(d, 'nomatch');
+    }
     let speakQuestion = { attempts: 0, best: null, last: null };
     let speakBooks = '', speakRecChunks = [], speakRecorder = null, speakRecStream = null, speakRecUrl = '';
 
@@ -3582,7 +3613,20 @@
         speakHeardAlts = []; speakLastError = ''; speakShortTap = false; speakIgnoreResult = false;
         speakPressAt = Date.now();
         speakStarted = false; speakLatched = false; speakSkipUp = false;
-        rec.onaudiostart = () => { speakStarted = true; if (speakRec === rec && speakListening && speakLatched) setSpeakHint(SPEAK_LATCH_HINT); };
+        const dbg = speakDbg = speakDbgNew();
+        speakDbgMark(dbg, 'press');
+        speakDbgHook(rec, dbg);
+
+        // 麥克風「真正開啟」（onaudiostart）後，才進入錄音畫面並提示「請說」。
+        // 之前一按下就顯示錄音中，但麥克風要幾百毫秒後才打開，玩家搶先開口會把開頭的音（例如 win 的 /w/）切掉。
+        let readyShown = false;
+        const showReady = () => {
+            if (readyShown || speakRec !== rec || !speakListening) return;
+            readyShown = true;
+            setSpeakState('rec');
+            setSpeakHint(speakLatched ? SPEAK_LATCH_HINT : '🎙️ 請說');
+        };
+        rec.onaudiostart = () => { speakStarted = true; speakDbgMark(dbg, 'audiostart'); showReady(); };
 
         rec.onresult = (ev) => {
             let alts = [];
@@ -3591,18 +3635,20 @@
                 for (let j = 0; j < res.length; j++) alts.push({ transcript: res[j].transcript, confidence: res[j].confidence });
             }
             speakHeardAlts = alts;
+            if (SPEAK_DEBUG && ev.results.length) speakDbgMark(dbg, 'result×' + ev.results.length + (ev.results[ev.results.length - 1].isFinal ? '(final)' : '(interim)'));
             if (speakListening && alts.length && !speakIgnoreResult) setSpeakHint('🎙️ ' + alts[0].transcript);
         };
-        rec.onerror = (ev) => { speakLastError = (ev && ev.error) || 'error'; };
-        rec.onend = () => finishSpeakListening(rec, false);
+        rec.onerror = (ev) => { speakLastError = (ev && ev.error) || 'error'; speakDbgMark(dbg, 'error:' + speakLastError); };
+        rec.onend = () => { speakDbgMark(dbg, 'end'); finishSpeakListening(rec, false); };
 
         speakRec = rec;
         speakListening = true;
-        setSpeakState('rec');
-        setSpeakHint('');
+        setSpeakHint('⏳ 準備中…');
         try {
             rec.start();
             speakStartRecording();
+            // 保險：有些瀏覽器不觸發 onaudiostart，1.5 秒後仍照舊進入錄音畫面
+            setTimeout(() => { if (!readyShown && speakRec === rec && speakListening) speakDbgMark(dbg, 'ready-fallback'); showReady(); }, 1500);
         } catch (e) {
             speakListening = false;
             setSpeakState(speakQuestion.last ? 'done' : 'idle');
@@ -3621,6 +3667,7 @@
     function stopSpeakListening() {
         if (!speakListening || !speakRec) return;
         let rec = speakRec;
+        speakDbgMark(speakDbg, 'release');
         if (!speakStarted || Date.now() - speakPressAt < 350) {
             speakLatched = true;
             setSpeakHint(speakStarted ? SPEAK_LATCH_HINT : '⏳ 等待麥克風授權…請按瀏覽器的「允許」，然後直接說話');
@@ -3636,7 +3683,7 @@
     function speakFinishHold(rec, tailMs) {
         // 再多收一小段，避免單字最後一個音被切掉（切掉會被辨識成別的字）
         setSpeakHint('收音中…');
-        setTimeout(() => { speakStopRecording(); if (speakRec === rec && speakListening) { try { rec.stop(); } catch (e) {} } }, tailMs);
+        setTimeout(() => { speakDbgMark(speakDbg, 'stop()'); speakStopRecording(); if (speakRec === rec && speakListening) { try { rec.stop(); } catch (e) {} } }, tailMs);
         // 保險：有些瀏覽器偶爾不會觸發 onend，8 秒後強制收尾
         clearTimeout(speakWatchdog);
         speakWatchdog = setTimeout(() => {
@@ -3654,6 +3701,7 @@
         if (speakIgnoreResult) return;
 
         let alts = speakHeardAlts.filter(a => a.transcript && a.transcript.trim());
+        speakDbgShow(speakDbg, 'forced=' + forced + ' err=' + (speakLastError || '-') + ' alts=' + alts.length + ' ｜ ' + speakDbgAlts(alts));
         if (alts.length === 0) {
             setSpeakHint(forced ? '辨識逾時，請再按住說話一次' : speakErrorMessage(speakLastError), true);
             if (speakLastError === 'not-allowed' || speakLastError === 'service-not-allowed') openMicHelpModal();
@@ -8257,21 +8305,35 @@
         rec.maxAlternatives = 10;
         advAlts = []; advErr = ''; advShort = false; advIgnore = false; advPressAt = Date.now();
         advStarted = false; advLatched = false; advSkipUp = false;
-        rec.onaudiostart = () => { advStarted = true; if (advRec === rec && advListening && advLatched) advSpeakHint(SPEAK_LATCH_HINT); };
+        const dbg = advDbg = speakDbgNew();
+        speakDbgMark(dbg, 'press');
+        speakDbgHook(rec, dbg);
+        // 麥克風真正開啟後才顯示錄音中並提示「請說」（原因同朗讀練習：避免開頭被切掉）
+        let readyShown = false;
+        const showReady = () => {
+            if (readyShown || advRec !== rec || !advListening) return;
+            readyShown = true;
+            let b = document.getElementById('advMicBtn'); if (b) b.classList.add('recording');
+            advSpeakHint(advLatched ? SPEAK_LATCH_HINT : '🎙️ 請說…說完請再多按住一下');
+        };
+        rec.onaudiostart = () => { advStarted = true; speakDbgMark(dbg, 'audiostart'); showReady(); };
         rec.onresult = (ev) => {
             let alts = [];
             for (let i = 0; i < ev.results.length; i++) for (let j = 0; j < ev.results[i].length; j++) alts.push({ transcript: ev.results[i][j].transcript, confidence: ev.results[i][j].confidence });
             advAlts = alts;
+            if (SPEAK_DEBUG && ev.results.length) speakDbgMark(dbg, 'result×' + ev.results.length + (ev.results[ev.results.length - 1].isFinal ? '(final)' : '(interim)'));
             if (advListening && alts.length && !advIgnore) advSpeakHint('🎙️ ' + alts[0].transcript);
         };
-        rec.onerror = (ev) => { advErr = (ev && ev.error) || 'error'; };
-        rec.onend = () => advSpeakFinish(rec, false);
+        rec.onerror = (ev) => { advErr = (ev && ev.error) || 'error'; speakDbgMark(dbg, 'error:' + advErr); };
+        rec.onend = () => { speakDbgMark(dbg, 'end'); advSpeakFinish(rec, false); };
         advRec = rec;
         advListening = true;
         let btn = document.getElementById('advMicBtn');
-        if (btn) btn.classList.add('recording');
-        advSpeakHint('🎙️ 聆聽中…說完請再多按住一下');
-        try { rec.start(); } catch (e) {
+        advSpeakHint('⏳ 準備中…');
+        try {
+            rec.start();
+            setTimeout(() => { if (!readyShown && advRec === rec && advListening) speakDbgMark(dbg, 'ready-fallback'); showReady(); }, 1500);
+        } catch (e) {
             advListening = false;
             if (btn) btn.classList.remove('recording');
             advSpeakHint('無法啟動語音辨識，請再按一次');
@@ -8280,6 +8342,7 @@
     function advSpeakStop() {
         if (!advListening || !advRec) return;
         let rec = advRec;
+        speakDbgMark(advDbg, 'release');
         if (!advStarted || Date.now() - advPressAt < 350) {        // 還在等授權、或只是輕點：改成「點一下模式」
             advLatched = true;
             advSpeakHint(advStarted ? SPEAK_LATCH_HINT : '⏳ 等待麥克風授權…請按瀏覽器的「允許」，然後直接說話');
@@ -8293,7 +8356,7 @@
         let btn = document.getElementById('advMicBtn');
         if (btn) btn.classList.remove('recording');
         advSpeakHint('🎙️ 收音中…');
-        setTimeout(() => { if (advRec === rec && advListening) { try { rec.stop(); } catch (e) {} } }, tailMs);
+        setTimeout(() => { speakDbgMark(advDbg, 'stop()'); if (advRec === rec && advListening) { try { rec.stop(); } catch (e) {} } }, tailMs);
         clearTimeout(advWatch);
         advWatch = setTimeout(() => { if (advListening && advRec === rec) { try { rec.abort(); } catch (e) {} advSpeakFinish(rec, true); } }, 8000 + tailMs);
     }
@@ -8308,6 +8371,7 @@
         if (advShort) { advSpeakHint('請「按住」麥克風說話，說完再放開'); return; }
         if (advIgnore) return;
         let alts = advAlts.filter(a => a.transcript && a.transcript.trim());
+        speakDbgShow(advDbg, 'forced=' + forced + ' err=' + (advErr || '-') + ' alts=' + alts.length + ' ｜ ' + speakDbgAlts(alts));
         if (!alts.length) {
             advSpeakHint(forced ? '辨識逾時，請再按住說一次' : speakErrorMessage(advErr));
             if (advErr === 'not-allowed' || advErr === 'service-not-allowed') openMicHelpModal();
