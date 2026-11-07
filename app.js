@@ -912,7 +912,19 @@
             box.style.cssText = 'position:fixed;left:6px;right:6px;bottom:6px;z-index:99999;background:rgba(0,0,0,.85);color:#9f9;font:11px/1.5 monospace;padding:6px 8px;border-radius:6px;pointer-events:none;white-space:pre-wrap;word-break:break-all;';
             document.body.appendChild(box);
         }
-        box.textContent = '[診斷] ' + d.ev.join(' → ') + (extra ? '\n' + extra : '');
+        box.textContent = '[診斷] cont=' + d.cont + ' ' + d.ev.join(' → ') + (extra ? '\n' + extra : '');
+    }
+    // 原始結果（含空字串）：例如 [["win"(0.82),"when"(0.4)]] 或 [[""]]，用來分辨「沒結果」和「結果是空的」
+    function speakDbgRaw(ev) {
+        if (!SPEAK_DEBUG) return '';
+        try {
+            return ' ' + Array.from(ev.results).map(r => '[' + Array.from(r).map(a => JSON.stringify(a.transcript) + '(' + (a.confidence != null ? (+a.confidence).toFixed(2) : '?') + ')').join(',') + ']').join('');
+        } catch (e) { return ''; }
+    }
+    // 題目是不是「單一單字」（片語、多個字的題目回傳 false）
+    function speakIsSingleWord(text) {
+        let t = String(text || '').replace(/\([^)]*\)|（[^）]*）/g, ' ').trim();
+        return t.split(/\s+/).filter(Boolean).length === 1;
     }
     function speakDbgAlts(alts) {
         return alts.length ? alts.slice(0, 6).map(a => String(a.transcript).trim() + '(' + (a.confidence != null ? (+a.confidence).toFixed(2) : '?') + ')').join(', ') : '(無)';
@@ -3608,12 +3620,15 @@
         rec.lang = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
         rec.interimResults = true;
         // 按住期間持續收音（continuous），放開才結束：單音節的短字（win、切）不會因為瀏覽器太早判定「說完了」而沒有結果
-        rec.continuous = true;
+        // 實驗：只有「單一單字」題關閉 continuous，片語維持開啟。
+        // 診斷顯示手機在 continuous 下，按住期間辨識器會自己結束並回傳空的 final 結果。
+        rec.continuous = !speakIsSingleWord((speakPracticeActiveList[currentSpeakPracticeIndex] || {}).english);
         rec.maxAlternatives = 10;
         speakHeardAlts = []; speakLastError = ''; speakShortTap = false; speakIgnoreResult = false;
         speakPressAt = Date.now();
         speakStarted = false; speakLatched = false; speakSkipUp = false;
         const dbg = speakDbg = speakDbgNew();
+        dbg.cont = rec.continuous;
         speakDbgMark(dbg, 'press');
         speakDbgHook(rec, dbg);
 
@@ -3635,7 +3650,7 @@
                 for (let j = 0; j < res.length; j++) alts.push({ transcript: res[j].transcript, confidence: res[j].confidence });
             }
             speakHeardAlts = alts;
-            if (SPEAK_DEBUG && ev.results.length) speakDbgMark(dbg, 'result×' + ev.results.length + (ev.results[ev.results.length - 1].isFinal ? '(final)' : '(interim)'));
+            if (SPEAK_DEBUG && ev.results.length) speakDbgMark(dbg, 'result×' + ev.results.length + (ev.results[ev.results.length - 1].isFinal ? '(final)' : '(interim)') + speakDbgRaw(ev));
             if (speakListening && alts.length && !speakIgnoreResult) setSpeakHint('🎙️ ' + alts[0].transcript);
         };
         rec.onerror = (ev) => { speakLastError = (ev && ev.error) || 'error'; speakDbgMark(dbg, 'error:' + speakLastError); };
@@ -8301,11 +8316,12 @@
         let rec = new SR();
         rec.lang = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
         rec.interimResults = true;
-        rec.continuous = true;     // 按住期間持續收音，放開才結束（單音節短字比較不會沒結果）
+        rec.continuous = !speakIsSingleWord(q.word.english);   // 單一單字關閉 continuous（實驗），片語維持開啟
         rec.maxAlternatives = 10;
         advAlts = []; advErr = ''; advShort = false; advIgnore = false; advPressAt = Date.now();
         advStarted = false; advLatched = false; advSkipUp = false;
         const dbg = advDbg = speakDbgNew();
+        dbg.cont = rec.continuous;
         speakDbgMark(dbg, 'press');
         speakDbgHook(rec, dbg);
         // 麥克風真正開啟後才顯示錄音中並提示「請說」（原因同朗讀練習：避免開頭被切掉）
@@ -8321,7 +8337,7 @@
             let alts = [];
             for (let i = 0; i < ev.results.length; i++) for (let j = 0; j < ev.results[i].length; j++) alts.push({ transcript: ev.results[i][j].transcript, confidence: ev.results[i][j].confidence });
             advAlts = alts;
-            if (SPEAK_DEBUG && ev.results.length) speakDbgMark(dbg, 'result×' + ev.results.length + (ev.results[ev.results.length - 1].isFinal ? '(final)' : '(interim)'));
+            if (SPEAK_DEBUG && ev.results.length) speakDbgMark(dbg, 'result×' + ev.results.length + (ev.results[ev.results.length - 1].isFinal ? '(final)' : '(interim)') + speakDbgRaw(ev));
             if (advListening && alts.length && !advIgnore) advSpeakHint('🎙️ ' + alts[0].transcript);
         };
         rec.onerror = (ev) => { advErr = (ev && ev.error) || 'error'; speakDbgMark(dbg, 'error:' + advErr); };
