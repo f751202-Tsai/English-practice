@@ -166,9 +166,11 @@
         basic_noun: { free: true, title: '多益-基礎名詞', oldTitles: ['基礎單字-名詞'], lang: 'en', words: 300, kind: 'toeic' },
         basic_verb: { free: true, title: '多益-基礎動詞形容詞', oldTitles: ['基礎單字-動詞形容詞'], lang: 'en', words: 300, kind: 'toeic' },
         toeic_job: { item: 'pack_toeic_job', title: '多益-職場', lang: 'en', words: 300, kind: 'toeic' },
+        toeic_people: { free: true, title: '多益-人際溝通', lang: 'en', words: 300, kind: 'toeic' },
+        toeic_office: { free: true, title: '多益-辦公室常用', lang: 'en', words: 300, kind: 'toeic' },
         adv_night: { free: true, title: '冒險・夜市篇', lang: 'en', words: 50, kind: 'adv', chapter: 1 },
         adv_store: { free: true, title: '冒險・便利商店篇', lang: 'en', words: 80, kind: 'adv', chapter: 2 },
-        farm_1_5: { free: true, title: '農場・Lv1～5', lang: 'en', words: 83, kind: 'farm' }    // 雞塊農場的題庫（蜜蜂採蜜也從這裡出題）
+        farm_1_5: { free: true, title: '農場・Lv1～5', lang: 'en', words: 82, kind: 'farm' }    // 雞塊農場的題庫（蜜蜂採蜜也從這裡出題）
     };
     // 精選單字庫的圖示：同一類共用一張（多益：TOEIC 字樣／基礎：ABC 字樣），紫色實心
     function packIconHTML(packKey, size) {
@@ -182,7 +184,9 @@
     }
     // 免費附贈的精選單字庫：直接放在 App 裡，不用下載
     const FREE_PACK_CONTENT = {
-        farm_1_5: "January 1月 名詞\nFebruary 2月 名詞\nMarch 3月 名詞\nApril 4月 名詞\nMay 5月 名詞\nJune 6月 名詞\nJuly 7月 名詞\nAugust 8月 名詞\nSeptember 9月 名詞\nOctober 10月 名詞\nNovember 11月 名詞\nDecember 12月 名詞\nMonday 星期一 名詞\nTuesday 星期二 名詞\nWednesday 星期三 名詞\nThursday 星期四 名詞\nFriday 星期五 名詞\nSaturday 星期六 名詞\nSunday 星期日 名詞\nspring 春天 名詞\nsummer 夏天 名詞\nautumn 秋天 名詞\nwinter 冬天 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\nyesterday 昨天 名詞 副詞\nmorning 早上 名詞\nnight 夜晚 名詞\nsun 太陽 名詞\nrain 雨 名詞\nwind 風 名詞\ncloud 雲 名詞\nsnow 雪 名詞\nwarm 溫暖的 形容詞\nseed 種子 名詞\nflower 花 名詞\nleaf 葉子 名詞\ntree 樹 名詞\ngrass 草 名詞\nroot 根 名詞\nfruit 水果 名詞\ncorn 玉米 名詞\nrice 米 名詞\npotato 馬鈴薯 名詞\ntomato 番茄 名詞\ncarrot 紅蘿蔔 名詞\napple 蘋果 名詞\nbanana 香蕉 名詞\nwatermelon 西瓜 名詞\nsunflower 向日葵 名詞\nchicken 雞 名詞\ndog 狗 名詞\ncat 貓 名詞\ncow 乳牛 名詞\npig 豬 名詞\nduck 鴨 名詞\nbird 鳥 名詞\nbee 蜜蜂 名詞\nhoney 蜂蜜 名詞\nplant 種植 動詞\nwater 澆水 動詞\ngrow 生長 動詞\npick 摘 動詞\ndig 挖 動詞\nfeed 餵 動詞\nwait 等待 動詞\nsell 賣 動詞\nharvest 收成 動詞\nfarm 農場 名詞\nfield 田地 名詞\ngarden 花園 名詞\nfence 圍籬 名詞\nhouse 房子 名詞\nbasket 籃子 名詞\nmarket 市場 名詞\nvegetable 蔬菜 名詞\nstrawberry 草莓 名詞\npineapple 鳳梨 名詞\nbutterfly 蝴蝶 名詞\nafternoon 下午 名詞\nbeautiful 美麗的 形容詞\ntemperature 溫度 名詞\nscarecrow 稻草人 名詞",
+        toeic_people: "accommodating 樂於助人的 形容詞\nacknowledge 承認 告知收到 動詞\naddress 處理 動詞 地址 名詞\nadmire 欽佩 動詞\nadvice 建議 名詞\nadvise 建議 勸告 動詞\nagreeable 令人愉快的 欣然同意的 形容詞\nannoyed 惱怒的 形容詞\nanxious 焦慮的 渴望的 形容詞\napologetic 歉疚的 形容詞\napologize 道歉 動詞\napology 道歉 名詞\napology letter 致歉信 名詞\nappreciate 感激 欣賞 動詞\napproachable 平易近人的 形容詞\nargue 爭論 動詞\nargument 爭論 論點 名詞\nas requested 依照要求 副詞\nask for 要求 動詞\nassist 協助 動詞\nassistance 協助 名詞\nassure 向…保證 動詞\nattend to 處理 照料 動詞\nattention 注意力 名詞\nattentive 體貼的 專心的 形容詞\nattitude 態度 名詞\navailable 有空的 可取得的 形容詞\nawkward 尷尬的 形容詞\nbehave 表現 守規矩 動詞\nbehavior 行為 名詞\nbody language 肢體語言 名詞\nbother 打擾 動詞 麻煩 名詞\nbring up 提出 動詞\ncall back 回電 動詞\ncall center 客服中心 名詞\ncaller 來電者 名詞\ncalm 冷靜的 形容詞 使平靜 動詞\ncare 關心 照顧 名詞 動詞\ncaring 關懷的 形容詞\ncasual 隨意的 非正式的 形容詞\ncatch up 趕上 補做 動詞\nchat 聊天 動詞 名詞\ncheck with 向…確認 動詞\ncheerful 開朗的 形容詞\nclarification 澄清 名詞\nclarify 澄清 動詞\nclear up 澄清 解決 動詞\nclient 客戶 名詞\ncolleague 同事 名詞\ncomment 評論 名詞 動詞\ncommunicate 溝通 動詞\ncommunication 溝通 通訊 名詞\ncompensate 補償 動詞\ncomplain 抱怨 動詞\ncomplaint 抱怨 客訴 名詞\ncompliment 讚美 名詞 動詞\ncomplimentary 免費贈送的 讚美的 形容詞\nconcern 擔憂 名詞 涉及 動詞\nconcerning 關於 介系詞\nconfidence 信心 名詞\nconfident 有自信的 形容詞\nconfirm 確認 動詞\nconfirmation 確認 名詞\nconflict 衝突 名詞\nconfuse 使困惑 動詞\nconfusion 困惑 混亂 名詞\nconnect 聯繫 動詞\nconsiderate 體貼的 形容詞\nconsideration 體諒 考慮 名詞\nconsult 諮詢 動詞\nconsumer 消費者 名詞\ncontact 聯絡 動詞 聯絡人 名詞\ncontribute 貢獻 動詞\nconvenience 便利 名詞\nconvenient 方便的 形容詞\nconversation 對話 名詞\nconvince 說服 動詞\ncooperate 合作 配合 動詞\ncooperation 合作 名詞\ncooperative 合作的 形容詞\ncordial 熱誠的 形容詞\ncount on 指望 動詞\ncourteous 有禮貌的 形容詞\ncourtesy 禮貌 名詞\ncriticism 批評 名詞\ncriticize 批評 動詞\ncustomer 顧客 名詞\ncustomer complaint 顧客投訴 名詞\ncustomer feedback 顧客意見 名詞\ncustomer inquiry 顧客詢問 名詞\ncustomer satisfaction 顧客滿意度 名詞\ncustomer service 客戶服務 名詞\ncustomer support 客戶支援 名詞\ncustomer-oriented 顧客導向的 形容詞\ndamaged 損壞的 形容詞\ndeal 處理 動詞 交易 名詞\ndeal with 處理 應付 動詞\ndedicate 致力於 動詞\ndelighted 高興的 形容詞\ndemanding 要求高的 形容詞\ndeny 否認 拒絕 動詞\ndescribe 描述 動詞\ndescription 描述 名詞\ndialogue 對話 名詞\ndisagree 不同意 動詞\ndisappoint 使失望 動詞\ndisappointed 失望的 形容詞\ndiscourteous 失禮的 形容詞\ndissatisfaction 不滿 名詞\ndissatisfied 不滿意的 形容詞\neager 渴望的 形容詞\nemotion 情緒 名詞\nempathize 同理 動詞\nempathy 同理心 名詞\nemphasize 強調 動詞\nencourage 鼓勵 動詞\nenthusiastic 熱情的 形容詞\nescalate 升級處理 動詞\netiquette 禮儀 名詞\nexchange 交換 退換 動詞 名詞\nexcuse 藉口 名詞 原諒 動詞\nexpectation 期望 名詞\nexplanation 解釋 說明 名詞\nexpress 表達 動詞 快遞的 形容詞\nextension 分機 延長 名詞\nface-to-face 面對面的 形容詞\nfault 過錯 名詞\nfaulty 有瑕疵的 形容詞\nfeedback 回饋 意見 名詞\nfile a complaint 提出投訴 動詞\nfollow up 後續追蹤 動詞\nfollow-up 後續追蹤 名詞\nfrank 坦白的 形容詞\nfriendly 友善的 形容詞\nfrustrated 沮喪的 形容詞\ngenerous 慷慨的 形容詞\ngentle 溫和的 形容詞\ngenuine 真誠的 真正的 形容詞\ngesture 手勢 姿態 名詞\nget along with 與…相處融洽 動詞\nget back to 回覆 動詞\nget in touch with 與…聯絡 動詞\nget through 打通電話 動詞\ngrateful 感激的 形容詞\ngratitude 感激 名詞\ngreet 問候 迎接 動詞\ngreeting 問候 名詞\nguarantee 保證 名詞 動詞\nhandle 處理 動詞 把手 名詞\nhang up 掛電話 動詞\nharmony 和諧 名詞\nhear from 收到…的消息 動詞\nhelp desk 服務台 名詞\nhelpful 有幫助的 形容詞\nhesitate 猶豫 動詞\nhold on 稍等 動詞\nhold time 等候時間 名詞\nhonest 誠實的 形容詞\nhospitable 好客的 形容詞\nhospitality 款待 名詞\nhotline 熱線 名詞\nhumble 謙虛的 形容詞\nignore 忽視 動詞\nimpatient 不耐煩的 形容詞\nimpolite 沒禮貌的 形容詞\nimpression 印象 名詞\nin a timely manner 及時地 副詞\nin person 親自 副詞\ninconvenience 不便 名詞 造成不便 動詞\ninform 通知 動詞\ninquire 詢問 動詞\ninquiry 詢問 名詞\ninsist 堅持 動詞\ninteract 互動 動詞\ninteraction 互動 名詞\ninterpersonal 人際的 形容詞\ninterrupt 打斷 動詞\nintroduce 介紹 動詞\nissue 問題 議題 名詞 發行 動詞\nkeep in touch 保持聯絡 動詞\nkindly 好心地 副詞\nkindness 親切 名詞\nleave a message 留言 動詞\nlive chat 線上客服 名詞\nlook into 調查 動詞\nloyal 忠誠的 形容詞\nloyalty 忠誠 名詞\nmake up for 彌補 動詞\nmanner 方式 名詞\nmanners 禮貌 名詞\nmention 提及 動詞\nmisunderstand 誤會 動詞\nmisunderstanding 誤會 名詞\nmutual 互相的 形容詞\noffend 冒犯 動詞\non behalf of 代表 介系詞\non hold 等候中 形容詞\nopinion 意見 名詞\novercharge 多收費 動詞\npass on 轉達 動詞\npatience 耐心 名詞\npatient 有耐心的 形容詞 病人 名詞\npersonality 個性 名詞\npersuade 說服 動詞\npleasant 令人愉快的 形容詞\npleasure 榮幸 樂趣 名詞\npoint out 指出 動詞\npolite 有禮貌的 形容詞\npositive 正面的 積極的 形容詞\npraise 稱讚 動詞 名詞\nprofessionalism 專業素養 名詞\nprompt 迅速的 形容詞 促使 動詞\npromptly 迅速地 準時地 副詞\nproper 適當的 形容詞\nput through 轉接電話 動詞\nquery 疑問 名詞 詢問 動詞\nreach out 主動聯繫 動詞\nreasonable 合理的 形容詞\nreassure 使安心 動詞\nreassuring 令人安心的 形容詞\nreceipt 收據 名詞\nreception 接待處 歡迎會 名詞\nreceptionist 接待員 名詞\nrecognize 認出 認可 動詞\nrecommend 推薦 動詞\nrecommendation 推薦 建議 名詞\nrefer 提及 轉介 動詞\nrefund 退款 名詞 動詞\nregarding 關於 介系詞\nregret 遺憾 後悔 動詞 名詞\nrelationship 關係 名詞\nreliable 可靠的 形容詞\nrely on 依賴 動詞\nremind 提醒 動詞\nrepair 修理 動詞 名詞\nreplace 替換 動詞\nreplacement 更換 替代品 名詞\nreply to 回覆 動詞\nrepresentative 代表 名詞 有代表性的 形容詞\nrequest 請求 名詞 動詞\nresolution 解決 決議 名詞\nresolve 解決 動詞\nrespect 尊重 名詞 動詞\nrespectful 恭敬的 形容詞\nrespond 回應 動詞\nresponse 回應 名詞\nresponsive 反應迅速的 形容詞\nresponsiveness 回應速度 名詞\nreturn policy 退貨政策 名詞\nreview 評論 名詞 審查 動詞\nrude 無禮的 形容詞\nrun into 遇到 偶遇 動詞\nsatisfaction 滿意 名詞\nsatisfaction survey 滿意度調查 名詞\nsatisfactory 令人滿意的 形容詞\nsatisfied 滿意的 形容詞\nsatisfy 使滿意 動詞\nsensitive 敏感的 形容詞\nserve 服務 供應 動詞\nservice 服務 名詞\nservice representative 客服專員 名詞\nsincere 真誠的 形容詞\nsincerely 真誠地 副詞\nsmooth 順利的 形容詞\nsolution 解決方法 名詞\nsolve 解決 動詞\nsort out 解決 整理 動詞\nspeak up 大聲說 動詞\nstore credit 購物抵用金 名詞\nstraightforward 直接的 簡單的 形容詞\nsupport 支持 名詞 動詞\nsympathetic 同情的 形容詞\nsympathy 同情 名詞\ntactful 圓滑的 得體的 形容詞\ntake a message 記下留言 動詞\ntalk over 商量 動詞\nthank-you note 感謝函 名詞\nthankful 感謝的 形容詞\nthoughtful 體貼的 形容詞\ntolerate 容忍 動詞\ntoll-free 免付費的 形容詞\ntone 語氣 名詞\ntroubleshoot 排解問題 動詞\ntrust 信任 名詞 動詞\ntrustworthy 值得信賴的 形容詞\nunderstanding 理解 諒解 名詞\nunfortunately 不幸地 遺憾地 副詞\nunhappy 不高興的 形容詞\nupset 心煩的 形容詞 使心煩 動詞\nurgent 緊急的 形容詞\nvalued 珍視的 形容詞\nvalued customer 重要顧客 名詞\nvoice 聲音 名詞\nvoicemail 語音信箱 名詞\nwalk-in 無預約的 形容詞\nwarmly 熱情地 副詞\nwelcome 歡迎 動詞 名詞\nwilling 願意的 形容詞\nwith regard to 關於 介系詞\nwork out 解決 想出 動詞",
+        toeic_office: "absent 缺席的 形容詞\naccess 存取 名詞 動詞\naccess card 門禁卡 名詞\naccessory 配件 名詞\naccuracy 準確性 名詞\naccurate 準確的 形容詞\nadministration 行政 管理 名詞\nadministrative 行政的 形容詞\nadministrator 管理員 名詞\nagenda 議程 名詞\nahead of schedule 提前 副詞\nannounce 宣布 動詞\nannouncement 公告 名詞\nappointment 約會 預約 名詞\napproval 批准 名詞\napprove 批准 動詞\narchive 檔案庫 名詞 歸檔 動詞\narrange 安排 整理 動詞\nas soon as possible 盡快 副詞\nassign 分派 動詞\nassignment 任務 名詞\nassistant 助理 名詞\nattach 附加 動詞\nattachment 附件 名詞\nattend 出席 動詞\nattendance 出勤 出席人數 名詞\nauthorization 授權 名詞\nauthorize 授權 動詞\navailability 可用性 有空 名詞\nback up 備份 動詞\nbackup 備份 名詞\nbadge 識別證 名詞\nbehind schedule 落後進度 副詞\nbinder 活頁夾 名詞\nboard 董事會 公告板 名詞\nboard meeting 董事會議 名詞\nbranch 分公司 名詞\nbreak room 員工休息室 名詞\nbrief 簡短的 形容詞 簡報 名詞\nbriefing 簡報 名詞\nbroken 故障的 形容詞\nbudget 預算 名詞\nbulletin 公告 名詞\nbulletin board 公告欄 名詞\nbusiness hours 營業時間 名詞\ncabinet 櫃子 名詞\ncalculate 計算 動詞\ncalculator 計算機 名詞\ncall a meeting 召開會議 動詞\ncancel 取消 動詞\ncarpool 共乘 名詞 動詞\ncartridge 墨水匣 名詞\nchairperson 主席 名詞\nchecklist 檢查清單 名詞\ncirculate 傳閱 動詞\nclerk 職員 名詞\nclip 迴紋針 名詞 夾住 動詞\nclipboard 寫字夾板 名詞\nclock in 打卡上班 動詞\ncoffee machine 咖啡機 名詞\ncommittee 委員會 名詞\ncompany policy 公司政策 名詞\ncompile 彙編 動詞\ncompletion 完成 名詞\nconference 會議 研討會 名詞\nconference call 電話會議 名詞\nconference room 會議室 名詞\nconfidential 機密的 形容詞\ncoordinate 協調 動詞\ncopier 影印機 名詞\ncopy room 影印室 名詞\ncorrespond 通信 動詞\ncorrespondence 信件往來 名詞\ncorridor 走廊 名詞\ncourier 快遞員 名詞\ncover for 代理 動詞\ncoworker 同事 名詞\ncrowded 擁擠的 形容詞\ncubicle 辦公隔間 名詞\ndata 資料 名詞\ndatabase 資料庫 名詞\nday off 休假日 名詞\ndeadline 截止日期 名詞\ndelegate 委派 動詞 代表 名詞\ndelete 刪除 動詞\ndepartment 部門 名詞\ndesignate 指定 動詞\ndesktop 桌上型電腦 名詞\ndetail 細節 名詞\ndetailed 詳細的 形容詞\ndevice 裝置 名詞\ndiagram 圖表 名詞\ndigital copy 電子檔 名詞\ndirector 主任 董事 名詞\ndirectory 通訊錄 目錄 名詞\ndiscard 丟棄 動詞\ndispenser 取用機 分配器 名詞\ndispose 處理 丟棄 動詞\ndistribute 分發 動詞\ndivision 部門 名詞\ndocument 文件 名詞 記錄 動詞\ndownload 下載 動詞\ndraft 草稿 名詞 起草 動詞\ndrawer 抽屜 名詞\ndue date 截止日 到期日 名詞\nduplicate 複本 名詞 複製 動詞\nedit 編輯 動詞\nefficient 有效率的 形容詞\nelectronic 電子的 形容詞\nenclose 隨函附上 動詞\nenclosure 附件 名詞\nenvelope 信封 名詞\nerrand 差事 名詞\nerror 錯誤 名詞\nexecutive 主管 名詞 行政的 形容詞\nextension cord 延長線 名詞\nfacilitate 促進 主持 動詞\nfasten 固定 繫緊 動詞\nfax 傳真 名詞 動詞\nfile 檔案 名詞 歸檔 動詞\nfile a report 提交報告 動詞\nfile cabinet 檔案櫃 名詞\nfiling 歸檔 名詞\nfiling system 歸檔系統 名詞\nfill in for 代班 動詞\nfill out 填寫 動詞\nfolder 資料夾 名詞\nform 表格 名詞\nformat 格式 名詞\nforward 轉寄 動詞\nfront desk 櫃台 名詞\nfurniture 家具 名詞\ngo over 檢查 複習 動詞\nguideline 指引 名詞\nhand out 分發 動詞\nhandbook 手冊 名詞\nhandout 講義 名詞\nhard copy 紙本 名詞\nheadquarters 總部 名詞\nheadset 耳機麥克風 名詞\nhighlighter 螢光筆 名詞\nhole punch 打孔機 名詞\nin advance 事先 副詞\nin charge 負責的 形容詞\ninbox 收件匣 名詞\nink 墨水 名詞\ninstall 安裝 動詞\ninstruction 說明 指示 名詞\ninternal memo 內部備忘錄 名詞\nIT department 資訊部門 名詞\nitemized 逐項列出的 形容詞\njanitor 清潔工 名詞\nkeep track of 追蹤 記錄 動詞\nlabel 標籤 名詞 貼標籤 動詞\nletterhead 信頭 名詞\nlobby 大廳 名詞\nlocker 置物櫃 名詞\nlog 日誌 名詞 記錄 動詞\nlog in 登入 動詞\nlog out 登出 動詞\nlook over 瀏覽 檢查 動詞\nlounge 休息室 名詞\nmail 郵件 名詞 郵寄 動詞\nmailing list 郵寄名單 名詞\nmailroom 收發室 名詞\nmaintenance request 報修單 名詞\nmalfunction 故障 名詞 動詞\nmanager 經理 名詞\nmanual 手冊 名詞 手動的 形容詞\nmarker 麥克筆 名詞\nmeeting 會議 名詞\nmemo 備忘錄 名詞\nminutes 會議紀錄 名詞\nmonitor 螢幕 名詞 監控 動詞\nmultitask 多工處理 動詞\nnetwork 網路 名詞\nnotepad 便條紙 名詞\nnotification 通知 名詞\nnotify 通知 動詞\noffice equipment 辦公設備 名詞\noffice hours 辦公時間 名詞\noffice manager 辦公室經理 名詞\noffice supplies 辦公用品 名詞\non schedule 按進度 副詞\norder 訂購 動詞 訂單 名詞\norganize 整理 組織 動詞\norganizer 籌辦者 收納用品 名詞\nout of order 故障的 形容詞\noutline 大綱 名詞 概述 動詞\noversee 監督 動詞\novertime 加班 名詞 副詞\npackage 包裹 名詞\npantry 茶水間 名詞\npaper jam 卡紙 名詞\npaperless 無紙化的 形容詞\npaperwork 文書工作 名詞\nparcel 包裹 名詞\npermission 許可 名詞\npetty cash 零用金 名詞\nphotocopier 影印機 名詞\nphotocopy 影印 動詞 影本 名詞\nplace an order 下訂單 動詞\npolicy 政策 規定 名詞\npostpone 延後 動詞\npresident 總裁 名詞\nprint 列印 動詞\nprint out 列印出來 動詞\nprinter 印表機 名詞\nprintout 列印文件 名詞\nprioritize 排定優先順序 動詞\npriority 優先事項 名詞\nprocedure 程序 名詞\nprojector 投影機 名詞\nproofread 校對 動詞\npunctual 準時的 形容詞\nrearrange 重新安排 動詞\nreception area 接待區 名詞\nrecord 紀錄 名詞 記錄 動詞\nrecurring 定期的 形容詞\nrecycling bin 回收桶 名詞\nreference number 參考編號 名詞\nrefill 補充 動詞 補充品 名詞\nregister 登記 動詞 名詞\nregistration 登記 註冊 名詞\nregulation 規定 名詞\nreimburse 核銷 償還 動詞\nreminder 提示 名詞\nrenovate 翻修 動詞\nrenovation 整修 名詞\nreschedule 重新安排 動詞\nresponsibility 責任 名詞\nresponsible 負責的 形容詞\nretrieve 取回 動詞\nrevise 修改 動詞\nrevision 修訂 名詞\nrotate 輪流 動詞\nrotation 輪調 輪替 名詞\nroutine 例行公事 名詞 例行的 形容詞\nscan 掃描 動詞\nscanner 掃描器 名詞\nschedule 時程表 名詞 安排 動詞\nscissors 剪刀 名詞\nsecretary 祕書 名詞\nsecurity 保全 安全 名詞\nserver 伺服器 名詞\nsetup 設置 名詞\nshelf 架子 名詞\nshift 輪班 名詞\nshred 用碎紙機切碎 動詞\nshredder 碎紙機 名詞\nsick leave 病假 名詞\nsign in 簽到 動詞\nsign off 簽核 動詞\nsignature 簽名 名詞\nsoftware 軟體 名詞\nsort 分類 動詞 種類 名詞\nspreadsheet 試算表 名詞\nstack 一疊 名詞 堆疊 動詞\nstaff meeting 員工會議 名詞\nstamp 郵票 印章 名詞 蓋章 動詞\nstaple 釘書針 名詞 用釘書機釘 動詞\nstapler 釘書機 名詞\nstationery 文具 名詞\nsticky note 便利貼 名詞\nstoreroom 儲藏室 名詞\nsubmit 提交 動詞\nsubmit a request 提出申請 動詞\nsummarize 總結 動詞\nsummary 摘要 名詞\nsupervisor 主管 名詞\nsupplies 用品 名詞\nsupply 供應 名詞 動詞\nsupply room 用品室 名詞\nswipe 刷卡 動詞\ntake minutes 做會議記錄 動詞\ntape 膠帶 名詞\ntask 任務 名詞\ntechnical support 技術支援 名詞\ntechnician 技術人員 名詞\ntelecommute 遠距工作 動詞\ntemplate 範本 名詞\ntimesheet 工時表 名詞\nto-do list 待辦清單 名詞\ntoner 碳粉 名詞\ntrash can 垃圾桶 名詞\ntroubleshooting 疑難排解 名詞\nupdate 更新 動詞 名詞\nupload 上傳 動詞\nvending machine 自動販賣機 名詞\nverify 核對 驗證 動詞\nvice president 副總裁 名詞\nvideo conference 視訊會議 名詞\nvisitor 訪客 名詞\nvoice message 語音留言 名詞\nwater cooler 飲水機 名詞\nwhiteboard 白板 名詞\nwork from home 在家工作 動詞\nwork order 工單 名詞\nworkload 工作量 名詞\nworkstation 工作站 名詞",
+        farm_1_5: "January 1月 名詞\nFebruary 2月 名詞\nMarch 3月 名詞\nApril 4月 名詞\nMay 5月 名詞\nJune 6月 名詞\nJuly 7月 名詞\nAugust 8月 名詞\nSeptember 9月 名詞\nOctober 10月 名詞\nNovember 11月 名詞\nDecember 12月 名詞\nMonday 星期一 名詞\nTuesday 星期二 名詞\nWednesday 星期三 名詞\nThursday 星期四 名詞\nFriday 星期五 名詞\nSaturday 星期六 名詞\nSunday 星期日 名詞\nspring 春天 名詞\nsummer 夏天 名詞\nautumn 秋天 名詞\nwinter 冬天 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\nyesterday 昨天 名詞 副詞\nmorning 早上 名詞\nnight 夜晚 名詞\nsun 太陽 名詞\nrain 雨 名詞\nwind 風 名詞\ncloud 雲 名詞\nsnow 雪 名詞\nwarm 溫暖的 形容詞\nseed 種子 名詞\nflower 花 名詞\nleaf 葉子 名詞\ntree 樹 名詞\ngrass 草 名詞\nroot 根 名詞\nfruit 水果 名詞\ncorn 玉米 名詞\nrice 米 名詞\npotato 馬鈴薯 名詞\ncarrot 紅蘿蔔 名詞\napple 蘋果 名詞\nbanana 香蕉 名詞\nwatermelon 西瓜 名詞\nsunflower 向日葵 名詞\nchicken 雞 名詞\ndog 狗 名詞\ncat 貓 名詞\ncow 乳牛 名詞\npig 豬 名詞\nduck 鴨 名詞\nbird 鳥 名詞\nbee 蜜蜂 名詞\nhoney 蜂蜜 名詞\nplant 種植 動詞\nwater 澆水 動詞\ngrow 生長 動詞\npick 摘 動詞\ndig 挖 動詞\nfeed 餵 動詞\nwait 等待 動詞\nsell 賣 動詞\nharvest 收成 動詞\nfarm 農場 名詞\nfield 田地 名詞\ngarden 花園 名詞\nfence 圍籬 名詞\nhouse 房子 名詞\nbasket 籃子 名詞\nmarket 市場 名詞\nvegetable 蔬菜 名詞\nstrawberry 草莓 名詞\npineapple 鳳梨 名詞\nbutterfly 蝴蝶 名詞\nafternoon 下午 名詞\nbeautiful 美麗的 形容詞\ntemperature 溫度 名詞\nscarecrow 稻草人 名詞",
         adv_night: "hot 熱的 形容詞\ncup 杯子 名詞\nsoup 湯 名詞\nmeatball 貢丸 肉丸 名詞\neat 吃 動詞\ngood 好的 好吃的 形容詞\ncorn 玉米 名詞\ngrill 烤 動詞 烤架 名詞\nsalt 鹽 名詞\nbutter 奶油 名詞\nsweet 甜的 形容詞\nbuy 買 動詞\noyster 蚵仔 牡蠣 名詞\negg 蛋 名詞\nrice 飯 米 名詞\nsauce 醬料 名詞\nspicy 辣的 形容詞\norder 點餐 動詞\ntofu 豆腐 名詞\nstinky 臭的 形容詞\nbubble tea 珍珠奶茶 名詞\nmilk tea 奶茶 名詞\nice 冰塊 名詞\nsugar 糖 名詞\nstraw 吸管 名詞\ndoll 娃娃 名詞\ncoin 硬幣 名詞\ngrab 抓 動詞\ntry 嘗試 動詞\nprize 獎品 名詞\nplay 玩 動詞\ndart 飛鏢 名詞\nthrow 丟 投擲 動詞\nhit 打中 動詞\nmiss 沒打中 錯過 動詞\nscore 分數 名詞 得分 動詞\nlucky 幸運的 形容詞\nwin 贏 動詞\nlose 輸 動詞\neast 東方 名詞\nwest 西方 名詞\nsouth 南方 名詞\nnorth 北方 名詞\nring 圈圈 戒指 名詞\nstall 攤位 名詞\nline 隊伍 名詞 排隊 動詞\ncrowded 擁擠的 形容詞\ncheap 便宜的 形容詞\nprice 價格 名詞\nnight market 夜市 名詞",
         adv_store: "convenience store 便利商店 名詞\nopen 營業中的 形容詞 打開 動詞\nclose 關門 關閉 動詞\nwelcome 歡迎 動詞 形容詞\nclerk 店員 名詞\ntea egg 茶葉蛋 名詞\nboil 煮 煮沸 動詞\nhungry 餓的 形容詞\nsnack 零食 名詞\nbreakfast 早餐 名詞\nhot dog 熱狗 名詞\nbun 小圓麵包 名詞\nbread 麵包 名詞\nsandwich 三明治 名詞\nketchup 番茄醬 名詞\ncheese 起司 名詞\nnapkin 餐巾紙 名詞\ninstant noodles 泡麵 名詞\nfull 飽的 滿的 形容詞\ndelicious 好吃的 美味的 形容詞\nrice ball 飯糰 名詞\nseaweed 海苔 名詞\ntuna 鮪魚 名詞\nsalmon 鮭魚 名詞\ntriangle 三角形 名詞\nwrap 包裝 名詞 包起來 動詞\ntear 撕開 動詞\nplastic 塑膠 名詞\nfridge 冰箱 名詞\ncold 冰的 冷的 形容詞\nbottle 瓶子 名詞\nwater 水 名詞\ndrink 飲料 名詞 喝 動詞\nsugar-free 無糖的 形容詞\ngreen tea 綠茶 名詞\nprint 列印 動詞\nticket 票 名詞\nmachine 機器 名詞\nbill 帳單 名詞\nreceipt 收據 發票 名詞\nsalad 沙拉 名詞\nvegetable 蔬菜 名詞\nfresh 新鮮的 形容詞\nlid 蓋子 名詞\nfork 叉子 名詞\nhealthy 健康的 形容詞\nlettuce 生菜 萵苣 名詞\ntomato 番茄 名詞\ndressing 沙拉醬 名詞\nlight 清淡的 輕的 形容詞\nmicrowave 微波爐 名詞 微波加熱 動詞\nheat 加熱 動詞 熱度 名詞\nwarm 溫的 溫暖的 形容詞\nminute 分鐘 名詞\nsecond 秒 名詞\nbutton 按鈕 名詞\nwait 等待 動詞\ncareful 小心的 形容詞\nsteam 蒸氣 名詞\nnoise 噪音 聲音 名詞\nlunch box 便當 名詞\nchopsticks 筷子 名詞\nspoon 湯匙 名詞\nexpire 過期 動詞\ndiscount 折扣 名詞\nhalf price 半價 名詞\nsticker 貼紙 名詞\nmeat 肉 名詞\nchicken 雞肉 名詞\npoint 點數 名詞\ncoffee 咖啡 名詞\nlatte 拿鐵 名詞\niced 加冰的 形容詞\nbitter 苦的 形容詞\nsleepy 想睡的 形容詞\ncashier 收銀員 名詞\ncustomer 顧客 名詞\npay 付錢 動詞\ncash 現金 名詞\ncredit card 信用卡 名詞",
         basic_noun: "activity 活動 名詞\nafternoon 下午 名詞\nage 年齡 名詞\napplication form 申請表 名詞\narea 區域 名詞\nart 藝術 美術 名詞\nauditorium 禮堂 名詞\nback 後面 名詞\nbackpack 背包 名詞\nbag 包包 名詞\nbank 銀行 名詞\nbe late for 遲到 動詞\nbeginner 初學者 名詞\nbike 腳踏車 名詞\nbirthday 生日 名詞\nbook 書籍 名詞 預訂 動詞\nbookshelf 書架 名詞\nbookstore 書店 名詞\nboss 老闆 名詞\nbottle 瓶子 名詞\nbottom 底部 名詞\nbox 箱子 名詞\nbreakfast 早餐 名詞\nbuilding 建築物 名詞\nbus 公車 名詞\nbusiness card 名片 名詞\ncafeteria 自助餐廳 名詞\ncalendar 日曆 名詞\ncampus 校園 名詞\ncar 汽車 名詞\ncard 卡片 名詞\ncenter 中心 名詞\nchair 椅子 名詞\nchance 機會 名詞\nchapter 章節 名詞\nchild 小孩 名詞\ncity 城市 名詞\nclass 班級 課堂 名詞\nclassmate 同學 名詞\nclassroom 教室 名詞\nclock 時鐘 名詞\nclosing time 打烊時間 名詞\nclothes 衣服 名詞\nclub 社團 俱樂部 名詞\ncoffee 咖啡 名詞\ncoffee break 休息時間 名詞\ncoin 硬幣 名詞\ncollege 大學 學院 名詞\ncolor 顏色 名詞\ncompany 公司 名詞\ncomputer 電腦 名詞\ncontest 比賽 名詞\ncorner 角落 轉角 名詞\ncountry 國家 名詞\ncourse 課程 名詞\ncup 杯子 名詞\ndaily 每日的 形容詞 每天 副詞\ndate 日期 名詞\nday 天 名詞\nday shift 日班 名詞\ndebate 辯論 名詞 動詞\ndesk 書桌 名詞\ndictionary 字典 名詞\ndinner 晚餐 名詞\ndiscussion 討論 名詞\ndoctor 醫生 名詞\ndoor 門 名詞\ndormitory 宿舍 名詞\ndrawing 圖畫 名詞\ndream 夢想 名詞 做夢 動詞\ndriver 司機 名詞\neducation 教育 名詞\nelevator 電梯 名詞\nemail 電子郵件 名詞 寄電子郵件 動詞\nemail address 電子郵件地址 名詞\nenrollment 註冊 名詞\nentrance 入口 名詞\neraser 橡皮擦 名詞\nessay 短文 論文 名詞\nevening 傍晚 名詞\nevent 活動 事件 名詞\nexam 考試 名詞\nexample 例子 名詞\nexcited 興奮的 形容詞\nexit 出口 名詞 離開 動詞\nexperience 經驗 名詞\nextracurricular 課外的 形容詞\nfaculty 全體教職員 名詞\nfamily 家庭 名詞\nfirst day 第一天 名詞\nfirst job 第一份工作 名詞\nfirst name 名字 名詞\nfloor 地板 樓層 名詞\nfood 食物 名詞\nfriend 朋友 名詞\nfront 前面 名詞\nfull-time 全職的 形容詞\ngame 遊戲 比賽 名詞\ngift 禮物 名詞\ngoal 目標 名詞\ngrade 成績 年級 名詞\ngraduate 畢業 動詞 畢業生 名詞\ngraduation 畢業 畢業典禮 名詞\ngroup 群體 小組 名詞\ngroup project 小組作業 名詞\nguest 客人 來賓 名詞\nguidance 輔導 指導 名詞\ngym 體育館 健身房 名詞\nhabit 習慣 名詞\nhall 大廳 走廊 名詞\nhallway 走廊 名詞\nhand in 繳交 動詞\nhardworking 努力的 形容詞\nhat 帽子 名詞\nheadphones 耳機 名詞\nhealth 健康 名詞\nhelper 幫手 名詞\nhistory 歷史 名詞\nhobby 嗜好 名詞\nholiday 假日 名詞\nhometown 家鄉 名詞\nhomework 家庭作業 名詞\nhospital 醫院 名詞\nhour 小時 名詞\nidea 主意 想法 名詞\ninstructor 講師 名詞\ninternet 網際網路 名詞\nintroduction 介紹 名詞\njob 工作 名詞\njob hunting 找工作 名詞\njob title 職稱 名詞\nkey 鑰匙 關鍵 名詞\nkeyboard 鍵盤 名詞\nknowledge 知識 名詞\nlaboratory 實驗室 名詞\nlanguage 語言 名詞\nlaptop 筆記型電腦 名詞\nlast name 姓氏 名詞\nleader 領導者 名詞\nlecture 講課 名詞 演講 動詞\nlesson 課程 教訓 名詞\nletter 信件 字母 名詞\nlevel 程度 等級 名詞\nlibrarian 圖書館員 名詞\nlibrary 圖書館 名詞\nline 線 隊伍 名詞\nlist 清單 名詞 列出 動詞\nlocation 地點 位置 名詞\nlunch 午餐 名詞\nlunch break 午休 名詞\nlunchroom 員工餐廳 名詞\nlunchtime 午餐時間 名詞\nmagazine 雜誌 名詞\nmajor 主修 名詞 動詞\nmap 地圖 名詞\nmark 分數 名詞 打分數 動詞\nmarket 市場 名詞\nmath 數學 名詞\nmeal 餐點 名詞\nmeasure 測量 動詞 措施 名詞\nmember 成員 名詞\nmessage 訊息 名詞\nmiddle 中間 名詞\nminute 分鐘 名詞\nmistake 錯誤 名詞\nmoney 金錢 名詞\nmonth 月份 名詞\nmorning 早晨 名詞\nmusic 音樂 名詞\nnameplate 名牌 名詞\nnationality 國籍 名詞\nnervous 緊張的 形容詞\nnewcomer 新人 名詞\nnews 新聞 消息 名詞\nnewspaper 報紙 名詞\nnight 夜晚 名詞\nnight shift 夜班 名詞\nnote 筆記 名詞 記下 動詞\nnotebook 筆記本 名詞\nnumber 數字 號碼 名詞\nnurse 護士 名詞\noffice 辦公室 名詞\noffice worker 上班族 名詞\nowner 擁有者 老闆 名詞\npage 頁 名詞\npaper 紙張 報告 名詞\nparent 父母 名詞\npark 公園 名詞 停車 動詞\nparking lot 停車場 名詞\npart-time 兼職的 形容詞\npart-time job 打工 名詞\npartner 夥伴 名詞\nparty 派對 名詞\npassword 密碼 名詞\npay attention to 注意 動詞\npen 原子筆 名詞\npencil 鉛筆 名詞\npeople 人們 名詞\nperson 個人 名詞\nphone 電話 名詞\nphone number 電話號碼 名詞\nphoto 照片 名詞\nphysics 物理 名詞\npicture 圖片 照片 名詞\npiece 一片 一件 名詞\npost 郵件 名詞 張貼 動詞\npractice 練習 名詞 動詞\npresentation 簡報 名詞\nprice 價格 名詞\nprincipal 校長 名詞 主要的 形容詞\nprize 獎品 名詞\nproblem 問題 名詞\nprofessor 教授 名詞\nproject 專案 計畫 名詞\nquestion 問題 名詞 質問 動詞\nquiz 小考 名詞\nreason 原因 理由 名詞\nresearch 研究 名詞 動詞\nrestaurant 餐廳 名詞\nrestroom 洗手間 名詞\nresult 結果 名詞\nroad 道路 名詞\nroom 房間 空間 名詞\nroommate 室友 名詞\nrule 規則 名詞\nsalesclerk 店員 名詞\nsalesperson 售貨員 名詞\nscholarship 獎學金 名詞\nschool 學校 名詞\nscience 科學 名詞\nscore 分數 名詞 得分 動詞\nseat 座位 名詞\nsemester 學期 名詞\nseminar 研討會 名詞\nsentence 句子 名詞\nshape 形狀 名詞\nshirt 襯衫 名詞\nshoe 鞋子 名詞\nshop 商店 名詞 購物 動詞\nside 旁邊 一側 名詞\nsign 招牌 標誌 名詞 簽名 動詞\nsize 尺寸 名詞\nskill 技能 名詞\nsmart 聰明的 形容詞\nsnack 點心 名詞\nspace 空間 名詞\nspeaker 演講者 喇叭 名詞\nspeech 演講 名詞\nsport 運動 名詞\nstairs 樓梯 名詞\nstation 車站 名詞\nstep 步驟 名詞\nstore 商店 名詞 儲存 動詞\nstory 故事 樓層 名詞\nstreet 街道 名詞\nstudent 學生 名詞\nstudy group 讀書會 名詞\nsubject 科目 主題 名詞\nsubway 地鐵 名詞\ntable 桌子 表格 名詞\ntake notes 做筆記 動詞\ntaxi 計程車 名詞\ntea 茶 名詞\nteacher 老師 名詞\nteam 團隊 名詞\nteam member 團隊成員 名詞\nteammate 隊友 名詞\ntelephone 電話 名詞\nterm 學期 期限 名詞\ntest 測驗 名詞 測試 動詞\nticket 票 名詞\ntime 時間 次數 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\ntop 頂端 名詞\ntopic 主題 名詞\ntown 城鎮 名詞\ntrain 火車 名詞 訓練 動詞\ntranslate 翻譯 動詞\ntranslation 翻譯 名詞\ntype 類型 名詞 打字 動詞\numbrella 雨傘 名詞\nuniform 制服 名詞 一致的 形容詞\nvocabulary 字彙 名詞\nvolunteer 志工 名詞 自願 動詞\nwaiter 服務生 名詞\nwall 牆壁 名詞\nwater 水 名詞\nweather 天氣 名詞\nwebsite 網站 名詞\nweek 星期 名詞\nweekday 平日 名詞\nweekend 週末 名詞\nwindow 窗戶 名詞\nword 單字 名詞\nwork hours 工作時數 名詞\nworker 工人 員工 名詞\nyear 年 名詞\nyearly 每年的 形容詞\nyesterday 昨天 名詞 副詞",
@@ -892,6 +896,7 @@
     let speakRec = null, speakListening = false, speakPressAt = 0, speakShortTap = false, speakIgnoreResult = false, speakStarted = false, speakLatched = false, speakSkipUp = false;
     let speakHeardAlts = [], speakLastError = '', speakWatchdog = null;
     let speakQuestion = { attempts: 0, best: null, last: null };
+    let speakBooks = '', speakRecChunks = [], speakRecorder = null, speakRecStream = null, speakRecUrl = '';
 
     let touchStartX = 0;
     let touchEndX = 0;
@@ -1732,6 +1737,7 @@
 
     function switchView(viewId) {
         try { if (viewId !== 'adventureView') faStop(); if (viewId !== 'adventureBattleView') advHideResult(); } catch (e) {}
+        if (viewId !== 'adventureBattleView') document.body.classList.remove('bt-on');
         // 戰鬥中打字：鍵盤蓋在畫面上，不要把整個遊戲畫面往上推
         try { if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = (viewId === 'adventureBattleView'); } catch (e) {}
         document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
@@ -1747,13 +1753,13 @@
         
         let wrapper = document.getElementById('mainScaleWrapper');
         // 新版練習頁（cp-）與建立單字頁（we-）：不放大，照設計稿的寬度（手機 480、電腦 780）
-        const CP_VIEWS = ['practiceView', 'examView', 'flashcardSetupView', 'flashcardPlayView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'advLevelView', 'advStatsView'];
+        const CP_VIEWS = ['practiceView', 'examView', 'flashcardSetupView', 'flashcardPlayView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'speakPracticePlayView', 'advLevelView', 'advStatsView'];
         let cpOn = CP_VIEWS.includes(viewId), weOn = viewId === 'editorDetailView';
         document.body.classList.toggle('cp-on', cpOn);
         document.body.classList.toggle('we-on', weOn);
         if (!weOn) document.body.classList.remove('we-sub');
         document.body.classList.toggle('qz-on', viewId === 'cardExamPlayView' || (viewId === 'examView' && typeof isExamRunning !== 'undefined' && isExamRunning));   // 測驗作答中：手機整頁高度跟著可見區域（鍵盤）
-        document.body.classList.toggle('cp-tall', viewId === 'flashcardPlayView' || viewId === 'advLevelView' || viewId === 'advStatsView' || (viewId === 'practiceView' && typeof isPlaying !== 'undefined' && isPlaying));
+        document.body.classList.toggle('cp-tall', viewId === 'flashcardPlayView' || viewId === 'speakPracticePlayView' || viewId === 'advLevelView' || viewId === 'advStatsView' || (viewId === 'practiceView' && typeof isPlaying !== 'undefined' && isPlaying));
         if (cpOn || weOn) { wrapper.className = 'scale-wrapper-cp'; }
         else if (['practiceView', 'examView', 'flashcardPlayView', 'flashcardSetupView', 'cardExamSetupView', 'cardExamPlayView', 'speakPracticeSetupView', 'speakPracticePlayView', 'homeDashboardView', 'editorListView', 'editorDetailView', 'historyView'].includes(viewId)) {
             wrapper.className = 'scale-wrapper-practice';
@@ -3206,6 +3212,7 @@
     function goToSpeakPracticePage() {
         initSpeakPracticeGrid();
         switchView('speakPracticeSetupView');
+        cpRenderResume('speak');
     }
 
     function levenshtein(a, b) {
@@ -3246,7 +3253,8 @@
     ];
     // 很短的單字，語音辨識常常寫成別的字：目標是左邊的字時，聽成右邊這些也算對（只有單向）
     const EN_SPEAK_ALIKE = {
-        till: ['til', 'until', 'tell', 'teal', 'tilt', 'tilly', 'tele']
+        till: ['til', 'until', 'tell', 'teal', 'tilt', 'tilly', 'tele'],
+        win: ['when', 'wing', 'wind', 'wins', 'wen', 'whin']
     };
     const EN_HOMO_MAP = (function () {
         let m = {};
@@ -3331,8 +3339,10 @@
     function setSpeakHint(text, warn) {
         let el = document.getElementById('speakMicHint');
         if (!el) return;
-        el.textContent = text;
+        el.textContent = text || '';
         el.classList.toggle('warn', !!warn);
+        let panel = document.getElementById('speakPanel');
+        if (panel) panel.classList.toggle('sp-has-msg', !!text);
     }
 
     function speakErrorMessage(code) {
@@ -3417,17 +3427,23 @@
         }
     }
 
-    async function startSpeakPracticeSession() {
+    async function startSpeakPracticeSession(resume) {
         if (speakStarting) return;
-        let text = document.getElementById('speakPracticePreviewTextarea').value.trim();
-        let words = parseWordsRaw(text);
-        if (document.getElementById('speakPracticeSettingStarred').checked) words = words.filter(w => w.starred);
-        for (let i = words.length - 1; i > 0; i--) {
-            let j = Math.floor(Math.random() * (i + 1));
-            [words[i], words[j]] = [words[j], words[i]];
+        let words;
+        if (resume && Array.isArray(resume.words)) {
+            words = resume.words.map(l => parseWordsRaw(l)[0]).filter(Boolean);
+        } else {
+            resume = null;
+            let text = document.getElementById('speakPracticePreviewTextarea').value.trim();
+            words = parseWordsRaw(text);
+            if (document.getElementById('speakPracticeSettingStarred').checked) words = words.filter(w => w.starred);
+            for (let i = words.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [words[i], words[j]] = [words[j], words[i]];
+            }
+            let qCount = parseInt(document.getElementById('speakPracticeQuestionCount').value) || 0;
+            if (qCount > 0 && words.length > qCount) words = words.slice(0, qCount);
         }
-        let qCount = parseInt(document.getElementById('speakPracticeQuestionCount').value) || 0;
-        if (qCount > 0 && words.length > qCount) words = words.slice(0, qCount);
         if (words.length === 0) {
             alert('⚠️ 範圍內沒有符合條件的單字，請重新勾選！');
             return;
@@ -3454,8 +3470,10 @@
 
         requestWakeLock();
         speakPracticeActiveList = words;
-        currentSpeakPracticeIndex = 0;
-        speakPracticeResults = [];
+        currentSpeakPracticeIndex = resume ? Math.min(resume.idx || 0, words.length - 1) : 0;
+        speakPracticeResults = resume && Array.isArray(resume.results) ? resume.results.slice(0, currentSpeakPracticeIndex) : [];
+        speakBooks = resume ? (resume.books || '') : cpSelectedTitles('speakPracticeGrid');
+        speakSaveResume();
         switchView('speakPracticePlayView');
         showSpeakPracticeQuestion();
     }
@@ -3468,14 +3486,34 @@
     function backToSpeakPracticeSetup() {
         stopSpeakPracticeSession();
         switchView('speakPracticeSetupView');
+        cpRenderResume('speak');
+    }
+    // 左上返回：離開並保留進度（下次在開始頁可以「繼續練習」）
+    function leaveSpeakPractice() {
+        abortSpeakListening();
+        speakSaveResume();
+        backToSpeakPracticeSetup();
+    }
+    const SPEAK_RESUME_KEY = 'chicky_speak_resume';
+    function speakSaveResume() {
+        try {
+            if (!speakPracticeActiveList.length || currentSpeakPracticeIndex >= speakPracticeActiveList.length) { localStorage.removeItem(SPEAK_RESUME_KEY); return; }
+            localStorage.setItem(SPEAK_RESUME_KEY, JSON.stringify({ words: speakPracticeActiveList.map(w => w.rawLine), idx: currentSpeakPracticeIndex, results: speakPracticeResults.slice(0, 500), books: speakBooks, ts: Date.now(), lang: getLearningLanguage() }));
+        } catch (e) {}
+    }
+    function setSpeakState(st) {
+        let v = document.getElementById('speakPracticePlayView');
+        if (v) v.dataset.state = st;
+        let b = document.getElementById('speakMicBtn');
+        if (b) b.setAttribute('aria-label', st === 'rec' ? '放開送出' : st === 'done' ? '再唸一次' : '按住朗讀');
     }
 
     function updateSpeakNextBtn() {
-        let btn = document.getElementById('speakPracticeNextBtn');
-        if (!btn) return;
         let isLast = currentSpeakPracticeIndex >= speakPracticeActiveList.length - 1;
-        if (speakQuestion.attempts === 0) btn.innerText = isLast ? '略過並結束 🏁' : '略過此題 ⏭';
-        else btn.innerText = isLast ? '完成 🏁' : '下一題 ▶';
+        let lb = document.getElementById('speakNextLabel');
+        if (lb) lb.textContent = isLast ? '完成' : '下一個';
+        let btn = document.getElementById('speakPracticeNextBtn');
+        if (btn) btn.setAttribute('aria-label', isLast ? '完成' : '下一個');
     }
 
     function showSpeakPracticeQuestion() {
@@ -3483,19 +3521,24 @@
             finishSpeakPracticeSession();
             return;
         }
-        let card = speakPracticeActiveList[currentSpeakPracticeIndex];
-        document.getElementById('speakPracticeCardEng').innerText = card.english;
-        document.getElementById('speakPracticeCardChi').innerText = wordMeaningLine(card);
-        document.getElementById('speakPracticeProgressText').innerText = `${currentSpeakPracticeIndex + 1} / ${speakPracticeActiveList.length} 題`;
-        document.getElementById('speakPracticeProgressBar').style.width = `${((currentSpeakPracticeIndex + 1) / speakPracticeActiveList.length) * 100}%`;
+        let card = speakPracticeActiveList[currentSpeakPracticeIndex], total = speakPracticeActiveList.length;
+        let set = (id, v, html) => { let el = document.getElementById(id); if (el) el[html ? 'innerHTML' : 'textContent'] = v; };
+        set('speakBook', speakBooks ? `題庫 ${speakBooks}` : '題庫');
+        set('speakPracticeCardEng', card.english);
+        let senses = (card.senses && card.senses.length) ? card.senses : [{ m: card.meanings && card.meanings.length ? card.meanings : [card.chinese || ''], p: card.posList || [] }];
+        set('speakPracticeCardChi', senses.map(x => (x.m || []).join('、')).join(' ／ '));
+        let pos = []; senses.forEach(x => (x.p || []).forEach(q => { if (pos.indexOf(q) === -1) pos.push(q); }));
+        set('speakPracticeCardPos', pos.map(q => `<span class="cp-pos">${escapeHTML(q)}</span>`).join(''), true);
+        set('speakPracticeProgressText', `${currentSpeakPracticeIndex + 1} <small>/ ${total}</small>`, true);
+        let bar = document.getElementById('speakPracticeProgressBar'); if (bar) bar.style.width = ((currentSpeakPracticeIndex + 1) / total * 100) + '%';
+        try { cpFitWord(document.getElementById('speakPracticeCardEng')); } catch (e) {}
 
         speakQuestion = { attempts: 0, best: null, last: null };
-        let box = document.getElementById('speakResultBox');
-        box.classList.remove('show');
-        box.innerHTML = '';
+        speakClearRecording();
+        setSpeakState('idle');
         let env = getBrowserEnv();
-        let note = (currentSpeakPracticeIndex === 0 && env.isIOS && env.standalone) ? '（主畫面模式的語音辨識可能無法使用，沒反應請改用 Safari 開啟）' : '';
-        setSpeakHint('按住麥克風朗讀上面的單字，說完再放開 ' + note, !!note);
+        let note = (currentSpeakPracticeIndex === 0 && env.isIOS && env.standalone) ? '主畫面模式的語音辨識可能無法使用，沒反應請改用 Safari 開啟' : '';
+        setSpeakHint(note, !!note);
         updateSpeakNextBtn();
     }
 
@@ -3503,13 +3546,12 @@
         let r = speakQuestion.last, best = speakQuestion.best;
         if (!r) return;
         let pass = r.score >= getSpeakPassScore();
-        let box = document.getElementById('speakResultBox');
-        box.innerHTML = `
-            <div class="speak-score ${pass ? 'pass' : 'fail'}">${r.score}<small>分</small></div>
-            <div style="font-weight:700; margin-top:4px;">${pass ? '✅ 通過！' : `❌ 未通過（需 ${getSpeakPassScore()} 分以上）`}</div>
-            <div class="speak-sub">辨識到：<b>${escapeHTML(r.heard || '(沒有內容)')}</b></div>
-            <div class="speak-sub">已嘗試 ${speakQuestion.attempts} 次 ｜ 本題最高 ${best.score} 分</div>`;
-        box.classList.add('show');
+        let set = (id, v) => { let el = document.getElementById(id); if (el) el.textContent = v; };
+        set('speakScoreLabel', pass ? '很棒！' : '再試試看・');
+        set('speakScore', r.score);
+        let chip = document.getElementById('speakScoreChip'); if (chip) chip.classList.toggle('is-fail', !pass);
+        setSpeakState('done');
+        setSpeakHint(`辨識到：${r.heard || '(沒有內容)'}${speakQuestion.attempts > 1 ? `｜本題最高 ${best.score} 分` : ''}`);
     }
 
     function abortSpeakListening() {
@@ -3517,8 +3559,9 @@
         clearTimeout(speakWatchdog);
         if (speakRec && speakListening) { try { speakRec.abort(); } catch (e) {} }
         speakListening = false;
-        let btn = document.getElementById('speakMicBtn');
-        if (btn) btn.classList.remove('recording');
+        speakStopRecording(true);
+        let v = document.getElementById('speakPracticePlayView');
+        if (v && v.dataset.state === 'rec') setSpeakState(speakQuestion.last ? 'done' : 'idle');
     }
 
     function startSpeakListening() {
@@ -3533,7 +3576,8 @@
         let rec = new SR();
         rec.lang = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
         rec.interimResults = true;
-        rec.continuous = false;
+        // 按住期間持續收音（continuous），放開才結束：單音節的短字（win、切）不會因為瀏覽器太早判定「說完了」而沒有結果
+        rec.continuous = true;
         rec.maxAlternatives = 10;
         speakHeardAlts = []; speakLastError = ''; speakShortTap = false; speakIgnoreResult = false;
         speakPressAt = Date.now();
@@ -3554,13 +3598,14 @@
 
         speakRec = rec;
         speakListening = true;
-        document.getElementById('speakMicBtn').classList.add('recording');
-        setSpeakHint('🎙️ 聆聽中…說完請放開');
+        setSpeakState('rec');
+        setSpeakHint('');
         try {
             rec.start();
+            speakStartRecording();
         } catch (e) {
             speakListening = false;
-            document.getElementById('speakMicBtn').classList.remove('recording');
+            setSpeakState(speakQuestion.last ? 'done' : 'idle');
             setSpeakHint('無法啟動語音辨識，請再按一次', true);
         }
     }
@@ -3589,11 +3634,9 @@
     }
 
     function speakFinishHold(rec, tailMs) {
-        let btn = document.getElementById('speakMicBtn');
-        if (btn) btn.classList.remove('recording');
         // 再多收一小段，避免單字最後一個音被切掉（切掉會被辨識成別的字）
-        setSpeakHint('🎙️ 收音中…');
-        setTimeout(() => { if (speakRec === rec && speakListening) { try { rec.stop(); } catch (e) {} } }, tailMs);
+        setSpeakHint('收音中…');
+        setTimeout(() => { speakStopRecording(); if (speakRec === rec && speakListening) { try { rec.stop(); } catch (e) {} } }, tailMs);
         // 保險：有些瀏覽器偶爾不會觸發 onend，8 秒後強制收尾
         clearTimeout(speakWatchdog);
         speakWatchdog = setTimeout(() => {
@@ -3605,7 +3648,8 @@
         if (speakRec !== rec || !speakListening) return;     // 已處理過（或已被中止）
         speakListening = false;
         clearTimeout(speakWatchdog);
-        document.getElementById('speakMicBtn').classList.remove('recording');
+        speakStopRecording();
+        setSpeakState(speakQuestion.last ? 'done' : 'idle');
         if (speakShortTap) { setSpeakHint('請「按住」麥克風說話，說完再放開', true); return; }
         if (speakIgnoreResult) return;
 
@@ -3623,7 +3667,48 @@
         if (!speakQuestion.best || res.score > speakQuestion.best.score) speakQuestion.best = res;
         renderSpeakResult();
         updateSpeakNextBtn();
-        setSpeakHint('可以再按住麥克風重說一次，或按「下一題」');
+    }
+
+    // ── 聽我的錄音：只在電腦版開（手機上同時錄音＋語音辨識會搶麥克風，iPhone / Android 容易讓辨識失敗）──
+    function speakCanRecord() {
+        let env = getBrowserEnv();
+        return !env.isIOS && !env.isAndroid && !!window.MediaRecorder && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && location.protocol !== 'file:';
+    }
+    function speakClearRecording() {
+        speakStopRecording(true);
+        if (speakRecUrl) { try { URL.revokeObjectURL(speakRecUrl); } catch (e) {} speakRecUrl = ''; }
+        let b = document.getElementById('speakReplayBtn'); if (b) b.hidden = true;
+    }
+    function speakStartRecording() {
+        if (!speakCanRecord()) return;
+        speakStopRecording(true);
+        speakRecChunks = [];
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+            if (!speakListening) { stream.getTracks().forEach(t => t.stop()); return; }
+            speakRecStream = stream;
+            let mr = new MediaRecorder(stream);
+            mr.ondataavailable = e => { if (e.data && e.data.size) speakRecChunks.push(e.data); };
+            mr.onstop = () => {
+                stream.getTracks().forEach(t => t.stop());
+                if (mr._discard || !speakRecChunks.length) return;
+                if (speakRecUrl) { try { URL.revokeObjectURL(speakRecUrl); } catch (e) {} }
+                speakRecUrl = URL.createObjectURL(new Blob(speakRecChunks, { type: mr.mimeType || 'audio/webm' }));
+                let b = document.getElementById('speakReplayBtn'); if (b) b.hidden = false;
+            };
+            speakRecorder = mr;
+            mr.start();
+        }).catch(() => {});
+    }
+    function speakStopRecording(discard) {
+        let mr = speakRecorder; speakRecorder = null;
+        if (mr) { mr._discard = !!discard; try { if (mr.state !== 'inactive') mr.stop(); } catch (e) {} }
+        else if (speakRecStream) { speakRecStream.getTracks().forEach(t => t.stop()); }
+        speakRecStream = null;
+    }
+    function playSpeakMyRecording() {
+        if (!speakRecUrl) return;
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+        try { new Audio(speakRecUrl).play(); } catch (e) {}
     }
 
     function playSpeakPracticeSample() {
@@ -3662,8 +3747,20 @@
         ['pointerup', 'pointercancel'].forEach(t => btn.addEventListener(t, (e) => { e.preventDefault(); up(); }));
         btn.addEventListener('contextmenu', (e) => e.preventDefault());
         // 鍵盤：按住空白鍵說話（電腦測試用）
-        btn.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); down(); } });
-        btn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); up(); } });
+        // 電腦版：在朗讀頁任何地方按住空白鍵 = 按住麥克風
+        const onPage = () => { let v = document.getElementById('speakPracticePlayView'); return v && v.classList.contains('active'); };
+        const typing = (e) => { let t = e.target; return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable); };
+        let spaceDown = false;
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== ' ' || !onPage() || typing(e)) return;
+            e.preventDefault();
+            if (e.repeat || spaceDown) return;
+            spaceDown = true; down();
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.key !== ' ' || !spaceDown) return;
+            e.preventDefault(); spaceDown = false; up();
+        });
     }
 
     function pushCurrentSpeakResult() {
@@ -3688,12 +3785,14 @@
         if (currentSpeakPracticeIndex >= speakPracticeActiveList.length) return;
         pushCurrentSpeakResult();
         currentSpeakPracticeIndex++;
+        speakSaveResume();
         showSpeakPracticeQuestion();
     }
 
     function finishSpeakPracticeSession() {
         abortSpeakListening();
         releaseWakeLock();
+        try { localStorage.removeItem(SPEAK_RESUME_KEY); } catch (e) {}
         // 已經說過、但還沒按「下一題」就結束：這一題也要算進成績
         if (currentSpeakPracticeIndex < speakPracticeActiveList.length && speakQuestion.attempts > 0 && speakPracticeResults.length === currentSpeakPracticeIndex) {
             pushCurrentSpeakResult();
@@ -4100,6 +4199,8 @@
         return w.chinese ? ((w.pos ? w.pos + ' ' : '') + w.chinese) : '';
     }
 
+    // 單字開頭的大寫 I 改成小寫（大寫 I 跟小寫 l 分不出來）；I 本身、IT 這類縮寫不改
+    function lowerLeadingI(w) { return String(w || '').replace(/^I(?=[a-z])/, 'i'); }
     function parseWordsRaw(text) {
         let lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         let allWords = [], seen = new Set();
@@ -4114,7 +4215,7 @@
             if (key && !seen.has(key)) {
                 seen.add(key);
                 allWords.push({
-                    english: engPart,
+                    english: lowerLeadingI(engPart),     // Island → island：大寫 I 跟小寫 l 太像
                     chinese: pm.meanings.join('、'),      // 顯示用（多個意思用「、」連接）
                     pos: pm.posList.join(' '),
                     meanings: pm.meanings,
@@ -4385,7 +4486,7 @@
     function togglePauseDictation() { lpTogglePause(); }
 
     // ── 開始頁：繼續練習卡片、開始新練習（有未完成紀錄時先確認）──
-    const CP_RESUME_KEYS = { listen: LP_RESUME_KEY, flash: 'chicky_flash_resume' };
+    const CP_RESUME_KEYS = { listen: LP_RESUME_KEY, flash: 'chicky_flash_resume', speak: 'chicky_speak_resume' };
     function cpGetResume(kind) {
         try {
             let r = JSON.parse(localStorage.getItem(CP_RESUME_KEYS[kind]));
@@ -4401,14 +4502,14 @@
         return `${Math.round(h / 24)} 天前`;
     }
     function cpRenderResume(kind) {
-        let card = document.getElementById(kind + 'ResumeCard'), btn = document.getElementById(kind === 'listen' ? 'lpStartBtn' : 'fcStartBtn');
+        let card = document.getElementById(kind + 'ResumeCard'), btn = document.getElementById(kind === 'listen' ? 'lpStartBtn' : kind === 'speak' ? 'spStartBtn' : 'fcStartBtn');
         if (!card || !btn) return;
         let r = cpGetResume(kind);
         card.hidden = !r;
         let PLUS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
         let PLAY = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4v16a1 1 0 001.5.86l13-8a1 1 0 000-1.72l-13-8A1 1 0 006 4z"/></svg>';
         if (r) {
-            let done = kind === 'listen' ? r.idx : r.idx + 1, total = r.words.length;
+            let done = kind === 'flash' ? r.idx + 1 : r.idx, total = r.words.length;
             document.getElementById(kind + 'ResumeTime').textContent = cpAgo(r.ts);
             document.getElementById(kind + 'ResumeBooks').textContent = r.books || '';
             document.getElementById(kind + 'ResumeFill').style.width = (done / total * 100) + '%';
@@ -4423,26 +4524,27 @@
     function cpResume(kind) {
         let r = cpGetResume(kind);
         if (!r) { cpRenderResume(kind); return; }
-        if (kind === 'listen') startDictation(r); else startFlashcardSession(r);
+        if (kind === 'listen') startDictation(r); else if (kind === 'speak') startSpeakPracticeSession(r); else startFlashcardSession(r);
     }
     let cpConfirmKind = '';
     function cpAskNew(kind) {
         let r = cpGetResume(kind);
-        if (!r) { if (kind === 'listen') checkAndStartDictation(); else startFlashcardSession(); return; }
+        if (!r) { if (kind === 'listen') checkAndStartDictation(); else if (kind === 'speak') startSpeakPracticeSession(); else startFlashcardSession(); return; }
         cpConfirmKind = kind;
-        let done = kind === 'listen' ? r.idx : r.idx + 1;
+        let done = kind === 'flash' ? r.idx + 1 : r.idx;
         document.getElementById('cpConfirmText').innerHTML = `上次 <b>${escapeHTML(r.books || '這次的範圍')}</b> 練到 <b class="cp-hl">${done} / ${r.words.length}</b> 個還沒完成，<br>開始新練習會取代這筆進度。`;
         document.getElementById('cpConfirm').hidden = false;
         try { document.getElementById('cpConfirmOk').focus(); } catch (e) {}
     }
     function cpStartNew() { cpAskNew('listen'); }
     function cpStartNewFlash() { cpAskNew('flash'); }
+    function cpStartNewSpeak() { cpAskNew('speak'); }
     function cpConfirmClose() { document.getElementById('cpConfirm').hidden = true; }
     function cpConfirmBg(e) { if (e && e.target && e.target.id === 'cpConfirm') cpConfirmClose(); }
     function cpConfirmOk() {
         cpConfirmClose();
         try { localStorage.removeItem(CP_RESUME_KEYS[cpConfirmKind]); } catch (e) {}
-        if (cpConfirmKind === 'listen') checkAndStartDictation(); else startFlashcardSession();
+        if (cpConfirmKind === 'listen') checkAndStartDictation(); else if (cpConfirmKind === 'speak') startSpeakPracticeSession(); else startFlashcardSession();
     }
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { let d = document.getElementById('cpConfirm'); if (d && !d.hidden) cpConfirmClose(); } });
 
@@ -5456,7 +5558,7 @@
     ];
     const ADV_WIPE_COST = 5;                // 濕紙巾：5 個碎片
     const ADV_HIT_N = 20;                   // 命中：看最近 20 題
-    const ADV_HANDS = ['左手', '右手'];      // 兩個裝備欄
+    const ADV_HANDS = ['裝備 1', '裝備 2'];      // 兩個裝備欄
     // 裝備的稀有度（邊框顏色跟招式一樣：灰＝普通、深金＝稀有、亮紫＝傳說）
     const ADV_ITEM_RARITY = { boba: 'common', tofu: 'common', skewer: 'rare', bill: 'common', bag: 'common', soda: 'common', coaster: 'common' };
     function advItemRarityKey(k) { return ADV_ITEM_RARITY[k] || 'common'; }
@@ -5868,6 +5970,18 @@
             <path d="M 61 73 Q 67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round"/>
             <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
             <path d="M 108 68 C 118 68, 124 72, 122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+        </svg>`;
+    }
+    // 雞塊背面（戰鬥新版面：雞塊背對畫面、看著敵人）
+    function advChickenBackSVG() {
+        return `<svg viewBox="4 22 128 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <path d="M 52 108 L 46 118 M 46 118 L 38 118 M 84 108 L 88 118 M 88 118 L 96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+            <path d="M 28 68 C 18 68, 12 72, 14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+            <path d="M 108 68 C 118 68, 124 72, 122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/>
+            <ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/>
+            <ellipse cx="68" cy="72" rx="27" ry="29" fill="#E99A2E" opacity="0.55"/>
+            <path d="M 44 44 Q 56 34 72 35" stroke="#FFD58A" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+            <circle cx="50" cy="86" r="3.5" fill="#E2861E"/><circle cx="82" cy="58" r="3" fill="#E2861E"/><circle cx="76" cy="96" r="3.5" fill="#E2861E"/><circle cx="92" cy="80" r="2.6" fill="#E2861E"/><circle cx="58" cy="60" r="2.4" fill="#E2861E"/>
         </svg>`;
     }
     function advFace(cx, cy, mad, extra) {
@@ -6682,9 +6796,9 @@
             row('luck', '幸運', val('luck'), gearBar('luck'))
         ].join('');
         let statsBody = `${hit}<hr class="st-divider">
-            <div class="st-section-head"><span class="st-section-title">能力</span><span class="st-head-btns">${advData.sauce > 0 ? `<button class="st-sauce" type="button" data-on-click='[["advOpenSauce",[]]]'>${advSauceIcon(18)}強化 <b>${advData.sauce}</b></button>` : ''}<button class="st-info" type="button" data-on-click='[["advOpenStatInfo",[""]]]'>${ST_INFO}說明</button></span></div>
+            <div class="st-section-head"><span class="st-section-title">能力</span><span class="st-head-btns"><button class="st-info" type="button" data-on-click='[["advOpenStatInfo",[""]]]'>${ST_INFO}說明</button></span></div>
             ${rows}`;
-        let tab = (k, label, alert) => `<button type="button" role="tab" class="st-tab" aria-selected="${advStatsTab === k}" data-on-click='[["advSetStatsTab",["${k}"]]]'>${ST_TAB_ICONS[k]}${label}${alert || ''}</button>`;
+        let tab = (k, label, alert) => `<button type="button" role="tab" class="st-tab" aria-selected="${advStatsTab === k}" data-on-click='[["advSetStatsTab",["${k}"]]]'>${label}${alert || ''}</button>`;
         let body = advStatsTab === 'moves' ? advMovesTabHTML() : advStatsTab === 'gear' ? advGearTabHTML() : advStatsTab === 'bag' ? '<div id="advBagInline" class="st-bag"></div>' : statsBody;
         box.innerHTML = `
             <section class="st-hero">
@@ -6871,7 +6985,7 @@
             g[at] = '';
         } else {
             let e = g.indexOf('');
-            if (e === -1) { alert('左手、右手都已經有裝備了。\n請到「裝備」分頁點要更換的那一手。'); return; }
+            if (e === -1) { alert('裝備 1、裝備 2 都已經有裝備了。\n請到「裝備」分頁點要更換的那一格。'); return; }
             g[e] = key;
         }
         advSave();
@@ -7434,7 +7548,7 @@
         if (color) d.style.color = color;
         d.style.left = c.x + 'px';
         d.style.top = (actorEl.offsetTop - 4 + (dy || 0)) + 'px';
-        stage.appendChild(d);
+        (actorEl.offsetParent && stage.contains(actorEl.offsetParent) ? actorEl.offsetParent : stage).appendChild(d);
         advAnimate(d, [{ opacity: 1, transform: 'translate(-50%, 0)' }, { opacity: 1, transform: 'translate(-50%, -22px)', offset: 0.6 }, { opacity: 0, transform: 'translate(-50%, -34px)' }], { duration: 900, easing: 'ease-out' }).then(() => d.remove());
     }
     function advFx(html, x, y, size) {
@@ -7459,10 +7573,20 @@
         if (pf) { pf.style.width = (Math.max(0, p.hp) / p.max * 100) + '%'; pf.classList.toggle('low', p.hp / p.max <= 0.34); }
         if (ef) { ef.style.width = (Math.max(0, e.hp) / e.max * 100) + '%'; ef.classList.toggle('low', e.hp / e.max <= 0.34); }
         let pt = document.getElementById('advPlayerHpText'), et = document.getElementById('advEnemyHpText');
-        if (pt) pt.textContent = `${Math.max(0, p.hp)}/${p.max}` + (p.shieldMax ? ` 🛡️${p.shield}` : '');
+        let btOn = advBtOn();
+        if (pt) pt.textContent = `${Math.max(0, p.hp)}/${p.max}` + (!btOn && p.shieldMax ? ` 🛡️${p.shield}` : '');
+        if (btOn) {
+            let sh = Math.max(0, p.shield || 0), badge = document.getElementById('btShieldBadge'), bar = document.getElementById('btShieldBar');
+            if (badge) { badge.hidden = sh <= 0; let n = document.getElementById('btShieldNum'); if (n) n.textContent = sh; }
+            if (bar) { bar.hidden = sh <= 0; let f = document.getElementById('btShieldFill'); if (f) f.style.width = Math.min(100, sh / Math.max(1, p.max) * 100) + '%'; }
+        }
         if (et) et.textContent = `${Math.max(0, e.hp)}/${e.max}` + (e.shield ? ` 🛡️${e.shield}` : '');
         let info = document.getElementById('advTopInfo');
-        if (info) info.textContent = `第 ${adv.level.id} 關 ｜ 回合 ${adv.round} ｜ 行動 ${Math.min(adv.actionsTotal - adv.actionsLeft + 1, adv.actionsTotal)}/${adv.actionsTotal}`;
+        let act = `${Math.min(adv.actionsTotal - adv.actionsLeft + 1, adv.actionsTotal)}/${adv.actionsTotal}`;
+        if (info) {
+            if (btOn) info.innerHTML = `第 ${adv.level.id} 關 <span>｜</span> 回合 ${adv.round} <span>｜</span> 行動 ${act}`;
+            else info.textContent = `第 ${adv.level.id} 關 ｜ 回合 ${adv.round} ｜ 行動 ${act}`;
+        }
     }
     // 戰鬥場景：夜市小吃攤街景（藍紅帆布攤 + 紅燈籠 + 木檯）
     function advStageBG() {
@@ -7521,8 +7645,51 @@
             <linearGradient id="sgS1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E2E8F0"/><stop offset="1" stop-color="#F8FAFC"/></linearGradient>
             <linearGradient id="sgS2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E5E7EB"/><stop offset="1" stop-color="#F9FAFB"/></linearGradient></defs>${s}</svg>`;
     }
+    // 新版戰鬥畫面（前後透視：敵人在右上是主角、雞塊背面在左下）—— 先開放的關卡
+    const ADV_BT_LEVELS = [1, 9];
+    function advBtOn() { return !!(adv.level && ADV_BT_LEVELS.includes(adv.level.id)); }
+    function advBtFit() {
+        let b = document.querySelector('#adventureBattleView .adv-battle');
+        if (!b || !b.classList.contains('bt')) return;
+        let vv = window.visualViewport;
+        let h = vv ? vv.height : window.innerHeight, top = vv ? vv.offsetTop : 0;
+        b.style.setProperty('--bt-h', Math.round(h) + 'px');
+        b.style.setProperty('--bt-top', Math.round(top) + 'px');
+    }
+    try {
+        if (window.visualViewport) { window.visualViewport.addEventListener('resize', advBtFit); window.visualViewport.addEventListener('scroll', advBtFit); }
+        window.addEventListener('resize', advBtFit);
+    } catch (e) {}
     function advBuildStage() {
         let st = document.getElementById('advStage');
+        let battle = document.querySelector('#adventureBattleView .adv-battle'), btOn = advBtOn();
+        if (battle) battle.classList.toggle('bt', btOn);
+        let view = document.getElementById('adventureBattleView');
+        if (view) view.classList.toggle('bt-view', btOn);
+        document.body.classList.toggle('bt-on', btOn);
+        if (btOn) {
+            // 新版面：鍵盤跳出時整個畫面跟著可見高度縮（招式抽屜／輸入框不會被鍵盤蓋住）
+            try { if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = false; } catch (e) {}
+            advBtFit();
+            const SHIELD = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3z"/></svg>';
+            st.innerHTML = (adv.level && adv.level.id >= 11 ? advStoreStageBG() : advStageBG()) + `
+            <div class="bt-scene">
+                <svg class="bt-plat" viewBox="0 0 390 560" aria-hidden="true">
+                    <ellipse cx="280" cy="350" rx="102" ry="20" fill="#fff" opacity="0.12" stroke="#fff" stroke-opacity="0.4" stroke-width="2"/>
+                    <ellipse cx="280" cy="350" rx="64" ry="9" fill="#000" opacity="0.35"/>
+                    <ellipse cx="116" cy="540" rx="124" ry="24" fill="#fff" opacity="0.1" stroke="#fff" stroke-opacity="0.35" stroke-width="2"/>
+                    <ellipse cx="116" cy="542" rx="66" ry="10" fill="#000" opacity="0.35"/>
+                </svg>
+                <div class="adv-actor adv-enemy" id="advEnemy">${advEnemySVG(adv.enemy.sprite)}</div>
+                <div class="adv-actor adv-player" id="advPlayer">${advChickenBackSVG()}</div>
+                <div class="adv-hud adv-hud-enemy bt-hp bt-hp--enemy"><div class="adv-enemy-tag" id="advEnemyTag" style="display:none"></div><span class="bt-hp__name"><span id="advEnemyName">${escapeHTML(adv.enemy.name)}</span> <b id="advEnemyHpText"></b></span><span class="adv-hpbar bt-bar"><span class="adv-hpfill" id="advEnemyFill"></span></span></div>
+                <div class="adv-hud adv-hud-player bt-hp bt-hp--player"><span class="bt-hp__name">雞塊 <b id="advPlayerHpText"></b><span class="bt-badge-shield" id="btShieldBadge" hidden>${SHIELD}<span id="btShieldNum"></span></span></span><span class="bt-shieldbar" id="btShieldBar" hidden><i id="btShieldFill"></i></span><span class="adv-hpbar bt-bar"><span class="adv-hpfill" id="advPlayerFill"></span></span></div>
+                <div class="adv-fx" id="advFx"></div>
+            </div>`;
+            advUpdateHud();
+            return;
+        }
+        try { if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = true; } catch (e) {}
         st.innerHTML = (adv.level && adv.level.id >= 11 ? advStoreStageBG() : advStageBG()) + `
             <div class="adv-hud adv-hud-enemy"><div class="adv-enemy-tag" id="advEnemyTag" style="display:none"></div><div><span id="advEnemyName">${escapeHTML(adv.enemy.name)}</span> <span id="advEnemyHpText"></span></div><div class="adv-hpbar"><div class="adv-hpfill" id="advEnemyFill"></div></div></div>
             <div class="adv-actor adv-enemy" id="advEnemy">${advEnemySVG(adv.enemy.sprite)}</div>
@@ -8086,7 +8253,7 @@
         let rec = new SR();
         rec.lang = getLearningLanguage() === 'ko' ? 'ko-KR' : 'en-US';
         rec.interimResults = true;
-        rec.continuous = false;
+        rec.continuous = true;     // 按住期間持續收音，放開才結束（單音節短字比較不會沒結果）
         rec.maxAlternatives = 10;
         advAlts = []; advErr = ''; advShort = false; advIgnore = false; advPressAt = Date.now();
         advStarted = false; advLatched = false; advSkipUp = false;
@@ -8876,7 +9043,7 @@
         { id: 'fence_wood', slot: 'fence', name: '木圍籬', price: 0 },
         { id: 'fence_lantern', slot: 'fence', name: '燈籠圍籬', price: 50 },
         { id: 'guard_none', slot: 'guard', name: '空位', price: 0 },
-        { id: 'guard_dog', slot: 'guard', name: '看門狗', price: 60 },
+        { id: 'guard_dog', slot: 'guard', name: '看門狗', price: 0 },        // 2026/11：改成免費
         { id: 'mailbox_nugget', slot: 'mailbox', name: '雞塊信箱', price: 0 },
         { id: 'mailbox_red', slot: 'mailbox', name: '紅色郵筒', price: 40 },
         // 2026/11 新增：夜市 A／夜市 B／粉粉貓／懶懶海豹 四套（價格要和後台 farm_act 的 decor 一致，見 supabase_007_farm_decor.sql）
@@ -8932,7 +9099,7 @@
         for (let i = 0; i < FARM_MAX_PLOTS; i++) {
             let p = Array.isArray(d.plots) ? d.plots[i] : null;
             plots.push(p && typeof p === 'object' && typeof p.word === 'string' && p.word ? {
-                word: p.word.slice(0, 80), cn: String(p.cn || '').slice(0, 80), pos: String(p.pos || '').slice(0, 40), line: String(p.line || '').slice(0, 200),
+                word: lowerLeadingI(p.word.slice(0, 80)), cn: String(p.cn || '').slice(0, 80), pos: String(p.pos || '').slice(0, 40), line: String(p.line || '').slice(0, 200),
                 lang: p.lang === 'ko' ? 'ko' : 'en', stage: Math.max(0, Math.min(4, parseInt(p.stage) || 0)), readyAt: Number(p.readyAt) || 0,
                 wrong: n0(p.wrong), fast: p.fast === true
             } : null);
@@ -9372,7 +9539,7 @@
                 <span class="fm-pills"><button type="button" class="fm-pill" aria-label="花店" data-on-click='[["farmOpenShop",[]]]'>${farmFlowerIcon(22)}<b id="farmFlowerN">${farm.flowers}</b></button></span>
             </div>
             ${ed ? `<div class="fm-tip">點虛線框選擇要換的裝飾</div>`
-                 : (due ? `<div class="fm-remind">${farmCanSVG(36)}<span class="fm-remind-tx"><b>今天有 ${due} 株等你澆水</b><small>大約 1 分鐘・不計時</small></span><button type="button" class="fm-go" data-on-click='[["farmStartWater",[]]]'>去澆水</button></div>`
+                 : (due ? `<div class="fm-remind">${farmCanSVG(36)}<span class="fm-remind-tx"><b>今天有 ${due} 株等你澆水</b><small>點有水滴的田，一株一株澆</small></span></div>`
                         : `<div class="fm-remind mini">${farmCanSVG(30)}<span class="fm-remind-tx"><b>${farm.plots.some(Boolean) ? '目前沒有要澆水的作物' : '先種一個字吧！'}</b><small>${empty < 0 ? '沒有空田了' : left > 0 ? `今天還能種 ${left} 顆` : '明天可再種'}</small></span><button type="button" class="fm-go" ${plantOff ? 'disabled' : ''} data-on-click='[["farmOpenPlant",[]]]'>種新的字</button></div>`)}
             </div>
             <div class="fm-scene">
@@ -9401,7 +9568,7 @@
         let p = farm.plots[i];
         if (!p) { farmOpenPlant(); return; }
         if (p.stage >= 4) { farmStartHarvest(i); return; }
-        if (farmIsDue(p)) { farmStartWater(); return; }
+        if (farmIsDue(p)) { farmStartWater(i); return; }     // 點哪一株就澆哪一株（一題一題來）
         farmToast(`「${p.word}」${FARM_STAGE_NAMES[p.stage]}中，${farmSecLeft(p)} 秒後可以澆水`);
     }
     function farmToast(t) {
@@ -9531,23 +9698,39 @@
         if (!box) return;
         let planted = farmPlantedWords();
         let pool = farmWordPool().filter(w => !planted.includes(String(w.english).toLowerCase()));
-        let wrong = (advData && advData.wrongCnt) || {};
-        let rec = pool.filter(w => wrong[String(w.english).toLowerCase()] || w.starred)
+        let wrong = Object.assign({}, (advData && advData.wrongCnt) || {});
+        let fmiss = farmMissedMap();
+        Object.keys(fmiss).forEach(k => { wrong[k] = (wrong[k] || 0) + fmiss[k]; });
+        // 推薦：先放農場題庫的字，再放錯過的字（農場答錯、大冒險答錯、星號字）
+        let farmWords = farmBeePool().filter(w => !planted.includes(String(w.english).toLowerCase())).map(w => Object.assign({}, w, { farmPack: true }));
+        let farmKeys = new Set(farmWords.map(w => String(w.english).toLowerCase()));
+        let missedPool = farmWordPool().concat(farmBeePool()).filter((w, i, a) => a.findIndex(x => String(x.english).toLowerCase() === String(w.english).toLowerCase()) === i);
+        let missed = missedPool.filter(w => { let k = String(w.english).toLowerCase(); return !planted.includes(k) && !farmKeys.has(k) && (wrong[k] || w.starred); })
             .sort((a, b) => (wrong[String(b.english).toLowerCase()] || 0) - (wrong[String(a.english).toLowerCase()] || 0));
+        let rec = farmWords.concat(missed);
         let lists = wordLists.map((l, i) => ({ l, i })).filter(x => x.l && x.l.content && isListInCurrentLang(x.l) && getListWordCount(x.l.content) > 0);
         if (farmPlantList === 'rec' && !rec.length) farmPlantList = lists.length ? String(lists[0].i) : 'rec';
         let shown = farmPlantList === 'rec' ? rec : pool.filter(w => String(w.listIdx) === farmPlantList);
-        let opts = `<option value="rec"${farmPlantList === 'rec' ? ' selected' : ''}>⭐ 推薦（大冒險答錯的字、星號字）</option>` + lists.map(x => `<option value="${x.i}"${String(x.i) === farmPlantList ? ' selected' : ''}>${escapeHTML(x.l.title)}</option>`).join('');
-        let rows = shown.slice(0, 300).map(w => {
+        let opts = `<option value="rec"${farmPlantList === 'rec' ? ' selected' : ''}>⭐ 推薦（農場單字、錯過的字）</option>` + lists.map(x => `<option value="${x.i}"${String(x.i) === farmPlantList ? ' selected' : ''}>${escapeHTML(x.l.title)}</option>`).join('');
+        let rows = shown.slice(0, 300).map((w, i) => {
             let k = String(w.english).toLowerCase(), wc = wrong[k] || 0;
-            return `<button type="button" class="fm-wrow" data-on-click='[["farmLearn",[${JSON.stringify(w.english).replace(/'/g, '&#39;')}]]]'><span class="aw-tx"><b>${escapeHTML(w.english)}</b><span class="cn">${escapeHTML(w.chinese || '')}</span>${wc ? `<span class="aw-bad">錯 ${wc} 次</span>` : ''}${w.starred ? ' ⭐' : ''}</span><span class="fm-wplus">種</span></button>`;
+            let head = farmPlantList !== 'rec' ? '' : (i === 0 && w.farmPack ? '<div class="fm-wgrp">農場單字</div>' : (!w.farmPack && (i === 0 || shown[i - 1].farmPack) ? '<div class="fm-wgrp">錯過的字</div>' : ''));
+            return `${head}<button type="button" class="fm-wrow" data-on-click='[["farmLearn",[${JSON.stringify(w.english).replace(/'/g, '&#39;')}]]]'><span class="aw-tx"><b>${escapeHTML(w.english)}</b><span class="cn">${escapeHTML(w.chinese || '')}</span>${wc ? `<span class="aw-bad">錯 ${wc} 次</span>` : ''}${w.starred ? ' ⭐' : ''}</span><span class="fm-wplus">種</span></button>`;
         }).join('');
         box.innerHTML = `<div class="fm-pl-top"><span>今天還能種 <b>${farmPlantLeft()}</b> 顆・空田 <b>${farm.plots.slice(0, farmUnlocked()).filter(p => !p).length}</b> 格</span></div>
             <select class="fm-select" aria-label="從哪個題庫選字" data-on-change='[["farmSetPlantList",["$value"]]]'>${opts}</select>
             <div class="fm-wlist">${rows || '<div class="lst-empty">這裡沒有可以種的字了</div>'}</div>`;
         farmOverlay(farmLearnWord ? farmLearnHTML(farmLearnWord) : '');
     }
-    function farmFindWord(eng) { return farmWordPool().find(w => w.english === eng); }
+    function farmFindWord(eng) { return farmWordPool().find(w => w.english === eng) || farmBeePool().find(w => w.english === eng); }
+    // 農場裡答錯的字（澆水、收成、採蜜），種新的字時會推薦
+    const FARM_MISS_KEY = 'chicky_farm_missed';
+    function farmMissedMap() { try { let m = JSON.parse(localStorage.getItem(FARM_MISS_KEY)); return m && typeof m === 'object' ? m : {}; } catch (e) { return {}; } }
+    function farmNoteMiss(word) {
+        let k = String(word || '').toLowerCase(); if (!k) return;
+        let m = farmMissedMap(); m[k] = (m[k] || 0) + 1;
+        try { localStorage.setItem(FARM_MISS_KEY, JSON.stringify(m)); } catch (e) {}
+    }
     function farmLearn(eng) {
         let w = farmFindWord(eng);
         if (!w) return;
@@ -9637,10 +9820,13 @@
         let order = { tf: 0, scramble: 1, odd: 2 };
         return tasks.sort((a, b) => order[a.type] - order[b.type]);
     }
-    function farmStartWater() {
+    // 只澆點到的那一株：種子 → 聽英文判斷中文（是非）；發芽以後 → 看中文排字母
+    function farmStartWater(i) {
         if (farmEditing) return;
-        let tasks = farmBuildTasks();
-        if (!tasks.length) { farmToast('現在沒有要澆水的作物'); return; }
+        i = parseInt(i);
+        let p = farm.plots[i];
+        if (!p || p.stage >= 4 || !farmIsDue(p)) return;
+        let tasks = [{ type: p.stage === 0 ? 'tf' : 'scramble', idx: [i] }];
         fw = { tasks, k: 0 };
         switchView('farmWaterView');
         farmNewQuestion();
@@ -9704,7 +9890,7 @@
         } else if (q.type === 'dict') {
             body = `<div class="fw-ask">聽發音，拼出這個單字</div>
                 <button type="button" class="fw-listen big" aria-label="再聽一次" data-on-click='[["farmSay",[${JSON.stringify(p.word).replace(/'/g, '&#39;')}]]]'>${FW_SPEAKER}<span>再聽一次</span></button>
-                <label class="fw-dict"><span class="fw-boxes" id="fwDictBoxes">${farmDictBoxes(p.word, q.typed, fw.done)}</span>
+                <label class="fw-dict"><span class="fw-boxes" id="fwDictBoxes" style="--bx:${farmBoxSize(p.word)}px">${farmDictBoxes(p.word, q.typed, fw.done)}</span>
                 <input class="fw-dict-in" id="fwDictIn" type="text" inputmode="latin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" maxlength="${farmLetters(p.word).length}" value="${escapeHTML(q.typed)}" ${fw.done ? 'disabled' : ''} aria-label="輸入聽到的單字" data-on-input='[["farmDictInput",["$value"]]]' data-on-keydown='[["farmDictKey",["$event"]]]'></label>
                 <div class="fw-dict-hint">共 ${farmLetters(p.word).length} 個字母${/\s/.test(p.word.trim()) ? '（空格不用打）' : ''}</div>`;
             canSubmit = q.typed.length === farmLetters(p.word).length;
@@ -9724,6 +9910,7 @@
         }
         let last = fw.k >= fw.tasks.length - 1;
         let isH = q.type === 'dict';
+        box.classList.remove('bee-mode');
         box.innerHTML = `<div class="fw-head"><button type="button" class="fm-sq" aria-label="回農場" data-on-click='[["farmWaterQuit",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E2650" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg></button><b>${isH ? '收成' : `澆水中　${fw.k + 1} / ${fw.tasks.length}`}</b><span class="fm-sq ghost"></span></div>
             <div class="fw-card"><div class="fw-art">${isH ? farmPotSVG(4, 120) : farmPotSVG(fw.done && fw.ok ? Math.min(4, farmNextStage(p)) : p.stage, 120)}${isH ? '' : farmCanSVG(110)}</div><span class="fw-pill">${isH ? '開花了・拼對就收成' : `${q.type === 'odd' ? `${FARM_STAGE_NAMES[p.stage]}・3 株一起澆` : (fw.done && fw.ok ? fw.label : farmStageLabel(p))}　答對就長大`}</span></div>
             ${body}${fb}
@@ -9756,7 +9943,7 @@
             ok = q.typed.toLowerCase() === farmLetters(q.p.word).join('').toLowerCase();
             fw.done = true; fw.ok = ok;
             if (ok) await farmHarvest(fw.harvest);
-            else advSpeakWord(q.p.word);
+            else { advSpeakWord(q.p.word); farmNoteMiss(q.p.word); }
             farmRenderWater();
             return;
         }
@@ -9768,7 +9955,7 @@
         fw.label = farmStageLabel(p0);
         ps.forEach(p => {
             if (ok) p.stage = farmNextStage(p);
-            else p.wrong += 1;                  // 第一版：答錯不退階
+            else { p.wrong += 1; farmNoteMiss(p.word); }   // 第一版：答錯不退階（記下來，種新字時推薦）
             p.readyAt = farmNow() + FARM_STEP_MS;
         });
         if (ok) farm.xp += 1;                   // 澆水答對：經驗 +1
@@ -9790,6 +9977,11 @@
 
     // ── 收成：聽英文 → 拼出單字（格子告訴你有幾個字母；可以重複聽）──
     function farmLetters(word) { return Array.from(String(word || '')).filter(ch => /[A-Za-z]/.test(ch)); }
+    // 格子大小跟著字母數縮放：長的字也排成一行（手機約 330px 寬）
+    function farmBoxSize(word) {
+        let n = Array.from(String(word || '').trim()).length;
+        return Math.max(22, Math.min(42, Math.floor((326 - 5 * (n - 1)) / Math.max(1, n))));
+    }
     function farmDictBoxes(word, typed, done) {
         let k = 0;
         return Array.from(String(word || '').trim()).map(ch => {
@@ -9837,9 +10029,11 @@
         let fill = document.getElementById('farmXpFill'), num = document.getElementById('farmXpNum'), chip = document.getElementById('farmLvChip');
         if (!fill) return;
         let a = farmLvInfo(from), b = farmLvInfo(to);
+        // 浮字放在 body 上（農場畫面重畫時不會被一起清掉），停留約 1.5 秒再淡出
         let fx = document.createElement('span'); fx.className = 'fm-xp-float'; fx.textContent = `+${gain} EXP`;
-        let lvBox = fill.closest('.fm-lv'); if (lvBox) lvBox.appendChild(fx);
-        setTimeout(() => fx.remove(), 1400);
+        let lvBox = fill.closest('.fm-lv'), r = lvBox ? lvBox.getBoundingClientRect() : null;
+        if (r) { fx.style.left = (r.left + r.width / 2) + 'px'; fx.style.top = (r.top - 2) + 'px'; document.body.appendChild(fx); }
+        setTimeout(() => fx.remove(), 2400);
         requestAnimationFrame(() => {
             if (b.lv > a.lv) {           // 升級：先長滿，再從新的等級開始
                 fill.style.width = '100%';
@@ -9882,7 +10076,7 @@
         if (farmLevel() < 2 || farm.honey >= FARM_HONEY_FULL) return;
         if (farmSrv === true) {           // 後台算蜂蜜：到時間了就跟後台同步一次
             if (farm.honeyAt && farmNow() >= farm.honeyAt + FARM_HONEY_STEP_MS && Date.now() - farmHoneySyncAt > 20000) { farmHoneySyncAt = Date.now(); farmSync(); }
-        } else if (farmHoneyTick()) farmSave();
+        } else if (farmSrv === false && farmHoneyTick()) farmSave();     // 確定連不到後台時才在這台裝置自己累積
     }
     function farmHiveHTML() {
         let lv2 = farmLevel() >= 2, full = farm.honey >= FARM_HONEY_FULL;
@@ -9948,9 +10142,9 @@
         let hearts = `<span class="bee-tries" aria-label="還有 ${fb.tries} 次機會">${[0, 1].map(i => `<i class="${i < fb.tries ? 'on' : ''}">♥</i>`).join('')}</span>`;
         let body = '', canSubmit = false, play = fb.state === 'play';
         if (fb.type === 'match') {
-            let enB = fb.en.map((w, k) => { let d = fb.done.includes(w); return `<button type="button" class="bm-cell en${d ? ' ok' : ''}${fb.selEn === k ? ' sel' : ''}" ${d || !play ? 'disabled' : ''} data-on-click='[["farmBeeMatch",["en",${k}]]]'>${escapeHTML(w.english)}</button>`; }).join('');
-            let cnB = fb.cn.map((w, k) => { let d = fb.done.includes(w); return `<button type="button" class="bm-cell cn${d ? ' ok' : ''}${fb.selCn === k ? ' sel' : ''}" ${d || !play ? 'disabled' : ''} data-on-click='[["farmBeeMatch",["cn",${k}]]]'>${escapeHTML(farmBeeCn(w))}</button>`; }).join('');
-            body = `<div class="fw-ask">把英文和中文連起來（先點左邊，再點右邊）</div><div class="bm-grid"><div class="bm-col">${enB}</div><div class="bm-col">${cnB}</div></div>`;
+            let enB = fb.en.map((w, k) => { let d = fb.done.includes(w); return `<button type="button" class="bm-cell en${d ? ' ok' : ''}${fb.selEn === k ? ' sel' : ''}" data-en="${k}" ${d || !play ? 'disabled' : ''} data-on-click='[["farmBeeMatch",["en",${k}]]]'>${escapeHTML(w.english)}<i class="bm-dot"></i></button>`; }).join('');
+            let cnB = fb.cn.map((w, k) => { let d = fb.done.includes(w); return `<button type="button" class="bm-cell cn${d ? ' ok' : ''}${fb.selCn === k ? ' sel' : ''}" data-cn="${k}" ${d || !play ? 'disabled' : ''} data-on-click='[["farmBeeMatch",["cn",${k}]]]'><i class="bm-dot"></i>${escapeHTML(farmBeeCn(w))}</button>`; }).join('');
+            body = `<div class="fw-ask">把英文和中文連起來（先點左邊，再點右邊）</div><div class="bm-grid" id="bmGrid"><svg class="bm-lines" id="bmLines" aria-hidden="true"></svg><div class="bm-col">${enB}</div><div class="bm-col">${cnB}</div></div>`;
         } else if (fb.type === 'odd') {
             body = `<div class="fw-ask">下面哪一個，<b>不是</b>這三個單字的意思？</div>
                 <div class="fw-words">${fb.ws.map(w => `<span>${escapeHTML(w.english)}</span>`).join('')}</div>
@@ -9960,7 +10154,7 @@
             let wd = fb.w.english;
             body = `<div class="fw-ask">聽發音，拼出單字，再選出中文意思</div>
                 <button type="button" class="fw-listen big" aria-label="再聽一次" data-on-click='[["farmSay",[${JSON.stringify(wd).replace(/'/g, '&#39;')}]]]'>${FW_SPEAKER}<span>再聽一次</span></button>
-                <label class="fw-dict"><span class="fw-boxes" id="fwDictBoxes">${farmDictBoxes(wd, fb.typed, !play)}</span>
+                <label class="fw-dict"><span class="fw-boxes" id="fwDictBoxes" style="--bx:${farmBoxSize(wd)}px">${farmDictBoxes(wd, fb.typed, !play)}</span>
                 <input class="fw-dict-in" id="fwDictIn" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" maxlength="${farmLetters(wd).length}" value="${escapeHTML(fb.typed)}" ${play ? '' : 'disabled'} aria-label="輸入聽到的單字" data-on-input='[["farmBeeDictInput",["$value"]]]'></label>
                 <div class="fw-dict-hint">共 ${farmLetters(wd).length} 個字母</div>
                 <div class="fw-opts">${fb.opts.map((o, k) => `<button type="button" class="fw-opt${fb.sel === k ? ' sel' : ''}${!play && o === farmBeeCn(fb.w) ? ' right' : ''}" ${play ? '' : 'disabled'} data-on-click='[["farmBeeSel",[${k}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
@@ -9972,6 +10166,22 @@
         box.innerHTML = `<div class="fw-head"><button type="button" class="fm-sq" aria-label="回農場" data-on-click='[["farmBeeQuit",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E2650" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg></button><b>蜜蜂採蜜</b>${hearts}</div>
             <div class="fw-card bee"><div class="fw-art"><span class="bee-art">${FARM_HIVE_SVG}</span></div><span class="fw-pill">${['連連看', '找出不是的意思', '聽寫'][['match', 'odd', 'dict'].indexOf(fb.type)]}・答對就能採蜜</span></div>
             ${body}${msg}<div class="fw-foot">${foot}</div>`;
+        box.classList.add('bee-mode');
+        if (fb.type === 'match') requestAnimationFrame(farmBeeLines);
+    }
+    // 連連看：配對成功的英文、中文之間畫一條線
+    function farmBeeLines() {
+        let g = document.getElementById('bmGrid'), svg = document.getElementById('bmLines');
+        if (!g || !svg || !fb || fb.type !== 'match') return;
+        let gr = g.getBoundingClientRect();
+        svg.setAttribute('viewBox', `0 0 ${gr.width.toFixed(0)} ${gr.height.toFixed(0)}`);
+        svg.innerHTML = fb.done.map(w => {
+            let a = g.querySelector(`[data-en="${fb.en.indexOf(w)}"]`), b = g.querySelector(`[data-cn="${fb.cn.indexOf(w)}"]`);
+            if (!a || !b) return '';
+            let ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+            let x1 = ra.right - gr.left - 6, y1 = ra.top + ra.height / 2 - gr.top, x2 = rb.left - gr.left + 6, y2 = rb.top + rb.height / 2 - gr.top;
+            return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/>`;
+        }).join('');
     }
     function farmBeeMatch(side, k) {
         if (!fb || fb.state !== 'play' || fb.type !== 'match') return;
@@ -10013,11 +10223,17 @@
             : `正確答案：${escapeHTML(fb.w.english)} ${escapeHTML(farmBeeCn(fb.w))}`;
         fb.msg = win ? '🍯 採蜜成功！經驗 +3、花 +1' : `採蜜失敗，這次的蜂蜜飛走了（蜂蜜歸 0，不會扣東西）${ans ? '<br><small>' + ans + '</small>' : ''}`;
         // 結果寫進農場（連得到後台就由後台記錄）
-        if (farmSrv === true) await farmCall('honey', { ok: !!win });
-        else {
-            if (win) { farm.xp += 3; farm.flowers += 1; }
+        let saved = false;
+        if (farmSrv === true) saved = !!(await farmCall('honey', { ok: !!win }));
+        if (!saved) {
+            // 沒連到後台、或後台回錯誤：這台裝置也要把這次採蜜用掉（不能再挑戰同一罐蜂蜜）
+            if (win && farmSrv !== true) { farm.xp += 3; farm.flowers += 1; }
             farm.honey = 0; farm.honeyAt = farmNow(); farm.beeStep = (farm.beeStep + 1) % 3;
             farmSave();
+        }
+        if (!win) {
+            let ws = fb.type === 'match' ? fb.ws.filter(w => !fb.done.includes(w)) : fb.type === 'odd' ? fb.ws.concat([fb.odd]) : [fb.w];
+            ws.forEach(w => farmNoteMiss(w.english));
         }
         if (win) try { triggerTaskCheck('farm_care'); } catch (e) {}
         farmRenderBee();
@@ -10214,7 +10430,7 @@
 
     const INLINE_ACTIONS = {
         copyAppUrl,
-        lpBack, lpTogglePause, cpResume, cpStartNew, cpStartNewFlash, cpConfirmClose, cpConfirmBg, cpConfirmOk, fcFlip,
+        lpBack, lpTogglePause, cpResume, cpStartNew, cpStartNewFlash, cpStartNewSpeak, leaveSpeakPractice, playSpeakMyRecording, cpConfirmClose, cpConfirmBg, cpConfirmOk, fcFlip,
         playSpeakPracticeSample,
         toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
         advSetMode, advOpenWords, advSayWord, advPracticeLevel, advWrongPick, advWrongPractice,
