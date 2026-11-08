@@ -128,8 +128,6 @@
         mv_charge:   { name: '衝鋒撞擊',     desc: '雞塊大冒險新招式（字卡：輸入中文，威力 3）' },
         mv_slash2:   { name: '連續斬擊',     desc: '雞塊大冒險新招式（聽力：斬 2 下）' },
         mv_thrust:   { name: '突刺',         desc: '雞塊大冒險新招式（聽力：拼出英文，威力 3）' },
-        mv_wave2:    { name: '雙重衝擊波',   desc: '雞塊大冒險新招式（朗讀：射 2 發）' },
-        mv_wave3:    { name: '雞塊氣功波',   desc: '雞塊大冒險新招式（朗讀：威力 3）' },
         pack_toeic_job: { name: '多益-職場', desc: '購買後多一本「多益-職場」英文單字庫（300 個職場單字），不占用你原本的題庫數量。\n這本單字庫不能清空、刪除或更換語言。' }
     };
     let shopCatalog = {
@@ -138,8 +136,6 @@
         mv_charge: { price: 5, max: 1 },
         mv_slash2: { price: 3, max: 1 },
         mv_thrust: { price: 5, max: 1 },
-        mv_wave2:  { price: 3, max: 1 },
-        mv_wave3:  { price: 5, max: 1 },
         pack_toeic_job: { price: 700, max: 1 }
     };
 
@@ -3551,7 +3547,7 @@
         set('speakScore', r.score);
         let chip = document.getElementById('speakScoreChip'); if (chip) chip.classList.toggle('is-fail', !pass);
         setSpeakState('done');
-        setSpeakHint(`辨識到：${r.heard || '(沒有內容)'}${speakQuestion.attempts > 1 ? `｜本題最高 ${best.score} 分` : ''}`);
+        setSpeakHint(`辨識到：${r.heard || '(沒有內容)'}`);
     }
 
     function abortSpeakListening() {
@@ -4330,7 +4326,8 @@
         if (s) s.hidden = !!play;
         if (p) p.hidden = !play;
         let v = document.getElementById('practiceView');
-        if (v) { v.classList.toggle('cp-playing', !!play); v.classList.remove('is-paused'); }
+        if (v) { v.classList.toggle('cp-playing', !!play); v.classList.remove('is-paused'); v.classList.remove('is-done'); }
+        let st = document.getElementById('lpStatus'); if (st) st.textContent = '正在朗讀';
         document.body.classList.toggle('cp-tall', !!play);
         window.scrollTo(0, 0);
     }
@@ -4450,7 +4447,7 @@
         try { localStorage.removeItem(LP_RESUME_KEY); } catch (e) {}
         releaseWakeLock();
         let st = document.getElementById('lpStatus'); if (st) st.textContent = '🎉 練習結束！';
-        let v = document.getElementById('practiceView'); if (v) v.classList.add('is-paused');
+        let v = document.getElementById('practiceView'); if (v) v.classList.add('is-done');
         setTimeout(() => { if (!isPlaying && document.getElementById('practiceView').classList.contains('active')) { lpShowPart(false); cpRenderResume('listen'); } }, 1600);
     }
     // 停止（離開頁面時呼叫）：停掉語音；練習中的進度會保留
@@ -5596,11 +5593,17 @@
         { key: 'slash',   name: '斬擊',         icon: ADV_ICONS.slash(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '聽發音，選中文意思' },
         { key: 'slash2',  name: '連續斬擊',     icon: ADV_ICONS.slash2(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 4, item: 'mv_slash2' },       desc: '聽發音，選中文意思' },
         { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_thrust' }, desc: '聽發音，拼出英文單字' },
-        { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 2, buy: { kind: 'free' },                                       desc: '看單字，並唸出單字' },
-        { key: 'wave2',   name: '雙重衝擊波',   icon: ADV_ICONS.wave2(), type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 2, buy: { kind: 'reward', level: 5, item: 'mv_wave2' },        desc: '看單字，並唸出單字' },
-        { key: 'wave3',   name: '雞塊氣功波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'speakCn',      fx: 'yellow', power: 5, hits: 1, q: 2, tries: 2, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_wave3' }, desc: '顯示中文，唸英文' }
+        { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 2, hidden: true, buy: { kind: 'none' },                                       desc: '看單字，並唸出單字' },
+        { key: 'wave2',   name: '雙重衝擊波',   icon: ADV_ICONS.wave2(), type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 2, hidden: true, buy: { kind: 'none' },        desc: '看單字，並唸出單字' },
+        // 速答類：20 秒內英中配對，配對成功的組數換成能力加成（不直接造成傷害）
+        //   speed.secs 秒數；every 每配對幾組 +1；cap 加成上限；pen 配錯扣幾秒；lvSecs／lvCap 每 1 級熟練度加的秒數／上限；maxCap 上限的上限
+        { key: 'meditate', name: '冥想',        icon: '🧘', type: 'speed', mode: 'speed', fx: '', power: 0, hits: 0, q: 0, tries: 0, buy: { kind: 'free' },
+          speed: { stat: 'int', label: '智慧', secs: 20, every: 2, cap: 5, pen: 2, lvSecs: 2, lvCap: 2, maxCap: 7 }, desc: '20 秒內把英文和中文配成對，每配對 2 組智慧 +1；配錯扣 2 秒' },
+        { key: 'chargeup', name: '蓄力',        icon: '⚡', type: 'speed', mode: 'speed', fx: '', power: 0, hits: 0, q: 0, tries: 0, buy: { kind: 'reward', level: 5 },
+          speed: { stat: 'atk', label: '下一招攻擊', secs: 20, every: 2, cap: 3, pen: 3, lvSecs: 2, lvCap: 1, maxCap: 99 }, desc: '20 秒內把英文和中文配成對，每配對 2 組下一招攻擊 +1；配錯扣 3 秒' },
+        { key: 'wave3',   name: '雞塊氣功波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'speakCn',      fx: 'yellow', power: 5, hits: 1, q: 2, tries: 2, hidden: true, buy: { kind: 'none' }, desc: '顯示中文，唸英文' }
     ];
-    const ADV_TYPE_LABEL = { card: '字卡', listen: '聽力', speak: '朗讀' };
+    const ADV_TYPE_LABEL = { card: '字卡', listen: '聽力', speak: '朗讀', speed: '速答' };
     // 稀有度：普通（灰框，熟練度上限 1）／稀有（深金框，上限 2）／傳說（亮紫框，上限 3）
     const ADV_RARITY = {
         common: { label: '普通', color: '#94A3B8', cap: 1 },
@@ -5608,7 +5611,7 @@
         legend: { label: '傳說', color: '#C026D3', cap: 3 }
     };
     const ADV_RARITY_SKILL = { common: '一般技能', rare: '稀有技能', legend: '傳奇技能' };
-    const ADV_MOVE_RARITY = { tackle: 'common', slash: 'common', wave: 'common', combo: 'rare', slash2: 'rare', wave2: 'rare', charge: 'legend', thrust: 'legend', wave3: 'legend' };
+    const ADV_MOVE_RARITY = { tackle: 'common', slash: 'common', wave: 'common', combo: 'rare', slash2: 'rare', wave2: 'rare', charge: 'legend', thrust: 'legend', wave3: 'legend', meditate: 'common', chargeup: 'rare' };
     // 熟練度：累積使用 20 次 → 1、100 次 → 2、300 次 → 3（不超過稀有度上限）；每 1 級這招攻擊 +1（傳說招式 +2）
     const ADV_MASTERY_STEPS = [20, 100, 300];
     function advRarity(key) { return ADV_RARITY[ADV_MOVE_RARITY[key] || 'common']; }
@@ -5632,7 +5635,7 @@
         let after = advMastery(key);
         return after > before ? after : 0;
     }
-    const ADV_DEFAULT_EQUIP = ['tackle', 'slash', 'wave'];
+    const ADV_DEFAULT_EQUIP = ['tackle', 'slash', 'meditate'];
     function advMoveByKey(k) { return ADV_MOVES.find(m => m.key === k); }
 
     // 關卡：firstShards/firstSauce = 第一次通關的獎勵；repeatShards = 之後每次通關的獎勵
@@ -5670,18 +5673,27 @@
     ];
     const ADV_COFFEE_BURN = 6;              // 美式咖啡：開戰燙傷 = 6 − 雞塊的智慧（無視防禦、護盾，直接扣體力）
     // 全能便利商店員工：每回合換崗位（第一階段），各自免疫一類招式
-    const ADV_CLERK_POSTS = [{ name: '收銀台', immune: 'card' }, { name: '做餐中', immune: 'listen' }, { name: '點貨中', immune: 'speak' }];
+    const ADV_CLERK_POSTS = [{ name: '收銀台', immune: 'card' }, { name: '做餐中', immune: 'listen' }, { name: '點貨中', immune: 'speed' }];   // 點貨中：速答加成 −4（不是無效）
     const ADV_CLERK_SHIFT_HP = 20, ADV_CLERK_CD = 3;        // HP 低於 20 進入交班；下班倒數 3
     const ADV_STAMP_NEED = 2, ADV_STAMP_ATK = 2, ADV_STAMP_HEAL = 5;   // 集點：任兩種 → 兌換集點卡（攻擊 +2、HP +5）
     // 這些敵人對某一類招式有抗性：每一下最多只受到 1 點傷害
-    const ADV_RESIST = { darts: 'listen', mahjong: 'card', ring: 'speak', hotdog: 'listen', tea: 'speak' };
+    const ADV_RESIST = { darts: 'listen', mahjong: 'card', hotdog: 'listen' };
     // 這些敵人完全不受某一類招式的傷害
-    const ADV_IMMUNE = { salad: 'card', microwave: 'listen', coffee: 'speak' };
+    const ADV_IMMUNE = { salad: 'card', microwave: 'listen' };
     function advImmuneType() {                // 這一刻敵人免疫的招式類型
-        if (adv.enemy && adv.enemy.special === 'clerk' && adv.post) return adv.post.immune;
+        if (adv.enemy && adv.enemy.special === 'clerk' && adv.post) return adv.post.immune === 'speed' ? '' : adv.post.immune;
         return ADV_IMMUNE[adv.enemy && adv.enemy.special] || '';
     }
-    const ADV_WEAK_BONUS = { expire: { type: 'speak', bonus: 4 } };   // 愛珍食便當：朗讀類每一下 +4
+    const ADV_WEAK_BONUS = {};
+    // 速答招式：這些敵人會把能力加成扣掉幾點（套圈圈 −1、瓶裝無糖茶 −2、美式咖啡 −3、店員「點貨中」−4）
+    const ADV_SPEED_GUARD = { ring: 1, tea: 2, coffee: 3 };
+    const ADV_CLERK_SPEED_GUARD = 4, ADV_TEA_SPEED_HEAL = 1, ADV_EXPIRE_SPEED_DMG = 4;
+    function advSpeedGuard() {
+        let sp = adv.enemy && adv.enemy.special;
+        if (sp === 'clerk') return adv.post && adv.post.immune === 'speed' && !adv.shifted ? ADV_CLERK_SPEED_GUARD : 0;
+        return ADV_SPEED_GUARD[sp] || 0;
+    }
+    function advPostRule(post) { return post.immune === 'speed' ? `速答加成 −${ADV_CLERK_SPEED_GUARD}` : `${ADV_TYPE_LABEL[post.immune]}無效`; }
     const ADV_MICRO_ATK_UP = 2;             // 微波爐：每次攻擊後攻擊力 +2
     const ADV_EXPIRE_SELF = 4;              // 愛珍食便當：攻擊完自己扣 4 點體力
     const ADV_EGG_CARD_BONUS = 2;           // 茶葉蛋：字卡類招式每一下傷害 +2
@@ -5738,18 +5750,18 @@
         claw: '送你娃娃！',
         darts: '聽力招式只造成 1 點傷害',
         mahjong: '摸牌！字卡招式只造成 1 點傷害',
-        ring: '朗讀招式只造成 1 點傷害',
+        ring: '速答招式的能力加成 −1',
         pinball: '打彈珠！',
         egg: '請幫我剝殼 ❤️',
         bun: '熱狗',
         wrap: '拆不掉的包裝',
-        tea: '現泡就是回甘！',
+        tea: '現泡就是回甘！速答招式的能力加成 −2，而且每次被速答會回復 1 點體力',
         seal: '取票失敗！',
         salad: '蓋子霧霧的，看不清楚字',
         microwave: '運轉中..聽不到你在說什麼？',
         bento: '月底救星！',
         expire: '我快過期了..',
-        coffee: '太燙，嘴巴張不開！',
+        coffee: '太燙了！速答招式的能力加成 −3',
         clerk: '集點卡'
     };
 
@@ -5765,7 +5777,7 @@
         let hp = parseInt(d.hp);
         let own = {};
         if (d.own && typeof d.own === 'object') ADV_MOVES.forEach(m => { if (d.own[m.key] === true) own[m.key] = true; });
-        let eq = Array.isArray(d.eq) ? d.eq.filter(k => !!advMoveByKey(k)) : ADV_DEFAULT_EQUIP.slice();
+        let eq = Array.isArray(d.eq) ? d.eq.map(k => k === 'wave' ? 'meditate' : k).filter(k => !!advMoveByKey(k) && !advMoveByKey(k).hidden) : ADV_DEFAULT_EQUIP.slice();
         eq = eq.filter((k, i) => eq.indexOf(k) === i).slice(0, ADV_MAX_EQUIP);
         ADV_MOVES.forEach(m => { if (m.buy.kind === 'reward' && d.cleared && d.cleared[String(m.buy.level)]) own[m.key] = true; });   // 關卡送的招式（舊存檔也補發）
         let items = {};
@@ -5789,7 +5801,7 @@
             hits: (() => {                                      // 命中：最近 20 題答對(1)／答錯(0)
                 let hz = (d.hits && typeof d.hits === 'object') ? d.hits : {};
                 const arr = a => Array.isArray(a) ? a.filter(v => v === 0 || v === 1).slice(-ADV_HIT_N) : [];
-                return { card: arr(hz.card), listen: arr(hz.listen), speak: arr(hz.speak), all: arr(hz.all) };
+                return { card: arr(hz.card), listen: arr(hz.listen), speak: arr(hz.speak), speed: arr(hz.speed), all: arr(hz.all) };
             })(),
             hitPrev: Number.isFinite(d.hitPrev) ? d.hitPrev : null,
             shards: hasShards ? n0(d.shards) : n0(d.sauce),     // 舊版把碎片叫「糖醋醬」，改名後數量轉成碎片
@@ -5895,7 +5907,7 @@
     // 這招有沒有擁有：一開始就有的、用碎片買的、用雞塊買的（雞塊的購買紀錄在後端錢包）
     function advOwns(key) {
         let m = advMoveByKey(key);
-        if (!m) return false;
+        if (!m || m.hidden) return false;              // 朗讀招式先隱藏（衝擊波系列）
         if (m.buy.kind === 'free') return true;
         if (advData.own[key] === true) return true;
         if (advData.legendReset && advRarityKey(key) === 'legend') return false;   // testreset 後：傳說招式要重新在補給站買
@@ -6776,7 +6788,7 @@
                 <span class="st-hitbar"><span class="st-bar"><i style="width:${c.p === null ? 0 : c.p}%"></i></span><span class="st-threshold" title="90% 爆擊門檻"></span></span>
             </button>`;
         // 能力區
-        let shield = advShieldMax(s.int);
+        let shield = advShieldMax(s.int) + ((advData.gear || []).includes('bag') ? ADV_BAG_SHIELD : 0);   // 裝備加的護盾（夜市塑膠袋 +1）也算進來
         let cur = Math.max(0, Math.min(advData.hp, s.hp));
         let row = (key, label, value, bar, extra) => `<button class="st-row" type="button" data-on-click='[["advOpenStatInfo",["${key}"]]]'>
                 <span class="st-box"><span class="st-box__label">${label}</span><span class="st-box__value">${value}</span>${extra || ''}</span>${bar}</button>`;
@@ -6818,7 +6830,7 @@
         advUpdateGearAlerts();
     }
     // ── 招式分頁：上面用下拉選單篩選，中間左右輪播（一次看一招），下面是詳細資料 ──
-    const ADV_MOVE_FILTERS = [['all', '全部'], ['eq', '已裝備'], ['card', '字卡'], ['listen', '聽力'], ['speak', '朗讀']];
+    const ADV_MOVE_FILTERS = [['all', '全部'], ['eq', '已裝備'], ['card', '字卡'], ['listen', '聽力'], ['speed', '速答']];
     let advCarDir = 0;              // 剛剛往哪邊切換（做滑入動畫用）
     function advMoveShown() {
         let owned = ADV_MOVES.filter(m => advOwns(m.key));
@@ -6906,6 +6918,21 @@
         let r = advRarity(key), rk = advRarityKey(key), mi = advMasteryInfo(key), on = advEquipped().some(x => x.key === key);
         let pct = mi.maxed ? 100 : Math.max(0, Math.min(100, (mi.uses - mi.prev) / (mi.next - mi.prev) * 100));
         let prog = mi.maxed ? `已達上限（共 ${mi.uses} 次）` : `${mi.uses} / ${mi.next}`;
+        let c = m.mode === 'speed' ? advSpeedCfg(m) : null;
+        let statsHTML = c ? `
+            <div class="adv-md-stats">
+                <div>類型<b>速答</b></div>
+                <div>秒數<b>${c.secs}${mi.lvl ? `<em>+${mi.lvl * m.speed.lvSecs}</em>` : ''}</b></div>
+                <div>${c.stat === 'int' ? '智慧' : '攻擊'}上限<b>+${c.cap}</b></div>
+                <div>配錯<b>−${c.pen} 秒</b></div>
+            </div>` : '';
+        if (c) return statsHTML + `
+            <div class="adv-md-desc">${m.desc}</div>
+            <div class="adv-md-mastery">
+                <div class="adv-md-mrow"><span>熟練度 <b>${mi.lvl}</b>${mi.maxed ? '<small class="max">（Max）</small>' : ''}</span><small class="prog">${prog}</small></div>
+                <div class="adv-bar adv-md-bar"><i style="width:${pct.toFixed(1)}%;background:${r.color}"></i></div>
+            </div>
+            <button type="button" class="adv-md-btn${on ? ' off' : ''}" data-on-click='[["advToggleMove",["${key}"]]]'>${on ? '卸下這招' : '裝備這招'}</button>`;
         return `
             <div class="adv-md-stats">
                 <div>類型<b>${ADV_TYPE_LABEL[m.type]}</b></div>
@@ -6989,8 +7016,9 @@
             g[e] = key;
         }
         advSave();
+        if (fromSlot) advCloseBag();
         advRenderStatsPage();
-        if (fromSlot) advCloseBag(); else advBagBack();
+        if (!fromSlot) advBagBack();
     }
     // ── 命中：能力值頁最上面一條；點進去看字卡／聽力／朗讀 ──
     function advHitRowHTML() {
@@ -6999,7 +7027,7 @@
         let bar = t === null
             ? `<div class="adv-bar"><i class="adv-hit-wait" style="width:${(Math.min(a.length, ADV_HIT_N) / ADV_HIT_N * 100).toFixed(1)}%"></i></div>`
             : `<div class="adv-bar"><i style="width:${t}%;background:#EAB308"></i></div>`;
-        return `<div class="adv-stat-row adv-hit-row" data-stat="hit" role="button" title="點一下看字卡、聽力、朗讀的命中" data-on-click='[["advOpenHit",[]]]'>${tile}${bar}<span class="adv-hit-chev">›</span></div>`;
+        return `<div class="adv-stat-row adv-hit-row" data-stat="hit" role="button" title="點一下看字卡、聽力、速答的命中" data-on-click='[["advOpenHit",[]]]'>${tile}${bar}<span class="adv-hit-chev">›</span></div>`;
     }
     // ── 能力介紹（固定位置的彈出視窗；從某一行點進來 → 那一項高亮）──
     const ADV_STAT_INFO_LIST = [
@@ -7035,7 +7063,8 @@
         if (p >= 60) return '🙂 還不錯！再多練習一點，命中會越來越高。';
         return '📚 命中還不到 60%，先去多背幾個單字，再回來打會輕鬆很多！';
     }
-    const ADV_HIT_TIPS = { card: '「字卡練習」或「字卡測驗」', listen: '「聽力練習」或「聽力測驗」', speak: '「朗讀練習」' };
+    const ADV_HIT_KINDS = ['card', 'listen', 'speed'];     // 命中分三類：字卡、聽力、速答（朗讀招式隱藏後改算速答）
+    const ADV_HIT_TIPS = { card: '「字卡練習」或「字卡測驗」', listen: '「聽力練習」或「聽力測驗」', speed: '大冒險的速答招式' };
     function advOpenHit() {
         let a = advHitAll(), cur = advHitPct(a), c = stCritState();
         let numTxt = cur === null ? '—' : cur + '%';
@@ -7046,14 +7075,14 @@
         }
         let bonus = c.on ? `<div class="st-bonus st-bonus--on">${ST_COIN}獲得攻擊時額外 1 次爆擊判定</div>`
             : c.ready ? `<div class="st-bonus st-bonus--off">${ST_COIN}差 ${c.gap}% 獲得能力加成</div>`
-            : `<div class="st-bonus st-bonus--off">${ST_COIN}<span>字卡、聽力、朗讀各答滿 20 題，命中 90% 以上：攻擊時 +1 爆擊判定</span></div>`;
-        let modes = ['card', 'listen', 'speak'].map(k => {
+            : `<div class="st-bonus st-bonus--off">${ST_COIN}<span>字卡、聽力、速答各答滿 20 題，命中 90% 以上：攻擊時 +1 爆擊判定</span></div>`;
+        let modes = ADV_HIT_KINDS.map(k => {
             let arr = advData.hits[k] || [], okN = arr.reduce((x, y) => x + y, 0), full = arr.length >= ADV_HIT_N, p = advHitPct(arr);
             return `<div class="st-mode"><span class="st-mode__name">${ADV_TYPE_LABEL[k]}</span><span class="st-bar${full ? '' : ' is-wait'}"><i style="width:${full ? p : arr.length / ADV_HIT_N * 100}%"></i></span>
                 <span class="st-mode__num">${full ? p + '%' : '累積中'}<small>${full ? okN : arr.length}/${ADV_HIT_N} 題</small></span></div>`;
         }).join('');
         let cheer = cur !== null ? advHitComment(cur) : '🗡️ 去大冒險打一場，就會開始累積命中！';
-        stModalOpen(stDialogHead('🎯 命中', `字卡、聽力、朗讀各算最近 ${ADV_HIT_N} 題`) + `
+        stModalOpen(stDialogHead('🎯 命中', `字卡、聽力、速答各算最近 ${ADV_HIT_N} 題`) + `
             <div class="st-total"><span class="st-total__num">${numTxt}</span><span class="st-total__meta">總命中${diffTxt}</span></div>
             ${bonus}<div class="st-modes">${modes}</div><div class="st-cheer"><span>${escapeHTML(cheer)}</span></div>`);
     }
@@ -7090,7 +7119,12 @@
         advBagBack();
         document.getElementById('advBagModal').style.display = 'block';
     }
-    function advCloseBag() { document.getElementById('advBagModal').style.display = 'none'; }
+    function advCloseBag() {
+        document.getElementById('advBagModal').style.display = 'none';
+        // 關掉「選裝備」視窗後回到一般背包狀態，背包分頁要重畫（不然會是空的）
+        if (advBagGearOnly || advBagSlot !== null) { advBagGearOnly = false; advBagSlot = null; advBagFilter = 'all'; advBagSel = ''; }
+        if (advStatsTab === 'bag' && document.getElementById('advBagInline')) advBagBack();
+    }
     // 背包畫在哪裡：能力值頁的「背包」分頁（沒開彈出視窗時），否則畫在背包彈出視窗
     function advBagEl() {
         let modalOn = document.getElementById('advBagModal').style.display === 'block';
@@ -7646,7 +7680,7 @@
             <linearGradient id="sgS2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E5E7EB"/><stop offset="1" stop-color="#F9FAFB"/></linearGradient></defs>${s}</svg>`;
     }
     // 新版戰鬥畫面（前後透視：敵人在右上是主角、雞塊背面在左下）—— 先開放的關卡
-    const ADV_BT_LEVELS = [1, 9];
+    const ADV_BT_LEVELS = [1, 2, 9];
     function advBtOn() { return !!(adv.level && ADV_BT_LEVELS.includes(adv.level.id)); }
     function advBtFit() {
         let b = document.querySelector('#adventureBattleView .adv-battle');
@@ -7655,6 +7689,30 @@
         let h = vv ? vv.height : window.innerHeight, top = vv ? vv.offsetTop : 0;
         b.style.setProperty('--bt-h', Math.round(h) + 'px');
         b.style.setProperty('--bt-top', Math.round(top) + 'px');
+        // 鍵盤跳出來（可見高度明顯變小）：只有這時候場景才跟著縮，讓輸入框不被蓋住
+        let kb = !!(adv.btFullH && h < adv.btFullH * 0.8);
+        b.classList.toggle('bt-kb', kb);
+        if (!kb && adv.btMenuH && (Math.abs(h - adv.btFullH) > 40 || b.clientWidth !== adv.btW)) advBtLock(false);
+    }
+    // 一場戰鬥裡場景高度固定不變：用第一次「選擇招式」選單的高度決定，之後題目變長變短都只動下面的選單
+    function advBtLock(measure) {
+        let b = document.querySelector('#adventureBattleView .adv-battle'), pn = document.getElementById('advPanel');
+        if (!b || !pn || !b.classList.contains('bt')) return;
+        if (measure || !adv.btMenuH) {
+            adv.btMenuH = pn.offsetHeight;
+            // 有帶速答招式：配對畫面比招式選單高，用比較高的那個決定場景高度（整場戰鬥都不用再變）
+            if ((adv.moves || []).some(m => m.mode === 'speed')) {
+                let keep = pn.innerHTML, cell = '<button type="button" class="spd-cell">word</button>';
+                pn.innerHTML = `<div class="spd-head"><div class="spd-title"><b>⚡ 速答配對</b><small>已配對 0 組</small></div><div class="spd-timer"></div></div><div class="spd-grid">${cell.repeat(4)}</div><div class="spd-sep"></div><div class="spd-grid">${cell.repeat(4)}</div>`;
+                adv.btMenuH = Math.max(adv.btMenuH, pn.offsetHeight + 24);   // +24：中文比較長會換行
+                pn.innerHTML = keep;
+            }
+        }
+        let H = b.clientHeight, W = b.clientWidth, overlap = Math.max(0, -parseFloat(getComputedStyle(pn).marginTop) || 0);
+        let natural = W * 560 / 390;
+        let st = Math.max(200, Math.min(natural, H - adv.btMenuH + overlap));
+        b.style.setProperty('--bt-stage-h', Math.round(st) + 'px');
+        adv.btFullH = H; adv.btW = W;
     }
     try {
         if (window.visualViewport) { window.visualViewport.addEventListener('resize', advBtFit); window.visualViewport.addEventListener('scroll', advBtFit); }
@@ -7662,6 +7720,8 @@
     } catch (e) {}
     function advBuildStage() {
         let st = document.getElementById('advStage');
+        adv.btLocked = false; adv.btMenuH = 0; adv.btFullH = 0; adv.btW = 0;
+        adv.nextAtk = 0; adv.intBuff = 0; if (advSp && advSp.timer) clearInterval(advSp.timer); advSp = null;
         let battle = document.querySelector('#adventureBattleView .adv-battle'), btOn = advBtOn();
         if (battle) battle.classList.toggle('bt', btOn);
         let view = document.getElementById('adventureBattleView');
@@ -7675,10 +7735,10 @@
             st.innerHTML = (adv.level && adv.level.id >= 11 ? advStoreStageBG() : advStageBG()) + `
             <div class="bt-scene">
                 <svg class="bt-plat" viewBox="0 0 390 560" aria-hidden="true">
-                    <ellipse cx="280" cy="350" rx="102" ry="20" fill="#fff" opacity="0.12" stroke="#fff" stroke-opacity="0.4" stroke-width="2"/>
-                    <ellipse cx="280" cy="350" rx="64" ry="9" fill="#000" opacity="0.35"/>
-                    <ellipse cx="116" cy="540" rx="124" ry="24" fill="#fff" opacity="0.1" stroke="#fff" stroke-opacity="0.35" stroke-width="2"/>
-                    <ellipse cx="116" cy="542" rx="66" ry="10" fill="#000" opacity="0.35"/>
+                    <ellipse cx="280" cy="350" rx="102" ry="20" fill="#fff" opacity="0.35" stroke="#8A5A34" stroke-opacity="0.35" stroke-width="2"/>
+                    <ellipse cx="280" cy="350" rx="64" ry="9" fill="#5A3A1E" opacity="0.35"/>
+                    <ellipse cx="116" cy="540" rx="124" ry="24" fill="#fff" opacity="0.3" stroke="#8A5A34" stroke-opacity="0.3" stroke-width="2"/>
+                    <ellipse cx="116" cy="542" rx="66" ry="10" fill="#5A3A1E" opacity="0.35"/>
                 </svg>
                 <div class="adv-actor adv-enemy" id="advEnemy">${advEnemySVG(adv.enemy.sprite)}</div>
                 <div class="adv-actor adv-player" id="advPlayer">${advChickenBackSVG()}</div>
@@ -7801,7 +7861,7 @@
         let el = document.getElementById('advEnemyTag');
         if (!el) return;
         let t = '';
-        if (adv.enemy && adv.enemy.special === 'clerk') t = adv.shifted ? (adv.cd > 0 ? `⏰ 下班倒數 ${adv.cd}` : '⏰ 下班了') : adv.post ? `🏷️ ${adv.post.name}・${ADV_TYPE_LABEL[adv.post.immune]}無效` : '';
+        if (adv.enemy && adv.enemy.special === 'clerk') t = adv.shifted ? (adv.cd > 0 ? `⏰ 下班倒數 ${adv.cd}` : '⏰ 下班了') : adv.post ? `🏷️ ${adv.post.name}・${advPostRule(adv.post)}` : '';
         el.textContent = t;
         el.style.display = t ? '' : 'none';
         el.classList.toggle('cd', !!adv.shifted);
@@ -7904,7 +7964,7 @@
         }
         advShowMenu();
         if (adv.enemy.special === 'clerk' && !adv.shifted && adv.post) {
-            advSetLog(`🏪「歡迎光臨！今天我負責${adv.post.name}」（這回合${ADV_TYPE_LABEL[adv.post.immune]}招式無效）`);
+            advSetLog(`🏪「歡迎光臨！今天我負責${adv.post.name}」（這回合${adv.post.immune === 'speed' ? `速答招式的加成 −${ADV_CLERK_SPEED_GUARD}` : ADV_TYPE_LABEL[adv.post.immune] + '招式無效'}）`);
             advFloat(document.getElementById('advEnemy'), adv.post.name, '#2563EB');
         }
         if (adv.billNext) { adv.billNext = false; advSetLog('🧾 條碼刷不過..'); advFloat(document.getElementById('advEnemy'), '條碼刷不過..', '#64748B'); }
@@ -7918,6 +7978,7 @@
         let bonus = (adv.enemy.special === 'egg' && m.type === 'card') ? ADV_EGG_CARD_BONUS : 0;
         let wk = ADV_WEAK_BONUS[adv.enemy.special];
         if (wk && wk.type === m.type) bonus += wk.bonus;
+        bonus += adv.nextAtk || 0;               // 蓄力：下一招攻擊 +N
         return advDamage(adv.player.atk, m.power + advMasteryAtk(m.key) + bonus, adv.enemy.def);
     }
     // 這招因為題庫或瀏覽器的關係不能用：回傳原因（可以用就回傳空字串）
@@ -7926,6 +7987,7 @@
         if (m.mode === 'speakCn' && adv.cnWords.length < 1) return '缺中文';
         if (m.mode === 'typeCn' && adv.cnWords.length < 1) return '缺中文';
         if (m.type === 'speak' && !getSpeechRecognitionCtor()) return '不支援';
+        if (m.mode === 'speed' && adv.cnWords.length < 4) return '缺中文';
         return '';
     }
     function advShowMenu() {
@@ -7937,9 +7999,14 @@
             let sealed = (adv.sealed || []).includes(m.key);
             if (sealed) { off = true; why = '封印中'; }
             let lvl = advMastery(m.key);
-            let per = adv.player.atk + m.power + advMasteryAtk(m.key);      // 不扣敵人防禦：打下去才知道
+            let per = adv.player.atk + m.power + advMasteryAtk(m.key) + (adv.nextAtk || 0);      // 不扣敵人防禦：打下去才知道
             let stamp = adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.has(m.type);
-            if (!why && adv.enemy.special === 'clerk' && advImmuneType() === m.type) why = '這回合無效';   // 店員：直接告訴玩家，不用自己試
+            if (!why && adv.enemy.special === 'clerk' && advImmuneType() === m.type) why = '這回合無效';
+            if (m.mode === 'speed') {
+                let sp = advSpeedCfg(m), g = advSpeedGuard();
+                return `<button type="button" class="adv-move rar-${advRarityKey(m.key)}${sealed ? ' sealed' : ''}" ${off ? 'disabled' : ''} data-on-click='[["advChooseMove",["${m.key}"]]]'>
+                ${stamp ? '<span class="adv-stamp">已集點</span>' : ''}<b class="nm">${m.icon} ${m.name}${lvl ? ` <span class="adv-lv-chip">Lv.${lvl}</span>` : ''}</b><span class="dmg">${sp.label} +1～${sp.cap}</span><small>速答${why ? '｜' + why : g ? `｜加成 −${g}` : ''}</small></button>`;
+            }   // 店員：直接告訴玩家，不用自己試
             return `<button type="button" class="adv-move rar-${advRarityKey(m.key)}${sealed ? ' sealed' : ''}" ${off ? 'disabled' : ''} data-on-click='[["advChooseMove",["${m.key}"]]]'>
                 ${stamp ? '<span class="adv-stamp">已集點</span>' : ''}<b class="nm">${m.icon} ${m.name}${lvl ? ` <span class="adv-lv-chip">Lv.${lvl}</span>` : ''}</b><span class="dmg">傷害 ${m.hits > 1 ? per + '×' + m.hits : per}</span><small>${ADV_TYPE_LABEL[m.type]}${why ? '｜' + why : ''}</small></button>`;
         }).join('');
@@ -7960,7 +8027,9 @@
         });
         if (advHasGear('tofu')) itemBtn += `<div class="adv-item-tip">${advTofuIcon(16)} 裝備烤焦臭豆腐：招式失敗時雙方各扣 1 點體力</div>`;
         if (advHasGear('skewer')) itemBtn += `<div class="adv-item-tip">${advSkewerIcon(16)} 裝備竹籤：攻擊無視對方護盾</div>`;
+        if (adv.nextAtk) itemBtn = `<div class="adv-item-tip">⚡ 蓄力中：下一招攻擊 +${adv.nextAtk}</div>` + itemBtn;
         document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">選擇招式！（本回合還可行動 ${adv.actionsLeft} 次）</div><div class="adv-moves">${moves}</div>${itemBtn}`;
+        if (advBtOn() && !adv.btLocked) { adv.btLocked = true; requestAnimationFrame(() => advBtLock(true)); }
     }
     function advUseFlowerItem(k) {
         if (!adv.active || adv.busy || adv.q || !FARM_ITEMS[k]) return;
@@ -8010,6 +8079,7 @@
             adv.micOk = true;
         }
         adv.progress = 0;
+        if (m.mode === 'speed') { advSpeedStart(); return; }
         advNextQuestion();
     }
     // 出下一題（多題的招式要連續答對 m.q 題）
@@ -8034,10 +8104,10 @@
     }
     function advHitPct(arr) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 100) : null; }
     // 總命中 = 字卡、聽力、朗讀各自最近 20 題合起來算（不會只看最近 20 題而忽略比較弱的類別）
-    function advHitAll() { return ['card', 'listen', 'speak'].reduce((x, k) => x.concat(advData.hits[k] || []), []); }
+    function advHitAll() { return ADV_HIT_KINDS.reduce((x, k) => x.concat(advData.hits[k] || []), []); }
     // 爆擊加成：字卡、聽力、朗讀「各」答滿 20 題，而且三種合計命中 ≥ 90%
     const ADV_CRIT_AT = 90;
-    function advCritReady() { return ['card', 'listen', 'speak'].every(k => (advData.hits[k] || []).length >= ADV_HIT_N); }
+    function advCritReady() { return ADV_HIT_KINDS.every(k => (advData.hits[k] || []).length >= ADV_HIT_N); }
     function advCritOn() { return advCritReady() && advHitPct(advHitAll()) >= ADV_CRIT_AT; }
     function advHitTotal() { let a = advHitAll(); return a.length >= ADV_HIT_N ? advHitPct(a) : null; }
     function advQuestionPassed() {
@@ -8087,6 +8157,187 @@
         await advWait(1200);
         if (id !== adv.runId) return;
         advResolveMove(false);
+    }
+
+    // ═════════ 速答招式（冥想／蓄力）═════════
+    //   一輪 4 個英文＋4 個中文；配對成功的那組只消失、不補；4 組都配完才整批換下一輪（位置重新打亂）
+    //   時間內配對成功的總組數 = 答對題數；配錯扣秒數
+    function advSpeedCfg(m) {
+        let c = m.speed, lv = advMastery(m.key);
+        return { label: c.label, stat: c.stat, every: c.every, pen: c.pen, secs: c.secs + lv * c.lvSecs, cap: Math.min(c.maxCap, c.cap + lv * c.lvCap) };
+    }
+    let advSp = null;
+    function advSpeedShort(w) { return (w.meanings && w.meanings[0]) || String(w.chinese || '').split(/[、,，;；\/]/)[0] || w.chinese; }
+    function advSpeedRound() {
+        let sp = advSp, pool = advShuffle(adv.cnWords.slice()), pick = [], usedEn = new Set(), usedCn = new Set();
+        let last = new Set((sp.round || []).map(w => advWordKey(w)));
+        let tryAdd = (w, avoidLast) => {
+            let en = advWordKey(w), cn = advSpeedShort(w);
+            if (pick.length >= 4 || usedEn.has(en) || usedCn.has(cn) || (avoidLast && last.has(en))) return;
+            usedEn.add(en); usedCn.add(cn); pick.push(w);
+        };
+        pool.forEach(w => tryAdd(w, true));
+        pool.forEach(w => tryAdd(w, false));
+        sp.round = pick;
+        sp.en = advShuffle(pick.map((w, i) => i));
+        sp.cn = advShuffle(pick.map((w, i) => i));
+        sp.done = new Set(); sp.selEn = null; sp.selCn = null; sp.bad = null;
+    }
+    function advSpeedStart() {
+        let m = adv.move, c = advSpeedCfg(m);
+        adv.q = { type: 'speed', done: false };
+        advSp = { id: adv.runId, m, c, pairs: 0, wrong: 0, endAt: Date.now() + c.secs * 1000, total: c.secs, round: null, over: false };
+        advSpeedRound();
+        advSpeedRender();
+        clearInterval(advSp.timer);
+        advSp.timer = setInterval(advSpeedTick, 100);
+    }
+    function advSpeedBonus(sp) { return Math.min(sp.c.cap, Math.floor(sp.pairs / sp.c.every)); }
+    function advSpeedTick() {
+        let sp = advSp;
+        if (!sp || sp.over) return;
+        if (!adv.active || sp.id !== adv.runId) { clearInterval(sp.timer); advSp = null; return; }
+        let left = Math.max(0, sp.endAt - Date.now());
+        let t = document.getElementById('spdTime'), ring = document.getElementById('spdRing');
+        if (t) t.textContent = Math.ceil(left / 1000);
+        if (ring) { ring.style.strokeDashoffset = (125.66 * (1 - left / (sp.total * 1000))).toFixed(2); ring.classList.toggle('low', left <= 5000); }
+        if (left <= 0) advSpeedEnd();
+    }
+    function advSpeedRender() {
+        let sp = advSp, m = sp.m;
+        let cell = (side, slot) => {
+            let i = (side === 'en' ? sp.en : sp.cn)[slot], w = sp.round[i];
+            if (!w) return '<div class="spd-cell gone"></div>';
+            if (sp.done.has(i)) return '<div class="spd-cell gone">✓</div>';
+            let sel = side === 'en' ? sp.selEn === i : sp.selCn === i;
+            let bad = sp.bad && sp.bad[side] === i;
+            let txt = side === 'en' ? w.english : advSpeedShort(w);
+            return `<button type="button" class="spd-cell${side === 'en' ? ' en' : ' cn'}${sel ? ' sel' : ''}${bad ? ' bad' : ''}" data-on-click='[["advSpeedTap",["${side}",${i}]]]'>${escapeHTML(txt)}${bad && side === 'cn' ? `<span class="spd-pen">配錯 −${sp.c.pen} 秒</span>` : ''}</button>`;
+        };
+        let left = Math.max(0, sp.endAt - Date.now());
+        document.getElementById('advPanel').innerHTML = `
+            <div class="spd-head">
+                <div class="spd-title"><b>${m.icon} ${m.name}・速答配對</b><small>已配對 <b id="spdPairs">${sp.pairs}</b> 組・${sp.c.label} <b class="hot">+${advSpeedBonus(sp)}</b></small></div>
+                <div class="spd-timer"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" fill="none" stroke="#E0E7FF" stroke-width="4"/><circle id="spdRing" cx="22" cy="22" r="20" fill="none" stroke="#4F46E5" stroke-width="4" stroke-linecap="round" stroke-dasharray="125.66" style="stroke-dashoffset:${(125.66 * (1 - left / (sp.total * 1000))).toFixed(2)}" transform="rotate(-90 22 22)"/></svg><b id="spdTime">${Math.ceil(left / 1000)}</b></div>
+            </div>
+            <div class="spd-grid">${[0, 1, 2, 3].map(k => cell('en', k)).join('')}</div>
+            <div class="spd-sep"></div>
+            <div class="spd-grid">${[0, 1, 2, 3].map(k => cell('cn', k)).join('')}</div>`;
+    }
+    function advSpeedTap(side, i) {
+        let sp = advSp;
+        if (!sp || sp.over || !adv.active || sp.id !== adv.runId || sp.done.has(i)) return;
+        sp.bad = null;
+        if (side === 'en') sp.selEn = sp.selEn === i ? null : i; else sp.selCn = sp.selCn === i ? null : i;
+        if (sp.selEn !== null && sp.selCn !== null) {
+            let a = sp.selEn, b = sp.selCn;
+            if (a === b) {
+                sp.done.add(a); sp.pairs++;
+                advRecordHit(true);
+                try { advSpeakWord(sp.round[a].english); } catch (e) {}
+            } else {
+                sp.wrong++;
+                sp.endAt -= sp.c.pen * 1000;
+                sp.bad = { en: a, cn: b };
+                advRecordHit(false);
+                advNoteWrong(sp.round[a]);
+            }
+            sp.selEn = null; sp.selCn = null;
+            if (sp.done.size >= sp.round.length) { advSpeedRound(); }
+        }
+        advSpeedRender();
+        advSpeedTick();
+    }
+    async function advSpeedEnd() {
+        let sp = advSp;
+        if (!sp || sp.over) return;
+        sp.over = true;
+        clearInterval(sp.timer);
+        const id = sp.id, m = sp.m;
+        if (!adv.active || id !== adv.runId) return;
+        adv.busy = true;
+        adv.q = null;
+        adv.resolvedSeq = adv.moveSeq;
+        let masteryUp = advAddMasteryUse(m.key);
+        advSave();
+        let raw = advSpeedBonus(sp), guard = advSpeedGuard(), got = Math.max(0, raw - guard);
+        // 套用加成
+        let applied = got;
+        if (m.speed.stat === 'int') {
+            applied = Math.max(0, Math.min(got, sp.c.cap - (adv.intBuff || 0)));    // 冥想：一場戰鬥加的智慧合計不超過上限
+            if (applied) {
+                adv.intBuff = (adv.intBuff || 0) + applied;
+                adv.player.int += applied;
+                let newMax = advShieldMax(adv.player.int) + (advHasGear('bag') ? ADV_BAG_SHIELD : 0);
+                if (newMax > (adv.player.shieldMax || 0)) { adv.player.shield += newMax - adv.player.shieldMax; adv.player.shieldMax = newMax; }
+            }
+        } else {
+            adv.nextAtk = Math.max(adv.nextAtk || 0, got);
+        }
+        if (adv.enemy.special === 'clerk' && adv.stamps && sp.pairs > 0 && !adv.stamps.has(m.type)) adv.stamps.add(m.type);
+        let segs = Array.from({ length: sp.c.cap }, (_, k) => `<i class="${k < got ? 'on' : ''}"></i>`).join('');
+        let guardTxt = guard ? `<div class="spd-guard">🛡️ ${escapeHTML(adv.enemy.name)}防禦了速答招式！加成 −${guard}${raw ? `（+${raw} → +${got}）` : ''}</div>` : '';
+        let gotTxt = m.speed.stat === 'int'
+            ? `智慧 +${applied}${applied < got ? `（這場已加到上限 +${sp.c.cap}）` : ''}`
+            : `下一招攻擊 +${got}（最多 +${sp.c.cap}）`;
+        let isLast = adv.actionsLeft <= 1;
+        document.getElementById('advPanel').innerHTML = `
+            <div class="spd-result">
+                <div class="spd-res-h">⏱ 時間到！配對成功</div>
+                <div class="spd-res-n">${sp.pairs} 組</div>
+                <div class="spd-segs">${segs}</div>
+                <div class="spd-res-got">${gotTxt}</div>
+                ${guardTxt}
+                <button type="button" class="spd-go" id="spdGo" disabled data-on-click='[["advSpeedDone",[]]]'>${isLast ? '繼續' : '繼續選招式'}</button>
+            </div>`;
+        advUpdateHud();
+        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
+        if (guard) advFloat(E, `🛡️防禦 −${guard}`, '#0EA5E9', -30);
+        if (applied && m.speed.stat === 'int') advFloat(P, `智慧 +${applied}`, '#7C3AED');
+        if (got && m.speed.stat === 'atk') advFloat(P, `攻擊 +${got}`, '#DB2777');
+        // 瓶裝無糖茶：被速答就回甘，HP +1
+        if (adv.enemy.special === 'tea' && adv.enemy.hp > 0 && adv.enemy.hp < adv.enemy.max) {
+            await advWait(500);
+            if (id !== adv.runId) return;
+            adv.enemy.hp = Math.min(adv.enemy.max, adv.enemy.hp + ADV_TEA_SPEED_HEAL);
+            advUpdateHud();
+            advFloat(E, `回甘 +${ADV_TEA_SPEED_HEAL}`, '#10B981');
+        }
+        // 愛珍食便當：速答只要答對 1 題，立刻扣牠 4 點體力
+        if (adv.enemy.special === 'expire' && sp.pairs > 0) {
+            await advWait(500);
+            if (id !== adv.runId) return;
+            advFloat(E, '💥 效果拔群！', '#DC2626', -30);
+            let er = advTakeDamage(adv.enemy, ADV_EXPIRE_SPEED_DMG, true);
+            advUpdateHud();
+            await advHurt(E, ADV_EXPIRE_SPEED_DMG, true, advHurtLabel(er));
+            if (id !== adv.runId) return;
+            if (adv.enemy.hp <= 0) {
+                if (await advEnemyDown(id)) return;
+                if (id !== adv.runId) return;
+            }
+        }
+        if (masteryUp) {
+            advFloat(P, `⬆️ 熟練度 ${masteryUp}`, '#4F46E5');
+            let c2 = advSpeedCfg(m);
+            let msg = document.createElement('div');
+            msg.className = 'spd-guard up';
+            msg.textContent = `⬆️「${m.name}」熟練度提升到 ${masteryUp}！秒數 +${m.speed.lvSecs}、上限變成 +${c2.cap}`;
+            let box = document.querySelector('#advPanel .spd-result');
+            if (box) box.insertBefore(msg, document.getElementById('spdGo'));
+        }
+        await advWait(400);
+        if (id !== adv.runId) return;
+        let go = document.getElementById('spdGo'); if (go) go.disabled = false;
+        advSp = { over: true, waiting: true, id };
+    }
+    async function advSpeedDone() {
+        if (!advSp || !advSp.waiting || advSp.id !== adv.runId || !adv.active) return;
+        const id = advSp.id;
+        advSp = null;
+        adv.actionsLeft--;
+        if (adv.actionsLeft > 0) { adv.busy = false; advShowMenu(); }
+        else await advEnemyPhase(id);
     }
 
     // 字卡（選擇題）
@@ -8168,7 +8419,7 @@
         let opts = advShuffle([ans, ...wrong]);
         adv.q = { type: 'listenChoice', word: w, opts, correct: opts.indexOf(ans), done: false };
         document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：${cn ? '聽英文，選出中文意思' : '聽發音，選出正確的單字'}</div>
+            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}${cn ? '' : '：聽發音，選出正確的單字'}</div>
             <div class="adv-opts">${opts.map((o, i) => `<button type="button" class="adv-opt" data-on-click='[["advAnswerListen",[${i}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
         advSpeakWord(w.english);
     }
@@ -8602,6 +8853,7 @@
                 if (adv.player.hp <= 0) { await advLose(id); return; }
             }
         }
+        adv.nextAtk = 0;                           // 蓄力的加成只給「下一招」
         let up = masteryUp;
         if (up) {
             advFloat(P, `⬆️ 熟練度 ${up}`, '#4F46E5');
@@ -10174,12 +10426,15 @@
         let g = document.getElementById('bmGrid'), svg = document.getElementById('bmLines');
         if (!g || !svg || !fb || fb.type !== 'match') return;
         let gr = g.getBoundingClientRect();
-        svg.setAttribute('viewBox', `0 0 ${gr.width.toFixed(0)} ${gr.height.toFixed(0)}`);
+        svg.setAttribute('viewBox', `0 0 ${gr.width.toFixed(2)} ${gr.height.toFixed(2)}`);
+        svg.setAttribute('preserveAspectRatio', 'none');
         svg.innerHTML = fb.done.map(w => {
             let a = g.querySelector(`[data-en="${fb.en.indexOf(w)}"]`), b = g.querySelector(`[data-cn="${fb.cn.indexOf(w)}"]`);
             if (!a || !b) return '';
-            let ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-            let x1 = ra.right - gr.left - 6, y1 = ra.top + ra.height / 2 - gr.top, x2 = rb.left - gr.left + 6, y2 = rb.top + rb.height / 2 - gr.top;
+            // 線的兩端對齊卡片上的圓點中心
+            let da = a.querySelector('.bm-dot') || a, db = b.querySelector('.bm-dot') || b;
+            let ra = da.getBoundingClientRect(), rb = db.getBoundingClientRect();
+            let x1 = ra.left + ra.width / 2 - gr.left, y1 = ra.top + ra.height / 2 - gr.top, x2 = rb.left + rb.width / 2 - gr.left, y2 = rb.top + rb.height / 2 - gr.top;
             return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/>`;
         }).join('');
     }
@@ -10432,7 +10687,7 @@
         copyAppUrl,
         lpBack, lpTogglePause, cpResume, cpStartNew, cpStartNewFlash, cpStartNewSpeak, leaveSpeakPractice, playSpeakMyRecording, cpConfirmClose, cpConfirmBg, cpConfirmOk, fcFlip,
         playSpeakPracticeSample,
-        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
+        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSpeedTap, advSpeedDone, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
         advSetMode, advOpenWords, advSayWord, advPracticeLevel, advWrongPick, advWrongPractice,
         advOpenSauce, advQuit, advRetry, advRedeemStamps, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
         openMicHelpModal,
