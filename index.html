@@ -1747,6 +1747,7 @@
         .adv-fx > * { position: absolute; }
         .adv-panel { flex: 1 0 auto; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; padding-bottom: 4px; }
         .adv-log.has-timer { position: relative; padding-right: 46px; }
+        .adv-log:has(.adv-timer) { padding-right: 46px; }
         .adv-timer { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; }
         .adv-timer svg { display: block; }
         .adv-timer b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #475569; }
@@ -2605,6 +2606,7 @@
 .cp-wave span:nth-child(5) { animation-delay: 0.6s; }
 @keyframes cp-wave { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
 .cp.is-paused .cp-wave span { animation-play-state: paused; }
+.cp.is-done .cp-wave span { animation-play-state: paused; }
 .cp.is-paused .cp-status-text::after { content: '（已暫停）'; }
 
 .cp-repeat {
@@ -3910,6 +3912,7 @@ body.power-saving-mode.cp-on .cp-books { border-color: var(--cp-line) !important
 
 /* 蜜蜂採蜜：頁面撐到手機底部、內容平均分配（不用上下捲動） */
 #farmWaterBody.bee-mode { display: flex; flex-direction: column; min-height: calc(100vh - 56px); min-height: calc(100dvh - 56px - env(safe-area-inset-bottom)); box-sizing: border-box; }
+@media (min-width: 769px) { #farmWaterBody.bee-mode { min-height: 0; } #farmWaterBody.bee-mode .fw-foot { margin-top: 18px; } }
 #farmWaterBody.bee-mode .fw-head { margin-bottom: 10px; }
 #farmWaterBody.bee-mode .fw-card { padding: 8px 12px 10px; }
 #farmWaterBody.bee-mode .fw-card.bee .bee-art { width: 84px; height: 84px; }
@@ -4077,13 +4080,14 @@ body.bt-on { overflow: hidden; }
 .adv-battle.bt .adv-topbar .back-home-btn svg { width: calc(20 * var(--u)); height: calc(20 * var(--u)); }
 .adv-battle.bt .adv-topinfo { padding: calc(8 * var(--u)) calc(14 * var(--u)); border-radius: 999px; background: rgba(255,255,255,.95); color: #4f46e5; font-family: 'Noto Sans TC', system-ui, sans-serif; font-size: calc(14 * var(--u)); font-weight: 900; white-space: nowrap; }
 .adv-battle.bt .adv-topinfo span { color: #c7caf7; }
-/* 上：戰鬥場景佔剩下的高度 */
-.adv-battle.bt .adv-stage { flex: 1 1 auto; min-height: 0; height: auto; border: none; border-radius: 0; overflow: hidden; container-type: size; }
+/* 上：戰鬥場景——同一場戰鬥高度固定（--bt-stage-h 由 JS 依第一次招式選單算好），只有鍵盤跳出時才縮 */
+.adv-battle.bt .adv-stage { flex: 0 0 auto; height: var(--bt-stage-h, 62%); min-height: 0; border: none; border-radius: 0; overflow: hidden; container-type: size; }
+.adv-battle.bt.bt-kb .adv-stage { flex: 1 1 auto; height: auto; }
 .adv-battle.bt .adv-stage {
   --bt-bgtop: calc(58 * var(--u));
   background:
-    repeating-linear-gradient(to bottom, transparent 0, transparent calc(46 * var(--u)), rgba(0,0,0,.28) calc(46 * var(--u)), rgba(0,0,0,.28) calc(49 * var(--u))),
-    linear-gradient(to bottom, #120E30 0, #120E30 var(--bt-bgtop), #4A2E22 var(--bt-bgtop), #1F110C 100%);
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(46 * var(--u)), rgba(120,72,30,.22) calc(46 * var(--u)), rgba(120,72,30,.22) calc(48 * var(--u))),
+    linear-gradient(to bottom, #120E30 0, #120E30 var(--bt-bgtop), #E2C29A var(--bt-bgtop), #CFA578 100%);
 }
 /* 背景：寬度鋪滿、上方對齊（不會被放大裁掉招牌），下面接木頭地板 */
 .adv-battle.bt .adv-stage-bg { position: absolute; left: 0; right: 0; top: var(--bt-bgtop); bottom: auto; width: 100%; height: auto; aspect-ratio: 340 / 150; }
@@ -4118,7 +4122,7 @@ body.bt-on { overflow: hidden; }
 .adv-battle.bt .adv-enemy-tag { align-self: flex-start; margin: 0; font-size: 2.8cqw; }
 /* 下：招式抽屜（白色，蓋在場景上） */
 .adv-battle.bt .adv-panel {
-  position: relative; z-index: 3; flex: 0 0 auto; max-height: 68%; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  position: relative; z-index: 3; flex: 0 1 auto; min-height: 0; max-height: none; overflow-y: auto; -webkit-overflow-scrolling: touch;
   margin-top: calc(-26 * var(--u));
   padding: calc(16 * var(--u)) calc(16 * var(--u)) calc(24 * var(--u) + env(safe-area-inset-bottom, 0px));
   border-radius: calc(26 * var(--u)) calc(26 * var(--u)) 0 0;
@@ -4143,6 +4147,58 @@ body.bt-on { overflow: hidden; }
   .adv-battle.bt .adv-moves { grid-auto-rows: calc(84 * var(--u)); }
 }
 
+
+/* 雞塊能力值（手機）：把每一列壓扁成「名稱 數值」橫排，整頁不用捲就看得到幸運 */
+@media (max-width: 768px) {
+  .st-view .st { gap: 10px; }
+  .st-view .st-avatar { width: 76px; height: 76px; }
+  .st-view .st-panel { gap: 6px; padding: 8px 10px 10px; }
+  .st-view .st-info { height: 26px; padding: 0 10px; }
+  .st-view .st-box { flex-direction: row; justify-content: space-between; align-items: baseline; width: 98px; height: 38px; padding: 0 10px; gap: 4px; align-items: center; }
+  .st-view .st-box__label { font-size: 13px; white-space: nowrap; }
+  .st-view .st-box__value { font-size: 18px; white-space: nowrap; }
+  .st-view .st-row--hit .st-box__value { font-size: 17px; }
+  .st-view .st-badge-shield, .st-view .st-badge-crit { top: -9px; right: -9px; }
+  .st-view .st-divider { margin: 0; }
+}
+@media (max-width: 768px) and (max-height: 700px) {
+  .st-view .st-box { height: 34px; }
+  .st-view .st-avatar { width: 64px; height: 64px; }
+}
+
+/* ── 大冒險・速答招式（冥想／蓄力）：4 英文 ＋ 4 中文配對 ── */
+.spd-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.spd-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.spd-title > b { font-size: 17px; font-weight: 900; color: #1e1b4b; }
+.spd-title small { font-size: 13px; font-weight: 700; color: #6b7090; }
+.spd-title small b { color: #1e1b4b; }
+.spd-title small b.hot { color: #DC2626; }
+.spd-timer { position: relative; flex: none; width: 42px; height: 42px; }
+.spd-timer svg { width: 100%; height: 100%; display: block; }
+.spd-timer #spdRing { transition: stroke-dashoffset .1s linear, stroke .2s; }
+.spd-timer #spdRing.low { stroke: #EF4444; }
+.spd-timer b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; color: #4F46E5; }
+.spd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+.spd-sep { height: 0; border-top: 1.5px solid #E5E7EB; margin: 7px 2px 1px; }
+.spd-cell { position: relative; min-height: 38px; padding: 3px 8px; border: 1.5px solid #E2E5EF; border-radius: 14px; background: #F8F9FC; font-family: inherit; font-size: 16px; font-weight: 800; color: #1e1b4b; cursor: pointer; line-height: 1.25; word-break: break-word; }
+.spd-cell.cn { font-size: 15px; }
+.spd-cell.sel { border-color: #6366F1; background: #EEF0FF; box-shadow: 0 0 0 2px #C7D2FE; }
+.spd-cell.bad { border-color: #F87171; background: #FEF2F2; color: #DC2626; animation: spd-shake .3s; }
+.spd-cell.gone { display: flex; align-items: center; justify-content: center; border: 1.5px dashed #D9DCE6; background: transparent; color: #C4C8D6; font-size: 15px; cursor: default; }
+.spd-pen { position: absolute; top: -10px; right: -4px; padding: 2px 7px; border-radius: 999px; background: #FEE2E2; color: #DC2626; font-size: 11px; font-weight: 900; white-space: nowrap; }
+@keyframes spd-shake { 0%,100% { transform: translateX(0); } 30% { transform: translateX(-4px); } 60% { transform: translateX(4px); } }
+.spd-result { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0 2px; text-align: center; }
+.spd-res-h { font-size: 16px; font-weight: 900; color: #1e1b4b; }
+.spd-res-n { font-size: 40px; font-weight: 900; color: #4F46E5; line-height: 1.05; }
+.spd-segs { display: flex; gap: 5px; }
+.spd-segs i { width: 34px; height: 9px; border-radius: 999px; background: #E5E7EB; }
+.spd-segs i.on { background: #F59E0B; }
+.spd-res-got { font-size: 16px; font-weight: 900; color: #C2410C; }
+.spd-guard { font-size: 13px; font-weight: 800; color: #0369A1; background: #E0F2FE; border-radius: 10px; padding: 5px 10px; }
+.spd-guard.up { color: #4338CA; background: #EEF0FF; }
+.spd-go { width: 100%; margin-top: 4px; min-height: 48px; border: none; border-radius: 14px; background: #6366F1; color: #fff; font-family: inherit; font-size: 16px; font-weight: 900; cursor: pointer; }
+.spd-go:disabled { opacity: .5; cursor: default; }
+body.power-saving-mode .spd-cell:not(.gone) { background: #1B1E27; border-color: #2B303C; color: #fff; }
 </style>
 </head>
 <body>
