@@ -128,8 +128,8 @@
         mv_charge:   { name: '衝鋒撞擊',     desc: '雞塊大冒險新招式（字卡：輸入中文，威力 3）' },
         mv_slash2:   { name: '連續斬擊',     desc: '雞塊大冒險新招式（聽力：斬 2 下）' },
         mv_thrust:   { name: '突刺',         desc: '雞塊大冒險新招式（聽力：拼出英文，威力 3）' },
-        mv_wave2:    { name: '雙重衝擊波',   desc: '雞塊大冒險新招式（填空：射 2 發）' },
-        mv_wave3:    { name: '雞塊氣功波',   desc: '雞塊大冒險新招式（填空：威力 3）' },
+        mv_wave2:    { name: '雙重衝擊波',   desc: '雞塊大冒險新招式（朗讀：射 2 發）' },
+        mv_wave3:    { name: '雞塊氣功波',   desc: '雞塊大冒險新招式（朗讀：威力 3）' },
         pack_toeic_job: { name: '多益-職場', desc: '購買後多一本「多益-職場」英文單字庫（300 個職場單字），不占用你原本的題庫數量。\n這本單字庫不能清空、刪除或更換語言。' }
     };
     let shopCatalog = {
@@ -5571,8 +5571,8 @@
     const ADV_LUCK_CAP = 3;                 // 幸運擲幣的加成最多 +3
 
     // 招式
-    //   type：card 字卡 / listen 聽力 / speak 填空（代號沿用 speak，存檔的命中紀錄才不會亂掉）
-    //   mode：choice 選擇題 / typeCn 輸入中文 / listenChoice 聽音選英文 / listenCn 聽英文選中文 / listenSpell 聽音拼英文 / cloze 例句填空（4 選 1）
+    //   type：card 字卡 / listen 聽力 / speak 朗讀（用來決定這招需要什麼條件）
+    //   mode：choice 選擇題 / typeCn 輸入中文 / listenChoice 聽音選英文 / listenCn 聽英文選中文 / listenSpell 聽音拼英文 / speak 朗讀
     //   power：每一下的威力；hits：打幾下（每一下各自扣掉對方防禦）；q：要連續答對幾題
     //   buy：free 一開始就有 / shards 用碎片買 / chicken 用雞塊買（item 是商店商品代號）
     // 招式圖示（SVG，會跟著文字大小縮放）
@@ -5596,11 +5596,11 @@
         { key: 'slash',   name: '斬擊',         icon: ADV_ICONS.slash(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '聽發音，選中文意思' },
         { key: 'slash2',  name: '連續斬擊',     icon: ADV_ICONS.slash2(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 4, item: 'mv_slash2' },       desc: '聽發音，選中文意思' },
         { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_thrust' }, desc: '聽發音，拼出英文單字' },
-        { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'cloze',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '看例句，選出空格裡的單字' },
-        { key: 'wave2',   name: '雙重衝擊波',   icon: ADV_ICONS.wave2(), type: 'speak',  mode: 'cloze',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 1, buy: { kind: 'reward', level: 5, item: 'mv_wave2' },        desc: '看例句，選出空格裡的單字' },
-        { key: 'wave3',   name: '雞塊氣功波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'cloze',        fx: 'yellow', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_wave3' }, desc: '看例句，選出空格裡的單字' }
+        { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 2, buy: { kind: 'free' },                                       desc: '看單字，並唸出單字' },
+        { key: 'wave2',   name: '雙重衝擊波',   icon: ADV_ICONS.wave2(), type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 2, buy: { kind: 'reward', level: 5, item: 'mv_wave2' },        desc: '看單字，並唸出單字' },
+        { key: 'wave3',   name: '雞塊氣功波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'speakCn',      fx: 'yellow', power: 5, hits: 1, q: 2, tries: 2, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_wave3' }, desc: '顯示中文，唸英文' }
     ];
-    const ADV_TYPE_LABEL = { card: '字卡', listen: '聽力', speak: '填空' };
+    const ADV_TYPE_LABEL = { card: '字卡', listen: '聽力', speak: '朗讀' };
     // 稀有度：普通（灰框，熟練度上限 1）／稀有（深金框，上限 2）／傳說（亮紫框，上限 3）
     const ADV_RARITY = {
         common: { label: '普通', color: '#94A3B8', cap: 1 },
@@ -5681,7 +5681,7 @@
         if (adv.enemy && adv.enemy.special === 'clerk' && adv.post) return adv.post.immune;
         return ADV_IMMUNE[adv.enemy && adv.enemy.special] || '';
     }
-    const ADV_WEAK_BONUS = { expire: { type: 'speak', bonus: 4 } };   // 愛珍食便當：填空類每一下 +4
+    const ADV_WEAK_BONUS = { expire: { type: 'speak', bonus: 4 } };   // 愛珍食便當：朗讀類每一下 +4
     const ADV_MICRO_ATK_UP = 2;             // 微波爐：每次攻擊後攻擊力 +2
     const ADV_EXPIRE_SELF = 4;              // 愛珍食便當：攻擊完自己扣 4 點體力
     const ADV_EGG_CARD_BONUS = 2;           // 茶葉蛋：字卡類招式每一下傷害 +2
@@ -5738,7 +5738,7 @@
         claw: '送你娃娃！',
         darts: '聽力招式只造成 1 點傷害',
         mahjong: '摸牌！字卡招式只造成 1 點傷害',
-        ring: '填空招式只造成 1 點傷害',
+        ring: '朗讀招式只造成 1 點傷害',
         pinball: '打彈珠！',
         egg: '請幫我剝殼 ❤️',
         bun: '熱狗',
@@ -6818,7 +6818,7 @@
         advUpdateGearAlerts();
     }
     // ── 招式分頁：上面用下拉選單篩選，中間左右輪播（一次看一招），下面是詳細資料 ──
-    const ADV_MOVE_FILTERS = [['all', '全部'], ['eq', '已裝備'], ['card', '字卡'], ['listen', '聽力'], ['speak', '填空']];
+    const ADV_MOVE_FILTERS = [['all', '全部'], ['eq', '已裝備'], ['card', '字卡'], ['listen', '聽力'], ['speak', '朗讀']];
     let advCarDir = 0;              // 剛剛往哪邊切換（做滑入動畫用）
     function advMoveShown() {
         let owned = ADV_MOVES.filter(m => advOwns(m.key));
@@ -6935,7 +6935,7 @@
         g.style.maxHeight = Math.ceil(cards[3].offsetTop + cards[3].offsetHeight + 6) + 'px';
     }
     window.addEventListener('resize', () => { try { advFitMoveGrid(); } catch (e) {} });
-    // ── 招式篩選（全部／字卡／聽力／填空）──
+    // ── 招式篩選（全部／字卡／聽力／朗讀）──
     let advMoveFilter = 'all';
     function advSetMoveFilter(v) {
         advMoveFilter = ADV_MOVE_FILTERS.some(o => o[0] === v) ? v : 'all';
@@ -6992,14 +6992,14 @@
         advRenderStatsPage();
         if (fromSlot) advCloseBag(); else advBagBack();
     }
-    // ── 命中：能力值頁最上面一條；點進去看字卡／聽力／填空 ──
+    // ── 命中：能力值頁最上面一條；點進去看字卡／聽力／朗讀 ──
     function advHitRowHTML() {
         let a = advHitAll(), t = advHitTotal();
         let tile = t === null ? `<div class="adv-stat-tile hit">命中<b class="wait">累積中</b></div>` : `<div class="adv-stat-tile hit">命中<b>${t}%</b></div>`;
         let bar = t === null
             ? `<div class="adv-bar"><i class="adv-hit-wait" style="width:${(Math.min(a.length, ADV_HIT_N) / ADV_HIT_N * 100).toFixed(1)}%"></i></div>`
             : `<div class="adv-bar"><i style="width:${t}%;background:#EAB308"></i></div>`;
-        return `<div class="adv-stat-row adv-hit-row" data-stat="hit" role="button" title="點一下看字卡、聽力、填空的命中" data-on-click='[["advOpenHit",[]]]'>${tile}${bar}<span class="adv-hit-chev">›</span></div>`;
+        return `<div class="adv-stat-row adv-hit-row" data-stat="hit" role="button" title="點一下看字卡、聽力、朗讀的命中" data-on-click='[["advOpenHit",[]]]'>${tile}${bar}<span class="adv-hit-chev">›</span></div>`;
     }
     // ── 能力介紹（固定位置的彈出視窗；從某一行點進來 → 那一項高亮）──
     const ADV_STAT_INFO_LIST = [
@@ -7035,7 +7035,7 @@
         if (p >= 60) return '🙂 還不錯！再多練習一點，命中會越來越高。';
         return '📚 命中還不到 60%，先去多背幾個單字，再回來打會輕鬆很多！';
     }
-    const ADV_HIT_TIPS = { card: '「字卡練習」或「字卡測驗」', listen: '「聽力練習」或「聽力測驗」', speak: '大冒險的「填空」招式' };
+    const ADV_HIT_TIPS = { card: '「字卡練習」或「字卡測驗」', listen: '「聽力練習」或「聽力測驗」', speak: '「朗讀練習」' };
     function advOpenHit() {
         let a = advHitAll(), cur = advHitPct(a), c = stCritState();
         let numTxt = cur === null ? '—' : cur + '%';
@@ -7046,14 +7046,14 @@
         }
         let bonus = c.on ? `<div class="st-bonus st-bonus--on">${ST_COIN}獲得攻擊時額外 1 次爆擊判定</div>`
             : c.ready ? `<div class="st-bonus st-bonus--off">${ST_COIN}差 ${c.gap}% 獲得能力加成</div>`
-            : `<div class="st-bonus st-bonus--off">${ST_COIN}<span>字卡、聽力、填空各答滿 20 題，命中 90% 以上：攻擊時 +1 爆擊判定</span></div>`;
+            : `<div class="st-bonus st-bonus--off">${ST_COIN}<span>字卡、聽力、朗讀各答滿 20 題，命中 90% 以上：攻擊時 +1 爆擊判定</span></div>`;
         let modes = ['card', 'listen', 'speak'].map(k => {
             let arr = advData.hits[k] || [], okN = arr.reduce((x, y) => x + y, 0), full = arr.length >= ADV_HIT_N, p = advHitPct(arr);
             return `<div class="st-mode"><span class="st-mode__name">${ADV_TYPE_LABEL[k]}</span><span class="st-bar${full ? '' : ' is-wait'}"><i style="width:${full ? p : arr.length / ADV_HIT_N * 100}%"></i></span>
                 <span class="st-mode__num">${full ? p + '%' : '累積中'}<small>${full ? okN : arr.length}/${ADV_HIT_N} 題</small></span></div>`;
         }).join('');
         let cheer = cur !== null ? advHitComment(cur) : '🗡️ 去大冒險打一場，就會開始累積命中！';
-        stModalOpen(stDialogHead('🎯 命中', `字卡、聽力、填空各算最近 ${ADV_HIT_N} 題`) + `
+        stModalOpen(stDialogHead('🎯 命中', `字卡、聽力、朗讀各算最近 ${ADV_HIT_N} 題`) + `
             <div class="st-total"><span class="st-total__num">${numTxt}</span><span class="st-total__meta">總命中${diffTxt}</span></div>
             ${bonus}<div class="st-modes">${modes}</div><div class="st-cheer"><span>${escapeHTML(cheer)}</span></div>`);
     }
@@ -7476,7 +7476,7 @@
         }
     }
     function advNextWord(kind) {
-        let filt = kind === 'cn' ? (w => !!w.chinese) : kind === 'cloze' ? (w => !!advClozeOf(w)) : (() => true);
+        let filt = kind === 'cn' ? (w => !!w.chinese) : (() => true);
         if (adv.plan) {
             if (!adv.plan.queue.length) advPlanRefill();
             let k = adv.plan.queue.findIndex(filt);
@@ -7923,9 +7923,9 @@
     // 這招因為題庫或瀏覽器的關係不能用：回傳原因（可以用就回傳空字串）
     function advMoveBlock(m) {
         if ((m.mode === 'choice' || m.mode === 'listenCn') && adv.cnWords.length < 4) return '缺中文';
-        if (m.mode === 'cloze' && !adv.words.some(w => advClozeOf(w))) return '缺例句';
+        if (m.mode === 'speakCn' && adv.cnWords.length < 1) return '缺中文';
         if (m.mode === 'typeCn' && adv.cnWords.length < 1) return '缺中文';
-        if ((m.mode === 'speak' || m.mode === 'speakCn') && !getSpeechRecognitionCtor()) return '不支援';
+        if (m.type === 'speak' && !getSpeechRecognitionCtor()) return '不支援';
         return '';
     }
     function advShowMenu() {
@@ -8001,7 +8001,7 @@
         adv.move = m;
         adv.moveSeq = (adv.moveSeq || 0) + 1;     // 這一次出招的編號：同一招只會結算一次
         adv.q = { type: 'pending' };
-        if ((m.mode === 'speak' || m.mode === 'speakCn') && !adv.micOk) {
+        if (m.type === 'speak' && !adv.micOk) {
             adv.busy = true;
             let mic = await ensureMicPermission();
             if (id !== adv.runId) return;
@@ -8020,7 +8020,6 @@
         else if (m.mode === 'typeCn') advAskTypeCn();
         else if (m.mode === 'listenChoice' || m.mode === 'listenCn') advAskListenChoice();
         else if (m.mode === 'listenSpell') advAskListen();
-        else if (m.mode === 'cloze') advAskCloze();
         else advAskSpeak();
         advMountTimer();
     }
@@ -8034,9 +8033,9 @@
         [t, 'all'].forEach(k => { advData.hits[k].push(ok ? 1 : 0); if (advData.hits[k].length > ADV_HIT_N) advData.hits[k].splice(0, advData.hits[k].length - ADV_HIT_N); });
     }
     function advHitPct(arr) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 100) : null; }
-    // 總命中 = 字卡、聽力、填空各自最近 20 題合起來算（不會只看最近 20 題而忽略比較弱的類別）
+    // 總命中 = 字卡、聽力、朗讀各自最近 20 題合起來算（不會只看最近 20 題而忽略比較弱的類別）
     function advHitAll() { return ['card', 'listen', 'speak'].reduce((x, k) => x.concat(advData.hits[k] || []), []); }
-    // 爆擊加成：字卡、聽力、填空「各」答滿 20 題，而且三種合計命中 ≥ 90%
+    // 爆擊加成：字卡、聽力、朗讀「各」答滿 20 題，而且三種合計命中 ≥ 90%
     const ADV_CRIT_AT = 90;
     function advCritReady() { return ['card', 'listen', 'speak'].every(k => (advData.hits[k] || []).length >= ADV_HIT_N); }
     function advCritOn() { return advCritReady() && advHitPct(advHitAll()) >= ADV_CRIT_AT; }
@@ -8080,8 +8079,7 @@
         clearTimeout(advWatch);
         try { window.speechSynthesis.cancel(); } catch (e) {}
         let btns = document.querySelectorAll('#advPanel .adv-opt');
-        if (q.type === 'card' || q.type === 'listenChoice' || q.type === 'cloze') btns.forEach((b, i) => { if (i === q.correct) b.classList.add('ok'); });
-        if (q.type === 'cloze') advClozeReveal(q, true);
+        if (q.type === 'card' || q.type === 'listenChoice') btns.forEach((b, i) => { if (i === q.correct) b.classList.add('ok'); });
         let sub = document.getElementById(q.type === 'typeCn' ? 'advCnSub' : q.type === 'listen' ? 'advListenSub' : 'advSpeakHint');
         if (sub && (q.type === 'typeCn' || q.type === 'listen')) sub.innerHTML = `⏰ 時間到！正確答案：<b>${escapeHTML(q.type === 'typeCn' ? q.word.chinese : q.word.english)}</b>`;
         else if (sub) sub.textContent = '⏰ 時間到！';
@@ -8089,110 +8087,6 @@
         await advWait(1200);
         if (id !== adv.runId) return;
         advResolveMove(false);
-    }
-
-    const ADV_CLOZE_RAW = [["n", "hot", "The street food is too hot to eat right now, so wait a moment.", "這個街頭小吃太燙了現在不能吃,所以等一下。", "hot"], ["n", "cup", "She poured the tea into a cup.", "她把茶倒進杯子裡。", "cup"], ["n", "soup", "Soup is a hot food made with water and vegetables, and you eat it with a spoon.", "湯是用水和蔬菜做成的熱食,你要用湯匙來喝。", "soup"], ["n", "meatball", "A meatball is a small ball made of ground meat.", "肉丸是用絞肉做成的小球。", "meatball"], ["n", "eat", "We ate stinky tofu at the night market last night.", "我們昨晚在夜市吃了臭豆腐。", "ate"], ["n", "good", "The food at this stall is really good, so there is a long line.", "這個攤位的食物真的很好吃,所以大排長龍。", "good"], ["n", "corn", "Popcorn is made from dried corn.", "爆米花是用乾玉米做成的。", "corn"], ["n", "grill", "The corn is grilled over charcoal and then brushed with sauce.", "玉米用炭火烤,然後刷上醬料。", "grilled"], ["n", "salt", "Seawater is not good to drink because it has a lot of salt in it.", "海水不適合喝,因為裡面有很多鹽。", "salt"], ["n", "butter", "Butter is a yellow food made from milk that people spread on bread.", "奶油是用牛奶做成的黃色食物,人們會把它塗在麵包上。", "butter"], ["n", "sweet", "Candy and cake are too sweet for me.", "糖果和蛋糕對我來說太甜了。", "sweet"], ["n", "buy", "She bought a doll for her little sister yesterday.", "她昨天幫妹妹買了一個娃娃。", "bought"], ["n", "oyster", "An oyster is a soft sea animal in a hard shell, and some people eat it raw.", "牡蠣是住在硬殼裡的柔軟海洋動物,有些人會生吃。", "oyster"], ["n", "egg", "A chicken lays an egg every day.", "一隻雞每天下一顆蛋。", "egg"], ["n", "rice", "Rice is a small white grain that grows in water fields, and people cook it for meals.", "米是長在水田裡的白色小穀粒,人們把它煮來當餐點。", "rice"], ["n", "sauce", "Soy sauce is a dark, salty liquid that adds flavor to food.", "醬油是一種深色、鹹鹹的液體,可以替食物增添風味。", "sauce"], ["n", "spicy", "I can't eat this because it is too spicy.", "我不能吃這個,因為太辣了。", "spicy"], ["n", "order", "Yesterday, my father ordered two bowls of noodles for us.", "昨天爸爸幫我們點了兩碗麵。", "ordered"], ["n", "tofu", "Tofu is made from soybeans.", "豆腐是用黃豆做成的。", "tofu"], ["n", "stinky", "This tofu has a terrible smell, which is why people call it stinky tofu.", "這種豆腐有很難聞的味道,所以人們叫它臭豆腐。", "stinky"], ["n", "bubble tea", "Bubble tea is a drink with chewy tapioca pearls that you drink through a big straw.", "珍珠奶茶是有嚼勁的粉圓的飲料,要用粗吸管喝。", "bubble tea"], ["n", "milk tea", "Milk tea is made by mixing black tea with milk, and it has no pearls inside.", "奶茶是把紅茶和牛奶混合做成的,裡面沒有珍珠。", "milk tea"], ["n", "ice", "Add some ice to make the drink cold.", "加一些冰塊讓飲料變冰。", "ice"], ["n", "sugar", "Sugar is the sweet white powder that you add to tea or cake.", "糖是你加進茶或蛋糕裡的甜甜的白色粉末。", "sugar"], ["n", "straw", "A straw is a thin tube that you use to sip a drink.", "吸管是用來啜飲飲料的細管子。", "straw"], ["n", "doll", "A doll is a toy that looks like a small person.", "娃娃是一種看起來像小人的玩具。", "doll"], ["n", "coin", "Put a coin in the machine to start the game.", "把硬幣投進機器來開始遊戲。", "coin"], ["n", "grab", "He grabbed the doll with the claw, but it fell down.", "他用爪子抓起娃娃,但娃娃掉了下去。", "grabbed"], ["n", "try", "She has tried stinky tofu three times, and now she likes it.", "她吃過三次臭豆腐,現在她很喜歡。", "tried"], ["n", "prize", "The first prize is a big teddy bear.", "頭獎是一隻大泰迪熊。", "prize"], ["n", "play", "Children like to play games at the night market.", "小朋友喜歡在夜市玩遊戲。", "play"], ["n", "dart", "A dart is a small, sharp arrow that people throw at a round board.", "飛鏢是人們丟向圓形靶的小而尖的箭。", "dart"], ["n", "throw", "He threw the dart at the balloon, but it flew too high.", "他把飛鏢丟向氣球,但飛得太高了。", "threw"], ["n", "hit", "Look! He is hitting the balloon again and again.", "看!他一次又一次地打中氣球。", "hitting"], ["n", "miss", "Be careful not to miss the target, or you will lose.", "小心不要沒打中靶心,否則你會輸。", "miss"], ["n", "score", "She scored ninety points in the dart game.", "她在射飛鏢遊戲中得了九十分。", "scored"], ["n", "lucky", "I'm so lucky! I won first prize on my first try.", "我好幸運!第一次嘗試就贏得頭獎。", "lucky"], ["n", "win", "Our team won the dart game yesterday.", "我們隊昨天贏了射飛鏢比賽。", "won"], ["n", "lose", "If you miss every dart, you will lose the game.", "如果你每支飛鏢都沒射中,就會輸掉遊戲。", "lose"], ["n", "east", "The sun rises in the east every morning.", "太陽每天早上從東方升起。", "east"], ["n", "west", "The sun sets in the west every evening.", "太陽每天傍晚從西方落下。", "west"], ["n", "south", "Birds fly south in winter to find warmer weather.", "鳥在冬天飛往南方尋找較溫暖的天氣。", "south"], ["n", "north", "A compass needle points north.", "指南針的指針指向北方。", "north"], ["n", "ring", "She wears a gold ring on her finger.", "她手指上戴著一枚金戒指。", "ring"], ["n", "stall", "The old man sells fried chicken at his stall.", "那位老先生在他的攤位賣炸雞。", "stall"], ["n", "line", "Many people are lining up in front of the stall.", "許多人正在攤位前排隊。", "lining"], ["n", "crowded", "The night market is crowded on weekends.", "夜市在週末很擁擠。", "crowded"], ["n", "cheap", "Things are cheap here, so I can buy a lot.", "這裡的東西很便宜,所以我可以買很多。", "cheap"], ["n", "price", "What is the price of this bubble tea?", "這杯珍珠奶茶的價格是多少?", "price"], ["n", "night market", "A night market is a street market that opens in the evening and sells food and games.", "夜市是在傍晚開張、販賣食物和遊戲的街頭市集。", "night market"], ["s", "convenience store", "A convenience store such as 7-Eleven is open 24 hours a day.", "像 7-Eleven 這樣的便利商店一天營業 24 小時。", "convenience store"], ["s", "open", "The store opens at 7 a.m. every day.", "這間店每天早上 7 點開門。", "opens"], ["s", "close", "The store closes at 11 p.m. every night, so please hurry.", "這間店每晚 11 點關門,所以請快一點。", "closes"], ["s", "welcome", "The clerk welcomed every customer with a smile.", "店員微笑歡迎每一位顧客。", "welcomed"], ["s", "clerk", "A sales clerk helped me find the green tea on the shelf.", "一位銷售店員幫我在貨架上找到綠茶。", "clerk"], ["s", "tea egg", "A tea egg is boiled in tea, soy sauce, and spices.", "茶葉蛋是用茶、醬油和香料煮出來的。", "tea egg"], ["s", "boil", "Look! The water is boiling, so we can put the noodles in.", "看!水正在滾,所以我們可以把麵放進去了。", "boiling"], ["s", "hungry", "I skipped lunch, so I am very hungry now.", "我沒吃午餐,所以現在非常餓。", "hungry"], ["s", "snack", "I eat a small snack, such as chips, between lunch and dinner.", "我在午餐和晚餐之間會吃一點零食,例如洋芋片。", "snack"], ["s", "breakfast", "I usually have eggs and toast for breakfast in the morning.", "我早上通常吃蛋和吐司當早餐。", "breakfast"], ["s", "hot dog", "A hot dog is a sausage in a long bun.", "熱狗是夾在長形小圓麵包裡的香腸。", "hot dog"], ["s", "bun", "The hamburger has a soft bun, a beef patty, and some lettuce.", "這個漢堡有柔軟的小圓麵包、牛肉餅和一些生菜。", "bun"], ["s", "bread", "Toast is a slice of bread that is heated until it turns brown.", "吐司是把一片麵包加熱到變成褐色。", "bread"], ["s", "sandwich", "A sandwich has ham and cheese between two pieces of bread.", "三明治是在兩片麵包中間夾火腿和起司。", "sandwich"], ["s", "ketchup", "French fries taste better with ketchup, the red sauce made from tomatoes.", "薯條配番茄醬更好吃,那是用番茄做的紅色醬料。", "ketchup"], ["s", "cheese", "Pizza has tomato sauce and melted cheese on top.", "披薩上面有番茄醬汁和融化的起司。", "cheese"], ["s", "napkin", "Use a napkin to wipe your hands and mouth after eating.", "吃完後用餐巾紙擦手和嘴巴。", "napkin"], ["s", "instant noodles", "Just add hot water, and the instant noodles will be ready in three minutes.", "只要加熱水,泡麵三分鐘就好了。", "instant noodles"], ["s", "full", "I can't eat any more because I am full.", "我不能再吃了,因為我飽了。", "full"], ["s", "delicious", "This cake is so delicious that I want another piece.", "這個蛋糕太好吃了,我想再來一塊。", "delicious"], ["s", "rice ball", "A rice ball with tuna inside is wrapped in seaweed.", "裡面有鮪魚的飯糰是用海苔包起來的。", "rice ball"], ["s", "seaweed", "Sushi rolls are wrapped in dried seaweed.", "壽司捲是用乾海苔包起來的。", "seaweed"], ["s", "tuna", "Tuna is a large, fast fish that spends its whole life in the ocean.", "鮪魚是一種體型大、游得快的魚,一輩子都生活在海裡。", "tuna"], ["s", "salmon", "Salmon is a pink fish that swims up rivers to lay eggs.", "鮭魚是一種粉紅色的魚,會游上河川產卵。", "salmon"], ["s", "triangle", "A triangle has three sides and three corners.", "三角形有三個邊和三個角。", "triangle"], ["s", "wrap", "The gift was wrapped in red paper by the clerk.", "禮物被店員用紅紙包了起來。", "wrapped"], ["s", "tear", "She tore the plastic open and took out the sandwich.", "她把塑膠撕開,拿出了三明治。", "tore"], ["s", "plastic", "Please bring your own bag to reduce plastic waste.", "請自備購物袋以減少塑膠垃圾。", "plastic"], ["s", "fridge", "Put the milk in the fridge so it stays cold.", "把牛奶放進冰箱,它才會保持冰涼。", "fridge"], ["s", "cold", "I want a cold drink because the weather is hot.", "天氣很熱,所以我想要一杯冰飲料。", "cold"], ["s", "bottle", "Please recycle the empty bottle after you finish the water.", "喝完水後,請回收空瓶子。", "bottle"], ["s", "water", "People can live for weeks without food, but only a few days without water.", "人沒有食物可以活幾週,但沒有水只能活幾天。", "water"], ["s", "drink", "She drinks a cup of warm milk every night before bed.", "她每天晚上睡前喝一杯溫牛奶。", "drinks"], ["s", "sugar-free", "I choose a sugar-free drink because I want less sugar.", "我選無糖飲料,因為我想少吃一點糖。", "sugar-free"], ["s", "green tea", "Green tea comes from the same plant as black tea but is not fermented.", "綠茶和紅茶來自同一種植物,但沒有經過發酵。", "green tea"], ["s", "print", "The report has been printed, so you can pick it up at the counter.", "報告已經列印好了,所以你可以到櫃檯領取。", "printed"], ["s", "ticket", "You need a ticket to enter the concert hall.", "你需要有票才能進入音樂廳。", "ticket"], ["s", "machine", "The ticket machine is out of order, so please ask the staff.", "售票機故障了,所以請詢問工作人員。", "machine"], ["s", "bill", "Could I have the bill, please? I'd like to pay.", "可以給我帳單嗎?我想結帳。", "bill"], ["s", "receipt", "After you pay, the clerk gives you a receipt that shows what you bought.", "付完錢後,店員會給你一張顯示你買了什麼的收據。", "receipt"], ["s", "salad", "A salad is a dish of raw vegetables, often served with dressing.", "沙拉是一道生蔬菜料理,通常搭配沙拉醬。", "salad"], ["s", "vegetable", "Broccoli is a green vegetable that is good for your health.", "花椰菜是對健康有益的綠色蔬菜。", "vegetable"], ["s", "fresh", "The fish at this market is always fresh because it arrives every morning.", "這個市場的魚總是很新鮮,因為每天早上都會送到。", "fresh"], ["s", "lid", "Put the lid on the cup so the coffee won't spill.", "把蓋子蓋在杯子上,咖啡才不會灑出來。", "lid"], ["s", "fork", "Please use a knife and a fork to cut the steak.", "請用刀子和叉子切牛排。", "fork"], ["s", "healthy", "Eating vegetables and exercising keep you healthy.", "吃蔬菜和運動能讓你保持健康。", "healthy"], ["s", "lettuce", "Lettuce is a green leafy vegetable often used in salads.", "生菜是常用在沙拉裡的綠色葉菜。", "lettuce"], ["s", "tomato", "A tomato is a round red fruit that people often use as a vegetable.", "番茄是一種圓圓的紅色水果,人們常把它當蔬菜使用。", "tomato"], ["s", "dressing", "Would you like Caesar or Italian dressing on your salad?", "您的沙拉要凱薩醬還是義式沙拉醬?", "dressing"], ["s", "light", "I want a light lunch, so I will just have a salad.", "我想吃清淡的午餐,所以只吃沙拉。", "light"], ["s", "microwave", "I microwaved the rice ball for thirty seconds.", "我把飯糰微波加熱了三十秒。", "microwaved"], ["s", "heat", "The soup was heated in the microwave for two minutes.", "湯用微波爐加熱了兩分鐘。", "heated"], ["s", "warm", "The milk is warm, not hot, so a baby can drink it.", "牛奶是溫的而不是燙的,所以嬰兒可以喝。", "warm"], ["s", "minute", "There are sixty seconds in a minute.", "一分鐘有六十秒。", "minute"], ["s", "second", "She won the race by just one tenth of a second.", "她只以十分之一秒的差距贏得了比賽。", "second"], ["s", "button", "Press the green button to start the machine.", "按下綠色按鈕來啟動機器。", "button"], ["s", "wait", "I have been waiting here for ten minutes.", "我已經在這裡等了十分鐘。", "waiting"], ["s", "careful", "Be careful! The soup is very hot.", "小心!這個湯很燙。", "careful"], ["s", "steam", "Steam comes out of the pot when the water boils.", "水煮沸時,鍋子會冒出蒸氣。", "steam"], ["s", "noise", "The microwave makes a loud noise when it finishes.", "微波爐加熱完成時會發出很大的聲音。", "noise"], ["s", "lunch box", "She packs a lunch box with rice, meat, and vegetables every morning.", "她每天早上都會準備一個裝有飯、肉和蔬菜的便當。", "lunch box"], ["s", "chopsticks", "Many people in Taiwan use chopsticks to eat rice.", "許多台灣人用筷子吃飯。", "chopsticks"], ["s", "spoon", "Use a spoon to drink the soup.", "用湯匙喝湯。", "spoon"], ["s", "expire", "The coupon expired yesterday, so you can't use it now.", "這張優惠券昨天過期了,所以你現在不能用了。", "expired"], ["s", "discount", "Students can get a 10 percent discount on tickets.", "學生購票可享有九折優惠。", "discount"], ["s", "half price", "Everything is half price today, so I bought two shirts.", "今天所有東西都半價,所以我買了兩件襯衫。", "half price"], ["s", "sticker", "There is a red sticker on the bread that says half price.", "麵包上有一張寫著半價的紅色貼紙。", "sticker"], ["s", "meat", "Vegetarians do not eat meat, such as beef or pork.", "素食者不吃肉,例如牛肉或豬肉。", "meat"], ["s", "chicken", "A chicken is a bird that lays eggs and cannot fly far.", "雞是一種會下蛋、飛不遠的鳥。", "chicken"], ["s", "point", "You get one point for every ten dollars you spend.", "每消費十元,您可以獲得一點。", "point"], ["s", "coffee", "Roasted beans are ground to make coffee, a dark drink that keeps people awake.", "烘焙過的豆子磨碎後可以做成咖啡,這種深色飲料能讓人保持清醒。", "coffee"], ["s", "latte", "A latte is an Italian coffee drink with a lot of steamed milk.", "拿鐵是加了大量蒸牛奶的義式咖啡飲品。", "latte"], ["s", "iced", "I'd like an iced coffee because the weather is too hot.", "天氣太熱了,我想要一杯冰咖啡。", "iced"], ["s", "bitter", "This coffee is too bitter, so please add some sugar.", "這杯咖啡太苦了,所以請加一點糖。", "bitter"], ["s", "sleepy", "I stayed up late, so I feel sleepy this morning.", "我熬夜了,所以今天早上覺得想睡。", "sleepy"], ["s", "cashier", "A cashier is a person whose job is to take payments at a register.", "收銀員是在收銀台負責收款的人。", "cashier"], ["s", "customer", "The clerk always smiles at every customer.", "店員總是對每位顧客微笑。", "customer"], ["s", "pay", "You can pay by cash or by credit card.", "您可以用現金或信用卡付款。", "pay"], ["s", "cash", "I have no cash, so I will pay by credit card.", "我沒有現金,所以我會用信用卡付款。", "cash"], ["s", "credit card", "Can I pay with a credit card instead of cash?", "我可以用信用卡而不是現金付款嗎?", "credit card"]];
-
-    // ── 填空（例句 4 選 1）──
-    //   動詞：四個選項是同一個字的不同形態（原形／三單／過去式／過去分詞／-ing），像多益一樣
-    //   其他詞性：從同一本記事本（夜市篇／便利商店篇）挑同詞性的字當干擾選項
-    const ADV_VERB_FORMS = {
-        open: ['open', 'opens', 'opened', 'opened', 'opening'], close: ['close', 'closes', 'closed', 'closed', 'closing'],
-        welcome: ['welcome', 'welcomes', 'welcomed', 'welcomed', 'welcoming'], boil: ['boil', 'boils', 'boiled', 'boiled', 'boiling'],
-        wrap: ['wrap', 'wraps', 'wrapped', 'wrapped', 'wrapping'], tear: ['tear', 'tears', 'tore', 'torn', 'tearing'],
-        drink: ['drink', 'drinks', 'drank', 'drunk', 'drinking'], print: ['print', 'prints', 'printed', 'printed', 'printing'],
-        microwave: ['microwave', 'microwaves', 'microwaved', 'microwaved', 'microwaving'], heat: ['heat', 'heats', 'heated', 'heated', 'heating'],
-        wait: ['wait', 'waits', 'waited', 'waited', 'waiting'], expire: ['expire', 'expires', 'expired', 'expired', 'expiring'],
-        pay: ['pay', 'pays', 'paid', 'paid', 'paying'], eat: ['eat', 'eats', 'ate', 'eaten', 'eating'],
-        grill: ['grill', 'grills', 'grilled', 'grilled', 'grilling'], buy: ['buy', 'buys', 'bought', 'bought', 'buying'],
-        order: ['order', 'orders', 'ordered', 'ordered', 'ordering'], grab: ['grab', 'grabs', 'grabbed', 'grabbed', 'grabbing'],
-        try: ['try', 'tries', 'tried', 'tried', 'trying'], play: ['play', 'plays', 'played', 'played', 'playing'],
-        throw: ['throw', 'throws', 'threw', 'thrown', 'throwing'], hit: ['hit', 'hits', 'hit', 'hit', 'hitting'],
-        miss: ['miss', 'misses', 'missed', 'missed', 'missing'], score: ['score', 'scores', 'scored', 'scored', 'scoring'],
-        win: ['win', 'wins', 'won', 'won', 'winning'], lose: ['lose', 'loses', 'lost', 'lost', 'losing'],
-        line: ['line', 'lines', 'lined', 'lined', 'lining']
-    };
-    function advVerbForms(base) {
-        let b = String(base || '').toLowerCase();
-        if (ADV_VERB_FORMS[b]) return ADV_VERB_FORMS[b];
-        let s3 = /(s|sh|ch|x|z|o)$/.test(b) ? b + 'es' : /[^aeiou]y$/.test(b) ? b.slice(0, -1) + 'ies' : b + 's';
-        let ed = /e$/.test(b) ? b + 'd' : /[^aeiou]y$/.test(b) ? b.slice(0, -1) + 'ied' : b + 'ed';
-        let ing = /ie$/.test(b) ? b.slice(0, -2) + 'ying' : /[^e]e$/.test(b) ? b.slice(0, -1) + 'ing' : b + 'ing';
-        return [b, s3, ed, ed, ing];
-    }
-    let advClozeMap = null;
-    function advClozeAll() {
-        if (advClozeMap) return advClozeMap;
-        advClozeMap = {};
-        let packs = { n: [], s: [] };
-        try { let p = advAutoParts(); packs.n = p.night; packs.s = p.store; } catch (e) {}
-        const posOf = (pack, en) => { let w = (packs[pack] || []).find(x => String(x.english).toLowerCase() === en); return w ? (w.posList || []) : []; };
-        ADV_CLOZE_RAW.forEach(([pack, en, sent, zh, form]) => {
-            let key = String(en).toLowerCase();
-            let pos = posOf(pack, key);
-            let verb = pos.includes('動詞') && (form.toLowerCase() !== key || pos.every(x => x === '動詞'));
-            advClozeMap[key] = { pack, en, sent, zh, form, pos, verb };
-        });
-        return advClozeMap;
-    }
-    function advClozeOf(w) { return w && w.english ? advClozeAll()[String(w.english).toLowerCase()] || null : null; }
-    function advClozeRegex(form) { return new RegExp('(^|[^A-Za-z])(' + form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')(?![A-Za-z])', 'i'); }
-    function advClozeOptions(c) {
-        if (c.verb) {
-            let forms = Array.from(new Set(advVerbForms(c.en)));
-            let ans = c.form.toLowerCase();
-            let others = advShuffle(forms.filter(f => f !== ans));
-            if (others.length < 3) others.push('to ' + forms[0]);
-            return { opts: advShuffle([ans].concat(others.slice(0, 3))), ans };
-        }
-        let ans = c.form.toLowerCase(), main = (c.pos || []).find(x => x !== '動詞') || c.pos[0];
-        let all = Object.values(advClozeAll()).filter(x => x.pack === c.pack && x.en.toLowerCase() !== ans && x.en.toLowerCase() !== c.en.toLowerCase());
-        let same = advShuffle(all.filter(x => main && (x.pos || []).includes(main)));
-        let rest = advShuffle(all.filter(x => !same.includes(x)));
-        let picks = [];
-        same.concat(rest).forEach(x => { let v = x.en.toLowerCase(); if (picks.length < 3 && !picks.includes(v)) picks.push(v); });
-        return { opts: advShuffle([ans].concat(picks)), ans };
-    }
-    function advAskCloze() {
-        let w = advNextWord('cloze'), c = advClozeOf(w);
-        if (!c) { advAskCard(); return; }       // 這個字沒有例句（自選題庫）：改出選意思的題目
-        let { opts, ans } = advClozeOptions(c);
-        let m = adv.move;
-        adv.q = { type: 'cloze', word: w, cloze: c, opts, correct: opts.indexOf(ans), done: false };
-        let mt = c.sent.match(advClozeRegex(c.form));
-        let html = mt
-            ? escapeHTML(c.sent.slice(0, mt.index + mt[1].length)) + '<span class="adv-blank" id="advBlank">____</span>' + escapeHTML(c.sent.slice(mt.index + mt[0].length))
-            : escapeHTML(c.sent);
-        document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：選出空格裡正確的字</div>
-            <div class="adv-cloze">${html}</div>
-            <div class="adv-cloze-zh" id="advClozeZh"></div>
-            <div class="adv-opts">${opts.map((o, i) => `<button type="button" class="adv-opt" data-on-click='[["advAnswerCloze",[${i}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
-    }
-    // 作答後：空格填上正確答案、顯示中文翻譯
-    function advClozeReveal(q, wrong) {
-        let b = document.getElementById('advBlank'), c = q.cloze;
-        if (b) {
-            let mt = c.sent.match(advClozeRegex(c.form));
-            b.textContent = mt ? mt[2] : c.form;
-            b.classList.add(wrong ? 'is-bad' : 'is-ok');
-        }
-        let zh = document.getElementById('advClozeZh');
-        if (zh) zh.textContent = c.zh;
-    }
-    async function advAnswerCloze(i) {
-        let q = adv.q;
-        if (!adv.active || adv.busy || !q || q.type !== 'cloze' || q.done) return;
-        const id = adv.runId;
-        q.done = true;
-        advStopTimer();
-        let btns = document.querySelectorAll('#advPanel .adv-opt');
-        btns.forEach((b, idx) => { if (idx === q.correct) b.classList.add('ok'); else if (idx === i) b.classList.add('bad'); });
-        let ok = i === q.correct;
-        advClozeReveal(q, !ok);
-        await advWait(ok ? 1300 : 2600);
-        if (id !== adv.runId) return;
-        if (ok) advQuestionPassed(); else advResolveMove(false);
     }
 
     // 字卡（選擇題）
@@ -8637,7 +8531,7 @@
                     if (id !== adv.runId) return;
                     dmg += luck.bonus;
                 }
-                // 命中加成：字卡、聽力、填空各答滿 20 題且總命中 ≥ 90% → 每次攻擊多 1 次爆擊判定（跟幸運的 3 枚硬幣分開算）
+                // 命中加成：字卡、聽力、朗讀各答滿 20 題且總命中 ≥ 90% → 每次攻擊多 1 次爆擊判定（跟幸運的 3 枚硬幣分開算）
                 if (adv.critOn) {
                     let f = Math.random() < 0.5, crit = { flips: [f], bonus: f ? 1 : 0 };
                     await advShowCoins(P, crit, m.hits > 1 ? `第 ${h + 1} 下` : '', '爆擊判定');
@@ -10538,7 +10432,7 @@
         copyAppUrl,
         lpBack, lpTogglePause, cpResume, cpStartNew, cpStartNewFlash, cpStartNewSpeak, leaveSpeakPractice, playSpeakMyRecording, cpConfirmClose, cpConfirmBg, cpConfirmOk, fcFlip,
         playSpeakPracticeSample,
-        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advAnswerCloze, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
+        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
         advSetMode, advOpenWords, advSayWord, advPracticeLevel, advWrongPick, advWrongPractice,
         advOpenSauce, advQuit, advRetry, advRedeemStamps, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
         openMicHelpModal,
