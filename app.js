@@ -1658,7 +1658,7 @@
                 if (usedKey) {
                     let needUpload = usedKey !== cloudWalletKey;
                     cloudWalletKey = usedKey;
-                    if (!advData.owner) { advData.owner = usedKey; advSave(); }
+                    if (!advData.owner) { advData.owner = usedKey; advSave(true); }
                     if (needUpload) { advNeedUpload = false; await triggerAutoSaveToCloud(); }
                 } else {
                     walletBoundThisLogin = false;   // 連線失敗：下次同步時再試
@@ -1691,7 +1691,7 @@
                 try {
                     let cr = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { 'Authorization': `Bearer ${tok}` } });
                     let cj = await cr.json();
-                    if (cj && cj.advData && cj.advData.ver === ADV_DATA_VER && (parseInt(cj.advData.ts) || 0) > advData.ts) advMergeFromCloud(cj.advData, '');
+                    if (cj && cj.advData && cj.advData.ver === ADV_DATA_VER && !advConflict) advMergeFromCloud(cj.advData, '');
                 } catch (e) { /* 讀不到就照原本流程上傳 */ }
             }
             let cloudData = { 
@@ -1701,10 +1701,11 @@
                 cardExamHistory: trimHistoryPerLang(cardExamHistory), 
                 walletKey: cloudWalletKey || undefined,
                 chickenData,
-                advData: advIsGoogleMode() ? advData : undefined,     // 只上傳 Google 進度；離線進度不會上傳
+                advData: advIsGoogleMode() ? (advConflict ? advConflict.c : advData) : undefined,     // 只上傳 Google 進度；兩邊進度衝突、玩家還沒選之前：雲端那份原封不動
                 appSettings: JSON.parse(localStorage.getItem('dictation_app_settings') || '{}') 
             };
             let fileContent = JSON.stringify(cloudData);
+            let sentAdvTs = cloudData.advData ? (parseInt(cloudData.advData.ts) || 0) : 0;
 
             let wr;
             if (fileId) {
@@ -1723,7 +1724,7 @@
                 });
             }
             if (wr && wr.ok === false) throw new Error('上傳失敗 ' + wr.status);
-            if (advIsGoogleMode() && advData.ts === sentTs) advDirty = false;
+            if (advIsGoogleMode() && !advConflict) { advSetSyncBase(sentAdvTs); if (advData.ts === sentTs) advDirty = false; }
             updateCloudStatusText(`✅ 已連結 Google 雲端`);
         } catch(e) { 
             console.error("雲端存檔失敗", e); 
@@ -5507,7 +5508,9 @@
         if (code === 'testsync') {
             // 檢查用：看這台裝置的大冒險存檔是哪一版、存在哪裡、最後存檔時間
             let t = advData.ts ? new Date(advData.ts).toLocaleString() : '（0）';
-            alert(`🔍 大冒險存檔檢查\n\nApp 版本：經驗值版（存檔版本 ${ADV_DATA_VER}）\n存檔位置：${advIsGoogleMode() ? 'Google 雲端進度' : '離線進度（沒有登入 Google）'}\n最後存檔：${t}\n已通關：${Object.keys(advData.cleared || {}).length} 關\n等級：Lv.${advLevel()}（經驗值 ${advData.xp || 0}）`);
+            let raw = {}; try { raw = JSON.parse(localStorage.getItem(advStoreKey())) || {}; } catch (e) {}
+            let b = advSyncBase();
+            alert(`🔍 大冒險存檔檢查\n\nApp 版本：經驗值版（程式存檔版本 ${ADV_DATA_VER}）\n這份存檔的版本：${raw.ver === undefined ? '（舊版，沒有版本）' : raw.ver}\n上次跟雲端同步：${b ? new Date(b).toLocaleString() : '（還沒同步過）'}\n存檔位置：${advIsGoogleMode() ? 'Google 雲端進度' : '離線進度（沒有登入 Google）'}\n最後存檔：${t}\n已通關：${Object.keys(advData.cleared || {}).length} 關\n等級：Lv.${advLevel()}（經驗值 ${advData.xp || 0}）`);
             return true;
         }
         if (code === 'testlevel') {
@@ -5625,17 +5628,17 @@
     const ADV_MOVES = [
         { key: 'tackle',  name: '衝撞',         icon: '💥', type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                              desc: '看單字，選出正確的中文意思' },
         { key: 'combo',   name: '連續衝撞',     icon: ADV_ICONS.combo(), type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 5 },                         desc: '看單字，選出正確的中文意思' },
-        { key: 'charge',  name: '衝鋒撞擊',     icon: '🐗', type: 'card',   mode: 'typeCn',      fx: 'charge', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_charge' }, desc: '看單字，寫出中文意思' },
+        { key: 'charge',  name: '衝鋒撞擊',     icon: '🐗', type: 'card',   mode: 'typeCn',      fx: 'charge', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'reward', level: 8 }, desc: '看英文單字，寫出中文意思（可以按 🎤 用說的）' },
         { key: 'slash',   name: '斬擊',         icon: ADV_ICONS.slash(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '聽發音，選中文意思' },
         { key: 'slash2',  name: '連續斬擊',     icon: ADV_ICONS.slash2(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 6, item: 'mv_slash2' },       desc: '聽發音，選中文意思' },
-        { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'shards', price: ADV_LEGEND_PRICE, item: 'mv_thrust' }, desc: '聽發音，拼出英文單字' },
+        { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'reward', level: 7 }, desc: '聽發音，拼出英文單字（提示第一個字母和字母數）' },
         { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 2, hidden: true, buy: { kind: 'none' },                                       desc: '看單字，並唸出單字' },
         { key: 'wave2',   name: '雙重衝擊波',   icon: ADV_ICONS.wave2(), type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 2, hidden: true, buy: { kind: 'none' },        desc: '看單字，並唸出單字' },
         // 速答類：20 秒內英中配對，配對成功的組數換成能力加成（不直接造成傷害）
         //   speed.secs 秒數；every 每配對幾組 +1；cap 加成上限；pen 配錯扣幾秒；lvSecs／lvCap 每 1 級熟練度加的秒數／上限；maxCap 上限的上限
         { key: 'meditate', name: '冥想',        icon: ADV_ICONS.meditate(), type: 'speed', mode: 'speed', fx: '', power: 0, hits: 0, q: 0, tries: 0, buy: { kind: 'reward', level: 10 },
           speed: { stat: 'int', label: '智慧', secs: 20, every: 3, cap: 5, pen: 3, lvSecs: 2, lvCap: 2, maxCap: 7 }, desc: '20 秒內把英文和中文配成對，每配對 3 組智慧 +1；配錯扣 3 秒' },
-        { key: 'chargeup', name: '蓄力',        icon: ADV_ICONS.chargeup(), type: 'speed', mode: 'speed', fx: '', power: 0, hits: 0, q: 0, tries: 0, buy: { kind: 'shards', price: 40, open: 14 },
+        { key: 'chargeup', name: '蓄力',        icon: ADV_ICONS.chargeup(), type: 'speed', mode: 'speed', fx: '', power: 0, hits: 0, q: 0, tries: 0, buy: { kind: 'shards', price: 40, open: 24 },
           speed: { stat: 'atk', label: '下一招攻擊', secs: 20, every: 4, cap: 5, pen: 4, lvSecs: 2, lvCap: 1, maxCap: 99 }, desc: '20 秒內把英文和中文配成對，每配對 4 組下一招攻擊 +1；配錯扣 4 秒' },
         { key: 'wave3',   name: '雞塊氣功波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'speakCn',      fx: 'yellow', power: 5, hits: 1, q: 2, tries: 2, hidden: true, buy: { kind: 'none' }, desc: '顯示中文，唸英文' }
     ];
@@ -5647,7 +5650,7 @@
         legend: { label: '傳說', color: '#C026D3', cap: 3 }
     };
     const ADV_RARITY_SKILL = { common: '一般技能', rare: '稀有技能', legend: '傳奇技能' };
-    const ADV_MOVE_RARITY = { tackle: 'common', slash: 'common', wave: 'common', combo: 'rare', slash2: 'rare', wave2: 'rare', charge: 'legend', thrust: 'legend', wave3: 'legend', meditate: 'common', chargeup: 'rare' };
+    const ADV_MOVE_RARITY = { tackle: 'common', slash: 'common', wave: 'common', combo: 'rare', slash2: 'rare', wave2: 'rare', charge: 'rare', thrust: 'rare', wave3: 'legend', meditate: 'common', chargeup: 'rare' };
     // 熟練度：累積使用 20 次 → 1、100 次 → 2、300 次 → 3（不超過稀有度上限）；每 1 級這招攻擊 +1（傳說招式 +2）
     const ADV_MASTERY_STEPS = [20, 100, 300];
     function advRarity(key) { return ADV_RARITY[ADV_MOVE_RARITY[key] || 'common']; }
@@ -5851,7 +5854,9 @@
             xpDay: typeof d.xpDay === 'string' ? d.xpDay : '',  // 最近一次拿到「每日首勝 ×2」是哪一天
             ver: ADV_DATA_VER,
             lvUpAt: n0(d.lvUpAt),
-            lvSeenAt: n0(d.lvSeenAt),                               // 最近一次升級的時間（紅點動畫用）
+            lvSeenAt: n0(d.lvSeenAt),
+            // 看過的招式／裝備（新拿到、還沒點開看過的會有紅色驚嘆號）；舊存檔第一次載入時，已擁有的都算看過
+            seen: (d.seen && typeof d.seen === 'object') ? { m: Object.assign({}, d.seen.m || {}), g: Object.assign({}, d.seen.g || {}), init: 1 } : null,                               // 最近一次升級的時間（紅點動畫用）
             resetNotice: d.resetNotice === true,                // 改版重來：下次進大冒險時告訴玩家一次
             cleared: (d.cleared && typeof d.cleared === 'object') ? d.cleared : {},
             up: { hp: clampUp(up.hp, 'hp'), atk: clampUp(up.atk, 'atk'), agi: clampUp(up.agi, 'agi'), def: clampUp(up.def, 'def'), int: clampUp(up.int, 'int'), luck: clampUp(up.luck, 'luck') },
@@ -5913,6 +5918,87 @@
         if (document.getElementById('advLevelCard')) advRenderLevelPage();
         advRenderShopBox();
     }
+    // ── 雲端同步衝突 ──
+    //   記住「這台裝置最後一次跟雲端同步」的存檔時間（base）
+    //   雲端比 base 新（別台玩過）＋本機也比 base 新（這台也玩過）→ 不自動蓋掉，跳出視窗讓玩家選
+    const ADV_SYNC_BASE_KEY = 'chicky_adv_sync_base';
+    let advConflict = null;           // { c: 雲端那份, owner }：視窗開著、玩家還沒選
+    function advSyncBase() { try { let v = localStorage.getItem(ADV_SYNC_BASE_KEY); return v === null ? null : (parseInt(v) || 0); } catch (e) { return null; } }
+    function advSetSyncBase(ts) { try { localStorage.setItem(ADV_SYNC_BASE_KEY, String(parseInt(ts) || 0)); } catch (e) {} }
+    function advProgSig(d) {          // 比較兩份進度是不是「真的不一樣」（只差時間不算）
+        d = d || {};
+        let keys = o => (o && typeof o === 'object') ? Object.keys(o).filter(k => o[k]).sort().join(',') : '';
+        return JSON.stringify([d.xp || 0, keys(d.cleared), d.shards || 0, d.potions || 0, d.wipes || 0, keys(d.items), keys(d.own), d.up || {}, d.mastery || {}]);
+    }
+    function advConflictCard(d, title, sub) {
+        d = d || {};
+        let xp = parseInt(d.xp) || 0, lv = advLevel(xp), n = Object.keys(d.cleared || {}).filter(k => d.cleared[k]).length;
+        let t = d.ts ? new Date(parseInt(d.ts)).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+        return `<div class="sc-card"><div class="sc-card__title">${title}</div><div class="sc-card__sub">${sub}</div>
+            <dl><dt>等級</dt><dd>Lv.${lv}</dd><dt>已通關</dt><dd>${n} 關</dd><dt>經驗值</dt><dd>${xp}</dd><dt>冒險代幣</dt><dd>${parseInt(d.shards) || 0}</dd><dt>最後存檔</dt><dd>${t}</dd></dl></div>`;
+    }
+    function advShowConflict(c, owner) {
+        advConflict = { c, owner: owner || '' };
+        let old = document.getElementById('advSyncConflict'); if (old) old.remove();
+        let el = document.createElement('div');
+        el.id = 'advSyncConflict';
+        el.className = 'sc-wrap';
+        el.innerHTML = `<div class="sc-box" role="dialog" aria-modal="true" aria-labelledby="scTitle">
+            <div class="sc-title" id="scTitle">☁️ 兩台裝置的大冒險進度不一樣</div>
+            <p class="sc-desc">上次同步之後，這台和另一台裝置都玩過了。要留下哪一份進度？<br><b>沒選的那一份會被蓋掉</b>。</p>
+            <div class="sc-cards">${advConflictCard(advData, '📱 這台裝置', '目前這台的進度')}${advConflictCard(c, '☁️ 雲端', '另一台裝置存的進度')}</div>
+            <div class="sc-btns">
+                <button type="button" class="sc-btn" data-on-click='[["advConflictUse",["local"]]]'>用這台的</button>
+                <button type="button" class="sc-btn sc-btn--cloud" data-on-click='[["advConflictUse",["cloud"]]]'>用雲端的</button>
+            </div></div>`;
+        document.body.appendChild(el);
+    }
+    function advConflictUse(which) {
+        let cf = advConflict;
+        let el = document.getElementById('advSyncConflict'); if (el) el.remove();
+        if (!cf) return;
+        advConflict = null;
+        let cts = parseInt(cf.c.ts) || 0;
+        if (which === 'cloud') {
+            try { localStorage.setItem(ADV_STORE_G, JSON.stringify(cf.c)); } catch (e) {}
+            try { advAbort(); } catch (e) {}
+            advData = advLoad();
+            if (cf.owner && !advData.owner) advData.owner = cf.owner;
+            advSetSyncBase(cts);
+            advSyncDaily();
+            advSave(true);
+            try { advRefreshViews(); homeAdvBadge(); } catch (e) {}
+        } else {
+            advSetSyncBase(cts);
+            advData.ts = Math.max(Date.now(), cts + 1);        // 這台的變成最新的 → 上傳蓋掉雲端
+            try { localStorage.setItem(advStoreKey(), JSON.stringify(advData)); } catch (e) {}
+            advDirty = true;
+            if (advIsGoogleMode() && accessToken && isCloudSyncActive && advCloudReady) triggerAutoSaveToCloud();
+        }
+    }
+    // 回到這個分頁（或 App）時：先把雲端最新的進度拉下來比對，避免一直開著的舊分頁用舊進度蓋掉
+    let advPullAt = 0;
+    async function advPullCloud() {
+        if (!advIsGoogleMode() || !accessToken || !isCloudSyncActive || !advCloudReady || advConflict) return;
+        if (Date.now() - advPullAt < 20000) return;
+        advPullAt = Date.now();
+        const tok = accessToken;
+        try {
+            let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
+            let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, { headers: { 'Authorization': `Bearer ${tok}` } });
+            if (!res.ok) return;
+            let data = await res.json();
+            let fileId = (data.files && data.files.length > 0) ? data.files[0].id : null;
+            if (!fileId) return;
+            let cr = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { 'Authorization': `Bearer ${tok}` } });
+            if (!cr.ok) return;
+            let cj = await cr.json();
+            if (!cj || !cj.advData || cj.advData.ver !== ADV_DATA_VER || adv.active) return;      // 戰鬥中先不動（等下次）
+            if (advMergeFromCloud(cj.advData, '') && advDirty) advQueueCloud();
+        } catch (e) {}
+    }
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(() => { try { advPullCloud(); } catch (e) {} }, 400); });
+    window.addEventListener('focus', () => { setTimeout(() => { try { advPullCloud(); } catch (e) {} }, 400); });
     // 從 Google 雲端載入進度：以「最後存檔時間」較新的為準；不同 Google 帳號的進度不會混在一起
     function advMergeFromCloud(c, cloudOwner) {
         let local = advData;
@@ -5921,14 +6007,22 @@
             let cts = parseInt(c.ts) || 0;
             // 雲端是舊版（糖醋醬版）存檔、本機已經是新版：不管時間，都以本機為準（不然舊版會把新進度整個重來）
             if (!mismatch && c.ver !== ADV_DATA_VER && local.ver === ADV_DATA_VER && local.ts > 0) return true;
+            // 兩邊都有新進度：上次同步之後，這台玩過、別台也玩過（而且內容不一樣）→ 跳出視窗讓玩家選要留哪一份
+            let base = advSyncBase();
+            if (!mismatch && c.ver === ADV_DATA_VER && base !== null && cts > base && local.ts > base && cts !== local.ts && advProgSig(c) !== advProgSig(local)) {
+                advShowConflict(c, cloudOwner);
+                return false;
+            }
             if (mismatch || cts > local.ts) {
                 try { localStorage.setItem(ADV_STORE_G, JSON.stringify(c)); } catch (e) {}
                 advData = advLoad();
                 if (cloudOwner && !advData.owner) advData.owner = cloudOwner;
+                advSetSyncBase(cts);
                 advSyncDaily();
                 advRefreshViews();
                 return false;                    // 不用再上傳
             }
+            if (cts === local.ts) advSetSyncBase(cts);
             return cts < local.ts;               // 本機比較新 → 要上傳
         }
         if (mismatch) {                          // 雲端是另一個帳號、沒有進度：本機暫存不能沿用
@@ -5947,6 +6041,7 @@
         while (next <= n && advData.cleared[next]) next++;
         el.textContent = next > n ? '全破' : `第 ${next} 關`;
         el.style.display = '';
+        try { advUpdateGearAlerts(); } catch (e) {}
     }
     function advDevDone() { advSave(); try { advRefreshViews(); } catch (e) {} }
 
@@ -5986,7 +6081,17 @@
     // 裝備帶來的加成（只在戰鬥中生效，可以讓能力超過 10）
     function advGearBonus(key) { let g = (advData.gear || []).filter(Boolean); return key === 'int' && g.includes('coaster') ? ADV_COASTER_INT : 0; }
     // 體力會繼承到下一場戰鬥；每天 00:00（本機時間）補滿
+    // 招式獎勵改到已經通關的關卡（例如突刺＝第 7 關、衝鋒撞擊＝第 8 關）：之前就通關的人直接補發
+    function advGrantPastRewards() {
+        let got = false;
+        try { advSeen(); } catch (e) {}
+        ADV_MOVES.forEach(m => {
+            if (m.buy.kind === 'reward' && advData.cleared[m.buy.level] && !advData.own[m.key] && !m.hidden) { advData.own[m.key] = true; got = true; }
+        });
+        if (got) { ADV_MOVES.forEach(m => { if (advData.own[m.key] && m.buy.kind === 'reward' && !advData.eq.includes(m.key) && advData.eq.length < ADV_MAX_EQUIP) advData.eq.push(m.key); }); advSave(true); }
+    }
     function advSyncDaily() {
+        try { advGrantPastRewards(); } catch (e) {}
         let today = getLocalDateStr(), max = advMaxHp();
         if (advData.hp === null || advData.hpDay !== today) { advData.hpDay = today; advData.hp = max; advSave(true); }
         else if (advData.hp > max) { advData.hp = max; advSave(true); }
@@ -6291,8 +6396,8 @@
             <rect x="${x + 3}" y="${y + 14}" width="${w - 6}" height="30" fill="#4C1D95" stroke="#2E1065" stroke-width="2"/>
             ${stripes}<rect x="${x}" y="${y}" width="${w}" height="14" fill="none" stroke="#2E1065" stroke-width="2" rx="3"/>
             <text x="${x + w / 2}" y="${y + 37}" font-size="17" text-anchor="middle">${emoji}</text>
-            <rect x="${x + 6}" y="${y - 16}" width="${w - 12}" height="14" rx="4" fill="#FDE047"/>
-            <text x="${x + w / 2}" y="${y - 5.5}" font-size="10.5" font-weight="800" text-anchor="middle" fill="#7C2D12">${label}</text>
+            <g transform="translate(${x + w / 2} ${y - 2}) scale(1.15) translate(${-(x + w / 2)} ${-(y - 2)})"><rect x="${x + 6}" y="${y - 16}" width="${w - 12}" height="14" rx="4" fill="#FDE047"/>
+            <text x="${x + w / 2}" y="${y - 5.5}" font-size="10.5" font-weight="800" text-anchor="middle" fill="#7C2D12">${label}</text></g>
         </g>`;
     }
     function advStringLights(y, sag) {
@@ -6374,7 +6479,7 @@
     function advStoreMapSVG() {
         const K = advMapK, H = advMapH(), dyB = H - ADV_MAP_H;      // dyB：貼齊下緣的東西要移動的量
         const FONT = `font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif"`;
-        const tag = (x, y, w, t) => `<g><rect x="${x}" y="${y}" width="${w}" height="15" rx="4" fill="#FDE047" stroke="#A16207" stroke-width="1"/><text x="${x + w / 2}" y="${y + 11}" font-size="10.5" font-weight="800" text-anchor="middle" fill="#7C2D12" ${FONT}>${t}</text></g>`;
+        const tag = (x, y, w, t) => `<g transform="translate(${x + w / 2} ${y + 7.5}) scale(1.15) translate(${-(x + w / 2)} ${-(y + 7.5)})"><rect x="${x}" y="${y}" width="${w}" height="15" rx="4" fill="#FDE047" stroke="#A16207" stroke-width="1"/><text x="${x + w / 2}" y="${y + 11}" font-size="10.5" font-weight="800" text-anchor="middle" fill="#7C2D12" ${FONT}>${t}</text></g>`;
         const O = advMapObj;
         let s = '';
         // 店內地板（白色地磚）
@@ -6388,7 +6493,7 @@
         for (let x = 0; x <= 340; x += 20) front += `<line x1="${x}" y1="664" x2="${x}" y2="700" stroke="#3B4757" stroke-width="1"/>`;
         front += `<line x1="0" y1="682" x2="340" y2="682" stroke="#3B4757" stroke-width="1"/>`;
         front += `<rect x="0" y="648" width="340" height="16" fill="#1E3A8A"/><rect x="0" y="648" width="340" height="3" fill="#F97316"/><rect x="0" y="661" width="340" height="3" fill="#22C55E"/>`;
-        front += `<text x="262" y="660" font-size="10" font-weight="900" text-anchor="middle" fill="#FFFFFF" ${FONT}>便利商店　24H</text>`;
+        front += `<text x="262" y="660" font-size="11.5" font-weight="900" text-anchor="middle" fill="#FFFFFF" ${FONT}>便利商店　24H</text>`;
         front += `<rect x="40" y="646" width="78" height="20" fill="#CBD5E1"/><rect x="40" y="646" width="10" height="20" fill="#BAE6FD" stroke="#64748B" stroke-width="1"/><rect x="108" y="646" width="10" height="20" fill="#BAE6FD" stroke="#64748B" stroke-width="1"/>`;
         s += `<g transform="translate(0 ${dyB})">${front}</g>`;
         // ── 第 12 關：熱食櫃（大亨堡）──
@@ -6467,7 +6572,7 @@
         let k = r.width / w || 1;                                   // 電腦版整個畫面有放大
         let avail = (advViewportH() - (r.top + window.scrollY) - 14) / k;   // 用頁面頂端算（不受目前捲動位置影響）
         let full = w * ADV_MAP_H / ADV_MAP_W;
-        let h = Math.max(w * 1.15, Math.min(full, avail));
+        let h = Math.max(w * 1.15, Math.min(full * 1.15, avail));     // 可以比原本比例再高 15%，把手機畫面下方空間用滿
         box.style.height = Math.round(h) + 'px';
         advMapK = (h / w) * ADV_MAP_W / ADV_MAP_H;
     }
@@ -6531,23 +6636,13 @@
         let isCleared = !!advData.cleared[lv.id];
         let canGo = ok && !tired;                // 已通關的關卡可以一直重複挑戰（每天前 3 次有通關獎勵）
         let used = advReplaysUsed(), cap = advReplayCap(), rewardLeft = Math.max(0, cap - used);
-        let item = (icon, cnt) => `<span class="aq-item"><span class="ic">${icon}</span>×${cnt}</span>`;
-        let rewards = [], tag = '', off = false;
-        if (!isCleared) {
-            tag = '<span class="aq-tag first">首勝</span>';
-            if (lv.firstPotions) rewards.push(item(advPotionIcon(22), lv.firstPotions));
-            if (lv.firstSauce) rewards.push(item(advSauceIcon(22), lv.firstSauce));
-            if (lv.firstShards) rewards.push(item(advShardIcon(22), lv.firstShards));
-            if (lv.firstWipes) rewards.push(item(advWipeIcon(22), lv.firstWipes));
-            if (lv.firstItem && ADV_ITEMS[lv.firstItem]) rewards.push(`<span class="aq-item" title="${ADV_ITEMS[lv.firstItem].name}"><span class="ic">${ADV_ITEMS[lv.firstItem].icon(22)}</span>×1</span>`);
-            ADV_MOVES.filter(m => m.buy.kind === 'reward' && m.buy.level === lv.id && !advOwns(m.key)).forEach(m => rewards.push(`<span class="aq-item" title="學會「${m.name}」"><span class="ic">${m.icon}</span>×1</span>`));
-        } else {
+        let tag = '', off = false;
+        if (!isCleared) tag = '<span class="aq-tag first">首勝</span>';
+        else {
             off = rewardLeft <= 0;
             tag = off ? '<span class="aq-tag gone">今日已領完</span>' : `<span class="aq-tag today">今日 ${used} / ${cap}</span>`;
-            rewards.push(item(advShardIcon(22), lv.repeatShards));
-            if (lv.potionChance) rewards.push(`<span class="aq-item" title="${Math.round(lv.potionChance * 100)}% 機會"><span class="ic">${advPotionIcon(22)}</span>${Math.round(lv.potionChance * 100)}%</span>`);
         }
-        if (lv.xp) { let xd = advData.xpDay !== getLocalDateStr(); rewards.unshift(`<span class="aq-item" title="經驗值${isCleared ? '（舊關卡 70%）' : ''}${xd ? '（今日首勝 ×2）' : ''}"><span class="ic"><span class="xp-ico">XP</span></span>+${advWinXp(lv, isCleared, xd)}</span>`); }
+        let rewards = advRewardList(lv).map(r => `<span class="aq-item" title="${escapeHTML(r.label)}"><span class="ic">${r.icon}</span>${r.text}</span>`);
         let warns = [];
         if (lv.special) warns.push(`<div class="aq-warn">${ADV_WARN_SVG}注意：${ADV_SPECIAL_TEXT[lv.special]}</div>`);
         if (tired) warns.push(`<div class="aq-warn bad">${ADV_WARN_SVG}雞塊沒有體力了，明天 00:00 恢復</div>`);
@@ -6930,7 +7025,7 @@
         let lvArea = `<button type="button" class="st-lv${pts ? ' has-pts' : ''}" id="stLvArea" aria-label="等級 ${li.lv}${pts ? `，可分配 ${pts} 點` : ''}" data-on-click='[["advLvTap",[]]]'>
                 <span class="st-lv__box"><small>Lv</small>${li.lv}${pts ? `<span class="st-lv__dot${bounce ? ' bounce' : ''}">${pts}</span>` : ''}</span>
                 <span class="st-lv__bar"><i style="width:${li.pct.toFixed(1)}%"></i></span>
-                <span class="st-lv__num">${li.max ? 'MAX' : `${li.xp} / ${li.next}`}</span>
+                <span class="st-lv__num">${li.max ? 'MAX' : `${li.xp - li.prev} / ${li.next - li.prev}`}</span>
             </button>`;
         if (bounce) { advData.lvSeenAt = Date.now(); advSave(true); }
         box.classList.toggle('is-alloc', !!al);
@@ -6941,7 +7036,7 @@
                 <div class="st-items">${[0, 1].map(i => advMiniGearHTML(i)).join('')}</div>
             </section>
             <div class="st-main">
-                <nav class="st-tabs" role="tablist">${tab('stats', '基本素質')}${tab('moves', '招式')}${tab('bag', '背包')}${tab('gear', '裝備', advGearAlert() ? ADV_ALERT : '')}</nav>
+                <nav class="st-tabs" role="tablist">${tab('stats', '基本素質')}${tab('moves', '招式', advAnyUnseenMove() ? ADV_NEW_ALERT : '')}${tab('bag', '背包', advAnyUnseenGear() ? ADV_NEW_ALERT : '')}${tab('gear', '裝備', advGearAlert() ? ADV_ALERT : '')}</nav>
                 <section class="st-panel${advStatsTab === 'stats' ? '' : ' st-panel--other'}" role="tabpanel">${body}</section>
             </div>`;
         if (advStatsTab === 'bag') advBagBack();
@@ -6968,13 +7063,14 @@
         let shown = advMoveShown(), n = shown.length;
         if (!advMoveFocus || !shown.some(m => m.key === advMoveFocus)) advMoveFocus = n ? (shown.find(m => eqKeys.includes(m.key)) || shown[0]).key : (eqKeys[0] || (ownedMoves[0] ? ownedMoves[0].key : ''));
         let idx = shown.findIndex(m => m.key === advMoveFocus);
+        if (advMoveFocus) advMarkSeen('m', advMoveFocus);     // 正在看的這招：算看過了
         let car;
         if (!n) {
             car = `<div class="adv-car adv-car-empty" id="advMoveGrid"><div class="adv-note" style="margin:0;">${advMoveFilter === 'eq' ? '還沒有裝備招式' : `還沒有${ADV_TYPE_LABEL[advMoveFilter]}類的招式`}</div></div>`;
         } else {
             let m = shown[idx], mi = advMasteryInfo(m.key), on = eqKeys.includes(m.key);
             let L = n >= 3 ? shown[(idx - 1 + n) % n] : null, R = n >= 2 ? shown[(idx + 1) % n] : null;
-            let side = (x, d) => x ? `<button type="button" class="adv-car-side rar-${advRarityKey(x.key)}" title="${x.name}" aria-label="${x.name}" data-on-click='[["advMoveStep",[${d}]]]'>${x.icon}</button>` : '<span class="adv-car-side ghost"></span>';
+            let side = (x, d) => x ? `<button type="button" class="adv-car-side rar-${advRarityKey(x.key)}" title="${x.name}" aria-label="${x.name}" data-on-click='[["advMoveStep",[${d}]]]'>${x.icon}${advMoveUnseen(x.key) ? ADV_NEW_ALERT : ''}</button>` : '<span class="adv-car-side ghost"></span>';
             car = `<div class="adv-car" id="advMoveGrid">
                 <button type="button" class="adv-car-arr${n < 2 ? ' off' : ''}" aria-label="上一招" data-on-click='[["advMoveStep",[-1]]]'>${advCarTri(180)}</button>
                 ${side(L, -1)}
@@ -6986,7 +7082,7 @@
                 </div>
                 ${side(R, 1)}
                 <button type="button" class="adv-car-arr${n < 2 ? ' off' : ''}" aria-label="下一招" data-on-click='[["advMoveStep",[1]]]'>${advCarTri(0)}</button>
-                <div class="adv-car-dots">${shown.map((x, i) => `<i class="${i === idx ? 'on' : ''}"></i>`).join('')}</div>
+                <div class="adv-car-dots">${shown.map((x, i) => `<i class="${i === idx ? 'on' : ''}${i !== idx && advMoveUnseen(x.key) ? ' new' : ''}"></i>`).join('')}</div>
             </div>
             <div class="adv-car-hint">（${idx + 1} / ${n}）</div>`;
         }
@@ -7109,14 +7205,38 @@
             <div class="adv-gear-slots">${slot(0)}${slot(1)}</div>`;
     }
     // 有空的裝備欄，而且背包裡還有沒裝備的裝備
+    function advSeen() {
+        if (!advData.seen) {
+            advData.seen = { m: {}, g: {}, init: 1 };
+            ADV_MOVES.forEach(m => { if (advOwns(m.key)) advData.seen.m[m.key] = 1; });
+            Object.keys(ADV_ITEMS).forEach(k => { if (advData.items[k]) advData.seen.g[k] = 1; });
+            advSave(true);
+        }
+        return advData.seen;
+    }
+    function advMoveUnseen(key) { return advOwns(key) && !advSeen().m[key]; }
+    function advGearUnseen(key) { return !!(ADV_ITEMS[key] && advData.items[key]) && !advSeen().g[key]; }
+    function advAnyUnseenMove() { return ADV_MOVES.some(m => advMoveUnseen(m.key)); }
+    function advAnyUnseenGear() { return Object.keys(ADV_ITEMS).some(k => advGearUnseen(k)); }
+    function advMarkSeen(kind, key) {
+        let sn = advSeen();
+        if (!key || sn[kind][key]) return false;
+        sn[kind][key] = 1;
+        advSave(true);
+        setTimeout(advUpdateGearAlerts, 0);
+        return true;
+    }
     function advGearAlert() {
         let g = advData.gear;
         if (g.every(Boolean)) return false;
         return Object.keys(ADV_ITEMS).some(k => advData.items[k] && !g.includes(k));
     }
     const ADV_ALERT = '<span class="adv-alert" aria-label="還可以裝備">!</span>';
+    const ADV_NEW_ALERT = '<span class="adv-alert" aria-label="有新的">!</span>';
     function advUpdateGearAlerts() {
-        let on = advGearAlert();
+        // 能力值按鈕的紅色驚嘆號：有空的裝備欄可以裝、有還沒分配的能力點、有新的招式或裝備還沒看過
+        let on = false;
+        try { on = advGearAlert() || advPtsLeft() > 0 || advAnyUnseenMove() || advAnyUnseenGear(); } catch (e) {}
         document.querySelectorAll('.adv-btn-sm[data-on-click*="goToAdvStats"], .aq-stat-btn').forEach(b => {
             let a = b.querySelector('.adv-alert');
             if (on && !a) b.insertAdjacentHTML('beforeend', ADV_ALERT);
@@ -7299,7 +7419,7 @@
         let defs = advBagDefs().filter(d => d.kind === 'gear' || d.n > 0).filter(d => advBagFilter === 'all' || d.kind === advBagFilter);
         if (advBagSel && !defs.some(d => d.key === advBagSel)) advBagSel = '';
         let cells = defs.map(d => `<button type="button" class="adv-bag-cell${d.on ? ' is-on' : ''}${d.kind === 'gear' ? ' rar-' + advItemRarityKey(d.key) : ''}${d.key === advBagSel ? ' sel' : ''}" data-on-click='[["advBagTap",["${d.key}"]]]'>
-                <span class="adv-bag-cico">${d.icon(34)}</span><b>${d.name}</b><small>${d.kind === 'gear' ? (d.on ? d.hand : '裝備') : '×' + d.n}</small></button>`);
+                <span class="adv-bag-cico">${d.icon(34)}</span><b>${d.name}</b><small>${d.kind === 'gear' ? (d.on ? d.hand : '裝備') : '×' + d.n}</small>${d.kind === 'gear' && advGearUnseen(d.key) ? ADV_NEW_ALERT : ''}</button>`);
         let total = Math.max(9, Math.ceil(cells.length / 3) * 3);
         while (cells.length < total) cells.push('<div class="adv-bag-cell empty"></div>');
         if (!defs.length && advBagGearOnly) cells = [];
@@ -7325,7 +7445,13 @@
             <button type="button" class="adv-plain-btn ${d.off ? 'danger' : 'main'}" ${d.kind === 'item' && d.n < 1 ? 'disabled' : ''} data-on-click='[["${d.fn}",["${d.key}"]]]'>${d.act}</button>
             <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagUnselect",[]]]'>返回</button>`;
     }
-    function advBagTap(key) { advBagSel = key; advBagBack(); }
+    function advBagTap(key) {
+        advBagSel = key;
+        if (ADV_ITEMS[key] && advMarkSeen('g', key) && !advAnyUnseenGear()) {     // 看過了：背包分頁的驚嘆號也拿掉
+            document.querySelectorAll(`.st-tab[data-on-click*='"bag"'] .adv-alert`).forEach(a => a.remove());
+        }
+        advBagBack();
+    }
     function advBagUnselect() { advBagSel = ''; advBagBack(); }
     // 冒險卷：今天的重複挑戰次數 +1
     function advBagUseTicket() {
@@ -7857,7 +7983,7 @@
             <linearGradient id="sgS2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E5E7EB"/><stop offset="1" stop-color="#F9FAFB"/></linearGradient></defs>${s}</svg>`;
     }
     // 新版戰鬥畫面（前後透視：敵人在右上是主角、雞塊背面在左下）—— 先開放的關卡
-    const ADV_BT_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const ADV_BT_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
     function advBtOn() { return !!(adv.level && ADV_BT_LEVELS.includes(adv.level.id)); }
     function advBtFit() {
         let b = document.querySelector('#adventureBattleView .adv-battle');
@@ -7879,9 +8005,12 @@
             pn.style.flex = '0 0 auto';          // 量「內容本身」的高度（平常選單會往下撐滿，量的時候先不要撐）
             adv.btMenuH = pn.offsetHeight;
             // 有帶速答招式：配對畫面比招式選單高，用比較高的那個決定場景高度（整場戰鬥都不用再變）
-            if ((adv.moves || []).some(m => m.mode === 'speed')) {
+            //   套圈圈的「天女散花」開場也是配對畫面，而且標題比較長 → 一起量
+            let ringOpen = !!(adv.enemy && adv.enemy.special === 'ring');
+            if ((adv.moves || []).some(m => m.mode === 'speed') || ringOpen) {
                 let keep = pn.innerHTML, cell = '<button type="button" class="spd-cell">word</button>';
-                pn.innerHTML = `<div class="spd-head"><div class="spd-title"><b>⚡ 速答配對</b><small>已配對 0 組</small></div><div class="spd-timer"></div></div><div class="spd-grid">${cell.repeat(4)}</div><div class="spd-sep"></div><div class="spd-grid">${cell.repeat(4)}</div>`;
+                let title = ringOpen ? `<b>🎯 天女散花！快配對躲開</b><small>已配對 0 / ${ADV_RING_NEED} 組・沒配完每少 1 組扣 1 點 HP</small>` : '<b>⚡ 速答配對</b><small>已配對 0 組</small>';
+                pn.innerHTML = `<div class="spd-head"><div class="spd-title">${title}</div><div class="spd-timer"></div></div><div class="spd-grid">${cell.repeat(4)}</div><div class="spd-sep"></div><div class="spd-grid">${cell.repeat(4)}</div>`;
                 adv.btMenuH = Math.max(adv.btMenuH, pn.offsetHeight + 24);   // +24：中文比較長會換行
                 pn.innerHTML = keep;
             }
@@ -7900,7 +8029,10 @@
     // 敵人攻擊台詞（白色對話框，出現在雞塊上方的空白處；只在新版戰鬥畫面）
     const ADV_ENEMY_LINES = {
         meatball: '彈死你！', corn: '玉米粒機關槍！', oyster: '黏住你囉～', tofu: '聞聞看我的味道！', boba: '珍珠發射！',
-        claw: '抓到你了！', darts: '正中紅心！', mahjong: '自摸啦！', ring: '你被套牢了！', pinball: '彈過來彈過去！'
+        claw: '抓到你了！', darts: '正中紅心！', mahjong: '自摸啦！', ring: '你被套牢了！', pinball: '彈過來彈過去！',
+        egg: '滾燙蛋汁來囉！', bun: '麵包夾住你！', hotdog: '熱油噴射！', onigiri: '海苔捲起來！', tea: '冰鎮你一下！',
+        ibon: '請到櫃檯繳費！', salad: '生菜甩甩甩！', microwave: '叮！加熱完成！', bento: '便當蓋飛過去！', bento2: '即期也很強！',
+        coffee: '小心燙口！', clerk: '歡迎光臨！'
     };
     // 臭豆腐：雞塊的招式失敗時說的話（隨機一句）
     const ADV_TOFU_LINES = ['哈！打不到吧～聞聞我的臭味！', '臭臭反擊！', '太嫩了，再練練吧！', '這味道，夠你受的了吧？'];
@@ -7920,7 +8052,7 @@
         adv.btLocked = false; adv.btMenuH = 0; adv.btFullH = 0; adv.btW = 0;
         adv.nextAtk = 0; adv.intBuff = 0; adv.ringOpening = false; if (advSp && advSp.timer) clearInterval(advSp.timer); advSp = null;
         let battle = document.querySelector('#adventureBattleView .adv-battle'), btOn = advBtOn();
-        if (battle) battle.classList.toggle('bt', btOn);
+        if (battle) { battle.classList.toggle('bt', btOn); battle.classList.toggle('bt-store', !!(btOn && adv.level && adv.level.id >= 11)); }   // 便利商店：白色地磚
         let view = document.getElementById('adventureBattleView');
         if (view) view.classList.toggle('bt-view', btOn);
         document.body.classList.toggle('bt-on', btOn);
@@ -8587,6 +8719,7 @@
         adv.q = { type: 'speed', done: false };
         adv.move = null;                          // 開場連連看不算任何招式的命中
         let c = { label: '', stat: '', every: 1, pen: ADV_RING_PEN, secs: ADV_RING_SECS, cap: ADV_RING_NEED };
+        if (advBtOn()) advBtLock(true);          // 開場就先把場景高度定好（配對畫面才放得下、不會被切掉）
         advSp = { id, m: { key: 'ring', icon: '🎯', name: '天女散花', speed: c }, c, ring: true, pairs: 0, wrong: 0, endAt: Date.now() + c.secs * 1000, total: c.secs, round: null, over: false };
         advSpeedRound();
         advSpeedRender();
@@ -8694,6 +8827,7 @@
             <div class="adv-qword">${escapeHTML(w.english)}</div>
             <div class="adv-input-row">
                 <input type="text" id="advCnInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入中文意思">
+                ${getSpeechRecognitionCtor() ? `<button type="button" class="adv-cn-mic" id="advCnMic" aria-label="用說的（中文）" data-on-click='[["advCnMicTap",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/></svg></button>` : ''}
                 <button type="button" data-on-click='[["advSubmitCn",[]]]'>送出</button>
             </div>
             <div class="adv-qsub" id="advCnSub"></div>`;
@@ -8701,7 +8835,34 @@
         inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); advSubmitCn(); } });
         setTimeout(() => { try { inp.focus({ preventScroll: true }); } catch (e) {} }, 50);
     }
+    // 衝鋒撞擊：按麥克風用中文說出意思（zh-TW 語音辨識），辨識到的字填進輸入框
+    let advCnRec = null;
+    function advCnMicStop() { if (advCnRec) { try { advCnRec.abort(); } catch (e) {} advCnRec = null; } let b = document.getElementById('advCnMic'); if (b) b.classList.remove('on'); }
+    function advCnMicTap() {
+        let q = adv.q;
+        if (!adv.active || adv.busy || !q || q.type !== 'typeCn' || q.done) return;
+        if (advCnRec) { advCnMicStop(); return; }
+        const SR = getSpeechRecognitionCtor();
+        if (!SR) return;
+        let rec = new SR(), btn = document.getElementById('advCnMic'), sub = document.getElementById('advCnSub');
+        rec.lang = 'zh-TW'; rec.interimResults = true; rec.maxAlternatives = 3; rec.continuous = false;
+        advCnRec = rec;
+        if (btn) btn.classList.add('on');
+        if (sub) sub.textContent = '🎤 請說出中文意思…';
+        rec.onresult = (e) => {
+            let inp = document.getElementById('advCnInput');
+            if (!inp || adv.q !== q || q.done) return;
+            let r = e.results[e.results.length - 1], best = r[0].transcript;
+            if (r.isFinal) for (let k = 0; k < r.length; k++) if (advCnMatch(r[k].transcript, q.word.chinese)) { best = r[k].transcript; break; }
+            inp.value = best.replace(/[。．.！!？?]+$/, '');
+            if (r.isFinal && sub) sub.textContent = '聽到了！確認沒問題就按「送出」';
+        };
+        rec.onerror = () => { if (sub && advCnRec === rec) sub.textContent = '沒有聽清楚，可以再按一次 🎤 或直接打字'; };
+        rec.onend = () => { if (advCnRec === rec) advCnRec = null; let b = document.getElementById('advCnMic'); if (b) b.classList.remove('on'); };
+        try { rec.start(); } catch (e) { advCnMicStop(); }
+    }
     async function advSubmitCn() {
+        advCnMicStop();
         let q = adv.q;
         if (!adv.active || adv.busy || !q || q.type !== 'typeCn' || q.done) return;
         let inp = document.getElementById('advCnInput');
@@ -8751,6 +8912,7 @@
         let m = adv.move;
         document.getElementById('advPanel').innerHTML = `
             <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：聽發音，拼出單字</div>
+            <div class="adv-spell-hint"><button type="button" class="adv-replay" aria-label="再聽一次" data-on-click='[["advReplayListen",[]]]'>🔊</button><span>提示：${advSpellHint(w.english)}</span></div>
             <div class="adv-input-row">
                 <input type="text" id="advListenInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入聽到的單字">
                 <button type="button" data-on-click='[["advSubmitListen",[]]]'>送出</button>
@@ -8760,6 +8922,15 @@
         inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); advSubmitListen(); } });
         advSpeakWord(w.english);
         setTimeout(() => { try { inp.focus({ preventScroll: true }); } catch (e) {} }, 50);
+    }
+    // 突刺的提示：第一個字母＋每個字母一條底線（片語的空格保留）＋總共幾個字母
+    function advSpellHint(en) {
+        let t = String(en || '').trim(), n = (t.match(/[A-Za-z]/g) || []).length, first = true;
+        let marks = Array.from(t).map(ch => {
+            if (/[A-Za-z]/.test(ch)) { if (first) { first = false; return `<b>${escapeHTML(ch)}</b>`; } return '<i>_</i>'; }
+            return ch === ' ' ? '<i class="sp"></i>' : escapeHTML(ch);
+        }).join('');
+        return `<span class="adv-spell-marks">${marks}</span><small>（${n} 個字母）</small>`;
     }
     function advReplayListen() { if (adv.q && (adv.q.type === 'listen' || adv.q.type === 'listenChoice')) advSpeakWord(adv.q.word.english); }
     async function advSubmitListen() {
@@ -8938,6 +9109,32 @@
         fx.appendChild(d);
         return d;
     }
+    // 衝鋒撞擊變身的山豬（側面、朝右衝）
+    const ADV_BOAR_SVG = `<svg viewBox="0 0 110 84" width="100%" height="100%" style="overflow:visible" aria-hidden="true">
+        <ellipse cx="54" cy="78" rx="40" ry="5" fill="#000" opacity=".15"/>
+        <path d="M14 46 Q4 42 8 34" stroke="#3F2A14" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        <rect x="22" y="58" width="9" height="18" rx="3" fill="#5C3A1A" stroke="#231F20" stroke-width="2"/>
+        <rect x="64" y="58" width="9" height="18" rx="3" fill="#5C3A1A" stroke="#231F20" stroke-width="2"/>
+        <ellipse cx="48" cy="46" rx="36" ry="24" fill="#8B5A2B" stroke="#231F20" stroke-width="2.6"/>
+        <path d="M18 34 L22 22 L28 31 L33 17 L40 28 L46 15 L52 27 L58 17 L63 29 L70 22 L72 34 Z" fill="#4A2F14" stroke="#231F20" stroke-width="2" stroke-linejoin="round"/>
+        <rect x="34" y="60" width="9" height="17" rx="3" fill="#6B4423" stroke="#231F20" stroke-width="2"/>
+        <rect x="52" y="60" width="9" height="17" rx="3" fill="#6B4423" stroke="#231F20" stroke-width="2"/>
+        <ellipse cx="82" cy="44" rx="17" ry="16" fill="#8B5A2B" stroke="#231F20" stroke-width="2.6"/>
+        <path d="M72 31 L74 17 L84 29 Z" fill="#6B4423" stroke="#231F20" stroke-width="2" stroke-linejoin="round"/>
+        <ellipse cx="98" cy="50" rx="8.5" ry="7.5" fill="#F0A58A" stroke="#231F20" stroke-width="2.2"/>
+        <circle cx="96" cy="49" r="1.6" fill="#231F20"/><circle cx="101" cy="50" r="1.6" fill="#231F20"/>
+        <path d="M90 57 Q94 66 101 58" fill="#FFFFFF" stroke="#231F20" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="86" cy="39" r="3" fill="#231F20"/><circle cx="87" cy="38" r="1" fill="#FFFFFF"/>
+        <path d="M80 33 L91 35" stroke="#231F20" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M-6 40 H8 M-10 50 H6 M-4 60 H10" stroke="#CBD5E1" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+    </svg>`;
+    // 突刺刺穿的洞（黑色的洞＋裂痕）
+    const ADV_HOLE_SVG = `<svg viewBox="0 0 40 40" width="100%" height="100%" style="overflow:visible" aria-hidden="true">
+        <path d="M20 9 L23 3 M30 13 L37 9 M31 25 L38 28 M21 31 L19 38 M10 26 L3 30 M9 14 L3 10" stroke="#231F20" stroke-width="2" stroke-linecap="round"/>
+        <path d="M20 8 L25 11 L31 12 L32 18 L33 24 L28 29 L21 32 L15 30 L9 27 L8 20 L9 13 L14 10 Z" fill="#1A1626" stroke="#231F20" stroke-width="2" stroke-linejoin="round"/>
+        <ellipse cx="19" cy="18" rx="7" ry="6" fill="#05040A"/>
+        <path d="M13 14 Q17 11 22 12" stroke="#ffffff" stroke-width="1.4" fill="none" opacity=".35" stroke-linecap="round"/>
+    </svg>`;
     // 播放「一下」攻擊；招式打幾下就呼叫幾次
     async function advPlayAttack(m, hitNo) {
         const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
@@ -8952,15 +9149,26 @@
         if (m.fx === 'dash') {
             let p = dash(0.78); await advWait(190); burst(m.icon); await p;
         } else if (m.fx === 'charge') {
-            // 衝鋒撞擊：先往後蓄力，再一口氣衝過去
+            // 衝鋒撞擊：「砰」一聲變成山豬 → 往後蓄力、一口氣衝過去 → 敵人被撞退一步 → 變回雞塊
+            let keep = P.innerHTML;
+            const poof = (sz) => { let b = advFx('<div class="adv-poof"></div>', pc.x, pc.y, sz); if (b) advAnimate(b, [{ opacity: 0.95, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(1.5)' }], { duration: 420, easing: 'ease-out' }).then(() => b.remove()); };
+            poof(Math.max(70, P.offsetWidth * 1.1));
+            P.innerHTML = ADV_BOAR_SVG; P.classList.add('is-boar');
+            await advAnimate(P, [{ transform: 'scale(.7)' }, { transform: 'scale(1.12)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 300, easing: 'ease-out' });
             await advAnimate(P, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${-d.dx * 0.12}px, ${-d.dy * 0.12}px) scale(0.9)` }], { duration: 220, fill: 'forwards', easing: 'ease-out' });
             let p = advAnimate(P, [
                 { transform: `translate(${-d.dx * 0.12}px, ${-d.dy * 0.12}px) scale(0.9)` },
-                { transform: `translate(${d.dx * 0.84}px, ${d.dy * 0.84}px) scale(1.25)`, offset: 0.6 },
-                { transform: 'translate(0,0) scale(1)' }], { duration: 460, easing: 'cubic-bezier(.5,0,.3,1)' });
-            await advWait(260); burst(m.icon, 64);
+                { transform: `translate(${d.dx * 0.8}px, ${d.dy * 0.8}px) scale(1.2)`, offset: 0.55 },
+                { transform: `translate(${d.dx * 0.8}px, ${d.dy * 0.8}px) scale(1.2)`, offset: 0.65 },
+                { transform: 'translate(0,0) scale(1)' }], { duration: 620, easing: 'cubic-bezier(.5,0,.3,1)' });
+            await advWait(330); burst('💥', 64);
+            // 敵人被撞退一步（動裡面的圖，外框留給受傷的抖動）
+            let es = E.firstElementChild;
+            if (es) advAnimate(es, [{ transform: 'translate(0,0)' }, { transform: `translate(${d.dx * 0.2}px, ${d.dy * 0.2}px) rotate(6deg)`, offset: 0.25 }, { transform: `translate(${d.dx * 0.2}px, ${d.dy * 0.2}px)`, offset: 0.75 }, { transform: 'translate(0,0)' }], { duration: 1300, easing: 'ease-out' });
             advAnimate(document.getElementById('advStage'), [{ transform: 'translate(0,0)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(3px,-2px)' }, { transform: 'translate(0,0)' }], { duration: 240 });
             await p;
+            poof(Math.max(60, P.offsetWidth));
+            P.innerHTML = keep; P.classList.remove('is-boar');
         } else if (m.fx === 'slash') {
             let p = advAnimate(P, [{ transform: 'translate(0,0)' }, { transform: `translate(${d.dx * 0.5}px, ${d.dy * 0.5}px)`, offset: 0.5 }, { transform: 'translate(0,0)' }], { duration: 380, easing: 'ease-in-out' });
             await advWait(170);
@@ -8975,7 +9183,15 @@
             let p = advAnimate(P, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${d.dx * 0.82}px, ${d.dy * 0.82}px) scale(1.1)`, offset: 0.4 }, { transform: `translate(${d.dx * 0.82}px, ${d.dy * 0.82}px) scale(1.1)`, offset: 0.55 }, { transform: 'translate(0,0) scale(1)' }], { duration: 480, easing: 'ease-out' });
             let ln = advFxBox(`<svg viewBox="0 0 100 16" width="100%" height="100%" style="overflow:visible"><path d="M0 8 L 86 8" stroke="#E0F2FE" stroke-width="7" stroke-linecap="round"/><path d="M 8 8 L 92 8" stroke="#38BDF8" stroke-width="3" stroke-linecap="round"/><path d="M 90 1 L 100 8 L 90 15 Z" fill="#FFFFFF"/></svg>`, (pc.x + ec.x) / 2, (pc.y + ec.y) / 2, Math.max(50, Math.hypot(d.dx, d.dy) * 0.9), 16);
             if (ln) { ln.style.transformOrigin = '50% 50%'; advAnimate(ln, [{ opacity: 0, transform: `rotate(${ang}deg) scaleX(.3)` }, { opacity: 1, transform: `rotate(${ang}deg) scaleX(1)`, offset: 0.4 }, { opacity: 0, transform: `rotate(${ang}deg) scaleX(1)` }], { duration: 420 }).then(() => ln.remove()); }
-            await advWait(200); burst(m.icon, 46); await p;
+            await advWait(200); burst('✨', 40);
+            // 刺穿：敵人身上留下一個洞，過一下再消失
+            let hole = document.createElement('div');
+            hole.className = 'adv-hole';
+            hole.innerHTML = ADV_HOLE_SVG;
+            E.appendChild(hole);
+            advAnimate(hole, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.2)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.1)', offset: 0.5 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }], { duration: 220, fill: 'forwards' });
+            setTimeout(() => { advAnimate(hole, [{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' }).then(() => hole.remove()); }, 1300);
+            await p;
         } else if (m.fx === 'yellow') {
             // 黃色衝擊波：龜派氣功！先在雙手之間聚氣，再射出一道粗粗的光束
             let ang = Math.atan2(d.dy, d.dx) * 180 / Math.PI;
@@ -9212,11 +9428,11 @@
             }
             if (ADV_ENEMY_LINES[adv.enemy.sprite]) advBtSay(ADV_ENEMY_LINES[adv.enemy.sprite]);   // 新版戰鬥畫面：敵人攻擊時在雞塊上方說話
             const d = advDelta(E, P);
-            await advAnimate(E, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${d.dx * 0.8}px, ${d.dy * 0.8}px) scale(1.12)`, offset: 0.5 }, { transform: 'translate(0,0) scale(1)' }], { duration: 480, easing: 'ease-in-out' });
-            if (id !== adv.runId) return;
-            // 套圈圈：一次攻擊打兩下（每一下分開算傷害，跟「連續衝撞」一樣）
+            // 套圈圈：一次攻擊打兩下（每一下都衝過來一次、分開算傷害，跟「連續斬擊」一樣）
             let eh = adv.enemy.hits || 1;
             for (let hh = 0; hh < eh; hh++) {
+            await advAnimate(E, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${d.dx * 0.8}px, ${d.dy * 0.8}px) scale(1.12)`, offset: 0.5 }, { transform: 'translate(0,0) scale(1)' }], { duration: eh > 1 ? 400 : 480, easing: 'ease-in-out' });
+            if (id !== adv.runId) return;
             let dmg = advDamage(adv.enemy.atk, adv.enemy.movePower, adv.player.def);
             let luck = advRollLuck(adv.enemy.luck, adv.player.luck);
             if (luck.flips.length) {
@@ -9433,7 +9649,7 @@
             ${(adv.wrongThis || []).length ? `<div class="cr-review" id="crReview"><button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crReviewPick",[]]]'>複習答錯的字</button></div>` : ''}`;
         el.innerHTML = `<section class="cr-screen" data-state="${st}" aria-label="戰鬥結算"><div class="cr-card">
             <header class="cr-top"><button type="button" class="cr-back" aria-label="返回" data-on-click='[["crBack",[]]]'>${CR_BACK_SVG}</button><span class="cr-pill">雞塊大冒險</span><span></span></header>
-            ${hero}${stats}${mid}${notes}<div class="cr-actions">${btns}</div></div></section>`;
+            ${hero}${st === 'lose' ? stats : ''}${mid}${notes}<div class="cr-actions">${btns}</div></div></section>`;
         el.hidden = false;
         el.scrollTop = 0;
         document.body.classList.add('cr-open');
@@ -9560,14 +9776,30 @@
     function faCloseSheet() { let el = document.getElementById('faSheet'); if (el) el.remove(); }
     function faGoLevel(id) { faStop(); goToAdvLevel(id); }
     // 首勝獎勵的 icon＋數量（卡片用）
+    // 這關打贏「現在」真的拿得到的獎勵（關卡頁、地圖的小視窗共用）
+    //   新關卡：經驗值＋首勝獎勵；舊關卡：經驗值 70%＋（今天還有次數才有）代幣、掉落；拿不到的不顯示
+    function advRewardList(lv) {
+        let out = [], first = !advData.cleared[lv.id];
+        let add = (icon, n, label, text) => out.push({ icon, n, label, text: text || '×' + n });
+        if (lv.xp) {
+            let xd = advData.xpDay !== getLocalDateStr(), x = advWinXp(lv, !first, xd);
+            add('<span class="xp-ico">XP</span>', x, `經驗值${first ? '' : '（舊關卡 70%）'}${xd ? '（今日首勝 ×2）' : ''}`, '+' + x);
+        }
+        let claw = lv.special === 'claw' ? 1 : 0;                  // 娃娃機：多掉 1 個冒險代幣
+        if (first) {
+            if ((lv.firstShards || 0) + claw) add(advShardIcon(22), (lv.firstShards || 0) + claw, '冒險代幣');
+            if (lv.firstPotions) add(advPotionIcon(22), lv.firstPotions, '小型恢復藥水');
+            if (lv.firstWipes) add(advWipeIcon(22), lv.firstWipes, '濕紙巾');
+            if (lv.firstItem && ADV_ITEMS[lv.firstItem] && !advData.items[lv.firstItem]) add(ADV_ITEMS[lv.firstItem].icon(22), 1, ADV_ITEMS[lv.firstItem].name);
+            ADV_MOVES.filter(m => m.buy.kind === 'reward' && m.buy.level === lv.id && !advData.own[m.key] && !advOwns(m.key)).forEach(m => add(m.icon, 1, `學會「${m.name}」`));
+        } else if (advReplaysUsed() < advReplayCap()) {
+            if ((lv.repeatShards || 0) + claw) add(advShardIcon(22), (lv.repeatShards || 0) + claw, '冒險代幣');
+            if (lv.potionChance) add(advPotionIcon(22), 1, `小型恢復藥水（${Math.round(lv.potionChance * 100)}% 機會）`, Math.round(lv.potionChance * 100) + '%');
+        }
+        return out;
+    }
     function advRewardItemsOf(lv) {
-        let out = [];
-        if (lv.firstSauce) out.push([advSauceIcon(22), lv.firstSauce, '糖醋醬']);
-        if (lv.firstShards) out.push([advShardIcon(22), lv.firstShards, '冒險代幣']);
-        if (lv.firstPotions) out.push([advPotionIcon(22), lv.firstPotions, '小型恢復藥水']);
-        if (lv.firstMaxHp) out.push(['<span class="cr-emo">❤️</span>', lv.firstMaxHp, '生命上限']);
-        if (lv.firstItem && ADV_ITEMS[lv.firstItem]) out.push([ADV_ITEMS[lv.firstItem].icon(22), 1, ADV_ITEMS[lv.firstItem].name]);
-        return out.map(x => `<span class="cr-item" role="img" aria-label="${escapeHTML(x[2])} ×${x[1]}">${x[0]}<b>×${x[1]}</b></span>`).join('');
+        return advRewardList(lv).map(r => `<span class="cr-item" role="img" aria-label="${escapeHTML(r.label)} ${r.text}"><span class="cr-ic">${r.icon}</span><b>${r.text}</b></span>`).join('');
     }
     async function advLose(id, why) {
         const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
@@ -11036,7 +11268,7 @@
         copyAppUrl,
         lpBack, lpTogglePause, advDoReplace, advLvTap, advAllocAdd, advAllocCancel, advAllocOk, cpResume, cpStartNew, cpStartNewFlash, cpStartNewSpeak, leaveSpeakPractice, playSpeakMyRecording, cpConfirmClose, cpConfirmBg, cpConfirmOk, fcFlip,
         playSpeakPracticeSample,
-        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSpeedTap, advSpeedDone, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advGiveUpSpeak,
+        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSpeedTap, advSpeedDone, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advCnMicTap, advConflictUse, advGiveUpSpeak,
         advSetMode, advOpenWords, advSayWord, advPracticeLevel, advWrongPick, advWrongPractice,
         advOpenSauce, advQuit, advRetry, advRedeemStamps, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
         openMicHelpModal,
