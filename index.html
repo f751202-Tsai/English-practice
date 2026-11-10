@@ -1654,7 +1654,7 @@
         .shop-pills { position: absolute; right: 0; top: -6px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
         .shop-pill { position: relative; display: flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; }
         .shop-pill-chicken { background: #EEF2FF; color: var(--primary); }
-        .shop-pill-shard { background: #FFEDE5; color: #C2410C; }
+        .shop-pill-shard { background: #FEF3C7; color: #92400E; }
         body.power-saving-mode .shop-pill-shard { background: #3A1E12; color: #FDBA74; }
         .shop-tabs { display: flex; gap: 6px; margin-bottom: 12px; padding: 4px; border-radius: 14px; background: #EEF2FF; }
         .shop-tab { flex: 1; border: none; border-radius: 11px; padding: 8px 4px; font-size: 13.5px; font-weight: 800; cursor: pointer; font-family: inherit; background: transparent; color: var(--text-muted); width: auto; }
@@ -4335,6 +4335,61 @@ body.power-saving-mode.we-on .we-pos-btn:not(.has-value) { background: #1b1e27 !
 .adv-battle.bt .adv-move .dmg { font-size: calc(17.6 * var(--u)); }
 .adv-battle.bt .adv-move small { font-size: calc(13.2 * var(--u)); }
 .adv-battle.bt .adv-lv-chip { font-size: calc(11.5 * var(--u)); }
+
+/* r9：關卡選擇移到最上面那一列；新招式／新裝備的紅色驚嘆號 */
+.adv-nav .adv-map-title { margin: 0; gap: 10px; }
+.adv-nav + .adv-map-sub { margin-top: -6px; }
+.adv-car-side { position: relative; overflow: visible; }
+.adv-car-side .adv-alert { opacity: 1; top: -8px; right: -8px; }
+.adv-car-side:has(.adv-alert) { opacity: .8; }
+.adv-car-dots i.new { background: #EF4444 !important; }
+.adv-bag-cell .adv-alert { top: -6px; right: -6px; }
+.cr-item .cr-ic { display: inline-flex; align-items: center; }
+.cr-item .cr-ic .xp-ico { font-size: 11px; }
+
+/* r9：衝鋒撞擊的麥克風、突刺的提示、山豬變身、刺穿的洞 */
+.adv-input-row .adv-cn-mic { padding: 0 11px; background: #F1F5F9; color: #4F46E5; border: 1.5px solid #C7D2FE; display: flex; align-items: center; justify-content: center; }
+.adv-input-row .adv-cn-mic.on { background: #EF4444; color: #FFFFFF; border-color: #EF4444; animation: advMicPulse 1s ease-in-out infinite; }
+@keyframes advMicPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.5); } 50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); } }
+.adv-spell-hint { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 2px 0 8px; font-size: 14px; font-weight: 700; color: var(--text-muted); flex-wrap: wrap; }
+.adv-spell-hint .adv-replay { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid #C7D2FE; background: #EEF2FF; font-size: 16px; padding: 0; cursor: pointer; flex: none; }
+.adv-spell-marks { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: 1px; color: var(--text-main); font-size: 17px; }
+.adv-spell-marks b { color: #4F46E5; font-weight: 900; margin-right: 2px; }
+.adv-spell-marks i { font-style: normal; margin-right: 2px; }
+.adv-spell-marks i.sp { display: inline-block; width: 10px; }
+.adv-spell-hint small { font-size: 12px; }
+body.power-saving-mode .adv-spell-marks { color: #FFFFFF; }
+.adv-player.is-boar > svg { width: 100%; height: auto; }
+.adv-poof { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle, #FFFFFF 0%, #F1F5F9 45%, rgba(203,213,225,.6) 62%, rgba(203,213,225,0) 72%); }
+.adv-hole { position: absolute; left: 50%; top: 46%; width: 34%; aspect-ratio: 1; transform: translate(-50%,-50%); pointer-events: none; z-index: 3; }
+
+/* r9：雲端進度衝突的選擇視窗 */
+.sc-wrap { position: fixed; inset: 0; z-index: 9999; background: rgba(15,23,42,.55); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; }
+.sc-box { width: 100%; max-width: 420px; background: #FFFFFF; border-radius: 20px; padding: 20px 16px 16px; box-shadow: 0 20px 50px rgba(15,23,42,.35); box-sizing: border-box; color: #1E293B; }
+.sc-title { font-size: 18px; font-weight: 900; text-align: center; }
+.sc-desc { font-size: 13.5px; line-height: 1.6; color: #475569; text-align: center; margin: 8px 0 14px; }
+.sc-desc b { color: #DC2626; }
+.sc-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sc-card { border: 2px solid #E2E8F0; border-radius: 14px; padding: 10px; background: #F8FAFC; min-width: 0; }
+.sc-card__title { font-weight: 900; font-size: 15px; }
+.sc-card__sub { font-size: 11.5px; color: #64748B; margin-bottom: 6px; }
+.sc-card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 8px; font-size: 13px; }
+.sc-card dt { color: #64748B; }
+.sc-card dd { margin: 0; font-weight: 800; text-align: right; }
+.sc-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.sc-btn { border: none; border-radius: 12px; padding: 12px 6px; font-size: 15px; font-weight: 900; font-family: inherit; color: #FFFFFF; background: #4F46E5; cursor: pointer; }
+.sc-btn--cloud { background: #0EA5E9; }
+body.power-saving-mode .sc-box { background: #1B1E27; color: #FFFFFF; }
+body.power-saving-mode .sc-card { background: #12141B; border-color: #2B303C; }
+
+/* r9：第 11～20 關（便利商店）新版戰鬥畫面：地板換成白色地磚 */
+.adv-battle.bt.bt-store .adv-stage {
+  background:
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(46 * var(--u)), rgba(148,163,184,.35) calc(46 * var(--u)), rgba(148,163,184,.35) calc(48 * var(--u))),
+    repeating-linear-gradient(to right, transparent 0, transparent calc(64 * var(--u)), rgba(148,163,184,.3) calc(64 * var(--u)), rgba(148,163,184,.3) calc(66 * var(--u))),
+    linear-gradient(to bottom, #120E30 0, #120E30 var(--bt-bgtop), #F1F5F9 var(--bt-bgtop), #DCE3EC 100%);
+}
+.adv-hole { width: 42%; }
 </style>
 </head>
 <body>
@@ -4853,13 +4908,12 @@ body.power-saving-mode.we-on .we-pos-btn:not(.has-value) { background: #1b1e27 !
                         <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                     </svg>
                 </button>
-                <div class="current-mode-indicator">🏰 雞塊大冒險</div>
+                <div class="adv-map-title">
+                    <button type="button" class="adv-map-arrow" id="advMapPrev" aria-label="上一張地圖" data-on-click='[["advMapStep",[-1]]]'><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                    <span>關卡選擇</span>
+                    <button type="button" class="adv-map-arrow" id="advMapNext" aria-label="下一張地圖" data-on-click='[["advMapStep",[1]]]'><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                </div>
                 <span></span>
-            </div>
-            <div class="adv-map-title">
-                <button type="button" class="adv-map-arrow" id="advMapPrev" aria-label="上一張地圖" data-on-click='[["advMapStep",[-1]]]'><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-                <span>關卡選擇</span>
-                <button type="button" class="adv-map-arrow" id="advMapNext" aria-label="下一張地圖" data-on-click='[["advMapStep",[1]]]'><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
             <div class="adv-map-sub" id="advMapSub"></div>
             <div class="adv-map" id="advMap"></div>
@@ -4869,7 +4923,7 @@ body.power-saving-mode.we-on .we-pos-btn:not(.has-value) { background: #1b1e27 !
         <div id="advLevelView" class="app-view cp aq">
             <header class="aq-head">
                 <button class="cp-back" type="button" aria-label="回關卡地圖" data-on-click='[["goToAdventurePage",[true]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
-                <div class="aq-title">雞塊大冒險</div>
+                <span></span>
                 <button type="button" class="aq-stat-btn" data-on-click='[["goToAdvStats",[]]]'><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-9"/></svg>能力值</button>
             </header>
             <div id="advLevelCard" class="aq-stack"></div>
@@ -5277,7 +5331,7 @@ body.power-saving-mode.we-on .we-pos-btn:not(.has-value) { background: #1b1e27 !
                 <span id="chickenShopCountDisplay">0</span>
             </div>
             <div class="shop-pill shop-pill-shard" title="冒險代幣">
-                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 1.5 L21 8 L17.5 22 L5 18 L3.5 8 Z" fill="#EE8F78" stroke="#B8553F" stroke-width="1.8" stroke-linejoin="round"/><path d="M13 1.5 L11 11 L3.5 8 M11 11 L17.5 22" stroke="#FFE4DC" stroke-width="1.4" fill="none" stroke-linejoin="round" opacity="0.95"/></svg>
+                <span id="advShopShardIco"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5 H8.6 A2.6 2.6 0 1 1 13.8 6.5 H19 V11.4 A2.6 2.6 0 1 1 19 16.6 V21.5 H13.8 A2.6 2.6 0 1 0 8.6 21.5 H3.5 V16.6 A2.6 2.6 0 1 0 3.5 11.4 Z" fill="#FBBF24" stroke="#92400E" stroke-width="1.5" stroke-linejoin="round"/><path d="M5.5 8.6 H8.8 M5.5 8.6 V11" stroke="#FEF3C7" stroke-width="1.4" stroke-linecap="round"/></svg></span>
                 <span id="advShopShardCount">0</span>
             </div>
             </div>
@@ -5653,6 +5707,6 @@ body.power-saving-mode.we-on .we-pos-btn:not(.has-value) { background: #1b1e27 !
     </div>
 </div>
 
-<script src="app.js?v=20261110b"></script>
+<script src="app.js?v=20261110c"></script>
 </body>
 </html>
