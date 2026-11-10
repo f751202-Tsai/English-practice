@@ -4297,6 +4297,43 @@ body.power-saving-mode.we-on .we input, body.power-saving-mode.we-on .we textare
 body.power-saving-mode.we-on .we-title { color: #FFFFFF !important; }
 body.power-saving-mode.we-on .we-track { background: #2d3140 !important; }
 body.power-saving-mode.we-on .we-pos-btn:not(.has-value) { background: #1b1e27 !important; }
+
+/* 套圈圈丟出的小套圈圈 */
+.adv-mini-ring { position: absolute; z-index: 7; pointer-events: none; border-radius: 50%; border: 5px solid #F97316; box-shadow: 0 0 0 2px #231F20, inset 0 0 0 2px #231F20; background: transparent; }
+
+/* 蜂蜜聽寫：英文／中文兩行填空（引導） */
+.fw-guide { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.fw-guide-row { display: flex; align-items: center; gap: 10px; }
+.fw-guide-k { flex: none; min-width: 44px; padding: 4px 8px; border-radius: 999px; background: #EEF0FF; color: #4F46E5; font-size: 13px; font-weight: 900; text-align: center; }
+.fw-guide-row .fw-dict { margin: 0; }
+.fw-boxes.cn { display: inline-flex; gap: 5px; flex-wrap: nowrap; }
+.fw-box.cn { font-size: calc(var(--bx, 36px) * .55); }
+#farmWaterBody.bee-mode .fw-guide-k { font-size: 14px; }
+/* 經驗值小字圖示 */
+.xp-ico { display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; height: 1.35em; border-radius: 5px; background: #7C3AED; color: #fff; font-family: Inter, Nunito, system-ui, sans-serif; font-size: .72em; font-weight: 900; letter-spacing: .3px; line-height: 1; vertical-align: .1em; }
+.xp-ico.big { font-size: 14px; height: 24px; padding: 0 6px; border-radius: 7px; }
+
+.adv-rep-grid { grid-template-columns: repeat(2, 1fr) !important; }
+.adv-rep-mico { font-size: 34px; line-height: 1; display: inline-flex; }
+.adv-rep-mico svg { width: 34px; height: 34px; }
+
+/* 能力值頁的 Lv：改成跟下面能力格子同一種樣式（白底、灰框、深藍數字），經驗值條也用同一種軌道 */
+.st-lv { grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; row-gap: 4px; align-items: center; padding: 4px 2px; }
+.st-lv__box { grid-row: 1 / span 2; flex-direction: row; gap: 3px; min-width: 64px; height: 46px; padding: 0 10px; border-radius: 12px; border: 1.5px solid var(--st-line-2); background: #fff; color: var(--st-ink, #1e1b4b); box-shadow: none; font-size: 20px; font-weight: 800; }
+.st-lv__box small { font-family: var(--st-font-tc); font-size: 12px; font-weight: 700; color: var(--st-muted); }
+.st-lv__bar { align-self: end; justify-self: stretch; width: auto; max-width: none; height: 10px; background: var(--st-track); }
+.st-view .st-lv { flex: 1 1 0; min-width: 0; }
+.st-lv__bar > i { background: #8b5cf6; }
+.st-lv__num { align-self: start; font-size: 12px; color: var(--st-muted); }
+.st-lv__dot { top: -8px; right: -8px; }
+@media (max-width: 768px) { .st-lv__box { height: 40px; min-width: 58px; font-size: 18px; } }
+/* 戰鬥選單：字放大 10%，白色區域不變高（內距縮一點抵掉） */
+.adv-battle.bt .adv-log { padding: calc(7 * var(--u)) calc(12 * var(--u)); font-size: calc(16.5 * var(--u)); }
+.adv-battle.bt .adv-move { padding: calc(6 * var(--u)) calc(10 * var(--u)); }
+.adv-battle.bt .adv-move b { font-size: calc(17.6 * var(--u)); }
+.adv-battle.bt .adv-move .dmg { font-size: calc(17.6 * var(--u)); }
+.adv-battle.bt .adv-move small { font-size: calc(13.2 * var(--u)); }
+.adv-battle.bt .adv-lv-chip { font-size: calc(11.5 * var(--u)); }
 </style>
 </head>
 <body>
