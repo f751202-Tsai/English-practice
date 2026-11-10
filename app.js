@@ -1691,7 +1691,7 @@
                 try {
                     let cr = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { 'Authorization': `Bearer ${tok}` } });
                     let cj = await cr.json();
-                    if (cj && cj.advData && (parseInt(cj.advData.ts) || 0) > advData.ts) advMergeFromCloud(cj.advData, '');
+                    if (cj && cj.advData && cj.advData.ver === ADV_DATA_VER && (parseInt(cj.advData.ts) || 0) > advData.ts) advMergeFromCloud(cj.advData, '');
                 } catch (e) { /* 讀不到就照原本流程上傳 */ }
             }
             let cloudData = { 
@@ -5504,6 +5504,12 @@
             alert('💰 已送出：冒險代幣 +500、小型恢復藥水／濕紙巾各 +100');
             return true;
         }
+        if (code === 'testsync') {
+            // 檢查用：看這台裝置的大冒險存檔是哪一版、存在哪裡、最後存檔時間
+            let t = advData.ts ? new Date(advData.ts).toLocaleString() : '（0）';
+            alert(`🔍 大冒險存檔檢查\n\nApp 版本：經驗值版（存檔版本 ${ADV_DATA_VER}）\n存檔位置：${advIsGoogleMode() ? 'Google 雲端進度' : '離線進度（沒有登入 Google）'}\n最後存檔：${t}\n已通關：${Object.keys(advData.cleared || {}).length} 關\n等級：Lv.${advLevel()}（經驗值 ${advData.xp || 0}）`);
+            return true;
+        }
         if (code === 'testlevel') {
             let lv = advLevel();
             if (lv >= ADV_XP_NEED.length) { alert(`已經是最高等級 Lv.${lv} 了。`); return true; }
@@ -5802,7 +5808,7 @@
         // 改成經驗值系統：舊存檔（糖醋醬版）的進度、道具、裝備、能力、熟練度全部重來，傳說招式回到補給站
         //   只留：帳號、今天的登入代幣有沒有領過、錯字紀錄（學習用）
         if (d && typeof d === 'object' && Object.keys(d).length && d.ver !== ADV_DATA_VER) {
-            d = { owner: d.owner, loginShardDay: d.loginShardDay, wrongCnt: d.wrongCnt, lastWrong: d.lastWrong, legendReset: true, ts: Date.now(), ver: ADV_DATA_VER, resetNotice: true };
+            d = { owner: d.owner, loginShardDay: d.loginShardDay, wrongCnt: d.wrongCnt, lastWrong: d.lastWrong, legendReset: true, ts: 0, ver: ADV_DATA_VER, resetNotice: true };   // ts 0：改版重來的空白進度不能蓋掉雲端上已經是新版的進度
         }
         let up = d.up || {};
         let clampUp = (v, k) => Math.max(0, Math.min(advUpMax(k), parseInt(v) || 0));
@@ -5913,6 +5919,8 @@
         let mismatch = !!(cloudOwner && local.owner && local.owner !== cloudOwner);
         if (c && typeof c === 'object') {
             let cts = parseInt(c.ts) || 0;
+            // 雲端是舊版（糖醋醬版）存檔、本機已經是新版：不管時間，都以本機為準（不然舊版會把新進度整個重來）
+            if (!mismatch && c.ver !== ADV_DATA_VER && local.ver === ADV_DATA_VER && local.ts > 0) return true;
             if (mismatch || cts > local.ts) {
                 try { localStorage.setItem(ADV_STORE_G, JSON.stringify(c)); } catch (e) {}
                 advData = advLoad();
@@ -7786,7 +7794,8 @@
         let info = document.getElementById('advTopInfo');
         let act = `${Math.min(adv.actionsTotal - adv.actionsLeft + 1, adv.actionsTotal)}/${adv.actionsTotal}`;
         if (info) {
-            if (btOn) info.innerHTML = `第 ${adv.level.id} 關 <span>｜</span> 回合 ${adv.round} <span>｜</span> 行動 ${act}`;
+            if (adv.ringOpening) info.innerHTML = `第 ${adv.level.id} 關 <span>｜</span> 套圈圈技能發動！`;     // 開場「天女散花」：回合還沒開始
+            else if (btOn) info.innerHTML = `第 ${adv.level.id} 關 <span>｜</span> 回合 ${adv.round} <span>｜</span> 行動 ${act}`;
             else info.textContent = `第 ${adv.level.id} 關 ｜ 回合 ${adv.round} ｜ 行動 ${act}`;
         }
     }
@@ -7909,7 +7918,7 @@
     function advBuildStage() {
         let st = document.getElementById('advStage');
         adv.btLocked = false; adv.btMenuH = 0; adv.btFullH = 0; adv.btW = 0;
-        adv.nextAtk = 0; adv.intBuff = 0; if (advSp && advSp.timer) clearInterval(advSp.timer); advSp = null;
+        adv.nextAtk = 0; adv.intBuff = 0; adv.ringOpening = false; if (advSp && advSp.timer) clearInterval(advSp.timer); advSp = null;
         let battle = document.querySelector('#adventureBattleView .adv-battle'), btOn = advBtOn();
         if (battle) battle.classList.toggle('bt', btOn);
         let view = document.getElementById('adventureBattleView');
@@ -8133,6 +8142,7 @@
 
     // ── 回合 ──
     function advBeginRound() {
+        adv.ringOpening = false;
         if (adv.enemy.special === 'clerk') {
             if (adv.shifted) {
                 if (adv.cdFresh) adv.cdFresh = false; else adv.cd--;
@@ -8567,6 +8577,8 @@
     const ADV_RING_NEED = 4, ADV_RING_SECS = 15, ADV_RING_PEN = 2;
     async function advRingOpening(id) {
         adv.busy = true;
+        adv.ringOpening = true;
+        advUpdateHud();
         document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">🎯 套圈圈：「天女散花！」</div>`;
         advBtSay('天女散花！', 1600);
         await advWait(1500);
