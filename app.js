@@ -5565,7 +5565,7 @@
     //   ADV_XP_NEED[n-1] = 升到 Lv.n 需要的「累積」經驗值；從 Lv.0 開始，最高 Lv.20
     const ADV_DATA_VER = 2;                  // 存檔版本：2 = 經驗值系統（舊版糖醋醬存檔會整個重來）
     const ADV_XP_NEED = BattleCore.XP_NEED;
-    const ADV_LOSE_XP_RATE = 0.2;            // 戰敗：拿勝利經驗值的 20%（至少 1）；中途離開什麼都沒有
+    const ADV_LOSE_XP_RATE = BattleCore.LOSE_XP_RATE;   // 戰敗：拿勝利經驗值的 20%（至少 1）；中途離開什麼都沒有（算法在 battle-core.js 的 loseXp）
     // 經驗值、等級的算法在 battle-core.js
     const ADV_OLD_XP_RATE = BattleCore.OLD_XP_RATE;   // 已經打贏過的舊關卡：經驗值只有 70%
     function advWinXp(lv, old, dbl) { return BattleCore.winXp(lv, old, dbl); }
@@ -7538,11 +7538,11 @@
         // 已經擁有的裝備、招式不顯示（只留還能買的）
         if (!advData.items.soda) cells.push(advShopCell({ id: 'advCell_soda', kind: 'gear', icon: advSodaIcon(46), name: '彈珠汽水', sub: `普通裝備｜${ADV_ITEMS.soda.desc}`, price: advShardPrice(ADV_SODA_PRICE), poor: advData.shards < ADV_SODA_PRICE, cls: 'rar-common', action: '[["advBuySoda",[]]]' }));
         if (!advData.items.boba) {
-            let open = !!advData.cleared[BattleCore.SHOP_OPEN.boba];
+            let open = advGearOpen('boba');
             cells.push(advShopCell({ id: 'advCell_boba', kind: 'gear', icon: ADV_ITEMS.boba.icon(46), name: '快喝光的珍珠奶茶', sub: `普通裝備｜${ADV_ITEMS.boba.desc}`, price: open ? advShardPrice(ADV_BOBA_PRICE) : `第 ${BattleCore.SHOP_OPEN.boba + 1} 關解鎖`, off: !open, poor: open && advData.shards < ADV_BOBA_PRICE, cls: 'rar-common' + (open ? '' : ' is-locked'), action: '[["advBuyBoba",[]]]' }));
         }
         if (!advData.items.coaster) {
-            let open = !!advData.cleared[BattleCore.SHOP_OPEN.coaster];
+            let open = advGearOpen('coaster');
             cells.push(advShopCell({ id: 'advCell_coaster', kind: 'gear', icon: advCoasterIcon(46), name: '防燙杯套', sub: `普通裝備｜${ADV_ITEMS.coaster.desc}`, price: open ? advShardPrice(ADV_COASTER_PRICE) : `第 ${BattleCore.SHOP_OPEN.coaster + 1} 關解鎖`, off: !open, poor: open && advData.shards < ADV_COASTER_PRICE, cls: 'rar-common' + (open ? '' : ' is-locked'), action: '[["advBuyCoaster",[]]]' }));
         }
         ADV_MOVES.filter(m => m.buy.kind === 'shards' && !advOwns(m.key)).forEach(m => {
@@ -7601,7 +7601,7 @@
     }
     function advBuyBoba() {
         if (advData.items.boba) { alert('已經擁有快喝光的珍珠奶茶了。'); return; }
-        if (!advData.cleared[4]) return;                        // 還沒解鎖：格子上已經寫「第 5 關解鎖」
+        if (!advGearOpen('boba')) return;                       // 還沒解鎖：格子上已經寫「第 5 關解鎖」
         if (advData.shards < ADV_BOBA_PRICE) return;
         if (!confirm(`要用 ${ADV_BOBA_PRICE} 個冒險代幣購買快喝光的珍珠奶茶嗎？\n\n${ADV_ITEMS.boba.desc}`)) return;
         advData.shards -= ADV_BOBA_PRICE;
@@ -7614,7 +7614,7 @@
     }
     function advBuyCoaster() {
         if (advData.items.coaster) { alert('已經擁有防燙杯套了。'); return; }
-        if (!advData.cleared[10]) return;                       // 還沒解鎖：格子上已經寫「第 11 關解鎖」
+        if (!advGearOpen('coaster')) return;                    // 還沒解鎖：格子上已經寫「第 11 關解鎖」
         if (advData.shards < ADV_COASTER_PRICE) return;
         if (!confirm(`要用 ${ADV_COASTER_PRICE} 個冒險代幣購買防燙杯套嗎？\n\n${ADV_ITEMS.coaster.desc}`)) return;
         advData.shards -= ADV_COASTER_PRICE;
@@ -7634,9 +7634,10 @@
         advRenderShopBox();
         advShardFloat(-ADV_WIPE_COST);
     }
-    // 傳說招式要先打倒第 20 關
+    // 補給站的招式／裝備開放了沒（第幾關開放：battle-core.js 的 moveUnlockAt／gearUnlockAt；傳說招式要先打倒第 20 關）
     function advMoveIcon(m) { return m.icon; }
-    function advMoveOpen(m) { if (m.buy.open) return !!advData.cleared[m.buy.open]; return advRarityKey(m.key) !== 'legend' || !!advData.cleared[20]; }
+    function advMoveOpen(m) { return BattleCore.isUnlocked(BattleCore.moveUnlockAt(m.key), advData.cleared); }
+    function advGearOpen(k) { return BattleCore.isUnlocked(BattleCore.gearUnlockAt(k), advData.cleared); }
     function advBuyMove(key) {
         let m = advMoveByKey(key);
         if (!m || m.buy.kind === 'free') return;
@@ -9613,7 +9614,7 @@
             return;
         }
         // 戰敗：拿勝利經驗值的 20%（至少 1）
-        let loseXp = Math.max(1, Math.round(advWinXp(adv.level, !!advData.cleared[adv.level.id], false) * ADV_LOSE_XP_RATE));
+        let loseXp = BattleCore.loseXp(adv.level, !!advData.cleared[adv.level.id]);   // 算法在 battle-core.js
         let lvB = advLevel();
         advData.xp = (advData.xp || 0) + loseXp;
         if (advLevel() > lvB) advData.lvUpAt = Date.now();
