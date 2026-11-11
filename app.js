@@ -5560,28 +5560,29 @@
     function advIsGoogleMode() { try { return localStorage.getItem('chicky_google_linked') === '1'; } catch (e) { return false; } }
     function advStoreKey() { return advIsGoogleMode() ? ADV_STORE_G : ADV_STORE; }
     const ADV_SEL_KEY = 'chicky_adv_selected';
-    const ADV_BASE_STATS = { hp: 3, atk: 0, agi: 3, def: 0, int: 1, luck: 0 };
+    const ADV_BASE_STATS = BattleCore.BASE_STATS;   // ⚔️ 戰鬥規則都在 battle-core.js（這裡只是取別名）
     // ── 等級：打贏大冒險得經驗值，每升 1 級得 1 點能力點（取代糖醋醬）──
     //   ADV_XP_NEED[n-1] = 升到 Lv.n 需要的「累積」經驗值；從 Lv.0 開始，最高 Lv.20
     const ADV_DATA_VER = 2;                  // 存檔版本：2 = 經驗值系統（舊版糖醋醬存檔會整個重來）
-    const ADV_XP_NEED = [3, 7, 37, 75, 124, 187, 268, 371, 503, 672, 888, 1165, 1519, 1903, 2317, 2771, 3265, 3799, 4373, 5007];
+    const ADV_XP_NEED = BattleCore.XP_NEED;
     const ADV_LOSE_XP_RATE = 0.2;            // 戰敗：拿勝利經驗值的 20%（至少 1）；中途離開什麼都沒有
-    const ADV_OLD_XP_RATE = 0.7;             // 已經打贏過的舊關卡：經驗值只有 70%
-    function advWinXp(lv, old, dbl) { let x = Math.max(1, Math.round((lv.xp || 0) * (old ? ADV_OLD_XP_RATE : 1))); return x * (dbl ? 2 : 1); }
-    function advLevel(xp) { xp = xp === undefined ? (advData.xp || 0) : xp; let n = 0; while (n < ADV_XP_NEED.length && xp >= ADV_XP_NEED[n]) n++; return n; }
+    // 經驗值、等級的算法在 battle-core.js
+    const ADV_OLD_XP_RATE = BattleCore.OLD_XP_RATE;   // 已經打贏過的舊關卡：經驗值只有 70%
+    function advWinXp(lv, old, dbl) { return BattleCore.winXp(lv, old, dbl); }
+    function advLevel(xp) { return BattleCore.levelOf(xp === undefined ? (advData.xp || 0) : xp); }
     function advLevelInfo() {
         let xp = advData.xp || 0, lv = advLevel(xp), max = lv >= ADV_XP_NEED.length;
         let prev = lv ? ADV_XP_NEED[lv - 1] : 0, next = max ? prev : ADV_XP_NEED[lv];
         return { lv, xp, prev, next, max, pct: max ? 100 : Math.max(0, Math.min(100, (xp - prev) / (next - prev) * 100)) };
     }
-    function advPtsUsed() { let u = advData.up || {}; return ['hp', 'atk', 'agi', 'def', 'int', 'luck'].reduce((t, k) => t + (u[k] || 0), 0); }
+    function advPtsUsed() { let u = advData.up || {}; return BattleCore.STAT_KEYS.reduce((t, k) => t + (u[k] || 0), 0); }
     function advPtsLeft() { return Math.max(0, advLevel() - advPtsUsed()); }
     const ADV_MOVES_SHOWN = 4;               // 招式選擇一開始只顯示幾張，其餘收在「更多招式」
     let advMovesOpen = false;
     const ADV_REPLAY_PER_DAY = 3;           // 已通關的關卡可以無限重複挑戰；每天前 3 次打贏才有通關獎勵
     const ADV_UP_MAX = 10;
-    const ADV_STAT_MAX = 10;                // 每項能力（含 HP、智慧）最多 10：能強化的次數 = 10 − 基礎值
-    function advUpMax(key) { return Math.max(0, ADV_STAT_MAX - (ADV_BASE_STATS[key] || 0)); }
+    const ADV_STAT_MAX = BattleCore.STAT_MAX;       // 每項能力（含 HP、智慧）最多 10：能強化的次數 = 10 − 基礎值
+    function advUpMax(key) { return BattleCore.upMax(key); }
     const ADV_SHARDS_PER_SAUCE = 15;        // 15 個碎片 → 1 瓶糖醋醬
     const ADV_TOTAL_LEVELS = 20;
     const ADV_CHAPTERS = [
@@ -5592,15 +5593,15 @@
     const ADV_HIT_N = 20;                   // 命中：看最近 20 題
     const ADV_HANDS = ['裝備 1', '裝備 2'];      // 兩個裝備欄
     // 裝備的稀有度（邊框顏色跟招式一樣：灰＝普通、深金＝稀有、亮紫＝傳說）
-    const ADV_ITEM_RARITY = { boba: 'common', tofu: 'common', skewer: 'rare', bill: 'common', bag: 'common', soda: 'common', coaster: 'common' };
+    const ADV_ITEM_RARITY = BattleCore.ITEM_RARITY;
     function advItemRarityKey(k) { return ADV_ITEM_RARITY[k] || 'common'; }
     const ADV_SAUCE_COLOR = '#EE8F78';      // 糖醋醬的顏色（碎片圖示也用這個顏色）
     const ADV_POTION_HEAL = 5, ADV_POTION_COST = 10;    // 恢復藥水：10 個冒險代幣 → HP +5
     const ADV_WEEKLY_SHARDS = 100, ADV_WEEKLY_CHICKENS = 2;   // 每週一次：100 碎片 → 2 雞塊
-    const ADV_MAX_EQUIP = 4;
-    const ADV_MIN_EQUIP = 3;                // 至少要帶 3 招
-    const ADV_BASE_SECS = 15;               // 每題作答時間（秒）
-    const ADV_LUCK_CAP = 3;                 // 幸運擲幣的加成最多 +3
+    const ADV_MAX_EQUIP = BattleCore.MAX_EQUIP;
+    const ADV_MIN_EQUIP = BattleCore.MIN_EQUIP;     // 至少要帶 3 招
+    const ADV_BASE_SECS = BattleCore.BASE_SECS;     // 每題作答時間（秒）
+    const ADV_LUCK_CAP = BattleCore.LUCK_CAP;       // 幸運擲幣的加成最多 +3
 
     // 招式
     //   type：card 字卡 / listen 聽力 / speak 朗讀（用來決定這招需要什麼條件）
@@ -5625,47 +5626,27 @@
     };
     // 招式說明只寫「怎麼答」：類型、題數、威力在畫面上已經有了
     const ADV_LEGEND_PRICE = 30;            // 傳說招式：補給站 30 個碎片（打倒第 20 關後才能買）
-    const ADV_MOVES = [
-        { key: 'tackle',  name: '衝撞',         icon: '💥', type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                              desc: '看單字，選出正確的中文意思' },
-        { key: 'combo',   name: '連續衝撞',     icon: ADV_ICONS.combo(), type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 5 },                         desc: '看單字，選出正確的中文意思' },
-        { key: 'charge',  name: '衝鋒撞擊',     icon: '🐗', type: 'card',   mode: 'typeCn',      fx: 'charge', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'reward', level: 8 }, desc: '看英文單字，寫出中文意思（可以按 🎤 用說的）' },
-        { key: 'slash',   name: '斬擊',         icon: ADV_ICONS.slash(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '聽發音，選中文意思' },
-        { key: 'slash2',  name: '連續斬擊',     icon: ADV_ICONS.slash2(), type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 6, item: 'mv_slash2' },       desc: '聽發音，選中文意思' },
-        { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'reward', level: 7 }, desc: '聽發音，拼出英文單字（提示第一個字母和字母數）' },
-        { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 2, hidden: true, buy: { kind: 'none' },                                       desc: '看單字，並唸出單字' },
-        { key: 'wave2',   name: '雙重衝擊波',   icon: ADV_ICONS.wave2(), type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 2, hidden: true, buy: { kind: 'none' },        desc: '看單字，並唸出單字' },
-        // 速答類：20 秒內英中配對，配對成功的組數換成能力加成（不直接造成傷害）
-        //   speed.secs 秒數；every 每配對幾組 +1；cap 加成上限；pen 配錯扣幾秒；lvSecs／lvCap 每 1 級熟練度加的秒數／上限；maxCap 上限的上限
-        { key: 'meditate', name: '冥想',        icon: ADV_ICONS.meditate(), type: 'speed', mode: 'speed', fx: '', power: 0, hits: 0, q: 0, tries: 0, buy: { kind: 'reward', level: 10 },
-          speed: { stat: 'int', label: '智慧', secs: 20, every: 3, cap: 5, pen: 3, lvSecs: 2, lvCap: 2, maxCap: 7 }, desc: '20 秒內把英文和中文配成對，每配對 3 組智慧 +1；配錯扣 3 秒' },
-        { key: 'chargeup', name: '蓄力',        icon: ADV_ICONS.chargeup(), type: 'speed', mode: 'speed', fx: '', power: 0, hits: 0, q: 0, tries: 0, buy: { kind: 'shards', price: 40, open: 24 },
-          speed: { stat: 'atk', label: '下一招攻擊', secs: 20, every: 4, cap: 5, pen: 4, lvSecs: 2, lvCap: 1, maxCap: 99 }, desc: '20 秒內把英文和中文配成對，每配對 4 組下一招攻擊 +1；配錯扣 4 秒' },
-        { key: 'wave3',   name: '雞塊氣功波',   icon: ADV_ICONS.wave3(), type: 'speak',  mode: 'speakCn',      fx: 'yellow', power: 5, hits: 1, q: 2, tries: 2, hidden: true, buy: { kind: 'none' }, desc: '顯示中文，唸英文' }
-    ];
-    const ADV_TYPE_LABEL = { card: '字卡', listen: '聽力', speak: '朗讀', speed: '速答' };
+    // 招式資料在 battle-core.js；這裡只把圖示換成 SVG
+    const ADV_MOVES = BattleCore.MOVES.map(m => ADV_ICONS[m.key] ? Object.assign({}, m, { icon: ADV_ICONS[m.key]() }) : m);
+    const ADV_TYPE_LABEL = BattleCore.TYPE_LABEL;
     // 稀有度：普通（灰框，熟練度上限 1）／稀有（深金框，上限 2）／傳說（亮紫框，上限 3）
-    const ADV_RARITY = {
-        common: { label: '普通', color: '#94A3B8', cap: 1 },
-        rare:   { label: '稀有', color: '#B8860B', cap: 2 },
-        legend: { label: '傳說', color: '#C026D3', cap: 3 }
-    };
+    const ADV_RARITY = BattleCore.RARITY;
     const ADV_RARITY_SKILL = { common: '一般技能', rare: '稀有技能', legend: '傳奇技能' };
-    const ADV_MOVE_RARITY = { tackle: 'common', slash: 'common', wave: 'common', combo: 'rare', slash2: 'rare', wave2: 'rare', charge: 'rare', thrust: 'rare', wave3: 'legend', meditate: 'common', chargeup: 'rare' };
+    const ADV_MOVE_RARITY = BattleCore.MOVE_RARITY;
     // 熟練度：累積使用 20 次 → 1、100 次 → 2、300 次 → 3（不超過稀有度上限）；每 1 級這招攻擊 +1（傳說招式 +2）
-    const ADV_MASTERY_STEPS = [20, 100, 300];
+    const ADV_MASTERY_STEPS = BattleCore.MASTERY_STEPS;
     function advRarity(key) { return ADV_RARITY[ADV_MOVE_RARITY[key] || 'common']; }
-    function advRarityKey(key) { return ADV_MOVE_RARITY[key] || 'common'; }
+    function advRarityKey(key) { return BattleCore.rarityKey(key); }
     function advMasteryInfo(key) {
         let uses = Math.max(0, parseInt((advData.mastery || {})[key]) || 0);
-        let cap = advRarity(key).cap, lvl = 0;
-        while (lvl < cap && uses >= ADV_MASTERY_STEPS[lvl]) lvl++;
+        let cap = advRarity(key).cap, lvl = BattleCore.masteryLevel(key, uses);   // 熟練度怎麼升級：battle-core.js
         let maxed = lvl >= cap;
         return { uses, lvl, cap, maxed, next: maxed ? null : ADV_MASTERY_STEPS[lvl], prev: lvl ? ADV_MASTERY_STEPS[lvl - 1] : 0 };
     }
     function advMastery(key) { return advMasteryInfo(key).lvl; }
     // 熟練度加的攻擊：每 1 級 +1，傳說招式每 1 級 +2
-    function advMasteryPerLv(key) { return advRarityKey(key) === 'legend' ? 2 : 1; }
-    function advMasteryAtk(key) { return advMastery(key) * advMasteryPerLv(key); }
+    function advMasteryPerLv(key) { return BattleCore.masteryPerLv(key); }
+    function advMasteryAtk(key) { return BattleCore.masteryAtk(key, advMastery(key)); }
     // 用了一次招式：回傳「升級後的等級」，沒升級回傳 0
     function advAddMasteryUse(key) {
         if (!advData.mastery) advData.mastery = {};
@@ -5677,77 +5658,33 @@
     const ADV_DEFAULT_EQUIP = ['tackle', 'slash'];
     function advMoveByKey(k) { return ADV_MOVES.find(m => m.key === k); }
 
-    // 關卡：firstShards/firstSauce = 第一次通關的獎勵；repeatShards = 之後每次通關的獎勵
-    //   special：stink 發臭（玩家的招式失敗時，無視防禦反擊 1 點）／heal 治癒（敵人攻擊結束時回 1 點體力）
-    const ADV_LEVELS = [
-        { id: 1, name: '貢丸',     sprite: 'meatball', minWords: 10, hp: 3,  atk: 1, agi: 1, def: 0, luck: 0, moveName: '彈跳撞擊', movePower: 0, firstShards: 1, firstSauce: 0, repeatShards: 1, xp: 3, firstPotions: 1, firstItem: 'bag', special: '' },
-        { id: 2, name: '烤玉米',   sprite: 'corn',     minWords: 15, hp: 4,  atk: 1, agi: 0, def: 1, luck: 0, moveName: '玉米粒連射', movePower: 0, firstShards: 1, firstSauce: 0, repeatShards: 1, xp: 4, firstPotions: 1, special: '' },
-        { id: 3, name: '蚵仔煎',   sprite: 'oyster',   minWords: 20, hp: 5,  atk: 2, agi: 1, def: 0, luck: 0, moveName: '黏稠甩擊', movePower: 0, firstShards: 2, firstSauce: 0, repeatShards: 1, xp: 5, firstPotions: 1, special: '' },
-        { id: 4, name: '臭豆腐',   sprite: 'tofu',     minWords: 20, hp: 7,  atk: 1, agi: 0, def: 1, luck: 0, moveName: '酸臭衝撞', movePower: 0, firstShards: 3, firstSauce: 0, repeatShards: 1, xp: 6, firstPotions: 2, firstItem: 'tofu', special: 'stink' },
-        { id: 5, name: '珍珠奶茶', sprite: 'boba',     minWords: 30, hp: 10, atk: 2, agi: 0, def: 1, luck: 0, moveName: '珍珠連射', movePower: 0, firstShards: 0, firstSauce: 0, repeatShards: 2, xp: 7, firstPotions: 2, firstTickets: 1, special: 'heal' },
-        { id: 6, name: '娃娃機',   sprite: 'claw',     minWords: 30, hp: 12, atk: 2, agi: 0, def: 2, int: 0, luck: 1, moveName: '夾子抓抓', movePower: 0, firstShards: 3, firstSauce: 0, repeatShards: 2, xp: 8, firstPotions: 1, firstTickets: 1, special: 'claw' },
-        { id: 7, name: '射飛鏢',   sprite: 'darts',    minWords: 40, hp: 13, atk: 2, agi: 2, def: 1, int: 0, luck: 1, moveName: '飛鏢連射', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 2, xp: 9, firstPotions: 1, special: 'darts' },
-        { id: 8, name: '夜市麻將', sprite: 'mahjong',  minWords: 40, hp: 14, atk: 2, agi: 1, def: 2, int: 3, luck: 3, moveName: '自摸', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 2, xp: 10, firstPotions: 1, special: 'mahjong' },
-        { id: 9, name: '套圈圈',   sprite: 'ring',     minWords: 50, hp: 15, atk: 1, hits: 2, agi: 3, def: 0, int: 0, luck: 1, moveName: '圈圈投擲', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 2, xp: 11, firstPotions: 1, firstTickets: 1, special: 'ring' },
-        { id: 10, name: '彈珠台',  sprite: 'pinball',  minWords: 50, hp: 15, atk: 4, agi: 1, def: 2, int: 1, luck: 6, moveName: '彈珠發射', movePower: 0, firstShards: 0, firstSauce: 0, repeatShards: 3, xp: 15, firstPotions: 2, firstTickets: 2, firstWipes: 1, special: 'pinball' },
-        // ── 第二章：便利商店 ──
-        { id: 11, name: '茶葉蛋',   sprite: 'egg',     minWords: 60, hp: 17, atk: 3, agi: 3, def: 2, int: 6, luck: 2, moveName: '滾燙蛋汁', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, xp: 13, special: 'egg' },
-        { id: 12, name: '大亨堡',   sprite: 'bun',     minWords: 60, hp: 8,  atk: 3, agi: 2, def: 3, int: 9, luck: 2, moveName: '麵包夾擊', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, xp: 17, firstItem: 'skewer', special: 'bun',
-          phases: [
-              { name: '大亨堡', sprite: 'bun',    hp: 8, atk: 3, agi: 2, def: 3, int: 9, luck: 2, moveName: '麵包夾擊', special: 'bun' },
-              { name: '熱狗',   sprite: 'hotdog', hp: 7, atk: 5, agi: 4, def: 2, int: 3, luck: 4, moveName: '熱油噴射', special: 'hotdog' }
-          ] },
-        { id: 13, name: '御飯糰',   sprite: 'onigiri', minWords: 70, hp: 15, atk: 5, agi: 3, def: 3, int: 9, luck: 3, shield: 12, moveName: '海苔捲擊', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, xp: 19, special: 'wrap' },
-        { id: 14, name: '瓶裝無糖茶', sprite: 'tea',   minWords: 70, hp: 18, atk: 5, agi: 3, def: 4, int: 5, luck: 0, moveName: '冰鎮茶柱', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, xp: 21, special: 'tea' },
-        { id: 15, name: 'ibon',   sprite: 'ibon',    minWords: 70, hp: 25, atk: 6, agi: 2, def: 7, int: 5, luck: -2, moveName: '列印繳費單', movePower: 0, firstShards: 0, firstSauce: 0, repeatShards: 4, xp: 23, firstPotions: 1, firstTickets: 3, firstItem: 'bill', potionChance: 0.2, special: 'seal' },
-        { id: 16, name: '盒裝沙拉', sprite: 'salad',  minWords: 80, hp: 22, atk: 5, agi: 5, def: 3, int: 5, luck: 3, moveName: '生菜甩擊', movePower: 0, firstShards: 6, firstSauce: 0, repeatShards: 4, xp: 23, firstTickets: 1, special: 'salad' },
-        { id: 17, name: '微波爐',   sprite: 'microwave', minWords: 80, hp: 25, atk: 5, agi: 1, def: 6, int: 1, luck: 1, moveName: '叮！加熱', movePower: 0, firstShards: 6, firstSauce: 0, repeatShards: 4, xp: 26, firstTickets: 1, special: 'microwave' },
-        { id: 18, name: '微波便當', sprite: 'bento',  minWords: 90, hp: 20, atk: 3, agi: 3, def: 3, int: 9, luck: 2, moveName: '便當蓋飛擊', movePower: 0, firstShards: 7, firstSauce: 0, repeatShards: 4, xp: 29, firstTickets: 1, special: 'bento',
-          phases: [
-              { name: '微波便當',   sprite: 'bento',  hp: 20, atk: 3, agi: 3, def: 3, int: 9, luck: 2, moveName: '便當蓋飛擊', special: 'bento' },
-              { name: '愛珍食便當', sprite: 'bento2', hp: 40, atk: 7, agi: 6, def: 2, int: 6, luck: 6, moveName: '即期大反撲', special: 'expire' }
-          ] },
-        { id: 19, name: '美式咖啡', sprite: 'coffee', minWords: 90, hp: 30, atk: 5, agi: 5, def: 3, int: 2, luck: 2, moveName: '滾燙潑灑', movePower: 0, firstShards: 7, firstSauce: 0, repeatShards: 4, xp: 32, firstTickets: 1, special: 'coffee' },
-        { id: 20, name: '全能便利商店員工', sprite: 'clerk', minWords: 100, hp: 40, atk: 6, agi: 4, def: 4, int: 4, luck: 2, moveName: '商品補貨', movePower: 0, firstShards: 0, firstSauce: 0, repeatShards: 5, xp: 35, firstPotions: 2, firstTickets: 2, special: 'clerk' }
-    ];
-    const ADV_COFFEE_BURN = 6;              // 美式咖啡：開戰燙傷 = 6 − 雞塊的智慧（無視防禦、護盾，直接扣體力）
-    // 全能便利商店員工：每回合換崗位（第一階段），各自免疫一類招式
-    const ADV_CLERK_POSTS = [{ name: '收銀台', immune: 'card' }, { name: '做餐中', immune: 'listen' }, { name: '點貨中', immune: 'speed' }];   // 點貨中：速答加成 −4（不是無效）
-    const ADV_CLERK_SHIFT_HP = 20, ADV_CLERK_CD = 3;        // HP 低於 20 進入交班；下班倒數 3
-    const ADV_STAMP_NEED = 2, ADV_STAMP_ATK = 2, ADV_STAMP_HEAL = 5;   // 集點：任兩種 → 兌換集點卡（攻擊 +2、HP +5）
-    // 這些敵人對某一類招式有抗性：每一下最多只受到 1 點傷害
-    const ADV_RESIST = { darts: 'listen', mahjong: 'card', hotdog: 'listen' };
-    // 這些敵人完全不受某一類招式的傷害
-    const ADV_IMMUNE = { salad: 'card', microwave: 'listen' };
-    function advImmuneType() {                // 這一刻敵人免疫的招式類型
-        if (adv.enemy && adv.enemy.special === 'clerk' && adv.post) return adv.post.immune === 'speed' ? '' : adv.post.immune;
-        return ADV_IMMUNE[adv.enemy && adv.enemy.special] || '';
-    }
-    const ADV_WEAK_BONUS = {};
-    // 速答招式：這些敵人會把能力加成扣掉幾點（套圈圈 −1、瓶裝無糖茶 −2、美式咖啡 −3、店員「點貨中」−4）
-    const ADV_SPEED_GUARD = { tea: 2, coffee: 3 };
-    const ADV_CLERK_SPEED_GUARD = 4, ADV_TEA_SPEED_HEAL = 1, ADV_EXPIRE_SPEED_DMG = 4;
-    function advSpeedGuard() {
-        let sp = adv.enemy && adv.enemy.special;
-        if (sp === 'clerk') return adv.post && adv.post.immune === 'speed' && !adv.shifted ? ADV_CLERK_SPEED_GUARD : 0;
-        return ADV_SPEED_GUARD[sp] || 0;
-    }
+    // 關卡資料、敵人特殊能力的數字：都在 battle-core.js
+    const ADV_LEVELS = BattleCore.LEVELS;
+    const ADV_COFFEE_BURN = BattleCore.COFFEE_BURN;
+    const ADV_CLERK_POSTS = BattleCore.CLERK_POSTS;
+    const ADV_CLERK_SHIFT_HP = BattleCore.CLERK_SHIFT_HP, ADV_CLERK_CD = BattleCore.CLERK_CD;
+    const ADV_STAMP_NEED = BattleCore.STAMP_NEED, ADV_STAMP_ATK = BattleCore.STAMP_ATK, ADV_STAMP_HEAL = BattleCore.STAMP_HEAL;
+    const ADV_RESIST = BattleCore.RESIST;
+    const ADV_IMMUNE = BattleCore.IMMUNE;
+    function advImmuneType() { return adv.enemy ? BattleCore.immuneType(adv) : ''; }   // 這一刻敵人免疫的招式類型
+    const ADV_WEAK_BONUS = BattleCore.WEAK_BONUS;
+    const ADV_SPEED_GUARD = BattleCore.SPEED_GUARD;
+    const ADV_CLERK_SPEED_GUARD = BattleCore.CLERK_SPEED_GUARD, ADV_TEA_SPEED_HEAL = BattleCore.TEA_SPEED_HEAL, ADV_EXPIRE_SPEED_DMG = BattleCore.EXPIRE_SPEED_DMG;
+    function advSpeedGuard() { return adv.enemy ? BattleCore.speedGuard(adv) : 0; }
     function advPostRule(post) { return post.immune === 'speed' ? `速答加成 −${ADV_CLERK_SPEED_GUARD}` : `${ADV_TYPE_LABEL[post.immune]}無效`; }
-    const ADV_MICRO_ATK_UP = 2;             // 微波爐：每次攻擊後攻擊力 +2
-    const ADV_EXPIRE_SELF = 4;              // 愛珍食便當：攻擊完自己扣 4 點體力
-    const ADV_EGG_CARD_BONUS = 2;           // 茶葉蛋：字卡類招式每一下傷害 +2
-    // 裝備道具（裝備欄同時只能放 1 個，沒裝備的道具放在背包）
-    const ADV_ITEMS = {
-        boba: { name: '快喝光的珍珠奶茶', icon: (s) => `<span style="font-size:${s}px;line-height:1">🧋</span>`, desc: '一場戰鬥限用 1 次：第 2 回合起（敵人攻擊過後）、HP 剩 3 以下可以喝，HP +1' },
-        tofu: { name: '烤焦臭豆腐', icon: (s) => advTofuIcon(s), desc: '自己的招式失敗時，雙方各扣 1 點體力（無視防禦）' },
-        skewer: { name: '竹籤', icon: (s) => advSkewerIcon(s), desc: '攻擊無視對方的護盾，直接扣體力' },
-        bill: { name: '繁瑣的繳費單', icon: (s) => advBillIcon(s), desc: '？？？' },
-        bag: { name: '夜市塑膠袋', icon: (s) => advPlasticBagIcon(s), desc: '每場戰鬥開始時護盾 +1' },
-        soda: { name: '彈珠汽水', icon: (s) => advSodaIcon(s), desc: '戰鬥勝利後 HP +1' },
-        coaster: { name: '防燙杯套', icon: (s) => advCoasterIcon(s), desc: '智慧 +3' }
+    const ADV_MICRO_ATK_UP = BattleCore.MICRO_ATK_UP;
+    const ADV_EXPIRE_SELF = BattleCore.EXPIRE_SELF;
+    const ADV_EGG_CARD_BONUS = BattleCore.EGG_CARD_BONUS;
+    // 裝備道具：名稱、效果說明在 battle-core.js，這裡加上圖示
+    const ADV_ITEM_ICONS = {
+        boba: (s) => `<span style="font-size:${s}px;line-height:1">🧋</span>`,
+        tofu: (s) => advTofuIcon(s), skewer: (s) => advSkewerIcon(s), bill: (s) => advBillIcon(s),
+        bag: (s) => advPlasticBagIcon(s), soda: (s) => advSodaIcon(s), coaster: (s) => advCoasterIcon(s)
     };
+    const ADV_ITEMS = {};
+    Object.keys(BattleCore.ITEMS).forEach(k => { ADV_ITEMS[k] = Object.assign({}, BattleCore.ITEMS[k], { icon: ADV_ITEM_ICONS[k] || ((s) => '') }); });
     const ADV_COASTER_PRICE = 30;           // 補給站：防燙杯套 30 個冒險代幣（第 11 關開放＝打完第 10 關）
-    const ADV_COASTER_INT = 3;
+    const ADV_COASTER_INT = BattleCore.COASTER_INT;
     // 防燙杯套：外帶咖啡紙杯＋牛皮紙瓦楞杯套
     function advCoasterIcon(size) {
         size = size || 24;
@@ -5755,7 +5692,7 @@
     }
     const ADV_BOBA_PRICE = 10;              // 補給站：快喝光的珍珠奶茶 10 個冒險代幣（第 5 關開放＝打完第 4 關）
     const ADV_SODA_PRICE = 2;               // 補給站：彈珠汽水 2 個碎片
-    const ADV_BAG_SHIELD = 1;               // 夜市塑膠袋：護盾 +1
+    const ADV_BAG_SHIELD = BattleCore.BAG_SHIELD;               // 夜市塑膠袋：護盾 +1
     function advPlasticBagIcon(size) {
         size = size || 24;
         return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-4px;overflow:visible"><path d="M9 10 Q9 3 12.5 3 Q15 3 15 10 M17 10 Q17 3 19.5 3 Q23 3 23 10" stroke="#DC2626" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M5 10 H27 L25 28 Q25 30 23 30 H9 Q7 30 7 28 Z" fill="#FFFFFF" stroke="#DC2626" stroke-width="2" stroke-linejoin="round"/><path d="M8 14 H24" stroke="#DC2626" stroke-width="1.6"/><text x="16" y="25" font-size="8" font-weight="900" text-anchor="middle" fill="#DC2626" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">謝謝</text></svg>`;
@@ -6068,18 +6005,11 @@
     // 第 N 關要先通關第 N−1 關才能挑戰
     function advUnlocked(id) { return id === 1 || !!advData.cleared[id - 1]; }
     function advPlayerStats() {
-        return {
-            hp: ADV_BASE_STATS.hp + advData.up.hp,
-            atk: ADV_BASE_STATS.atk + advData.up.atk,
-            agi: ADV_BASE_STATS.agi + advData.up.agi,
-            def: ADV_BASE_STATS.def + advData.up.def,
-            int: ADV_BASE_STATS.int + advData.up.int,
-            luck: ADV_BASE_STATS.luck + advData.up.luck
-        };
+        return BattleCore.playerStats(advData.up);   // 基礎能力 + 加的點數：battle-core.js
     }
-    function advMaxHp() { return ADV_BASE_STATS.hp + advData.up.hp; }
+    function advMaxHp() { return advPlayerStats().hp; }
     // 裝備帶來的加成（只在戰鬥中生效，可以讓能力超過 10）
-    function advGearBonus(key) { let g = (advData.gear || []).filter(Boolean); return key === 'int' && g.includes('coaster') ? ADV_COASTER_INT : 0; }
+    function advGearBonus(key) { return BattleCore.gearStatBonus((advData.gear || []).filter(Boolean), key); }
     // 體力會繼承到下一場戰鬥；每天 00:00（本機時間）補滿
     // 招式獎勵改到已經通關的關卡（例如突刺＝第 7 關、衝鋒撞擊＝第 8 關）：之前就通關的人直接補發
     function advGrantPastRewards() {
@@ -6097,33 +6027,17 @@
         else if (advData.hp > max) { advData.hp = max; advSave(true); }
         else if (advData.hp < 0) { advData.hp = 0; advSave(true); }
     }
-    // 幸運（兩種用途）：擲幣次數 = (自己的幸運 − 對方的幸運) ÷ 2 無條件捨去（最少 0）
-    //   每擲出一次「正面」算一次加成，加成最多 +3
-    //   ① 攻擊時：這次傷害 +加成　② 打贏之後：糖醋醬碎片 +加成
-    function advLuckDice(myLuck, foeLuck) { return Math.max(0, Math.floor((myLuck - foeLuck) / 2)); }
-    function advRollLuck(myLuck, foeLuck) {
-        let flips = [];
-        for (let i = 0; i < advLuckDice(myLuck, foeLuck); i++) flips.push(Math.random() < 0.5);
-        return { flips, bonus: Math.min(ADV_LUCK_CAP, flips.filter(Boolean).length) };
-    }
+    // 戰鬥公式：都在 battle-core.js
+    function advLuckDice(myLuck, foeLuck) { return BattleCore.luckDice(myLuck, foeLuck); }
+    function advRollLuck(myLuck, foeLuck) { return BattleCore.rollLuck(myLuck, foeLuck); }
     function advCoinText(flips) { return flips.map(f => f ? '正' : '反').join('、'); }
-    // 護盾：智慧 ÷ 2 無條件捨去，最多 5；每場戰鬥開始時補滿，擋掉等量的傷害（敵人也一樣）
-    const ADV_SHIELD_CAP = 10;
-    function advShieldMax(int) { return Math.min(ADV_SHIELD_CAP, Math.floor(Math.max(0, int || 0) / 2)); }
-    // 每題作答秒數：15 秒 + 我方智慧；敵人智慧比我方高時，再扣掉差額（至少 5 秒）
-    function advAnswerSecs(myInt, foeInt) { return Math.max(5, ADV_BASE_SECS + myInt - Math.max(0, foeInt - myInt)); }
-    // 受到傷害：先扣護盾，剩下的才扣體力
-    function advTakeDamage(t, dmg, ignoreShield) {
-        let absorbed = ignoreShield ? 0 : Math.min(t.shield || 0, dmg);
-        t.shield = (t.shield || 0) - absorbed;
-        t.hp = Math.max(0, t.hp - (dmg - absorbed));
-        return { absorbed, loss: dmg - absorbed };
-    }
+    const ADV_SHIELD_CAP = BattleCore.SHIELD_CAP;
+    function advShieldMax(int) { return BattleCore.shieldMax(int); }
+    function advAnswerSecs(myInt, foeInt) { return BattleCore.answerSecs(myInt, foeInt); }
+    function advTakeDamage(t, dmg, ignoreShield) { return BattleCore.takeDamage(t, dmg, ignoreShield); }
     function advHurtLabel(r) { return r.absorbed ? (r.loss ? `🛡️-${r.absorbed} -${r.loss}` : `🛡️-${r.absorbed}`) : '-' + r.loss; }
-    // 連續行動次數：(我方敏捷 − 敵方敏捷) ÷ 2，無條件捨去後 +1，至少 1 次
-    function advActionCount(myAgi, foeAgi) { return Math.max(1, Math.floor((myAgi - foeAgi) / 2) + 1); }
-    // 傷害：攻擊力 + 招式威力 − 對方防禦，至少 1
-    function advDamage(atk, power, def) { return Math.max(1, atk + power - def); }
+    function advActionCount(myAgi, foeAgi) { return BattleCore.actionCount(myAgi, foeAgi); }
+    function advDamage(atk, power, def) { return BattleCore.damage(atk, power, def); }
 
     // ── 角色圖（雞塊就是首頁那隻）──
     function advChickenSVG() {
@@ -7000,7 +6914,7 @@
         let addTag = k => al && al[k] ? `<small class="st-add-plus">+${al[k]}</small>` : '';
         let val = k => { let gb = advGearBonus(k); return `${s[k]}${gb ? `<small class="st-gear-plus">+${gb}</small>` : ''}${addTag(k)}`; };
         // 攻擊的爆擊判定：命中加成 1 個＋幸運每 2 點 1 個（最多 3）→ 硬幣排在攻擊條上方
-        let critN = (c.on ? 1 : 0) + Math.min(ADV_LUCK_CAP, Math.floor(Math.max(0, s.luck) / 2));
+        let critN = (c.on ? 1 : 0) + Math.min(ADV_LUCK_CAP, BattleCore.luckDice(s.luck, 0));
         let coins = critN ? `<span class="st-coins" role="img" aria-label="爆擊判定 ${critN} 次">${ST_COIN.repeat(critN)}</span>` : '';
         let rows = [
             row('hp', 'HP', `${cur}/${s.hp}${addTag('hp')}`,
@@ -7624,12 +7538,12 @@
         // 已經擁有的裝備、招式不顯示（只留還能買的）
         if (!advData.items.soda) cells.push(advShopCell({ id: 'advCell_soda', kind: 'gear', icon: advSodaIcon(46), name: '彈珠汽水', sub: `普通裝備｜${ADV_ITEMS.soda.desc}`, price: advShardPrice(ADV_SODA_PRICE), poor: advData.shards < ADV_SODA_PRICE, cls: 'rar-common', action: '[["advBuySoda",[]]]' }));
         if (!advData.items.boba) {
-            let open = !!advData.cleared[4];
-            cells.push(advShopCell({ id: 'advCell_boba', kind: 'gear', icon: ADV_ITEMS.boba.icon(46), name: '快喝光的珍珠奶茶', sub: `普通裝備｜${ADV_ITEMS.boba.desc}`, price: open ? advShardPrice(ADV_BOBA_PRICE) : '第 5 關解鎖', off: !open, poor: open && advData.shards < ADV_BOBA_PRICE, cls: 'rar-common' + (open ? '' : ' is-locked'), action: '[["advBuyBoba",[]]]' }));
+            let open = !!advData.cleared[BattleCore.SHOP_OPEN.boba];
+            cells.push(advShopCell({ id: 'advCell_boba', kind: 'gear', icon: ADV_ITEMS.boba.icon(46), name: '快喝光的珍珠奶茶', sub: `普通裝備｜${ADV_ITEMS.boba.desc}`, price: open ? advShardPrice(ADV_BOBA_PRICE) : `第 ${BattleCore.SHOP_OPEN.boba + 1} 關解鎖`, off: !open, poor: open && advData.shards < ADV_BOBA_PRICE, cls: 'rar-common' + (open ? '' : ' is-locked'), action: '[["advBuyBoba",[]]]' }));
         }
         if (!advData.items.coaster) {
-            let open = !!advData.cleared[10];
-            cells.push(advShopCell({ id: 'advCell_coaster', kind: 'gear', icon: advCoasterIcon(46), name: '防燙杯套', sub: `普通裝備｜${ADV_ITEMS.coaster.desc}`, price: open ? advShardPrice(ADV_COASTER_PRICE) : '第 11 關解鎖', off: !open, poor: open && advData.shards < ADV_COASTER_PRICE, cls: 'rar-common' + (open ? '' : ' is-locked'), action: '[["advBuyCoaster",[]]]' }));
+            let open = !!advData.cleared[BattleCore.SHOP_OPEN.coaster];
+            cells.push(advShopCell({ id: 'advCell_coaster', kind: 'gear', icon: advCoasterIcon(46), name: '防燙杯套', sub: `普通裝備｜${ADV_ITEMS.coaster.desc}`, price: open ? advShardPrice(ADV_COASTER_PRICE) : `第 ${BattleCore.SHOP_OPEN.coaster + 1} 關解鎖`, off: !open, poor: open && advData.shards < ADV_COASTER_PRICE, cls: 'rar-common' + (open ? '' : ' is-locked'), action: '[["advBuyCoaster",[]]]' }));
         }
         ADV_MOVES.filter(m => m.buy.kind === 'shards' && !advOwns(m.key)).forEach(m => {
             let open = advMoveOpen(m);           // 傳說招式：打倒第 20 關後才能買，之前顯示「第 21 關解鎖」並變灰
@@ -8130,25 +8044,12 @@
         adv.seen = new Set();          // 這場戰鬥已經出現過的單字
         adv.wrongThis = [];            // 這場戰鬥答錯的字
         adv.stOk = 0; adv.stAll = 0;   // 這場戰鬥答對的題數／作答題數
-        adv.critOn = advCritOn();      // 命中加成：開戰時決定這場有沒有爆擊判定
         adv.plan = autoMode ? { review: advIsReview(lv.id), fresh: advAutoWords(lv), old: advIsReview(lv.id) ? [] : advOldWords(lv), queue: [], started: false } : null;
-        let s = advPlayerStats();
-        adv.level = lv;
-        adv.moves = advEquipped();
-        adv.player = { hp: Math.min(advData.hp, s.hp), max: s.hp, atk: s.atk, agi: s.agi, def: s.def, int: s.int, luck: s.luck, shield: advShieldMax(s.int), shieldMax: advShieldMax(s.int) };
-        adv.phases = Array.isArray(lv.phases) && lv.phases.length ? lv.phases : [lv];
-        adv.phase = 0;
-        adv.enemy = advMakeEnemy(adv.phases[0]);
-        adv.sealed = [];
-        adv.round = 1;
-        adv.gear = advData.gear.filter(Boolean);    // 這場戰鬥帶的裝備（左手、右手）
-        if (advHasGear('coaster')) { adv.player.int += ADV_COASTER_INT; adv.player.shield = adv.player.shieldMax = advShieldMax(adv.player.int); }   // 防燙杯套：智慧 +3
-        if (advHasGear('bag')) { adv.player.shield += ADV_BAG_SHIELD; adv.player.shieldMax += ADV_BAG_SHIELD; }
+        // 戰鬥狀態由 battle-core.js 建立（雞塊能力、裝備效果、敵人資料都在那裡）
+        let eqMoves = advEquipped(), mast = {};
+        eqMoves.forEach(m => { mast[m.key] = advMastery(m.key); });
+        BattleCore.initBattle(adv, { level: lv, stats: advPlayerStats(), hp: advData.hp, gear: advData.gear, moves: eqMoves, mastery: mast, critOn: advCritOn() });   // 命中加成：開戰時決定這場有沒有爆擊判定
         advData.hitPrev = advHitTotal();             // 命中的「比上次」用這個比較
-        adv.itemUsed = false;
-        adv.flowerUsed = {};               // 用花買的道具：這場用過哪些
-        adv.stamps = new Set(); adv.redeemed = false; adv.stampTold = false;   // 店員：集點卡
-        adv.post = null; adv.shifted = false; adv.cd = 0; adv.cdFresh = false; adv.billNext = false;
         adv.micOk = false;
         adv.active = true;
         adv.busy = false;
@@ -8156,34 +8057,13 @@
         if (!document.getElementById('adventureBattleView').classList.contains('active')) advLockBattleHeight();
         switchView('adventureBattleView');
         advBuildStage();
-        if (adv.enemy.special === 'coffee') { advCoffeeBurn(adv.runId); return; }
-        if (adv.enemy.special === 'ring') { advRingOpening(adv.runId); return; }
-        advBeginRound();
+        advOpening(adv.runId);
     }
-    // 美式咖啡：戰鬥一開始燙傷雞塊（直接扣體力，智慧越高燙得越輕）
-    async function advCoffeeBurn(id) {
+    // 開戰效果（美式咖啡燙傷等）→ 套圈圈開場 → 第 1 回合
+    async function advOpening(id) {
         adv.busy = true;
-        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
-        document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">☕ ${escapeHTML(adv.enemy.name)}冒著熱氣…</div>`;
-        await advWait(700);
-        if (id !== adv.runId) return;
-        let dmg = Math.max(0, ADV_COFFEE_BURN - adv.player.int);
-        advFloat(E, '太燙了！', '#B45309');
-        if (dmg > 0) {
-            adv.player.hp = Math.max(0, adv.player.hp - dmg);
-            advData.hp = adv.player.hp;
-            advSave();
-            advSetLog(`☕ 好燙！雞塊被燙傷了，受到 ${dmg} 點傷害`);
-            advUpdateHud();
-            await advHurt(P, dmg, false, '-' + dmg);
-        } else {
-            advSetLog('☕ 好燙！還好雞塊夠聰明，沒有被燙傷');
-            await advWait(500);
-        }
-        if (id !== adv.runId) return;
-        await advWait(500);
-        if (id !== adv.runId) return;
-        if (adv.player.hp <= 0) { await advLose(id); return; }
+        if (await advPlay(BattleCore.opening(adv), id)) return;
+        if (BattleCore.openingKind(adv) === 'ring') { advRingOpening(id); return; }
         advBeginRound();
     }
     // 店員：頭上的牌子（崗位／下班倒數）
@@ -8196,74 +8076,17 @@
         el.style.display = t ? '' : 'none';
         el.classList.toggle('cd', !!adv.shifted);
     }
-    // 店員：HP 低於 20 → 交班（敏捷 +6、智慧 +4、攻擊 +3、HP +10；帶繳費單的話敏捷只剩 5、幸運 0）
-    async function advClerkShift(id) {
-        let e = adv.enemy;
-        if (!e || e.special !== 'clerk' || adv.shifted || e.hp <= 0 || e.hp >= ADV_CLERK_SHIFT_HP) return;
-        adv.shifted = true; adv.post = null; adv.cd = ADV_CLERK_CD; adv.cdFresh = true;
-        const E = document.getElementById('advEnemy');
-        e.agi += 6; e.int += 4; e.atk += 3; e.hp = Math.min(e.max, e.hp + 10);
-        e.shieldMax = advShieldMax(e.int); e.shield = e.shieldMax;
-        advSetLog(`🔔 交班中！${e.name}換上新的同事：敏捷、攻擊力、護盾都提升了，還回復 10 點體力`);
-        advFloat(E, '交班中！', '#F97316');
-        advUpdateHud(); advClerkTag();
-        await advWait(1100);
-        if (id !== adv.runId) return;
-        if (advHasGear('bill')) {
-            e.agi = 5; e.luck = 0; adv.billNext = true;
-            advSetLog('🧾 救命！是繳費單！（店員被繳費單纏住，動作變慢了）');
-            advFloat(E, '救命！是繳費單！', '#DC2626');
-            advUpdateHud();
-            await advWait(1200);
-        }
-    }
     // 店員：兌換集點卡（不用考英文、不消耗行動；一場一次）
     function advRedeemStamps() {
-        if (!adv.active || adv.busy || adv.q || adv.redeemed || !adv.stamps || adv.stamps.size < ADV_STAMP_NEED) return;
-        adv.redeemed = true;
-        adv.player.atk += ADV_STAMP_ATK;
-        let before = adv.player.hp;
-        adv.player.hp = Math.min(adv.player.max, adv.player.hp + ADV_STAMP_HEAL);
+        if (!adv.active || adv.busy || adv.q) return;
+        let r = BattleCore.redeemStamps(adv);
+        if (!r) return;
         advData.hp = adv.player.hp; advSave();
         advShowMenu();
-        advSetLog(`🎫 兌換集點卡！雞塊這場攻擊力 +${ADV_STAMP_ATK}${adv.player.hp > before ? `，HP +${adv.player.hp - before}` : ''}（不消耗行動）`);
-        advFloat(document.getElementById('advPlayer'), `攻擊 +${ADV_STAMP_ATK}`, '#7C3AED');
+        advSetLog(`🎫 兌換集點卡！雞塊這場攻擊力 +${r.atk}${r.heal ? `，HP +${r.heal}` : ''}（不消耗行動）`);
+        advFloat(document.getElementById('advPlayer'), `攻擊 +${r.atk}`, '#7C3AED');
     }
-    // 敵人資料：護盾 = 智慧 ÷ 2（最多 5）；有特別指定 shield 的（御飯糰 12 點）照指定
-    function advMakeEnemy(d) {
-        let sh = (typeof d.shield === 'number') ? d.shield : advShieldMax(d.int);
-        return { name: d.name, sprite: d.sprite, special: d.special || '', hp: d.hp, max: d.hp, atk: d.atk, agi: d.agi, def: d.def, int: d.int || 0, shield: sh, shieldMax: sh, luck: d.luck || 0, hits: d.hits || 1, moveName: d.moveName || '攻擊', movePower: d.movePower || 0 };
-    }
-    // 第一階段被打倒 → 下一個敵人登場（雞塊的體力、護盾延續）
-    async function advNextPhase(id) {
-        const E = document.getElementById('advEnemy');
-        let old = adv.enemy;
-        adv.phase++;
-        let nxt = advMakeEnemy(adv.phases[adv.phase]);
-        document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">💥 ${escapeHTML(old.name)}被打倒了…等等！裡面的${escapeHTML(nxt.name)}跳出來了！</div>`;
-        await advAnimate(E, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.2) rotate(200deg)', opacity: 0 }], { duration: 520, easing: 'ease-in' });
-        if (id !== adv.runId) return;
-        adv.enemy = nxt;
-        // 新的敵人登場：雞塊的行動次數依新敵人的敏捷重新計算（+1 是因為打倒上一隻的這一招等一下會扣掉 1 次）
-        adv.actionsTotal = advActionCount(adv.player.agi, nxt.agi);
-        adv.actionsLeft = adv.actionsTotal + 1;
-        adv.sealed = [];
-        if (E) E.innerHTML = advEnemySVG(nxt.sprite);
-        let nm = document.getElementById('advEnemyName');
-        if (nm) nm.textContent = nxt.name;
-        advUpdateHud();
-        await advAnimate(E, [{ transform: 'translateY(-40px) scale(0.6)', opacity: 0 }, { transform: 'translateY(6px) scale(1.08)', opacity: 1, offset: 0.7 }, { transform: 'translateY(0) scale(1)', opacity: 1 }], { duration: 560, easing: 'ease-out' });
-        if (id !== adv.runId) return;
-        advFloat(E, '登場！', '#F97316');
-        await advWait(500);
-    }
-    // 敵人倒下：還有下一階段就換人（回傳 false），沒有就勝利（回傳 true）
-    async function advEnemyDown(id) {
-        if (adv.enemy.hp > 0) return false;
-        if (adv.phases && adv.phase < adv.phases.length - 1) { await advNextPhase(id); return false; }
-        await advWin(id);
-        return true;
-    }
+    function advMakeEnemy(d) { return BattleCore.makeEnemy(d); }
     function advQuit() {
         if (adv.active && !confirm('要離開戰鬥嗎？這場戰鬥不會有任何獎勵。')) return;
         advAbort();
@@ -8275,43 +8098,11 @@
     // ── 回合 ──
     function advBeginRound() {
         adv.ringOpening = false;
-        if (adv.enemy.special === 'clerk') {
-            if (adv.shifted) {
-                if (adv.cdFresh) adv.cdFresh = false; else adv.cd--;
-                if (adv.cd <= 0) { advClerkTag(); advLose(adv.runId, 'shift'); return; }
-            } else {
-                adv.post = ADV_CLERK_POSTS[Math.floor(Math.random() * ADV_CLERK_POSTS.length)];
-            }
-            advClerkTag();
-        }
-        adv.actionsTotal = advActionCount(adv.player.agi, adv.enemy.agi);
-        adv.actionsLeft = adv.actionsTotal;
-        adv.busy = false;
-        adv.sealed = [];
-        if (adv.enemy.special === 'seal') {
-            // 只封印「本來能用」的招式，而且一定留至少 1 招能用（避免剩下的招式剛好因為別的原因不能用而卡住）
-            let keys = advShuffle(adv.moves.filter(m => !advMoveBlock(m)).map(m => m.key));
-            adv.sealed = keys.slice(0, Math.min(2, Math.max(0, keys.length - 1)));
-        }
-        advShowMenu();
-        if (adv.enemy.special === 'clerk' && !adv.shifted && adv.post) {
-            advSetLog(`🏪「歡迎光臨！今天我負責${adv.post.name}」（這回合${adv.post.immune === 'speed' ? `速答招式的加成 −${ADV_CLERK_SPEED_GUARD}` : ADV_TYPE_LABEL[adv.post.immune] + '招式無效'}）`);
-            advFloat(document.getElementById('advEnemy'), adv.post.name, '#2563EB');
-        }
-        if (adv.billNext) { adv.billNext = false; advSetLog('🧾 條碼刷不過..'); advFloat(document.getElementById('advEnemy'), '條碼刷不過..', '#64748B'); }
-        if (adv.sealed.length) {
-            advSetLog(`🧾 取票失敗！這回合有 ${adv.sealed.length} 招被封印（灰色的不能用）`);
-            advFloat(document.getElementById('advEnemy'), '取票失敗！', '#F97316');
-        }
+        adv.busy = true;
+        advPlay(BattleCore.beginRound(adv, Math.random, advMoveBlock), adv.runId);
     }
-    // 這招每一下的傷害：攻擊力 + 招式威力 + 熟練度 − 對方防禦（至少 1）；茶葉蛋被字卡打時 +2
-    function advHitDamage(m) {
-        let bonus = (adv.enemy.special === 'egg' && m.type === 'card') ? ADV_EGG_CARD_BONUS : 0;
-        let wk = ADV_WEAK_BONUS[adv.enemy.special];
-        if (wk && wk.type === m.type) bonus += wk.bonus;
-        bonus += adv.nextAtk || 0;               // 蓄力：下一招攻擊 +N
-        return advDamage(adv.player.atk, m.power + advMasteryAtk(m.key) + bonus, adv.enemy.def);
-    }
+    // 這招每一下的傷害（算法在 battle-core.js）
+    function advHitDamage(m) { return BattleCore.hitDamage(adv, m); }
     // 這招因為題庫或瀏覽器的關係不能用：回傳原因（可以用就回傳空字串）
     function advMoveBlock(m) {
         if ((m.mode === 'choice' || m.mode === 'listenCn') && adv.cnWords.length < 4) return '缺中文';
@@ -8347,7 +8138,7 @@
         let itemBtn = '';
         if (advHasGear('boba')) {
             let early = (adv.round || 1) < 2;                                       // 第 1 回合（敵人還沒攻擊過）不能喝
-            let can = !adv.itemUsed && !early && adv.player.hp <= 3 && adv.player.hp < adv.player.max;
+            let can = BattleCore.canBoba(adv);
             itemBtn += `<button type="button" class="adv-item-btn" ${can ? '' : 'disabled'} data-on-click='[["advUseBoba",[]]]'>🧋 喝快喝光的珍珠奶茶　HP +1 <small>${!adv.itemUsed && early ? '（第 2 回合起才能喝）' : adv.itemUsed ? '（這場已經喝過了）' : '（HP 3 以下可用，一場 1 次）'}</small></button>`;
         }
         ['nectar', 'crown'].forEach(k => {
@@ -8365,29 +8156,22 @@
     }
     function advUseFlowerItem(k) {
         if (!adv.active || adv.busy || adv.q || !FARM_ITEMS[k]) return;
-        if (!adv.flowerUsed) adv.flowerUsed = {};
-        if (adv.flowerUsed[k]) return;
+        if (adv.flowerUsed && adv.flowerUsed[k]) return;
         if (!farmUseItem(k)) return;
-        adv.flowerUsed[k] = true;
+        BattleCore.useFlower(adv, k);
         if (k === 'nectar') {
-            adv.player.shield = (adv.player.shield || 0) + 2;            // 花蜜：護盾 +2（可以超過原本的上限）
-            adv.player.shieldMax = Math.max(adv.player.shieldMax || 0, adv.player.shield);
-            advFloat(document.getElementById('advPlayer'), '🛡️ +2', '#6366F1');
-            advUpdateHud(); advShowMenu(); advSetLog('🍯 喝了花蜜，護盾 +2！');
+            advFloat(document.getElementById('advPlayer'), `🛡️ +${BattleCore.NECTAR_SHIELD}`, '#6366F1');
+            advUpdateHud(); advShowMenu(); advSetLog(`🍯 喝了花蜜，護盾 +${BattleCore.NECTAR_SHIELD}！`);
         } else {
-            adv.player.atk += 1;
-            advFloat(document.getElementById('advPlayer'), '攻擊 +1', '#DB2777');
-            advShowMenu(); advSetLog('🌸 戴上花環，這場攻擊力 +1！');
+            advFloat(document.getElementById('advPlayer'), `攻擊 +${BattleCore.CROWN_ATK}`, '#DB2777');
+            advShowMenu(); advSetLog(`🌸 戴上花環，這場攻擊力 +${BattleCore.CROWN_ATK}！`);
         }
     }
-    function advHasGear(k) { return Array.isArray(adv.gear) && adv.gear.includes(k); }
+    function advHasGear(k) { return BattleCore.hasGear(adv, k); }
     // 快喝光的珍珠奶茶：一場戰鬥限用 1 次，HP 3 以下才能喝，不消耗行動次數
     function advUseBoba() {
-        if (!adv.active || adv.busy || adv.q || !advHasGear('boba') || adv.itemUsed) return;
-        if ((adv.round || 1) < 2) return;          // 第 1 回合不能喝（避免一進場就回血再退出）
-        if (adv.player.hp > 3 || adv.player.hp >= adv.player.max) return;
-        adv.itemUsed = true;
-        adv.player.hp = Math.min(adv.player.max, adv.player.hp + 1);
+        if (!adv.active || adv.busy || adv.q) return;
+        if (!BattleCore.useBoba(adv)) return;
         advData.hp = adv.player.hp;
         advSave();
         advFloat(document.getElementById('advPlayer'), '+1', '#10B981');
@@ -8439,9 +8223,9 @@
     // 總命中 = 字卡、聽力、朗讀各自最近 20 題合起來算（不會只看最近 20 題而忽略比較弱的類別）
     function advHitAll() { return ADV_HIT_KINDS.reduce((x, k) => x.concat(advData.hits[k] || []), []); }
     // 爆擊加成：字卡、聽力、朗讀「各」答滿 20 題，而且三種合計命中 ≥ 90%
-    const ADV_CRIT_AT = 90;
+    const ADV_CRIT_AT = BattleCore.CRIT_AT;
     function advCritReady() { return ADV_HIT_KINDS.every(k => (advData.hits[k] || []).length >= ADV_HIT_N); }
-    function advCritOn() { return advCritReady() && advHitPct(advHitAll()) >= ADV_CRIT_AT; }
+    function advCritOn() { return advCritReady() && BattleCore.critOn(advHitPct(advHitAll())); }
     function advHitTotal() { let a = advHitAll(); return a.length >= ADV_HIT_N ? advHitPct(a) : null; }
     function advQuestionPassed() {
         advRecordHit(true);
@@ -8496,12 +8280,11 @@
     //   一輪 4 個英文＋4 個中文；配對成功的那組只消失、不補；4 組都配完才整批換下一輪（位置重新打亂）
     //   時間內配對成功的總組數 = 答對題數；配錯扣秒數
     function advSpeedCfg(m) {
-        let c = m.speed, lv = advMastery(m.key);
-        // 秒數 = 20 + 熟練度加的秒數 +（雞塊智慧 − 敵人智慧），最少 10 秒；智慧用戰鬥中的數字（含裝備、冥想）
-        let diff = (adv.active && adv.player && adv.enemy) ? (adv.player.int || 0) - (adv.enemy.int || 0) : 0;
-        return { label: c.label, stat: c.stat, every: c.every, pen: c.pen, base: c.secs + lv * c.lvSecs, secs: Math.max(ADV_SPEED_MIN_SECS, c.secs + lv * c.lvSecs + diff), cap: Math.min(c.maxCap, c.cap + lv * c.lvCap) };
+        // 秒數 = 20 + 熟練度加的秒數 +（雞塊智慧 − 敵人智慧），最少 10 秒（算法在 battle-core.js）
+        let on = adv.active && adv.player && adv.enemy;
+        return BattleCore.speedCfg(m, advMastery(m.key), on ? adv.player.int : 0, on ? adv.enemy.int : 0);
     }
-    const ADV_SPEED_MIN_SECS = 10;
+    const ADV_SPEED_MIN_SECS = BattleCore.SPEED_MIN_SECS;
     let advSp = null;
     function advSpeedShort(w) { return (w.meanings && w.meanings[0]) || String(w.chinese || '').split(/[、,，;；\/]/)[0] || w.chinese; }
     function advSpeedRound() {
@@ -8554,7 +8337,7 @@
         clearInterval(advSp.timer);
         advSp.timer = setInterval(advSpeedTick, 100);
     }
-    function advSpeedBonus(sp) { return Math.min(sp.c.cap, Math.floor(sp.pairs / sp.c.every)); }
+    function advSpeedBonus(sp) { return BattleCore.speedBonus(sp.pairs, sp.c); }
     function advSpeedTick() {
         let sp = advSp;
         if (!sp || sp.over) return;
@@ -8630,56 +8413,11 @@
         adv.q = null;
         adv.resolvedSeq = adv.moveSeq;
         let masteryUp = advAddMasteryUse(m.key);
+        adv.mastery[m.key] = advMastery(m.key);
         advSave();
-        let raw = advSpeedBonus(sp), guard = advSpeedGuard(), got = Math.max(0, raw - guard);
-        // 套用加成
-        let applied = got;
-        if (m.speed.stat === 'int') {
-            applied = Math.max(0, Math.min(got, sp.c.cap - (adv.intBuff || 0)));    // 冥想：一場戰鬥加的智慧合計不超過上限
-            if (applied) {
-                adv.intBuff = (adv.intBuff || 0) + applied;
-                adv.player.int += applied;
-                let newMax = advShieldMax(adv.player.int) + (advHasGear('bag') ? ADV_BAG_SHIELD : 0);
-                if (newMax > (adv.player.shieldMax || 0)) { adv.player.shield += newMax - adv.player.shieldMax; adv.player.shieldMax = newMax; }
-            }
-        } else {
-            adv.nextAtk = Math.max(adv.nextAtk || 0, got);
-        }
-        if (adv.enemy.special === 'clerk' && adv.stamps && sp.pairs > 0 && !adv.stamps.has(m.type)) adv.stamps.add(m.type);
-        let segs = Array.from({ length: sp.c.cap }, (_, k) => `<i class="${k < got ? 'on' : ''}"></i>`).join('');
-        let guardTxt = guard ? `<div class="spd-guard">🛡️ ${escapeHTML(adv.enemy.name)}防禦了速答招式！加成 −${guard}${raw ? `（+${raw} → +${got}）` : ''}</div>` : '';
-        let gotTxt = m.speed.stat === 'int'
-            ? `智慧 +${applied}${applied < got ? `（這場已加到上限 +${sp.c.cap}）` : ''}`
-            : `下一招攻擊 +${got}（最多 +${sp.c.cap}）`;
-        let isLast = adv.actionsLeft <= 1;
-        document.getElementById('advPanel').innerHTML = `
-            <div class="spd-result">
-                <div class="spd-res-h">⏱ 時間到！配對成功</div>
-                <div class="spd-res-n">${sp.pairs} 組</div>
-                <div class="spd-segs">${segs}</div>
-                <div class="spd-res-got">${gotTxt}</div>
-                ${guardTxt}
-                <button type="button" class="spd-go" id="spdGo" disabled data-on-click='[["advSpeedDone",[]]]'>${isLast ? '繼續' : '繼續選招式'}</button>
-            </div>`;
-        advUpdateHud();
-        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
-        if (guard) advFloat(E, `🛡️防禦 −${guard}`, '#0EA5E9', -30);
-        if (applied && m.speed.stat === 'int') advFloat(P, `智慧 +${applied}`, '#7C3AED');
-        if (got && m.speed.stat === 'atk') advFloat(P, `攻擊 +${got}`, '#DB2777');
-        // 愛珍食便當：速答只要答對 1 題，立刻扣牠 4 點體力
-        if (adv.enemy.special === 'expire' && sp.pairs > 0) {
-            await advWait(500);
-            if (id !== adv.runId) return;
-            advFloat(E, '💥 效果拔群！', '#DC2626', -30);
-            let er = advTakeDamage(adv.enemy, ADV_EXPIRE_SPEED_DMG, true);
-            advUpdateHud();
-            await advHurt(E, ADV_EXPIRE_SPEED_DMG, true, advHurtLabel(er));
-            if (id !== adv.runId) return;
-            if (adv.enemy.hp <= 0) {
-                if (await advEnemyDown(id)) return;
-                if (id !== adv.runId) return;
-            }
-        }
+        // 加成怎麼算、敵人怎麼防禦：battle-core.js 的 speedEnd
+        if (await advPlay(BattleCore.speedEnd(adv, m, sp.pairs, sp.c), id)) return;
+        const P = document.getElementById('advPlayer');
         if (masteryUp) {
             advFloat(P, `⬆️ 熟練度 ${masteryUp}`, '#4F46E5');
             let c2 = advSpeedCfg(m);
@@ -8698,15 +8436,15 @@
         if (!advSp || !advSp.waiting || advSp.id !== adv.runId || !adv.active) return;
         const id = advSp.id;
         advSp = null;
-        adv.actionsLeft--;
-        if (adv.actionsLeft > 0) { adv.busy = false; advShowMenu(); }
-        else await advEnemyPhase(id);
+        // 扣行動次數、判斷輪不輪到敵人：battle-core.js 的 endAction（跟一般招式同一套）
+        if (BattleCore.endAction(adv)) await advEnemyPhase(id);
+        else { adv.busy = false; advShowMenu(); }
     }
 
     // ═════════ 第 9 關套圈圈：開場「天女散花！」═════════
     //   戰鬥一開始先來一場連連看：15 秒內要配對 4 組（配錯扣 2 秒）
     //   沒配完：少幾組就扣幾點 HP（無視防禦），套圈圈丟 4 個小套圈圈過來
-    const ADV_RING_NEED = 4, ADV_RING_SECS = 15, ADV_RING_PEN = 2;
+    const ADV_RING_NEED = BattleCore.RING_NEED, ADV_RING_SECS = BattleCore.RING_SECS, ADV_RING_PEN = BattleCore.RING_PEN;
     async function advRingOpening(id) {
         adv.busy = true;
         adv.ringOpening = true;
@@ -8731,27 +8469,7 @@
         advSp = null;
         adv.q = null;
         if (!adv.active || id !== adv.runId) return;
-        let miss = Math.max(0, ADV_RING_NEED - sp.pairs);
-        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
-        if (!miss) {
-            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">✨ 配對了 ${sp.pairs} 組，全部躲開了！</div>`;
-            advFloat(P, '躲開了！', '#10B981');
-            await advWait(1100);
-        } else {
-            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">🎯 只配對了 ${sp.pairs} 組…套圈圈丟出 4 個小套圈圈！</div>`;
-            await advRingThrow(4);
-            if (id !== adv.runId) return;
-            let dr = advTakeDamage(adv.player, miss);
-            advData.hp = adv.player.hp;
-            advSave();
-            advSetLog(`🎯 被小套圈圈套中！無視防禦，${dr.absorbed ? `護盾擋下 ${dr.absorbed} 點，` : ''}雞塊受到 ${dr.loss} 點傷害`);
-            advUpdateHud();
-            await advHurt(P, miss, false, advHurtLabel(dr));
-            if (id !== adv.runId) return;
-            if (adv.player.hp <= 0) { await advLose(id); return; }
-            await advWait(500);
-        }
-        if (id !== adv.runId) return;
+        if (await advPlay(BattleCore.ringResult(adv, sp.pairs), id)) return;
         advBeginRound();
     }
     // 4 個小套圈圈從套圈圈飛到雞塊身上
@@ -9272,6 +8990,255 @@
         if (luck.bonus) { advFloat(actorEl, `+${luck.bonus}`, '#B45309'); await advWait(250); }
     }
 
+    // ═════════ 播放戰鬥事件 ═════════
+    //   戰鬥規則（傷害、特殊能力、裝備效果、誰先誰後）都在 battle-core.js，
+    //   battle-core.js 每做完一步就丟出一個事件，這裡只負責「把事件演出來」。
+    //   ⚠️ 不要在這裡算傷害或加規則：改 battle-core.js，模擬器才會一起更新。
+    async function advPlay(gen, id) {
+        for (let r = gen.next(); !r.done; r = gen.next()) {
+            if (id !== adv.runId || !adv.active) return true;
+            let stop = await advOnEvent(r.value, id);
+            if (adv.player && advData.hp !== adv.player.hp && adv.active) { advData.hp = adv.player.hp; advSave(); }   // 體力會繼承到之後的戰鬥
+            if (stop || id !== adv.runId) return true;
+        }
+        return id !== adv.runId;
+    }
+    function advPanelLog(html) { document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">${html}</div>`; }
+    async function advOnEvent(ev, id) {
+        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
+        const e = adv.enemy, m = ev.move;
+        switch (ev.t) {
+            case 'win':
+                await advWin(id); return true;
+            case 'lose':
+                if (ev.why === 'shift') { advClerkTag(); advLose(id, 'shift'); return true; }
+                await advLose(id); return true;
+            // ── 開場 ──
+            case 'coffee':
+                advPanelLog(`☕ ${escapeHTML(e.name)}冒著熱氣…`);
+                await advWait(700);
+                if (id !== adv.runId) return true;
+                advFloat(E, '太燙了！', '#B45309');
+                if (ev.dmg > 0) {
+                    advSetLog(`☕ 好燙！雞塊被燙傷了，受到 ${ev.dmg} 點傷害`);
+                    advUpdateHud();
+                    await advHurt(P, ev.dmg, false, '-' + ev.dmg);
+                } else {
+                    advSetLog('☕ 好燙！還好雞塊夠聰明，沒有被燙傷');
+                    await advWait(500);
+                }
+                await advWait(500);
+                return false;
+            case 'ringDodge':
+                advPanelLog(`✨ 配對了 ${ev.pairs} 組，全部躲開了！`);
+                advFloat(P, '躲開了！', '#10B981');
+                await advWait(1100);
+                return false;
+            case 'ringThrow':
+                advPanelLog(`🎯 只配對了 ${ev.pairs} 組…套圈圈丟出 4 個小套圈圈！`);
+                await advRingThrow(4);
+                return false;
+            case 'ringHit':
+                advSetLog(`🎯 被小套圈圈套中！無視防禦，${ev.r.absorbed ? `護盾擋下 ${ev.r.absorbed} 點，` : ''}雞塊受到 ${ev.r.loss} 點傷害`);
+                advUpdateHud();
+                await advHurt(P, ev.miss, false, advHurtLabel(ev.r));
+                if (adv.player.hp > 0) await advWait(500);
+                return false;
+            // ── 回合開始 ──
+            case 'menu':
+                if (e.special === 'clerk') advClerkTag();
+                adv.busy = false;
+                advShowMenu();
+                return false;
+            case 'post':
+                advSetLog(`🏪「歡迎光臨！今天我負責${ev.post.name}」（這回合${ev.post.immune === 'speed' ? `速答招式的加成 −${ADV_CLERK_SPEED_GUARD}` : ADV_TYPE_LABEL[ev.post.immune] + '招式無效'}）`);
+                advFloat(E, ev.post.name, '#2563EB');
+                return false;
+            case 'billSlow':
+                advSetLog('🧾 條碼刷不過..'); advFloat(E, '條碼刷不過..', '#64748B');
+                return false;
+            case 'seal':
+                advSetLog(`🧾 取票失敗！這回合有 ${ev.keys.length} 招被封印（灰色的不能用）`);
+                advFloat(E, '取票失敗！', '#F97316');
+                return false;
+            // ── 換下一個敵人、店員交班 ──
+            case 'phaseOut':
+                advPanelLog(`💥 ${escapeHTML(ev.old.name)}被打倒了…等等！裡面的${escapeHTML(ev.next.name)}跳出來了！`);
+                await advAnimate(E, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.2) rotate(200deg)', opacity: 0 }], { duration: 520, easing: 'ease-in' });
+                return false;
+            case 'phaseIn': {
+                if (E) E.innerHTML = advEnemySVG(ev.enemy.sprite);
+                let nm = document.getElementById('advEnemyName');
+                if (nm) nm.textContent = ev.enemy.name;
+                advUpdateHud();
+                await advAnimate(E, [{ transform: 'translateY(-40px) scale(0.6)', opacity: 0 }, { transform: 'translateY(6px) scale(1.08)', opacity: 1, offset: 0.7 }, { transform: 'translateY(0) scale(1)', opacity: 1 }], { duration: 560, easing: 'ease-out' });
+                if (id !== adv.runId) return true;
+                advFloat(E, '登場！', '#F97316');
+                await advWait(500);
+                return false;
+            }
+            case 'shift':
+                advSetLog(`🔔 交班中！${e.name}換上新的同事：敏捷、攻擊力、護盾都提升了，還回復 10 點體力`);
+                advFloat(E, '交班中！', '#F97316');
+                advUpdateHud(); advClerkTag();
+                await advWait(1100);
+                return false;
+            case 'bill':
+                advSetLog('🧾 救命！是繳費單！（店員被繳費單纏住，動作變慢了）');
+                advFloat(E, '救命！是繳費單！', '#DC2626');
+                advUpdateHud();
+                await advWait(1200);
+                return false;
+            // ── 雞塊出招 ──
+            case 'moveOk':
+                advPanelLog(`${m.icon} 「${m.name}」發動成功！`);
+                return false;
+            case 'stamp':
+                advFloat(P, `🎫 ${ADV_TYPE_LABEL[ev.type]}集點！`, '#7C3AED');
+                return false;
+            case 'attack':
+                await advPlayAttack(m, ev.h);
+                return false;
+            case 'coins':
+                if (ev.who === 'player') await advShowCoins(P, ev.luck, ev.hits > 1 ? `第 ${ev.h + 1} 下` : '', ev.crit ? '爆擊判定' : undefined);
+                else await advShowCoins(E, ev.luck, e.name + '的');
+                return false;
+            case 'enemyHurt': {
+                let er = ev.r;
+                if (ev.weak) advFloat(E, '💥 效果拔群！', '#DC2626', -30);   // 往上放，不跟傷害數字疊在一起
+                advSetLog(ev.immune
+                    ? `🛡️ ${e.name}防禦了${ADV_TYPE_LABEL[m.type]}招式！完全沒有受到傷害`
+                    : ev.guarded
+                    ? `🛡️ ${e.name}防禦了${ADV_TYPE_LABEL[m.type]}招式！${er.absorbed ? `護盾再擋下 ${er.absorbed} 點，` : ''}只受到 ${er.loss} 點傷害`
+                    : `${ev.weak ? '💥 效果拔群！' : '✨'}「${m.name}」${m.hits > 1 ? `第 ${ev.h + 1} 下` : ''}命中！${e.name}${er.absorbed ? `護盾擋下 ${er.absorbed} 點，` : ''}${ev.pierce ? '竹籤刺穿護盾！' : ''}受到 ${er.loss} 點傷害`);
+                advUpdateHud();
+                await advHurt(E, ev.dmg, true, (ev.guarded ? '🛡️防禦 ' : '') + advHurtLabel(er));
+                return false;
+            }
+            case 'stampsFull':
+                advSetLog('🎫 集點卡集滿了！招式選單多了「兌換集點卡！」');
+                await advWait(900);
+                return false;
+            case 'miss':
+                advPanelLog(`💨 「${m.name}」發動失敗…`);
+                advFloat(P, 'MISS', '#64748B');
+                await advAnimate(P, [{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration: 320 });
+                await advWait(300);
+                return false;
+            case 'tofu':
+                advSetLog('🔥 烤焦臭豆腐爆發！雙方各扣 1 點體力');
+                advUpdateHud();
+                await Promise.all([advHurt(E, 1, true, advHurtLabel(ev.er)), advHurt(P, 1, false, advHurtLabel(ev.pr))]);
+                return false;
+            case 'stink':
+                advBtSay(ADV_TOFU_LINES[Math.floor(Math.random() * ADV_TOFU_LINES.length)]);
+                advSetLog(`🤢 ${e.name}散發臭味！無視防禦，${ev.r.absorbed ? '護盾擋下 1 點' : '雞塊受到 1 點傷害'}`);
+                advUpdateHud();
+                await advHurt(P, 1, false, advHurtLabel(ev.r));
+                return false;
+            case 'moveEnd': case 'speedEnd': case 'roundEnd':
+                return false;
+            // ── 速答 ──
+            case 'speedResult': {
+                let segs = Array.from({ length: ev.cap }, (_, k) => `<i class="${k < ev.got ? 'on' : ''}"></i>`).join('');
+                let guardTxt = ev.guard ? `<div class="spd-guard">🛡️ ${escapeHTML(e.name)}防禦了速答招式！加成 −${ev.guard}${ev.raw ? `（+${ev.raw} → +${ev.got}）` : ''}</div>` : '';
+                let gotTxt = m.speed.stat === 'int'
+                    ? `智慧 +${ev.applied}${ev.applied < ev.got ? `（這場已加到上限 +${ev.cap}）` : ''}`
+                    : `下一招攻擊 +${ev.got}（最多 +${ev.cap}）`;
+                let isLast = adv.actionsLeft <= 1;
+                document.getElementById('advPanel').innerHTML = `
+            <div class="spd-result">
+                <div class="spd-res-h">⏱ 時間到！配對成功</div>
+                <div class="spd-res-n">${ev.pairs} 組</div>
+                <div class="spd-segs">${segs}</div>
+                <div class="spd-res-got">${gotTxt}</div>
+                ${guardTxt}
+                <button type="button" class="spd-go" id="spdGo" disabled data-on-click='[["advSpeedDone",[]]]'>${isLast ? '繼續' : '繼續選招式'}</button>
+            </div>`;
+                advUpdateHud();
+                if (ev.guard) advFloat(E, `🛡️防禦 −${ev.guard}`, '#0EA5E9', -30);
+                if (ev.applied && m.speed.stat === 'int') advFloat(P, `智慧 +${ev.applied}`, '#7C3AED');
+                if (ev.got && m.speed.stat === 'atk') advFloat(P, `攻擊 +${ev.got}`, '#DB2777');
+                return false;
+            }
+            case 'speedHurt':
+                await advWait(500);
+                if (id !== adv.runId) return true;
+                advFloat(E, '💥 效果拔群！', '#DC2626', -30);
+                advUpdateHud();
+                await advHurt(E, ev.dmg, true, advHurtLabel(ev.r));
+                return false;
+            // ── 敵人的回合 ──
+            case 'enemyTurn':
+                advPanelLog(`${escapeHTML(e.name)}的「${escapeHTML(e.moveName)}」攻擊！`);
+                await advWait(350);
+                return false;
+            case 'pinball':
+                advFloat(E, '🎰技能骰 ' + ev.r, '#0284C7');
+                if (ev.effect === 'heal') {
+                    advSetLog(`🎰【打彈珠】技能骰 ${ev.r}（不是幸運骰）　彈珠台回復 2 點體力`);
+                    await advWait(500);
+                    advUpdateHud();
+                    advFloat(E, '+2', '#10B981');
+                    await advWait(700);
+                } else if (ev.effect === 'none') {
+                    advSetLog(`🎰【打彈珠】技能骰 ${ev.r}（不是幸運骰）　沒有效果`);
+                    await advWait(1000);
+                } else {
+                    advSetLog(`🎰【打彈珠】技能骰 ${ev.r}（不是幸運骰）　彈珠直擊！無視防禦扣 1 點體力`);
+                    await advWait(500);
+                    advUpdateHud();
+                    await advHurt(P, 1, false, advHurtLabel(ev.r2));
+                    if (adv.player.hp <= 0) return false;
+                }
+                if (id !== adv.runId) return true;
+                advPanelLog(`${escapeHTML(e.name)}的「${escapeHTML(e.moveName)}」攻擊！`);
+                return false;
+            case 'enemyAttack': {
+                if (ev.hh === 0 && ADV_ENEMY_LINES[e.sprite]) advBtSay(ADV_ENEMY_LINES[e.sprite]);   // 新版戰鬥畫面：敵人攻擊時在雞塊上方說話
+                const d = advDelta(E, P);
+                await advAnimate(E, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${d.dx * 0.8}px, ${d.dy * 0.8}px) scale(1.12)`, offset: 0.5 }, { transform: 'translate(0,0) scale(1)' }], { duration: ev.eh > 1 ? 400 : 480, easing: 'ease-in-out' });
+                return false;
+            }
+            case 'playerHurt':
+                advSetLog(`${e.name}的攻擊${ev.eh > 1 ? `（第 ${ev.hh + 1} 下）` : ''}！${ev.r.absorbed ? `護盾擋下 ${ev.r.absorbed} 點，` : ''}雞塊受到 ${ev.r.loss} 點傷害`);
+                advUpdateHud();
+                await advHurt(P, ev.dmg, false, advHurtLabel(ev.r));
+                if (adv.player.hp > 0 && ev.hh < ev.eh - 1) await advWait(250);
+                return false;
+            case 'microwave':
+                advSetLog(`🔥 轉吧！美味雞塊！${e.name}越來越燙，攻擊力 +${ADV_MICRO_ATK_UP}（現在 ${ev.atk}）`);
+                advFloat(E, `攻擊 +${ADV_MICRO_ATK_UP}`, '#F97316');
+                advUpdateHud();
+                await advWait(800);
+                return false;
+            case 'expireSelf':
+                advSetLog(`🥀 我快過期了..（${e.name}自己扣了 ${ev.dmg} 點體力）`);
+                advUpdateHud();
+                await advHurt(E, ev.dmg, true, '-' + ev.dmg);
+                if (id !== adv.runId) return true;
+                advFloat(E, '我快過期了..', '#64748B');
+                await advWait(500);
+                return false;
+            case 'heal':
+                advSetLog(`💚 ${e.name}${ev.trait ? '' : '發動治癒，'}回復 ${ev.value} 點體力`);
+                advUpdateHud();
+                advFloat(E, '+' + ev.value, '#10B981');
+                await advWait(900);
+                return false;
+            // ── 特殊能力積木（traits）的通用演出 ──
+            case 'trait': {
+                let el = ev.target === 'enemy' ? E : P;
+                advSetLog(ev.text || '');
+                advUpdateHud();
+                if (ev.target === 'player' && (ev.dmg || (ev.r && ev.r.loss))) await advHurt(P, ev.dmg || ev.r.loss, false, ev.r ? advHurtLabel(ev.r) : '-' + ev.dmg);
+                else { if (ev.float) advFloat(el, ev.float, '#F97316'); await advWait(800); }
+                return false;
+            }
+        }
+        return false;
+    }
+
     async function advResolveMove(ok) {
         if (!adv.active) return;
         // 防呆：同一次出招只結算一次（避免多題招式在最後一題被重複結算，一次扣掉兩次行動）
@@ -9279,107 +9246,18 @@
         adv.resolvedSeq = adv.moveSeq;
         // 熟練度：不論成功或失敗，用一次就 +1（先算好，打倒敵人直接勝利時也會算到）
         let masteryUp = adv.move ? advAddMasteryUse(adv.move.key) : 0;
+        if (adv.move) adv.mastery[adv.move.key] = advMastery(adv.move.key);
         if (!ok && adv.q && adv.q.word) advNoteWrong(adv.q.word);
         advSave();
         if (!ok) advRecordHit(false);
         const id = adv.runId;
         adv.busy = true;
         const m = adv.move;
-        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
+        const P = document.getElementById('advPlayer');
         advStopTimer();
         adv.q = null;
-        if (ok) {
-            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">${m.icon} 「${m.name}」發動成功！</div>`;
-            if (adv.enemy.special === 'clerk' && adv.stamps && !adv.stamps.has(m.type)) {   // 店員：集點
-                adv.stamps.add(m.type);
-                advFloat(document.getElementById('advPlayer'), `🎫 ${ADV_TYPE_LABEL[m.type]}集點！`, '#7C3AED');
-            }
-            // 每一下各自計算：攻擊力 + 招式威力 + 熟練度 − 對方防禦（至少 1）；每一下都各自擲一次幸運幣
-            let total = 0;
-            let pierce = advHasGear('skewer');         // 竹籤：無視對方護盾
-            for (let h = 0; h < m.hits; h++) {
-                await advPlayAttack(m, h);
-                if (id !== adv.runId) return;
-                let dmg = advHitDamage(m);
-                let luck = advRollLuck(adv.player.luck, adv.enemy.luck);
-                if (luck.flips.length) {
-                    await advShowCoins(P, luck, m.hits > 1 ? `第 ${h + 1} 下` : '');
-                    if (id !== adv.runId) return;
-                    dmg += luck.bonus;
-                }
-                // 命中加成：字卡、聽力、朗讀各答滿 20 題且總命中 ≥ 90% → 每次攻擊多 1 次爆擊判定（跟幸運的 3 枚硬幣分開算）
-                if (adv.critOn) {
-                    let f = Math.random() < 0.5, crit = { flips: [f], bonus: f ? 1 : 0 };
-                    await advShowCoins(P, crit, m.hits > 1 ? `第 ${h + 1} 下` : '', '爆擊判定');
-                    if (id !== adv.runId) return;
-                    dmg += crit.bonus;
-                }
-                let immune = advImmuneType() === m.type;
-                let guarded = immune || ADV_RESIST[adv.enemy.special] === m.type;
-                if (immune) dmg = 0;                    // 完全不受這類招式的傷害
-                else if (guarded) dmg = Math.min(dmg, 1);    // 對這類招式有抗性：每一下最多 1 點
-                let weak = ADV_WEAK_BONUS[adv.enemy.special];
-                if (weak && weak.type === m.type && dmg > 0) advFloat(E, '💥 效果拔群！', '#DC2626', -30);   // 往上放，不跟傷害數字疊在一起
-                total += dmg;
-                let hadShield = adv.enemy.shield > 0;
-                let er = advTakeDamage(adv.enemy, dmg, pierce);
-                advSetLog(immune
-                    ? `🛡️ ${adv.enemy.name}防禦了${ADV_TYPE_LABEL[m.type]}招式！完全沒有受到傷害`
-                    : guarded
-                    ? `🛡️ ${adv.enemy.name}防禦了${ADV_TYPE_LABEL[m.type]}招式！${er.absorbed ? `護盾再擋下 ${er.absorbed} 點，` : ''}只受到 ${er.loss} 點傷害`
-                    : `${weak && weak.type === m.type ? '💥 效果拔群！' : '✨'}「${m.name}」${m.hits > 1 ? `第 ${h + 1} 下` : ''}命中！${adv.enemy.name}${er.absorbed ? `護盾擋下 ${er.absorbed} 點，` : ''}${pierce && hadShield ? '竹籤刺穿護盾！' : ''}受到 ${er.loss} 點傷害`);
-                advUpdateHud();
-                await advHurt(E, dmg, true, (guarded ? '🛡️防禦 ' : '') + advHurtLabel(er));
-                if (id !== adv.runId) return;
-                if (adv.enemy.hp <= 0) {
-                    if (await advEnemyDown(id)) return;
-                    if (id !== adv.runId) return;
-                    break;                               // 換下一個敵人：這招剩下的攻擊不再繼續
-                }
-                await advClerkShift(id);
-                if (id !== adv.runId) return;
-            }
-            if (adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.size >= ADV_STAMP_NEED && !adv.redeemed && !adv.stampTold) {
-                adv.stampTold = true;
-                advSetLog('🎫 集點卡集滿了！招式選單多了「兌換集點卡！」');
-                await advWait(900);
-                if (id !== adv.runId) return;
-            }
-        } else {
-            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">💨 「${m.name}」發動失敗…</div>`;
-            advFloat(P, 'MISS', '#64748B');
-            await advAnimate(P, [{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration: 320 });
-            await advWait(300);
-            if (id !== adv.runId) return;
-            // 裝備「烤焦臭豆腐」：招式失敗時雙方各扣 1 點體力
-            if (advHasGear('tofu')) {
-                let er = advTakeDamage(adv.enemy, 1), pr = advTakeDamage(adv.player, 1);
-                advData.hp = adv.player.hp;
-                advSave();
-                advSetLog('🔥 烤焦臭豆腐爆發！雙方各扣 1 點體力');
-                advUpdateHud();
-                await Promise.all([advHurt(E, 1, true, advHurtLabel(er)), advHurt(P, 1, false, advHurtLabel(pr))]);
-                if (id !== adv.runId) return;
-                if (adv.player.hp <= 0 && adv.enemy.hp > 0) { await advLose(id); return; }
-                if (adv.enemy.hp <= 0) { if (await advEnemyDown(id)) return; if (id !== adv.runId) return; }
-                if (adv.player.hp <= 0) { await advLose(id); return; }
-                await advClerkShift(id);
-                if (id !== adv.runId) return;
-            }
-            // 臭豆腐的「發臭」：招式失敗就被臭味反擊，無視防禦，固定 1 點
-            if (adv.enemy.special === 'stink') {
-                advBtSay(ADV_TOFU_LINES[Math.floor(Math.random() * ADV_TOFU_LINES.length)]);
-                let dr = advTakeDamage(adv.player, 1);
-                advSetLog(`🤢 ${adv.enemy.name}散發臭味！無視防禦，${dr.absorbed ? '護盾擋下 1 點' : '雞塊受到 1 點傷害'}`);
-                advData.hp = adv.player.hp;
-                advSave();
-                advUpdateHud();
-                await advHurt(P, 1, false, advHurtLabel(dr));
-                if (id !== adv.runId) return;
-                if (adv.player.hp <= 0) { await advLose(id); return; }
-            }
-        }
-        adv.nextAtk = 0;                           // 蓄力的加成只給「下一招」
+        // 傷害、特殊能力、裝備效果：battle-core.js 的 playerMove
+        if (await advPlay(BattleCore.playerMove(adv, m, ok), id)) return;
         let up = masteryUp;
         if (up) {
             advFloat(P, `⬆️ 熟練度 ${up}`, '#4F46E5');
@@ -9387,99 +9265,13 @@
             await advWait(900);
             if (id !== adv.runId) return;
         }
-        adv.actionsLeft--;
-        if (adv.actionsLeft > 0) { adv.busy = false; advShowMenu(); }
-        else await advEnemyPhase(id);
+        if (BattleCore.endAction(adv)) await advEnemyPhase(id);
+        else { adv.busy = false; advShowMenu(); }
     }
 
     async function advEnemyPhase(id) {
-        const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
-        let n = advActionCount(adv.enemy.agi, adv.player.agi);
-        for (let i = 0; i < n; i++) {
-            document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">${escapeHTML(adv.enemy.name)}的「${escapeHTML(adv.enemy.moveName)}」攻擊！</div>`;
-            await advWait(350);
-            if (id !== adv.runId) return;
-            if (adv.enemy.special === 'pinball') {
-                let r = 1 + Math.floor(Math.random() * 6);
-                advFloat(E, '🎰技能骰 ' + r, '#0284C7');
-                if (r <= 2) {
-                    adv.enemy.hp = Math.min(adv.enemy.max, adv.enemy.hp + 2);
-                    advSetLog(`🎰【打彈珠】技能骰 ${r}（不是幸運骰）　彈珠台回復 2 點體力`);
-                    await advWait(500);
-                    advUpdateHud();
-                    advFloat(E, '+2', '#10B981');
-                    await advWait(700);
-                } else if (r <= 4) {
-                    advSetLog(`🎰【打彈珠】技能骰 ${r}（不是幸運骰）　沒有效果`);
-                    await advWait(1000);
-                } else {
-                    advSetLog(`🎰【打彈珠】技能骰 ${r}（不是幸運骰）　彈珠直擊！無視防禦扣 1 點體力`);
-                    await advWait(500);
-                    let pr = advTakeDamage(adv.player, 1);
-                    advData.hp = adv.player.hp;
-                    advSave();
-                    advUpdateHud();
-                    await advHurt(P, 1, false, advHurtLabel(pr));
-                    if (id !== adv.runId) return;
-                    if (adv.player.hp <= 0) { await advLose(id); return; }
-                }
-                if (id !== adv.runId) return;
-                document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">${escapeHTML(adv.enemy.name)}的「${escapeHTML(adv.enemy.moveName)}」攻擊！</div>`;
-            }
-            if (ADV_ENEMY_LINES[adv.enemy.sprite]) advBtSay(ADV_ENEMY_LINES[adv.enemy.sprite]);   // 新版戰鬥畫面：敵人攻擊時在雞塊上方說話
-            const d = advDelta(E, P);
-            // 套圈圈：一次攻擊打兩下（每一下都衝過來一次、分開算傷害，跟「連續斬擊」一樣）
-            let eh = adv.enemy.hits || 1;
-            for (let hh = 0; hh < eh; hh++) {
-            await advAnimate(E, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${d.dx * 0.8}px, ${d.dy * 0.8}px) scale(1.12)`, offset: 0.5 }, { transform: 'translate(0,0) scale(1)' }], { duration: eh > 1 ? 400 : 480, easing: 'ease-in-out' });
-            if (id !== adv.runId) return;
-            let dmg = advDamage(adv.enemy.atk, adv.enemy.movePower, adv.player.def);
-            let luck = advRollLuck(adv.enemy.luck, adv.player.luck);
-            if (luck.flips.length) {
-                await advShowCoins(E, luck, adv.enemy.name + '的');
-                if (id !== adv.runId) return;
-                dmg += luck.bonus;
-            }
-            let dr = advTakeDamage(adv.player, dmg, adv.enemy.special === 'salad');   // 盒裝沙拉：無視雞塊的護盾
-            advData.hp = adv.player.hp;          // 體力會繼承到之後的戰鬥
-            advSave();
-            advSetLog(`${adv.enemy.name}的攻擊${eh > 1 ? `（第 ${hh + 1} 下）` : ''}！${dr.absorbed ? `護盾擋下 ${dr.absorbed} 點，` : ''}雞塊受到 ${dr.loss} 點傷害`);
-            advUpdateHud();
-            await advHurt(P, dmg, false, advHurtLabel(dr));
-            if (id !== adv.runId) return;
-            if (adv.player.hp <= 0) { await advLose(id); return; }
-            if (hh < eh - 1) { await advWait(250); if (id !== adv.runId) return; }
-            }
-            if (adv.enemy.special === 'microwave') {
-                adv.enemy.atk += ADV_MICRO_ATK_UP;
-                advSetLog(`🔥 轉吧！美味雞塊！${adv.enemy.name}越來越燙，攻擊力 +${ADV_MICRO_ATK_UP}（現在 ${adv.enemy.atk}）`);
-                advFloat(E, `攻擊 +${ADV_MICRO_ATK_UP}`, '#F97316');
-                advUpdateHud();
-                await advWait(800);
-                if (id !== adv.runId) return;
-            }
-            if (adv.enemy.special === 'expire') {
-                adv.enemy.hp = Math.max(0, adv.enemy.hp - ADV_EXPIRE_SELF);
-                advSetLog(`🥀 我快過期了..（${adv.enemy.name}自己扣了 ${ADV_EXPIRE_SELF} 點體力）`);
-                advUpdateHud();
-                await advHurt(E, ADV_EXPIRE_SELF, true, '-' + ADV_EXPIRE_SELF);
-                if (id !== adv.runId) return;
-                advFloat(E, '我快過期了..', '#64748B');
-                await advWait(500);
-                if (id !== adv.runId) return;
-                if (adv.enemy.hp <= 0) { await advEnemyDown(id); return; }
-            }
-        }
-        // 珍珠奶茶的「治癒」：敵人攻擊結束後回 1 點體力
-        if (adv.enemy.special === 'heal' && adv.enemy.hp < adv.enemy.max) {
-            adv.enemy.hp = Math.min(adv.enemy.max, adv.enemy.hp + 1);
-            advSetLog(`💚 ${adv.enemy.name}發動治癒，回復 1 點體力`);
-            advUpdateHud();
-            advFloat(E, '+1', '#10B981');
-            await advWait(900);
-            if (id !== adv.runId) return;
-        }
-        adv.round++;
+        // 敵人攻擊、特殊能力：battle-core.js 的 enemyPhase
+        if (await advPlay(BattleCore.enemyPhase(adv), id)) return;
         advBeginRound();
     }
 
@@ -9506,7 +9298,8 @@
         let dropPotion = (!first && rewardOK && lv.potionChance && Math.random() < lv.potionChance) ? 1 : 0;    // IBON 機：重複通關 20% 掉恢復藥水
         if (dropPotion) advData.potions += dropPotion;
         let sodaHeal = 0;
-        if (advHasGear('soda') && advData.hp > 0 && advData.hp < advMaxHp()) { sodaHeal = 1; advData.hp += 1; adv.player.hp = advData.hp; }
+        sodaHeal = BattleCore.winHeal(adv.gear, advData.hp, advMaxHp());   // 彈珠汽水：battle-core.js
+        if (sodaHeal) { advData.hp += sodaHeal; adv.player.hp = advData.hp; }
         gainShards += loot.bonus;
         let clawBonus = (rewardOK && lv.special === 'claw') ? 1 : 0;   // 娃娃機：多掉 1 個冒險代幣
         gainShards += clawBonus;
