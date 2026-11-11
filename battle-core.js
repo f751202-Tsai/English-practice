@@ -24,6 +24,7 @@
     // XP_NEED[n-1] = 升到 Lv.n 需要的「累積」經驗值；從 Lv.0 開始，最高 Lv.20
     const XP_NEED = [3, 7, 37, 75, 124, 187, 268, 371, 503, 672, 888, 1165, 1519, 1903, 2317, 2771, 3265, 3799, 4373, 5007];
     const OLD_XP_RATE = 0.7;                // 已經打贏過的舊關卡：經驗值只有 70%
+    const LOSE_XP_RATE = 0.2;               // 戰敗：拿這關勝利經驗值（不含每日 ×2）的 20%，至少 1；中途離開什麼都沒有
     const MAX_EQUIP = 4;
     const MIN_EQUIP = 3;
     const BASE_SECS = 15;                   // 每題作答時間（秒）
@@ -207,6 +208,8 @@
     }
     // 打贏的經驗值：舊關卡（打贏過的）只有 70%；每天第一場 ×2
     function winXp(lv, old, dbl) { let x = Math.max(1, Math.round((lv.xp || 0) * (old ? OLD_XP_RATE : 1))); return x * (dbl ? 2 : 1); }
+    // 打輸的經驗值：勝利經驗值（舊關卡算 70%、不乘每日 ×2）的 20%，至少 1
+    function loseXp(lv, old) { return Math.max(1, Math.round(winXp(lv, old, false) * LOSE_XP_RATE)); }
 
     function critOn(hitPct) { return hitPct !== null && hitPct !== undefined && hitPct >= CRIT_AT; }
     // 打完第幾關才拿得到（Infinity = 1～20 關都拿不到）
@@ -222,6 +225,9 @@
         let lv = LEVELS.find(l => l.firstItem === key);
         return lv ? lv.id : Infinity;
     }
+    // 解鎖了沒：at = moveUnlockAt／gearUnlockAt 的結果；cleared = 存檔的通關紀錄 { 關卡編號: true }
+    //   0 = 一開始就有；Infinity = 拿不到；其他 = 要打完第 at 關
+    function isUnlocked(at, cleared) { return at === 0 || (Number.isFinite(at) && !!(cleared && cleared[at])); }
     // 打完第 cleared 關時，拿得到哪些招式、裝備
     function unlocks(cleared) {
         return { moves: MOVES.filter(m => moveUnlockAt(m.key) <= cleared).map(m => m.key), gear: Object.keys(ITEMS).filter(k => gearUnlockAt(k) <= cleared) };
@@ -626,14 +632,14 @@
 
     const BattleCore = {
         // 資料
-        BASE_STATS, STAT_KEYS, STAT_MAX, XP_NEED, OLD_XP_RATE, MAX_EQUIP, MIN_EQUIP, BASE_SECS, LUCK_CAP, SHIELD_CAP, SPEED_MIN_SECS,
+        BASE_STATS, STAT_KEYS, STAT_MAX, XP_NEED, OLD_XP_RATE, LOSE_XP_RATE, MAX_EQUIP, MIN_EQUIP, BASE_SECS, LUCK_CAP, SHIELD_CAP, SPEED_MIN_SECS,
         RING_NEED, RING_SECS, RING_PEN, MOVES, LEVELS, TYPE_LABEL, RARITY, MOVE_RARITY, MASTERY_STEPS,
         COFFEE_BURN, CLERK_POSTS, CLERK_SHIFT_HP, CLERK_CD, STAMP_NEED, STAMP_ATK, STAMP_HEAL, RESIST, IMMUNE, WEAK_BONUS,
         SPEED_GUARD, CLERK_SPEED_GUARD, TEA_SPEED_HEAL, EXPIRE_SPEED_DMG, MICRO_ATK_UP, EXPIRE_SELF, EGG_CARD_BONUS, IGNORE_SHIELD,
         ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
         // 公式
         levelOf, upMax, moveByKey, rarityKey, rarity, masteryLevel, masteryPerLv, masteryAtk, luckDice, rollLuck, shieldMax, answerSecs,
-        critOn, moveUnlockAt, gearUnlockAt, unlocks, takeDamage, actionCount, damage, speedCfg, speedBonus, expireSpeedDmg, playerStats, winXp, makeEnemy, hasGear, gearStatBonus, winHeal, shuffle,
+        critOn, moveUnlockAt, gearUnlockAt, isUnlocked, unlocks, takeDamage, actionCount, damage, speedCfg, speedBonus, expireSpeedDmg, playerStats, winXp, loseXp, makeEnemy, hasGear, gearStatBonus, winHeal, shuffle,
         // 戰鬥
         initBattle, immuneType, isImmune, speedGuard, hitDamage, hitCap, enemyIgnoresShield, sealCount,
         canBoba, useBoba, canRedeem, redeemStamps, useFlower, endAction,
