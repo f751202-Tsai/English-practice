@@ -12,7 +12,7 @@
 
 1. **不要在 `app.js` 計算任何戰鬥數字**（傷害、扣血、加攻擊、特殊能力判定都不行）。要改規則就改 `battle-core.js`。
    - `app.js` 裡的 `ADV_LEVELS`、`ADV_MOVES`、`ADV_COFFEE_BURN`… 只是 `BattleCore` 的別名，不要改回寫死的數字。
-   - `advLevel`、`advWinXp`、`advPlayerStats`、`advMastery…`、`advGearBonus` 這些函式也只是轉呼叫 `BattleCore`，不要在裡面重寫算法。
+   - `advLevel`、`advWinXp`、`advPlayerStats`、`advMastery…`、`advGearBonus`、`advMoveOpen`、`advGearOpen` 這些函式也只是轉呼叫 `BattleCore`，不要在裡面重寫算法。
    - 同一個算法不要在 `app.js` 和 `battle-core.js` 各寫一份：模擬器只檢查 `battle-core.js`，`app.js` 的副本改了也檢查不出來。
 2. `battle-core.js` 不能碰畫面：不能用 `document`、`window`、`localStorage`、`setTimeout`、音效、網路。亂數一律用參數 `rng`。
 3. 戰鬥流程是產生器（`function*`）：每做完一步 `yield { t: '事件名', ... }`。
