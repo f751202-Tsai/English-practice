@@ -39,7 +39,7 @@
     const MOVES = [
         { key: 'tackle',  name: '衝撞',         icon: '💥', type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                              desc: '看單字，選出正確的中文意思' },
         { key: 'combo',   name: '連續衝撞',     icon: '💥', type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 5 },                         desc: '看單字，選出正確的中文意思' },
-        { key: 'charge',  name: '衝鋒撞擊',     icon: '🐗', type: 'card',   mode: 'typeCn',      fx: 'charge', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'reward', level: 8 }, desc: '看英文單字，寫出中文意思（可以按 🎤 用說的）' },
+        { key: 'charge',  name: '衝鋒撞擊',     icon: '🐗', type: 'card',   mode: 'typeCn',      fx: 'charge', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'reward', level: 8 }, desc: '看英文單字，寫出中文意思' },
         { key: 'slash',   name: '斬擊',         icon: '⚔️', type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '聽發音，選中文意思' },
         { key: 'slash2',  name: '連續斬擊',     icon: '⚔️', type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 6, item: 'mv_slash2' },       desc: '聽發音，選中文意思' },
         { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'reward', level: 7 }, desc: '聽發音，拼出英文單字（提示第一個字母和字母數）' },
@@ -113,7 +113,7 @@
     const WEAK_BONUS = {};
     // 速答招式：這些敵人會把能力加成扣掉幾點
     const SPEED_GUARD = { tea: 2, coffee: 3 };
-    const CLERK_SPEED_GUARD = 4, TEA_SPEED_HEAL = 1, EXPIRE_SPEED_DMG = 4;
+    const CLERK_SPEED_GUARD = 4, TEA_SPEED_HEAL = 1, EXPIRE_SPEED_DMG = 1, EXPIRE_SPEED_EVERY = 2;   // 愛珍食便當：速答每配對 2 組扣牠 1 點
     const MICRO_ATK_UP = 2;                 // 微波爐：每次攻擊後攻擊力 +2
     const EXPIRE_SELF = 4;                  // 愛珍食便當：攻擊完自己扣 4 點體力
     const EGG_CARD_BONUS = 2;               // 茶葉蛋：字卡類招式每一下傷害 +2
@@ -121,7 +121,7 @@
 
     // ── 裝備（只寫名稱與效果說明；圖示在 app.js）──
     const ITEMS = {
-        boba: { name: '快喝光的珍珠奶茶', desc: '一場戰鬥限用 1 次：第 2 回合起（敵人攻擊過後）、HP 剩 3 以下可以喝，HP +1' },
+        boba: { name: '快喝光的珍珠奶茶', desc: '一場戰鬥限用 1 次：第 2 回合起、HP 剩 3 以下可以喝，HP +1' },
         tofu: { name: '烤焦臭豆腐', desc: '自己的招式失敗時，雙方各扣 1 點體力（無視防禦）' },
         skewer: { name: '竹籤', desc: '攻擊無視對方的護盾，直接扣體力' },
         bill: { name: '繁瑣的繳費單', desc: '？？？' },
@@ -198,8 +198,8 @@
         let diff = (myInt || 0) - (foeInt || 0);
         return { label: c.label, stat: c.stat, every: c.every, pen: c.pen, base: c.secs + lvl * c.lvSecs, secs: Math.max(SPEED_MIN_SECS, c.secs + lvl * c.lvSecs + diff), cap: Math.min(c.maxCap, c.cap + lvl * c.lvCap) };
     }
-    // 愛珍食便當：速答配對 pairs 組，牠要扣幾點（無視護盾）。目前：答對 1 題以上就扣 4 點
-    function expireSpeedDmg(pairs) { return pairs > 0 ? EXPIRE_SPEED_DMG : 0; }
+    // 愛珍食便當：速答配對 pairs 組，牠要扣幾點（無視護盾）：每配對 2 組扣 1 點
+    function expireSpeedDmg(pairs) { return Math.floor(Math.max(0, pairs || 0) / EXPIRE_SPEED_EVERY) * EXPIRE_SPEED_DMG; }
     function speedBonus(pairs, cfg) { return Math.min(cfg.cap, Math.floor(pairs / cfg.every)); }
     function playerStats(up) {
         let s = {};
@@ -635,7 +635,7 @@
         BASE_STATS, STAT_KEYS, STAT_MAX, XP_NEED, OLD_XP_RATE, LOSE_XP_RATE, MAX_EQUIP, MIN_EQUIP, BASE_SECS, LUCK_CAP, SHIELD_CAP, SPEED_MIN_SECS,
         RING_NEED, RING_SECS, RING_PEN, MOVES, LEVELS, TYPE_LABEL, RARITY, MOVE_RARITY, MASTERY_STEPS,
         COFFEE_BURN, CLERK_POSTS, CLERK_SHIFT_HP, CLERK_CD, STAMP_NEED, STAMP_ATK, STAMP_HEAL, RESIST, IMMUNE, WEAK_BONUS,
-        SPEED_GUARD, CLERK_SPEED_GUARD, TEA_SPEED_HEAL, EXPIRE_SPEED_DMG, MICRO_ATK_UP, EXPIRE_SELF, EGG_CARD_BONUS, IGNORE_SHIELD,
+        SPEED_GUARD, CLERK_SPEED_GUARD, TEA_SPEED_HEAL, EXPIRE_SPEED_DMG, EXPIRE_SPEED_EVERY, MICRO_ATK_UP, EXPIRE_SELF, EGG_CARD_BONUS, IGNORE_SHIELD,
         ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
         // 公式
         levelOf, upMax, moveByKey, rarityKey, rarity, masteryLevel, masteryPerLv, masteryAtk, luckDice, rollLuck, shieldMax, answerSecs,
