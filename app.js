@@ -121,9 +121,9 @@
     let editorOpenCount = 0;     // 開啟編輯頁時該題庫的單字數（舊題庫超過上限時不會被刪除）
 
     // ── 商品目錄：價格與上限以後端 shop_items 為準，這裡只是連不上時的預設值 ──
-    const BASE_WORD_CAP = 100, WORD_CAP_STEP = 50;
+    const BASE_WORD_CAP = 100, WORD_CAP_STEP = 100;
     const SHOP_ITEM_META = {
-        word_cap_50: { name: '單字上限 +50',  desc: '指定一本題庫，單字上限 +50' },
+        word_cap_50: { name: '單字上限 +100',  desc: '指定一本題庫，單字上限 +100' },
         list_slot_1: { name: '題庫數量 +1',   desc: '增加 1 本空白題庫（可存放 100 個單字）' },
         mv_charge:   { name: '衝鋒撞擊',     desc: '雞塊大冒險新招式（字卡：輸入中文，威力 3）' },
         mv_slash2:   { name: '連續斬擊',     desc: '雞塊大冒險新招式（聽力：斬 2 下）' },
@@ -132,7 +132,7 @@
     };
     let shopCatalog = {
         word_cap_50: { price: 30, max: 4 },
-        list_slot_1: { price: 60, max: 89 },
+        list_slot_1: { price: 30, max: 89 },
         mv_charge: { price: 5, max: 1 },
         mv_slash2: { price: 3, max: 1 },
         mv_thrust: { price: 5, max: 1 },
@@ -184,7 +184,7 @@
         toeic_office: "absent 缺席的 形容詞\naccess 存取 名詞 動詞\naccess card 門禁卡 名詞\naccessory 配件 名詞\naccuracy 準確性 名詞\naccurate 準確的 形容詞\nadministration 行政 管理 名詞\nadministrative 行政的 形容詞\nadministrator 管理員 名詞\nagenda 議程 名詞\nahead of schedule 提前 副詞\nannounce 宣布 動詞\nannouncement 公告 名詞\nappointment 約會 預約 名詞\napproval 批准 名詞\napprove 批准 動詞\narchive 檔案庫 名詞 歸檔 動詞\narrange 安排 整理 動詞\nas soon as possible 盡快 副詞\nassign 分派 動詞\nassignment 任務 名詞\nassistant 助理 名詞\nattach 附加 動詞\nattachment 附件 名詞\nattend 出席 動詞\nattendance 出勤 出席人數 名詞\nauthorization 授權 名詞\nauthorize 授權 動詞\navailability 可用性 有空 名詞\nback up 備份 動詞\nbackup 備份 名詞\nbadge 識別證 名詞\nbehind schedule 落後進度 副詞\nbinder 活頁夾 名詞\nboard 董事會 公告板 名詞\nboard meeting 董事會議 名詞\nbranch 分公司 名詞\nbreak room 員工休息室 名詞\nbrief 簡短的 形容詞 簡報 名詞\nbriefing 簡報 名詞\nbroken 故障的 形容詞\nbudget 預算 名詞\nbulletin 公告 名詞\nbulletin board 公告欄 名詞\nbusiness hours 營業時間 名詞\ncabinet 櫃子 名詞\ncalculate 計算 動詞\ncalculator 計算機 名詞\ncall a meeting 召開會議 動詞\ncancel 取消 動詞\ncarpool 共乘 名詞 動詞\ncartridge 墨水匣 名詞\nchairperson 主席 名詞\nchecklist 檢查清單 名詞\ncirculate 傳閱 動詞\nclerk 職員 名詞\nclip 迴紋針 名詞 夾住 動詞\nclipboard 寫字夾板 名詞\nclock in 打卡上班 動詞\ncoffee machine 咖啡機 名詞\ncommittee 委員會 名詞\ncompany policy 公司政策 名詞\ncompile 彙編 動詞\ncompletion 完成 名詞\nconference 會議 研討會 名詞\nconference call 電話會議 名詞\nconference room 會議室 名詞\nconfidential 機密的 形容詞\ncoordinate 協調 動詞\ncopier 影印機 名詞\ncopy room 影印室 名詞\ncorrespond 通信 動詞\ncorrespondence 信件往來 名詞\ncorridor 走廊 名詞\ncourier 快遞員 名詞\ncover for 代理 動詞\ncoworker 同事 名詞\ncrowded 擁擠的 形容詞\ncubicle 辦公隔間 名詞\ndata 資料 名詞\ndatabase 資料庫 名詞\nday off 休假日 名詞\ndeadline 截止日期 名詞\ndelegate 委派 動詞 代表 名詞\ndelete 刪除 動詞\ndepartment 部門 名詞\ndesignate 指定 動詞\ndesktop 桌上型電腦 名詞\ndetail 細節 名詞\ndetailed 詳細的 形容詞\ndevice 裝置 名詞\ndiagram 圖表 名詞\ndigital copy 電子檔 名詞\ndirector 主任 董事 名詞\ndirectory 通訊錄 目錄 名詞\ndiscard 丟棄 動詞\ndispenser 取用機 分配器 名詞\ndispose 處理 丟棄 動詞\ndistribute 分發 動詞\ndivision 部門 名詞\ndocument 文件 名詞 記錄 動詞\ndownload 下載 動詞\ndraft 草稿 名詞 起草 動詞\ndrawer 抽屜 名詞\ndue date 截止日 到期日 名詞\nduplicate 複本 名詞 複製 動詞\nedit 編輯 動詞\nefficient 有效率的 形容詞\nelectronic 電子的 形容詞\nenclose 隨函附上 動詞\nenclosure 附件 名詞\nenvelope 信封 名詞\nerrand 差事 名詞\nerror 錯誤 名詞\nexecutive 主管 名詞 行政的 形容詞\nextension cord 延長線 名詞\nfacilitate 促進 主持 動詞\nfasten 固定 繫緊 動詞\nfax 傳真 名詞 動詞\nfile 檔案 名詞 歸檔 動詞\nfile a report 提交報告 動詞\nfile cabinet 檔案櫃 名詞\nfiling 歸檔 名詞\nfiling system 歸檔系統 名詞\nfill in for 代班 動詞\nfill out 填寫 動詞\nfolder 資料夾 名詞\nform 表格 名詞\nformat 格式 名詞\nforward 轉寄 動詞\nfront desk 櫃台 名詞\nfurniture 家具 名詞\ngo over 檢查 複習 動詞\nguideline 指引 名詞\nhand out 分發 動詞\nhandbook 手冊 名詞\nhandout 講義 名詞\nhard copy 紙本 名詞\nheadquarters 總部 名詞\nheadset 耳機麥克風 名詞\nhighlighter 螢光筆 名詞\nhole punch 打孔機 名詞\nin advance 事先 副詞\nin charge 負責的 形容詞\ninbox 收件匣 名詞\nink 墨水 名詞\ninstall 安裝 動詞\ninstruction 說明 指示 名詞\ninternal memo 內部備忘錄 名詞\nIT department 資訊部門 名詞\nitemized 逐項列出的 形容詞\njanitor 清潔工 名詞\nkeep track of 追蹤 記錄 動詞\nlabel 標籤 名詞 貼標籤 動詞\nletterhead 信頭 名詞\nlobby 大廳 名詞\nlocker 置物櫃 名詞\nlog 日誌 名詞 記錄 動詞\nlog in 登入 動詞\nlog out 登出 動詞\nlook over 瀏覽 檢查 動詞\nlounge 休息室 名詞\nmail 郵件 名詞 郵寄 動詞\nmailing list 郵寄名單 名詞\nmailroom 收發室 名詞\nmaintenance request 報修單 名詞\nmalfunction 故障 名詞 動詞\nmanager 經理 名詞\nmanual 手冊 名詞 手動的 形容詞\nmarker 麥克筆 名詞\nmeeting 會議 名詞\nmemo 備忘錄 名詞\nminutes 會議紀錄 名詞\nmonitor 螢幕 名詞 監控 動詞\nmultitask 多工處理 動詞\nnetwork 網路 名詞\nnotepad 便條紙 名詞\nnotification 通知 名詞\nnotify 通知 動詞\noffice equipment 辦公設備 名詞\noffice hours 辦公時間 名詞\noffice manager 辦公室經理 名詞\noffice supplies 辦公用品 名詞\non schedule 按進度 副詞\norder 訂購 動詞 訂單 名詞\norganize 整理 組織 動詞\norganizer 籌辦者 收納用品 名詞\nout of order 故障的 形容詞\noutline 大綱 名詞 概述 動詞\noversee 監督 動詞\novertime 加班 名詞 副詞\npackage 包裹 名詞\npantry 茶水間 名詞\npaper jam 卡紙 名詞\npaperless 無紙化的 形容詞\npaperwork 文書工作 名詞\nparcel 包裹 名詞\npermission 許可 名詞\npetty cash 零用金 名詞\nphotocopier 影印機 名詞\nphotocopy 影印 動詞 影本 名詞\nplace an order 下訂單 動詞\npolicy 政策 規定 名詞\npostpone 延後 動詞\npresident 總裁 名詞\nprint 列印 動詞\nprint out 列印出來 動詞\nprinter 印表機 名詞\nprintout 列印文件 名詞\nprioritize 排定優先順序 動詞\npriority 優先事項 名詞\nprocedure 程序 名詞\nprojector 投影機 名詞\nproofread 校對 動詞\npunctual 準時的 形容詞\nrearrange 重新安排 動詞\nreception area 接待區 名詞\nrecord 紀錄 名詞 記錄 動詞\nrecurring 定期的 形容詞\nrecycling bin 回收桶 名詞\nreference number 參考編號 名詞\nrefill 補充 動詞 補充品 名詞\nregister 登記 動詞 名詞\nregistration 登記 註冊 名詞\nregulation 規定 名詞\nreimburse 核銷 償還 動詞\nreminder 提示 名詞\nrenovate 翻修 動詞\nrenovation 整修 名詞\nreschedule 重新安排 動詞\nresponsibility 責任 名詞\nresponsible 負責的 形容詞\nretrieve 取回 動詞\nrevise 修改 動詞\nrevision 修訂 名詞\nrotate 輪流 動詞\nrotation 輪調 輪替 名詞\nroutine 例行公事 名詞 例行的 形容詞\nscan 掃描 動詞\nscanner 掃描器 名詞\nschedule 時程表 名詞 安排 動詞\nscissors 剪刀 名詞\nsecretary 祕書 名詞\nsecurity 保全 安全 名詞\nserver 伺服器 名詞\nsetup 設置 名詞\nshelf 架子 名詞\nshift 輪班 名詞\nshred 用碎紙機切碎 動詞\nshredder 碎紙機 名詞\nsick leave 病假 名詞\nsign in 簽到 動詞\nsign off 簽核 動詞\nsignature 簽名 名詞\nsoftware 軟體 名詞\nsort 分類 動詞 種類 名詞\nspreadsheet 試算表 名詞\nstack 一疊 名詞 堆疊 動詞\nstaff meeting 員工會議 名詞\nstamp 郵票 印章 名詞 蓋章 動詞\nstaple 釘書針 名詞 用釘書機釘 動詞\nstapler 釘書機 名詞\nstationery 文具 名詞\nsticky note 便利貼 名詞\nstoreroom 儲藏室 名詞\nsubmit 提交 動詞\nsubmit a request 提出申請 動詞\nsummarize 總結 動詞\nsummary 摘要 名詞\nsupervisor 主管 名詞\nsupplies 用品 名詞\nsupply 供應 名詞 動詞\nsupply room 用品室 名詞\nswipe 刷卡 動詞\ntake minutes 做會議記錄 動詞\ntape 膠帶 名詞\ntask 任務 名詞\ntechnical support 技術支援 名詞\ntechnician 技術人員 名詞\ntelecommute 遠距工作 動詞\ntemplate 範本 名詞\ntimesheet 工時表 名詞\nto-do list 待辦清單 名詞\ntoner 碳粉 名詞\ntrash can 垃圾桶 名詞\ntroubleshooting 疑難排解 名詞\nupdate 更新 動詞 名詞\nupload 上傳 動詞\nvending machine 自動販賣機 名詞\nverify 核對 驗證 動詞\nvice president 副總裁 名詞\nvideo conference 視訊會議 名詞\nvisitor 訪客 名詞\nvoice message 語音留言 名詞\nwater cooler 飲水機 名詞\nwhiteboard 白板 名詞\nwork from home 在家工作 動詞\nwork order 工單 名詞\nworkload 工作量 名詞\nworkstation 工作站 名詞",
         farm_1_5: "January 1月 名詞\nFebruary 2月 名詞\nMarch 3月 名詞\nApril 4月 名詞\nMay 5月 名詞\nJune 6月 名詞\nJuly 7月 名詞\nAugust 8月 名詞\nSeptember 9月 名詞\nOctober 10月 名詞\nNovember 11月 名詞\nDecember 12月 名詞\nMonday 星期一 名詞\nTuesday 星期二 名詞\nWednesday 星期三 名詞\nThursday 星期四 名詞\nFriday 星期五 名詞\nSaturday 星期六 名詞\nSunday 星期日 名詞\nspring 春天 名詞\nsummer 夏天 名詞\nautumn 秋天 名詞\nwinter 冬天 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\nyesterday 昨天 名詞 副詞\nmorning 早上 名詞\nnight 夜晚 名詞\nsun 太陽 名詞\nrain 雨 名詞\nwind 風 名詞\ncloud 雲 名詞\nsnow 雪 名詞\nwarm 溫暖的 形容詞\nseed 種子 名詞\nflower 花 名詞\nleaf 葉子 名詞\ntree 樹 名詞\ngrass 草 名詞\nroot 根 名詞\nfruit 水果 名詞\ncorn 玉米 名詞\nrice 米 名詞\npotato 馬鈴薯 名詞\ncarrot 紅蘿蔔 名詞\napple 蘋果 名詞\nbanana 香蕉 名詞\nwatermelon 西瓜 名詞\nsunflower 向日葵 名詞\nchicken 雞 名詞\ndog 狗 名詞\ncat 貓 名詞\ncow 乳牛 名詞\npig 豬 名詞\nduck 鴨 名詞\nbird 鳥 名詞\nbee 蜜蜂 名詞\nhoney 蜂蜜 名詞\nplant 種植 動詞\nwater 澆水 動詞\ngrow 生長 動詞\npick 摘 動詞\ndig 挖 動詞\nfeed 餵 動詞\nwait 等待 動詞\nsell 賣 動詞\nharvest 收成 動詞\nfarm 農場 名詞\nfield 田地 名詞\ngarden 花園 名詞\nfence 圍籬 名詞\nhouse 房子 名詞\nbasket 籃子 名詞\nmarket 市場 名詞\nvegetable 蔬菜 名詞\nstrawberry 草莓 名詞\npineapple 鳳梨 名詞\nbutterfly 蝴蝶 名詞\nafternoon 下午 名詞\nbeautiful 美麗的 形容詞\ntemperature 溫度 名詞\nscarecrow 稻草人 名詞",
         adv_night: "hot 熱的 形容詞\ncup 杯子 名詞\nsoup 湯 名詞\nmeatball 貢丸 肉丸 名詞\neat 吃 動詞\ngood 好的 好吃的 形容詞\ncorn 玉米 名詞\ngrill 烤 動詞 烤架 名詞\nsalt 鹽 名詞\nbutter 奶油 名詞\nsweet 甜的 形容詞\nbuy 買 動詞\noyster 蚵仔 牡蠣 名詞\negg 蛋 名詞\nrice 飯 米 名詞\nsauce 醬料 名詞\nspicy 辣的 形容詞\norder 點餐 動詞\ntofu 豆腐 名詞\nstinky 臭的 形容詞\nbubble tea 珍珠奶茶 名詞\nmilk tea 奶茶 名詞\nice 冰塊 名詞\nsugar 糖 名詞\nstraw 吸管 名詞\ndoll 娃娃 名詞\ncoin 硬幣 名詞\ngrab 抓 動詞\ntry 嘗試 動詞\nprize 獎品 名詞\nplay 玩 動詞\ndart 飛鏢 名詞\nthrow 丟 投擲 動詞\nhit 打中 動詞\nmiss 沒打中 錯過 動詞\nscore 分數 名詞 得分 動詞\nlucky 幸運的 形容詞\nwin 贏 動詞\nlose 輸 動詞\neast 東方 名詞\nwest 西方 名詞\nsouth 南方 名詞\nnorth 北方 名詞\nring 圈圈 戒指 名詞\nstall 攤位 名詞\nline 隊伍 名詞 排隊 動詞\ncrowded 擁擠的 形容詞\ncheap 便宜的 形容詞\nprice 價格 名詞\nnight market 夜市 名詞",
-        adv_store: "convenience store 便利商店 名詞\nopen 營業中的 形容詞 打開 動詞\nclose 關門 關閉 動詞\nwelcome 歡迎 動詞 形容詞\nclerk 店員 名詞\ntea egg 茶葉蛋 名詞\nboil 煮 煮沸 動詞\nhungry 餓的 形容詞\nsnack 零食 名詞\nbreakfast 早餐 名詞\nhot dog 熱狗 名詞\nbun 小圓麵包 名詞\nbread 麵包 名詞\nsandwich 三明治 名詞\nketchup 番茄醬 名詞\ncheese 起司 名詞\nnapkin 餐巾紙 名詞\ninstant noodles 泡麵 名詞\nfull 飽的 滿的 形容詞\ndelicious 好吃的 美味的 形容詞\nrice ball 飯糰 名詞\nseaweed 海苔 名詞\ntuna 鮪魚 名詞\nsalmon 鮭魚 名詞\ntriangle 三角形 名詞\nwrap 包裝 名詞 包起來 動詞\ntear 撕開 動詞\nplastic 塑膠 名詞\nfridge 冰箱 名詞\ncold 冰的 冷的 形容詞\nbottle 瓶子 名詞\nwater 水 名詞\ndrink 飲料 名詞 喝 動詞\nsugar-free 無糖的 形容詞\ngreen tea 綠茶 名詞\nprint 列印 動詞\nticket 票 名詞\nmachine 機器 名詞\nbill 帳單 名詞\nreceipt 收據 發票 名詞\nsalad 沙拉 名詞\nvegetable 蔬菜 名詞\nfresh 新鮮的 形容詞\nlid 蓋子 名詞\nfork 叉子 名詞\nhealthy 健康的 形容詞\nlettuce 生菜 萵苣 名詞\ntomato 番茄 名詞\ndressing 沙拉醬 名詞\nlight 清淡的 輕的 形容詞\nmicrowave 微波爐 名詞 微波加熱 動詞\nheat 加熱 動詞 熱度 名詞\nwarm 溫的 溫暖的 形容詞\nminute 分鐘 名詞\nsecond 秒 名詞\nbutton 按鈕 名詞\nwait 等待 動詞\ncareful 小心的 形容詞\nsteam 蒸氣 名詞\nnoise 噪音 聲音 名詞\nlunch box 便當 名詞\nchopsticks 筷子 名詞\nspoon 湯匙 名詞\nexpire 過期 動詞\ndiscount 折扣 名詞\nhalf price 半價 名詞\nsticker 貼紙 名詞\nmeat 肉 名詞\nchicken 雞肉 名詞\npoint 點數 名詞\ncoffee 咖啡 名詞\nlatte 拿鐵 名詞\niced 加冰的 形容詞\nbitter 苦的 形容詞\nsleepy 想睡的 形容詞\ncashier 收銀員 名詞\ncustomer 顧客 名詞\npay 付錢 動詞\ncash 現金 名詞\ncredit card 信用卡 名詞",
+        adv_store: "convenience store 便利商店 名詞\nopen 營業中的 形容詞 打開 動詞\nclose 關門 關閉 動詞\nwelcome 歡迎 動詞 形容詞\nclerk 店員 名詞\ntea egg 茶葉蛋 名詞\nboil 煮 煮沸 動詞\nhungry 餓的 形容詞\nsnack 零食 名詞\nbreakfast 早餐 名詞\nhot dog 熱狗 名詞\nsausage 香腸 名詞\nbread 麵包 名詞\nsandwich 三明治 名詞\nketchup 番茄醬 名詞\ncheese 起司 名詞\nnapkin 餐巾紙 名詞\ninstant noodles 泡麵 名詞\nfull 飽的 滿的 形容詞\ndelicious 好吃的 美味的 形容詞\nrice ball 飯糰 名詞\nseaweed 海苔 名詞\ntuna 鮪魚 名詞\nsalmon 鮭魚 名詞\ntriangle 三角形 名詞\nwrap 包裝 名詞 包起來 動詞\ntear 撕開 動詞\nplastic 塑膠 名詞\nfridge 冰箱 名詞\ncold 冰的 冷的 形容詞\nbottle 瓶子 名詞\nwater 水 名詞\ndrink 飲料 名詞 喝 動詞\nsugar-free 無糖的 形容詞\ngreen tea 綠茶 名詞\nprint 列印 動詞\nticket 票 名詞\nmachine 機器 名詞\nbill 帳單 名詞\nreceipt 收據 發票 名詞\nsalad 沙拉 名詞\nvegetable 蔬菜 名詞\nfresh 新鮮的 形容詞\nlid 蓋子 名詞\nfork 叉子 名詞\nhealthy 健康的 形容詞\nlettuce 生菜 萵苣 名詞\ntomato 番茄 名詞\ndressing 沙拉醬 名詞\nlight 清淡的 輕的 形容詞\nmicrowave 微波爐 名詞 微波加熱 動詞\nheat 加熱 動詞 熱度 名詞\nwarm 溫的 溫暖的 形容詞\nminute 分鐘 名詞\nsecond 秒 名詞\nbutton 按鈕 名詞\nwait 等待 動詞\ncareful 小心的 形容詞\nsteam 蒸氣 名詞\nnoise 噪音 聲音 名詞\nlunch box 便當 名詞\nchopsticks 筷子 名詞\nspoon 湯匙 名詞\nexpire 過期 動詞\ndiscount 折扣 名詞\nhalf price 半價 名詞\nsticker 貼紙 名詞\nmeat 肉 名詞\nchicken 雞肉 名詞\npoint 點數 名詞\ncoffee 咖啡 名詞\nlatte 拿鐵 名詞\niced 加冰的 形容詞\nbitter 苦的 形容詞\nsleepy 想睡的 形容詞\ncashier 收銀員 名詞\ncustomer 顧客 名詞\npay 付錢 動詞\ncash 現金 名詞\ncredit card 信用卡 名詞",
         basic_noun: "activity 活動 名詞\nafternoon 下午 名詞\nage 年齡 名詞\napplication form 申請表 名詞\narea 區域 名詞\nart 藝術 美術 名詞\nauditorium 禮堂 名詞\nback 後面 名詞\nbackpack 背包 名詞\nbag 包包 名詞\nbank 銀行 名詞\nbe late for 遲到 動詞\nbeginner 初學者 名詞\nbike 腳踏車 名詞\nbirthday 生日 名詞\nbook 書籍 名詞 預訂 動詞\nbookshelf 書架 名詞\nbookstore 書店 名詞\nboss 老闆 名詞\nbottle 瓶子 名詞\nbottom 底部 名詞\nbox 箱子 名詞\nbreakfast 早餐 名詞\nbuilding 建築物 名詞\nbus 公車 名詞\nbusiness card 名片 名詞\ncafeteria 自助餐廳 名詞\ncalendar 日曆 名詞\ncampus 校園 名詞\ncar 汽車 名詞\ncard 卡片 名詞\ncenter 中心 名詞\nchair 椅子 名詞\nchance 機會 名詞\nchapter 章節 名詞\nchild 小孩 名詞\ncity 城市 名詞\nclass 班級 課堂 名詞\nclassmate 同學 名詞\nclassroom 教室 名詞\nclock 時鐘 名詞\nclosing time 打烊時間 名詞\nclothes 衣服 名詞\nclub 社團 俱樂部 名詞\ncoffee 咖啡 名詞\ncoffee break 休息時間 名詞\ncoin 硬幣 名詞\ncollege 大學 學院 名詞\ncolor 顏色 名詞\ncompany 公司 名詞\ncomputer 電腦 名詞\ncontest 比賽 名詞\ncorner 角落 轉角 名詞\ncountry 國家 名詞\ncourse 課程 名詞\ncup 杯子 名詞\ndaily 每日的 形容詞 每天 副詞\ndate 日期 名詞\nday 天 名詞\nday shift 日班 名詞\ndebate 辯論 名詞 動詞\ndesk 書桌 名詞\ndictionary 字典 名詞\ndinner 晚餐 名詞\ndiscussion 討論 名詞\ndoctor 醫生 名詞\ndoor 門 名詞\ndormitory 宿舍 名詞\ndrawing 圖畫 名詞\ndream 夢想 名詞 做夢 動詞\ndriver 司機 名詞\neducation 教育 名詞\nelevator 電梯 名詞\nemail 電子郵件 名詞 寄電子郵件 動詞\nemail address 電子郵件地址 名詞\nenrollment 註冊 名詞\nentrance 入口 名詞\neraser 橡皮擦 名詞\nessay 短文 論文 名詞\nevening 傍晚 名詞\nevent 活動 事件 名詞\nexam 考試 名詞\nexample 例子 名詞\nexcited 興奮的 形容詞\nexit 出口 名詞 離開 動詞\nexperience 經驗 名詞\nextracurricular 課外的 形容詞\nfaculty 全體教職員 名詞\nfamily 家庭 名詞\nfirst day 第一天 名詞\nfirst job 第一份工作 名詞\nfirst name 名字 名詞\nfloor 地板 樓層 名詞\nfood 食物 名詞\nfriend 朋友 名詞\nfront 前面 名詞\nfull-time 全職的 形容詞\ngame 遊戲 比賽 名詞\ngift 禮物 名詞\ngoal 目標 名詞\ngrade 成績 年級 名詞\ngraduate 畢業 動詞 畢業生 名詞\ngraduation 畢業 畢業典禮 名詞\ngroup 群體 小組 名詞\ngroup project 小組作業 名詞\nguest 客人 來賓 名詞\nguidance 輔導 指導 名詞\ngym 體育館 健身房 名詞\nhabit 習慣 名詞\nhall 大廳 走廊 名詞\nhallway 走廊 名詞\nhand in 繳交 動詞\nhardworking 努力的 形容詞\nhat 帽子 名詞\nheadphones 耳機 名詞\nhealth 健康 名詞\nhelper 幫手 名詞\nhistory 歷史 名詞\nhobby 嗜好 名詞\nholiday 假日 名詞\nhometown 家鄉 名詞\nhomework 家庭作業 名詞\nhospital 醫院 名詞\nhour 小時 名詞\nidea 主意 想法 名詞\ninstructor 講師 名詞\ninternet 網際網路 名詞\nintroduction 介紹 名詞\njob 工作 名詞\njob hunting 找工作 名詞\njob title 職稱 名詞\nkey 鑰匙 關鍵 名詞\nkeyboard 鍵盤 名詞\nknowledge 知識 名詞\nlaboratory 實驗室 名詞\nlanguage 語言 名詞\nlaptop 筆記型電腦 名詞\nlast name 姓氏 名詞\nleader 領導者 名詞\nlecture 講課 名詞 演講 動詞\nlesson 課程 教訓 名詞\nletter 信件 字母 名詞\nlevel 程度 等級 名詞\nlibrarian 圖書館員 名詞\nlibrary 圖書館 名詞\nline 線 隊伍 名詞\nlist 清單 名詞 列出 動詞\nlocation 地點 位置 名詞\nlunch 午餐 名詞\nlunch break 午休 名詞\nlunchroom 員工餐廳 名詞\nlunchtime 午餐時間 名詞\nmagazine 雜誌 名詞\nmajor 主修 名詞 動詞\nmap 地圖 名詞\nmark 分數 名詞 打分數 動詞\nmarket 市場 名詞\nmath 數學 名詞\nmeal 餐點 名詞\nmeasure 測量 動詞 措施 名詞\nmember 成員 名詞\nmessage 訊息 名詞\nmiddle 中間 名詞\nminute 分鐘 名詞\nmistake 錯誤 名詞\nmoney 金錢 名詞\nmonth 月份 名詞\nmorning 早晨 名詞\nmusic 音樂 名詞\nnameplate 名牌 名詞\nnationality 國籍 名詞\nnervous 緊張的 形容詞\nnewcomer 新人 名詞\nnews 新聞 消息 名詞\nnewspaper 報紙 名詞\nnight 夜晚 名詞\nnight shift 夜班 名詞\nnote 筆記 名詞 記下 動詞\nnotebook 筆記本 名詞\nnumber 數字 號碼 名詞\nnurse 護士 名詞\noffice 辦公室 名詞\noffice worker 上班族 名詞\nowner 擁有者 老闆 名詞\npage 頁 名詞\npaper 紙張 報告 名詞\nparent 父母 名詞\npark 公園 名詞 停車 動詞\nparking lot 停車場 名詞\npart-time 兼職的 形容詞\npart-time job 打工 名詞\npartner 夥伴 名詞\nparty 派對 名詞\npassword 密碼 名詞\npay attention to 注意 動詞\npen 原子筆 名詞\npencil 鉛筆 名詞\npeople 人們 名詞\nperson 個人 名詞\nphone 電話 名詞\nphone number 電話號碼 名詞\nphoto 照片 名詞\nphysics 物理 名詞\npicture 圖片 照片 名詞\npiece 一片 一件 名詞\npost 郵件 名詞 張貼 動詞\npractice 練習 名詞 動詞\npresentation 簡報 名詞\nprice 價格 名詞\nprincipal 校長 名詞 主要的 形容詞\nprize 獎品 名詞\nproblem 問題 名詞\nprofessor 教授 名詞\nproject 專案 計畫 名詞\nquestion 問題 名詞 質問 動詞\nquiz 小考 名詞\nreason 原因 理由 名詞\nresearch 研究 名詞 動詞\nrestaurant 餐廳 名詞\nrestroom 洗手間 名詞\nresult 結果 名詞\nroad 道路 名詞\nroom 房間 空間 名詞\nroommate 室友 名詞\nrule 規則 名詞\nsalesclerk 店員 名詞\nsalesperson 售貨員 名詞\nscholarship 獎學金 名詞\nschool 學校 名詞\nscience 科學 名詞\nscore 分數 名詞 得分 動詞\nseat 座位 名詞\nsemester 學期 名詞\nseminar 研討會 名詞\nsentence 句子 名詞\nshape 形狀 名詞\nshirt 襯衫 名詞\nshoe 鞋子 名詞\nshop 商店 名詞 購物 動詞\nside 旁邊 一側 名詞\nsign 招牌 標誌 名詞 簽名 動詞\nsize 尺寸 名詞\nskill 技能 名詞\nsmart 聰明的 形容詞\nsnack 點心 名詞\nspace 空間 名詞\nspeaker 演講者 喇叭 名詞\nspeech 演講 名詞\nsport 運動 名詞\nstairs 樓梯 名詞\nstation 車站 名詞\nstep 步驟 名詞\nstore 商店 名詞 儲存 動詞\nstory 故事 樓層 名詞\nstreet 街道 名詞\nstudent 學生 名詞\nstudy group 讀書會 名詞\nsubject 科目 主題 名詞\nsubway 地鐵 名詞\ntable 桌子 表格 名詞\ntake notes 做筆記 動詞\ntaxi 計程車 名詞\ntea 茶 名詞\nteacher 老師 名詞\nteam 團隊 名詞\nteam member 團隊成員 名詞\nteammate 隊友 名詞\ntelephone 電話 名詞\nterm 學期 期限 名詞\ntest 測驗 名詞 測試 動詞\nticket 票 名詞\ntime 時間 次數 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\ntop 頂端 名詞\ntopic 主題 名詞\ntown 城鎮 名詞\ntrain 火車 名詞 訓練 動詞\ntranslate 翻譯 動詞\ntranslation 翻譯 名詞\ntype 類型 名詞 打字 動詞\numbrella 雨傘 名詞\nuniform 制服 名詞 一致的 形容詞\nvocabulary 字彙 名詞\nvolunteer 志工 名詞 自願 動詞\nwaiter 服務生 名詞\nwall 牆壁 名詞\nwater 水 名詞\nweather 天氣 名詞\nwebsite 網站 名詞\nweek 星期 名詞\nweekday 平日 名詞\nweekend 週末 名詞\nwindow 窗戶 名詞\nword 單字 名詞\nwork hours 工作時數 名詞\nworker 工人 員工 名詞\nyear 年 名詞\nyearly 每年的 形容詞\nyesterday 昨天 名詞 副詞",
         basic_verb: "able 有能力的 形容詞\naccept 接受 動詞\nachieve 達成 動詞\nact 行動 動詞\nactive 積極的 形容詞\nadd 增加 動詞\nafford 負擔得起 動詞\nafraid 害怕的 形容詞\nagree 同意 動詞\nallow 允許 動詞\nalone 單獨的 形容詞\nangry 生氣的 形容詞\nanswer 回答 動詞 名詞\narrive 到達 動詞\nask 詢問 動詞\navoid 避免 動詞\nbad 壞的 形容詞\nbeautiful 美麗的 形容詞\nbegin 開始 動詞\nbelieve 相信 動詞\nbelong 屬於 動詞\nbig 大的 形容詞\nborrow 借入 動詞\nbreak 打破 動詞 休息 名詞\nbright 明亮的 聰明的 形容詞\nbring 帶來 動詞\nbuild 建造 動詞\nbusy 忙碌的 形容詞\nbuy 購買 動詞\ncall 打電話 呼叫 動詞\ncall off 取消 動詞\ncarry 攜帶 搬運 動詞\ncarry out 執行 動詞\ncatch 抓住 趕上 動詞\nchange 改變 動詞 零錢 名詞\ncheap 便宜的 形容詞\nchoose 選擇 動詞\nclean 打掃 動詞 乾淨的 形容詞\nclear 清楚的 形容詞\nclose 關閉 動詞 接近的 形容詞\ncold 冷的 形容詞 感冒 名詞\ncome 來 動詞\ncome up with 想出 動詞\ncomfortable 舒適的 形容詞\ncompare 比較 動詞\ncomplete 完成 動詞 完整的 形容詞\nconsider 考慮 動詞\ncontinue 繼續 動詞\ncook 烹調 動詞 廚師 名詞\ncopy 複製 動詞 副本 名詞\ncorrect 正確的 形容詞 改正 動詞\ncreate 創造 動詞\ncross 穿越 動詞\ncut 切 剪 動詞\ndark 黑暗的 形容詞\ndecide 決定 動詞\ndeliver 遞送 動詞\ndepend 依賴 動詞\ndevelop 發展 動詞\ndifferent 不同的 形容詞\ndifficult 困難的 形容詞\ndirty 髒的 形容詞\ndisappear 消失 動詞\ndiscover 發現 動詞\ndiscuss 討論 動詞\ndo 做 動詞\ndraw 畫畫 動詞\ndrink 喝 動詞 飲料 名詞\ndrive 開車 動詞\ndrop 落下 動詞\ndrop off 放下 送達 動詞\nearly 早的 形容詞\neasy 簡單的 形容詞\neat 吃 動詞\nempty 空的 形容詞\nenjoy 享受 動詞\nenter 進入 動詞\nexpect 期待 預期 動詞\nexpensive 昂貴的 形容詞\nexplain 解釋 動詞\nfail 失敗 動詞\nfall 落下 動詞\nfamous 有名的 形容詞\nfast 快的 形容詞\nfeel 感覺 動詞\nfew 很少的 形容詞\nfigure out 想出 弄清楚 動詞\nfill 填滿 填寫 動詞\nfind 找到 動詞\nfind out 查明 發現 動詞\nfine 好的 形容詞 罰款 名詞\nfinish 完成 動詞\nfit 合身 動詞 健康的 形容詞\nfix 修理 固定 動詞\nfly 飛 搭飛機 動詞\nfollow 跟隨 遵循 動詞\nforget 忘記 動詞\nfree 免費的 自由的 形容詞\nfresh 新鮮的 形容詞\nfull 滿的 形容詞\nget 得到 動詞\nget rid of 擺脫 丟掉 動詞\ngive 給予 動詞\ngive up 放棄 動詞\ngo 去 動詞\ngood 好的 形容詞\ngreat 很棒的 偉大的 形容詞\ngrow 生長 成長 動詞\nguess 猜測 動詞\nhang 懸掛 動詞\nhappen 發生 動詞\nhappy 快樂的 形容詞\nhard 困難的 堅硬的 形容詞\nhave 有 動詞\nhealthy 健康的 形容詞\nhear 聽到 動詞\nheavy 重的 形容詞\nhelp 幫助 動詞 名詞\nhigh 高的 形容詞\nhold 握住 舉行 動詞\nhope 希望 動詞\nhot 熱的 形容詞\nhuge 巨大的 形容詞\nhurry 趕快 動詞\nimagine 想像 動詞\nimportant 重要的 形容詞\nimprove 改善 動詞\ninclude 包含 動詞\ninteresting 有趣的 形容詞\ninvite 邀請 動詞\njoin 加入 動詞\nkeep 保持 動詞\nkind 親切的 形容詞 種類 名詞\nknow 知道 動詞\nlarge 大的 形容詞\nlate 遲的 晚的 形容詞\nlaugh 笑 動詞\nlearn 學習 動詞\nleave 離開 動詞\nlift 舉起 動詞\nlight 輕的 形容詞 光線 名詞\nlike 喜歡 動詞\nlisten 聽 動詞\nlittle 小的 形容詞\nlive 居住 動詞\nlong 長的 形容詞\nlook 看 動詞\nlook for 尋找 動詞\nlook forward to 期待 動詞\nlose 失去 動詞\nloud 大聲的 形容詞\nlow 低的 形容詞\nlucky 幸運的 形容詞\nmain 主要的 形容詞\nmake 製作 動詞\nmake sure 確定 動詞\nmany 許多的 形容詞\nmature 成熟的 形容詞 成熟 動詞\nmean 意指 動詞 刻薄的 形容詞\nmeet 見面 動詞\nmind 介意 動詞 頭腦 名詞\nmiss 錯過 想念 動詞\nmodern 現代的 形容詞\nmove 移動 搬家 動詞\nmuch 許多的 形容詞\nnarrow 狹窄的 形容詞\nnear 接近的 形容詞\nneed 需要 動詞\nnew 新的 形容詞\nnice 不錯的 形容詞\nnoisy 吵鬧的 形容詞\nnormal 正常的 形容詞\nnotice 注意到 動詞 通知 名詞\nold 老的 舊的 形容詞\nopen 打開 動詞 開放的 形容詞\npack 打包 動詞\npay 支付 動詞\npick 挑選 撿起 動詞\npick up 撿起 接送 動詞\nplace 放置 動詞 地方 名詞\nplan 計劃 動詞 名詞\nplay 玩 動詞\npoint 指向 動詞\npoor 貧窮的 差的 形容詞\npopular 受歡迎的 形容詞\npossible 可能的 形容詞\nprefer 更喜歡 動詞\nprepare 準備 動詞\nprotect 保護 動詞\nprove 證明 動詞\nprovide 提供 動詞\npull 拉 動詞\npush 推 動詞\nput 放置 動詞\nput off 延後 動詞\nquick 快速的 形容詞\nquiet 安靜的 形容詞\nread 閱讀 動詞\nready 準備好的 形容詞\nreal 真實的 形容詞\nreceive 收到 動詞\nreduce 減少 動詞\nremember 記得 動詞\nremove 移除 動詞\nrepeat 重複 動詞\nreply 回覆 動詞 名詞\nrest 休息 動詞 名詞\nreturn 返回 歸還 動詞\nrich 富有的 形容詞\nride 騎 搭乘 動詞\nright 正確的 右邊的 形容詞\nring 響 動詞 戒指 名詞\nrise 上升 動詞\nrun 跑 動詞\nrun out of 用完 動詞\nsafe 安全的 形容詞\nsame 相同的 形容詞\nsave 節省 拯救 動詞\nsay 說 動詞\nsee 看見 動詞\nseem 似乎 動詞\nsell 銷售 動詞\nsend 寄出 動詞\nserious 嚴重的 認真的 形容詞\nset up 設立 安排 動詞\nshare 分享 動詞\nshort 短的 矮的 形容詞\nshow 顯示 動詞 表演 名詞\nshow up 出現 動詞\nshut 關上 動詞\nsick 生病的 形容詞\nsign up 報名 動詞\nsimple 簡單的 形容詞\nsit 坐 動詞\nsleep 睡眠 動詞 名詞\nslow 慢的 形容詞\nsmall 小的 形容詞\nsmell 聞 動詞 氣味 名詞\nsmile 微笑 動詞 名詞\nsoft 柔軟的 形容詞\nspeak 說話 動詞\nspecial 特別的 形容詞\nspend 花費 動詞\nstand 站立 動詞\nstart 開始 動詞\nstay 停留 動詞\nstop 停止 動詞\nstrong 強壯的 形容詞\nstudy 學習 動詞\nsucceed 成功 動詞\nsuggest 建議 動詞\nsure 確定的 形容詞\nsweet 甜的 形容詞\ntake 拿取 動詞\ntake care of 照顧 處理 動詞\ntalk 談話 動詞\ntall 高的 形容詞\ntaste 品嚐 動詞 味道 名詞\nteach 教導 動詞\ntell 告訴 動詞\nthick 厚的 形容詞\nthin 薄的 瘦的 形容詞\nthink 想 動詞\nthrow 投擲 動詞\ntired 疲倦的 形容詞\ntouch 觸摸 動詞\ntrue 真實的 形容詞\ntry 嘗試 動詞\ntry on 試穿 動詞\nturn 轉動 動詞\nturn down 拒絕 調低 動詞\nturn off 關掉 動詞\nturn on 打開 動詞\nunderstand 理解 動詞\nuse 使用 動詞\nuseful 有用的 形容詞\nusual 通常的 形容詞\nvisit 參觀 拜訪 動詞\nwait 等待 動詞\nwake 醒來 動詞\nwake up 醒來 動詞\nwalk 走路 動詞\nwant 想要 動詞\nwarm 溫暖的 形容詞\nwash 洗 動詞\nwatch 觀看 動詞 手錶 名詞\nweak 虛弱的 形容詞\nwear 穿戴 動詞\nwet 濕的 形容詞\nwide 寬的 形容詞\nwin 贏 動詞\nwise 明智的 形容詞\nwish 希望 動詞\nwonder 想知道 動詞\nwonderful 美好的 形容詞\nwork 工作 動詞 名詞\nworry 擔心 動詞\nwrite 書寫 動詞\nwrong 錯誤的 形容詞\nyoung 年輕的 形容詞"
     };
@@ -681,7 +681,8 @@
     // ---------------------------------
     // 🛒 雞塊補給站
     // ---------------------------------
-    function openChickenShopModal() {
+    function openChickenShopModal(tab) {
+        if (tab !== undefined && tab !== null && tab !== '') { try { advShopTab = Math.max(0, Math.min(2, parseInt(tab) || 0)); advShopFilter = 'all'; } catch (e) {} }   // 指定分頁（0 = 單字庫）
         checkDailyReset();
         updateChickenShopUI();
         advRenderShopBox();
@@ -1389,7 +1390,7 @@
             ta.value = list.content;
             handleEditorSearch();
         }
-        alert(`⚠️ 「${list.title}」最多只能放 ${limit} 個單字，超出的 ${removed} 行已移除。\n可到「雞塊補給站」兌換單字上限 +50。`);
+        alert(`⚠️ 「${list.title}」最多只能放 ${limit} 個單字，超出的 ${removed} 行已移除。\n可到「雞塊補給站」兌換單字上限 +100。`);
         return removed;
     }
 
@@ -1735,6 +1736,8 @@
     function switchView(viewId) {
         try { if (viewId !== 'adventureView') faStop(); if (viewId !== 'adventureBattleView') advHideResult(); } catch (e) {}
         if (viewId !== 'adventureBattleView') document.body.classList.remove('bt-on');
+        document.body.classList.toggle('ah-on', viewId === 'adventureView');     // 大冒險首頁：整個畫面固定（地圖自己捲動）
+        if (viewId !== 'adventureView') { try { ahWalkStop(); ahHold = null; } catch (e) {} }
         // 戰鬥中打字：鍵盤蓋在畫面上，不要把整個遊戲畫面往上推
         try { if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = (viewId === 'adventureBattleView'); } catch (e) {}
         document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
@@ -1959,7 +1962,7 @@
             let advP = packs.filter(x => (WORD_PACKS[x.l.pack] || {}).kind === 'adv').sort((x, y) => (WORD_PACKS[x.l.pack].chapter || 0) - (WORD_PACKS[y.l.pack].chapter || 0));
             let farmP = packs.filter(x => (WORD_PACKS[x.l.pack] || {}).kind === 'farm');
             let others = packs.filter(x => ['adv', 'farm'].indexOf((WORD_PACKS[x.l.pack] || {}).kind) === -1);
-            let shop = `<div class="lst-row lst-shop" data-on-click='[["openChickenShopModal",[]]]'><span class="lst-no">🛒</span><span class="lst-tx"><b>到雞塊補給站看更多</b></span><span class="lst-ar">›</span></div>`;
+            let shop = `<div class="lst-row lst-shop" data-on-click='[["openChickenShopModal",[0]]]'><span class="lst-no">🛒</span><span class="lst-tx"><b>到雞塊補給站看更多</b></span><span class="lst-ar">›</span></div>`;
             // 多益放上面；大冒險題庫比較不重要，放在下面
             html = `<div class="lst-grp">多益</div><div class="lst-list">${others.map(row).join('')}${shop}</div>`
                 + (advP.length ? `<div class="lst-grp">大冒險</div><div class="lst-list">${advP.map(row).join('')}</div>` : '')
@@ -2396,7 +2399,7 @@
         if (!grid) return;
         grid.innerHTML = '';
         
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
+        let activeLists = pickListOrder(wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l)));
         let savedPracticeSelected = JSON.parse(localStorage.getItem('dictation_practice_selected')) || [0];
         
         activeLists.forEach((list, displayIdx) => {
@@ -2523,12 +2526,18 @@
         setPickSummary('practiceStatsText', 'cardGrid', totalWords, starCount);
     }
 
+    // 練習範圍的排列：自訂題庫 → 多益（放在一起）→ 冒險（照章節）→ 農場；同一組裡維持原本順序
+    function pickListOrder(arr) {
+        let grp = l => { if (!isPackList(l)) return 0; let k = (WORD_PACKS[l.pack] || {}).kind; return k === 'toeic' ? 1 : k === 'adv' ? 2 : k === 'farm' ? 3 : 4; };
+        let ch = l => (isPackList(l) && (WORD_PACKS[l.pack] || {}).chapter) || 0;
+        return arr.map((l, i) => ({ l, i })).sort((a, b) => (grp(a.l) - grp(b.l)) || (ch(a.l) - ch(b.l)) || (a.i - b.i)).map(x => x.l);
+    }
     function initFlashcardGrid() {
         let grid = document.getElementById('flashcardGrid');
         if (!grid) return;
         grid.innerHTML = '';
         
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
+        let activeLists = pickListOrder(wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l)));
         let savedSelected = JSON.parse(localStorage.getItem('dictation_flashcard_selected')) || [0];
         
         activeLists.forEach((list, displayIdx) => {
@@ -2753,7 +2762,7 @@
         if (!grid) return;
         grid.innerHTML = '';
         
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
+        let activeLists = pickListOrder(wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l)));
         let savedSelected = JSON.parse(localStorage.getItem('dictation_card_exam_selected')) || [0];
         
         activeLists.forEach((list, displayIdx) => {
@@ -2855,7 +2864,7 @@
         if (!grid) return;
         grid.innerHTML = '';
         
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
+        let activeLists = pickListOrder(wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l)));
         let savedSelected = JSON.parse(localStorage.getItem('dictation_speak_practice_selected')) || [0];
         
         activeLists.forEach((list, displayIdx) => {
@@ -3870,7 +3879,7 @@
         if (!grid) return;
         grid.innerHTML = '';
         
-        let activeLists = wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l));
+        let activeLists = pickListOrder(wordLists.map((l, originalIdx) => ({ ...l, originalIdx })).filter(l => getListWordCount(l.content) > 0 && isListInCurrentLang(l)));
         let savedExamSelected = JSON.parse(localStorage.getItem('dictation_exam_selected')) || [0];
 
         activeLists.forEach((list, displayIdx) => {
@@ -3998,7 +4007,7 @@
         el.classList.toggle('is-full', count >= cap);
         el.classList.toggle('is-near', count < cap && count >= cap * 0.9);
         el.title = count >= cap
-            ? '已達單字上限，可到「雞塊補給站」兌換單字上限 +50'
+            ? '已達單字上限，可到「雞塊補給站」兌換單字上限 +100'
             : `還可以再放 ${cap - count} 個單字`;
     }
 
@@ -4269,17 +4278,55 @@
             .replace(/[零〇一二兩三四五六七八九十百千]+/g, cnNumRun);
     }
     function chiNorm(s) { return cnDigits(String(s || '').normalize('NFC').replace(/[（(][^）)]*[）)]/g, '').replace(/[\s　，,、；;。.！!？?\/／…~～]/g, '')); }
+    // ── 中文答案的彈性比對（字卡練習、測驗、大冒險招式共用）──
+    //   1. 結尾的「的／地」可有可無：熱的 = 熱
+    //   2. 否定詞「沒有／沒／無／不」視為一樣：沒禮貌的 = 不禮貌 = 沒有禮貌
+    //   3. 把幾個意思合在一起寫也算對：飽的、滿的 → 飽滿的
+    //   4. 同義詞表（CN_SYNONYMS）：寫法不同但意思一樣的字，要一組一組加上去
+    const CN_SYNONYMS = [
+        ['商店', '超商'],           // 便利商店 = 便利超商
+        ['折扣', '打折'],           // discount
+        ['好吃', '美味'],
+        ['飲料', '飲品'],
+        ['衛生紙', '紙巾', '餐巾紙'],
+        ['冰箱', '冷藏櫃'],
+        ['收銀員', '收銀人員'],
+        ['顧客', '客人'],
+        ['信用卡', '刷卡']
+    ];
+    function cnCanon(s) {
+        let t = chiNorm(s).toLowerCase();
+        CN_SYNONYMS.forEach(g => { for (let k = 1; k < g.length; k++) t = t.split(g[k]).join(g[0]); });
+        t = t.replace(/^(沒有|沒|無|不)/, '不');
+        t = t.replace(/[的地]+$/, '');
+        return t;
+    }
+    // 一格答案對到哪一個意思（-1 = 都沒對到）
+    function cnMatchIdx(u, meanings) {
+        let cu = cnCanon(u);
+        if (!cu) return -1;
+        return meanings.findIndex(m => { let cm = cnCanon(m); return cm && cm === cu; });
+    }
+    // 把幾個意思合在一起寫（任意順序，最多 3 個意思）
+    function cnMatchCombined(u, meanings) {
+        let cu = cnCanon(u);
+        if (!cu || meanings.length < 2 || meanings.length > 3) return false;
+        let parts = meanings.map(cnCanon);
+        let perms = parts.length === 2 ? [[0, 1], [1, 0]] : [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+        return perms.some(p => p.map(i => parts[i]).join('') === cu);
+    }
+    function cnLooseMatch(u, meanings) { return cnMatchIdx(u, meanings) !== -1 || cnMatchCombined(u, meanings); }
     // 每一格都要對到一個「還沒用過」的意思（順序不拘）；沒有中文的單字直接算對
     function matchChineseAnswers(userArr, item) {
         let meanings = (item && item.meanings) || [];
         if (!meanings.length) return true;
-        let pool = meanings.map(chiNorm);
+        let pool = meanings.slice();
         let whole = chiNorm(meanings.join(''));
         for (let u of userArr) {
             let nu = chiNorm(u);
             if (!nu) return false;
-            let i = pool.indexOf(nu);
-            if (i === -1 && userArr.length === 1 && nu === whole) return true;
+            let i = cnMatchIdx(u, pool);
+            if (i === -1 && userArr.length === 1 && (nu === whole || cnMatchCombined(u, meanings))) return true;
             if (i === -1) return false;
             pool.splice(i, 1);
         }
@@ -5356,7 +5403,7 @@
 
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
         triggerAutoSaveToCloud();
-        let fullNote = skippedFull > 0 ? `\n⚠️ 題庫已達 ${getListWordCap(wordLists[targetListIdx])} 字上限，有 ${skippedFull} 個單字沒有加入（可到「雞塊補給站」兌換單字上限 +50）。` : '';
+        let fullNote = skippedFull > 0 ? `\n⚠️ 題庫已達 ${getListWordCap(wordLists[targetListIdx])} 字上限，有 ${skippedFull} 個單字沒有加入（可到「雞塊補給站」兌換單字上限 +100）。` : '';
         alert(`✅ 成功將 ${addedCount} 個錯題單字儲存至「${wordLists[targetListIdx].title}」！${fullNote}`);
     }
 
@@ -5972,13 +6019,14 @@
     // 每天前 3 次重複通關有獎勵
     // 首頁「雞塊樂園」標題旁的小標籤：目前要打第幾關
     function homeAdvBadge() {
-        let el = document.getElementById('funLvBadge');
+        let el = document.getElementById('advListBadge');       // 樂園頁「雞塊大冒險」右邊（樂園分頁上不再顯示，因為還有農場）
         if (!el || typeof advData === 'undefined' || !advData) return;
         let n = ADV_LEVELS.length, next = 1;
         while (next <= n && advData.cleared[next]) next++;
         el.textContent = next > n ? '全破' : `第 ${next} 關`;
         el.style.display = '';
         try { advUpdateGearAlerts(); } catch (e) {}
+        try { ahUpdateBadges(); } catch (e) {}
     }
     function advDevDone() { advSave(); try { advRefreshViews(); } catch (e) {} }
 
@@ -5992,6 +6040,7 @@
         if (m.buy.kind === 'free') return true;
         if (advData.own[key] === true) return true;
         if (advData.legendReset && advRarityKey(key) === 'legend') return false;   // testreset 後：傳說招式要重新在補給站買
+        if (m.buy.kind !== 'shards') return false;             // 關卡獎勵的招式（例如連續斬擊）：只看存檔，不看以前用雞塊買過的紀錄（testreset 後要重打）
         return !!(m.buy.item && walletQty(m.buy.item) > 0);    // 以前用雞塊買過的
 
     }
@@ -6257,14 +6306,19 @@
             return wrap(`${shadow}
                 <path d="M 30 100 Q 30 66 60 66 Q 90 66 90 100 Z" fill="#16A34A" stroke="#231F20" stroke-width="5" stroke-linejoin="round"/>
                 <path d="M 46 68 L 60 84 L 74 68" fill="#FFFFFF" stroke="#231F20" stroke-width="4" stroke-linejoin="round"/>
-                <rect x="44" y="84" width="32" height="12" rx="3" fill="#F97316" stroke="#231F20" stroke-width="3"/>
-                <text x="60" y="93.5" font-size="8" font-weight="900" text-anchor="middle" fill="#FFFFFF" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">店員</text>
                 <circle cx="60" cy="40" r="26" fill="#FCD9B6" stroke="#231F20" stroke-width="5"/>
                 <path d="M 34 34 Q 36 12 60 12 Q 84 12 86 34 Q 72 26 60 28 Q 48 26 34 34 Z" fill="#3F2A1D" stroke="#231F20" stroke-width="4" stroke-linejoin="round"/>
                 <path d="M 32 32 Q 60 18 88 32 L 88 36 Q 60 24 32 36 Z" fill="#16A34A" stroke="#231F20" stroke-width="3.5" stroke-linejoin="round"/>
                 <circle cx="50" cy="42" r="4" fill="#231F20"/><circle cx="70" cy="42" r="4" fill="#231F20"/>
                 <path d="M 50 52 Q 60 59 70 52" stroke="#231F20" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-                <ellipse cx="42" cy="50" rx="5" ry="3" fill="#F87171" opacity="0.7"/><ellipse cx="78" cy="50" rx="5" ry="3" fill="#F87171" opacity="0.7"/>`);
+                <ellipse cx="42" cy="50" rx="5" ry="3" fill="#F87171" opacity="0.7"/><ellipse cx="78" cy="50" rx="5" ry="3" fill="#F87171" opacity="0.7"/>
+                <!-- 櫃檯：店員站在櫃檯後面 -->
+                <rect x="14" y="70" width="22" height="12" rx="2" fill="#475569" stroke="#231F20" stroke-width="3"/><rect x="17" y="72.5" width="16" height="5" rx="1" fill="#5EEAD4"/>
+                <rect x="4" y="80" width="112" height="8" rx="3" fill="#FFFFFF" stroke="#231F20" stroke-width="4"/>
+                <rect x="9" y="88" width="102" height="19" fill="#16A34A" stroke="#231F20" stroke-width="4" stroke-linejoin="round"/>
+                <rect x="9" y="88" width="102" height="4" fill="#F97316"/>
+                <rect x="44" y="94" width="32" height="10" rx="3" fill="#F97316" stroke="#231F20" stroke-width="2.5"/>
+                <text x="60" y="101.8" font-size="7.5" font-weight="900" text-anchor="middle" fill="#FFFFFF" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif">店員</text>`);
         }
         if (kind === 'bento' || kind === 'bento2') {
             let old = kind === 'bento2';
@@ -6453,31 +6507,6 @@
     let advMapChapter = 1;
     function advChapterOf(id) { let c = ADV_CHAPTERS.find(ch => id >= ch.from && id <= ch.to); return c ? c.id : 1; }
     function advHighestUnlocked() { let best = 1; ADV_LEVELS.forEach(l => { if (advUnlocked(l.id)) best = Math.max(best, l.id); }); return best; }
-    function advMapStep(d) {
-        advMapChapter = Math.max(1, Math.min(ADV_CHAPTERS.length, advMapChapter + (parseInt(d) || 0)));
-        advRenderMap();
-    }
-    function advRenderMap() {
-        if (faState) return;           // 插旗動畫播放中：不要重畫地圖（會把動畫蓋掉）
-        let ch = ADV_CHAPTERS.find(c => c.id === advMapChapter) || ADV_CHAPTERS[0];
-        let prev = document.getElementById('advMapPrev'), next = document.getElementById('advMapNext');
-        if (prev) prev.disabled = ch.id <= 1;
-        if (next) next.disabled = ch.id >= ADV_CHAPTERS.length;
-        let sub = document.getElementById('advMapSub');
-        if (sub) sub.textContent = `第 ${ch.id} 章：${ch.name}（第 ${ch.from}～${ch.to} 關）`;
-        let nodes = ADV_MAP_PTS.map((p, i) => {
-            let id = ch.from + i, lv = ADV_LEVELS.find(l => l.id === id);
-            let st = (!lv || !advUnlocked(id)) ? 'locked' : (advData.cleared[id] ? 'cleared' : 'open');
-            let pos = `left:${(p[0] / ADV_MAP_W * 100).toFixed(2)}%;top:${(p[1] / ADV_MAP_H * 100).toFixed(2)}%`;
-            return (lv && st !== 'locked')
-                ? `<button type="button" class="adv-node ${st}" style="${pos}" aria-label="第 ${id} 關" data-on-click='[["goToAdvLevel",[${id}]]]'>${id}</button>`
-                : `<button type="button" class="adv-node locked" style="${pos}" disabled aria-label="第 ${id} 關（${lv ? '先通關上一關' : '敬請期待'}）">🔒</button>`;
-        }).join('');
-        let box = document.getElementById('advMap');
-        if (!box) return;
-        advFitMap(box);
-        box.innerHTML = (ch.id === 2 ? advStoreMapSVG() : advMapSVG()) + nodes;
-    }
     // 地圖高度 = 手機畫面剩下的高度（介於「寬 × 1.15」和原本比例之間），整張地圖不用捲動就看得完
     function advFitMap(box) {
         let w = box.offsetWidth;
@@ -6490,8 +6519,6 @@
         box.style.height = Math.round(h) + 'px';
         advMapK = (h / w) * ADV_MAP_W / ADV_MAP_H;
     }
-    window.addEventListener('resize', () => { try { if (document.getElementById('adventureView').classList.contains('active')) advRenderMap(); } catch (e) {} });
-    try { if (window.visualViewport) window.visualViewport.addEventListener('resize', () => { try { if (document.getElementById('adventureView').classList.contains('active')) advRenderMap(); } catch (e) {} }); } catch (e) {}
 
     // ── 第 2 頁：關卡（攻略條件 + 出題範圍）──
     let advSelected = [];
@@ -6522,11 +6549,7 @@
         try { localStorage.setItem(ADV_SEL_KEY, JSON.stringify(advSelected)); } catch (e) {}
         advRenderLevelPage();
     }
-    function advSyncCustomTab() {
-        let grid = document.getElementById('advGrid');
-        if (!advCustomTab) advCustomTab = (grid && grid.querySelector('.select-card[data-kind="custom"]')) ? 'mine' : 'pack';
-        pickSeg['advGrid'] = advCustomTab === 'pack' ? 'pack' : 'custom';
-    }
+    function advSyncCustomTab() {}
     // 關卡副標：夜市篇・第 44–50 字／複習第 1–9 關・共 50 字
     function advHeroSub(lv) {
         let p = advPlanOf(lv.id), k = advAutoParts().night.length;
@@ -6535,54 +6558,53 @@
     }
     const ADV_WARN_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4"/></svg>';
     const ADV_SWORD_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6M16 16l4 4M19 21l2-2"/></svg>';
+    const AH_SWORDS = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/><path d="M11 19l-6-6M8 16l-4 4M5 21l-2-2"/></svg>';
     function advRenderLevelPage() {
         let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0];
-        let auto = advMode() === 'auto';
-        advSyncCustomTab();
+        let auto = advMode() === 'auto', kind = advCustomTab === 'pack' ? 'pack' : 'mine';
+        if (!auto) { let c = ahDeckChosen(kind, lv.minWords); advSelected = c ? [c.i] : []; }
         let words = auto ? advAutoWords(lv) : advGetWords();
         let n = words.length;
-        if (!auto) setPickSummary('advStatsText', 'advGrid', n, words.filter(w => w.starred).length);
-        advRenderModeBox(lv, auto);
         advSyncDaily();
+        advRenderModeBox(lv, auto, n);
         let ok = auto || n >= lv.minWords;       // 冒險題庫：每關的字數照關卡設計
         let tired = advData.hp <= 0;
         let max = advMaxHp(), hp = Math.max(0, Math.min(advData.hp, max));
         let isCleared = !!advData.cleared[lv.id];
-        let canGo = ok && !tired;                // 已通關的關卡可以一直重複挑戰（每天前 3 次有通關獎勵）
+        let canGo = ok && !tired;
         let used = advReplaysUsed(), cap = advReplayCap(), rewardLeft = Math.max(0, cap - used);
         let tag = '', off = false;
-        if (!isCleared) tag = '<span class="aq-tag first">首勝</span>';
+        if (!isCleared) tag = '<span class="ah-chip gold">首勝</span>';
         else {
             off = rewardLeft <= 0;
-            tag = off ? '<span class="aq-tag gone">今日已領完</span>' : `<span class="aq-tag today">今日 ${used} / ${cap}</span>`;
+            tag = off ? '<span class="ah-chip gray">今日已領完</span>' : `<span class="ah-chip blue">今日 ${used} / ${cap}</span>`;
         }
         let rewards = advRewardList(lv).map(r => `<span class="aq-item" title="${escapeHTML(r.label)}"><span class="ic">${r.icon}</span>${r.text}</span>`);
         let warns = [];
-        if (lv.special) warns.push(`<div class="aq-warn">${ADV_WARN_SVG}注意：${ADV_SPECIAL_TEXT[lv.special]}</div>`);
-        if (tired) warns.push(`<div class="aq-warn bad">${ADV_WARN_SVG}雞塊沒有體力了，明天 00:00 恢復</div>`);
+        if (lv.special) warns.push(`<div class="ah-warn">${ADV_WARN_SVG}<span>注意：${escapeHTML(ADV_SPECIAL_TEXT[lv.special] || '')}</span></div>`);
+        if (tired) warns.push(`<div class="ah-warn bad">${ADV_WARN_SVG}<span>雞塊沒有體力了，明天 00:00 恢復</span></div>`);
+        let chName = (ADV_CHAPTERS.find(c => c.id === advChapterOf(lv.id)) || {}).name || '';
         let box = document.getElementById('advLevelCard');
         if (box) box.innerHTML = `
-            <div class="aq-hero">
-                <div class="aq-sprite">${advEnemySVG(lv.sprite)}</div>
-                <div class="aq-info">
-                    <div class="aq-lv"><span>第 ${lv.id} 關</span>${isCleared ? '<span class="aq-badge done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>已通關</span>' : '<span class="aq-badge new">新關卡</span>'}</div>
-                    <span class="aq-name">${escapeHTML(lv.name)}</span>
-                    <span class="aq-sub">${auto ? advHeroSub(lv) : `自選題庫・至少 ${lv.minWords} 字`}</span>
+            <div class="ah-hero">
+                <div class="ah-hero-art">${advEnemySVG(lv.sprite)}</div>
+                <div class="ah-hero-info">
+                    <div class="ah-hero-lv">第 ${lv.id} 關${isCleared ? '<span class="ah-chip green">已通關</span>' : '<span class="ah-chip gold">新關卡</span>'}</div>
+                    <b class="ah-hero-name">${escapeHTML(lv.name)}</b>
+                    <span class="ah-hero-sub">${auto ? `${escapeHTML(chName)}・${escapeHTML(advHeroSub(lv).replace(/^(夜市篇|便利商店篇)・/, ''))}` : `自選題庫・至少 ${lv.minWords} 字`}</span>
                 </div>
             </div>
-            <div class="aq-cards">
-                <div class="aq-hp"><span class="aq-k">體力</span><div class="aq-bar${hp / max < 0.34 ? ' low' : ''}"><i style="width:${(hp / max * 100).toFixed(0)}%"></i></div><span class="aq-num">${hp} <small>/ ${max}</small></span></div>
-                <div class="aq-rw${off ? ' off' : ''}"><div class="aq-rw-head"><span class="aq-k">通關獎勵</span>${tag}</div><div class="aq-items">${rewards.join('')}</div></div>
+            <div class="ah-boxes">
+                <div class="ah-box ah-hpbox"><span class="ah-k">體力</span><div class="aq-bar${hp / max < 0.34 ? ' low' : ''}"><i style="width:${(hp / max * 100).toFixed(0)}%"></i></div><span class="ah-num"><b>${hp}</b> / ${max}</span></div>
+                <div class="ah-box ah-rwbox${off ? ' off' : ''}"><div class="ah-rw-head"><span class="ah-k">通關獎勵</span>${tag}</div><div class="aq-items">${rewards.join('')}</div></div>
             </div>
             ${warns.join('')}`;
         advUpdateGearAlerts();
         let st = document.getElementById('advStatsText');
-        if (st && !auto) {
-            if (!ok) st.insertAdjacentHTML('beforeend', `<br><span class="bad">這關至少要 ${lv.minWords} 個字（目前 ${n} 個）</span>`);
-        } else if (st) st.innerHTML = '';
+        if (st) st.innerHTML = !ok ? `<span class="bad">這關至少要 ${lv.minWords} 個字（目前 ${n} 個），請換一個題庫</span>` : '';
         let note = isCleared && rewardLeft <= 0 ? '<span class="aq-go-note">今天的通關獎勵領完了，再挑戰可以繼續累積招式熟練度</span>' : '';
         let bar = document.getElementById('advGoBar');
-        if (bar) bar.innerHTML = `<button type="button" class="aq-start" ${canGo ? '' : 'disabled'} data-on-click='[["advStartBattle",[${lv.id}]]]'>${ADV_SWORD_SVG}開始戰鬥</button>${note}`;
+        if (bar) bar.innerHTML = `${note}<button type="button" class="ah-btn-gold ah-start" ${canGo ? '' : 'disabled'} data-on-click='[["advStartBattle",[${lv.id}]]]'>${AH_SWORDS}開始戰鬥</button>`;
     }
     // ── 大冒險預設題庫：跟著關卡（每關自動用前 N 個字）──
     const ADV_MODE_KEY = 'chicky_adv_mode';
@@ -6621,7 +6643,7 @@
     }
     function advAutoDesc(lv) { return advRangeText(lv); }
     function advCanAuto() { return getLearningLanguage() !== 'ko'; }      // 韓文版的冒險題庫之後再做
-    let advCustomTab = '';      // 自選時看的是「精選單字庫」還是「自訂題庫」
+    let advCustomTab = (() => { try { return localStorage.getItem('chicky_adv_tab') === 'pack' ? 'pack' : 'mine'; } catch (e) { return 'mine'; } })();      // 自選時用「精選單字庫」還是「自訂題庫」（記住上次選的）
     function advMode() {
         if (!advCanAuto()) return 'custom';
         let m = null, had = false;
@@ -6630,30 +6652,35 @@
         return had ? 'custom' : 'auto';         // 已經自己勾過範圍的舊玩家維持自選
     }
     function advSetMode(m) {
-        if (m === 'pack' || m === 'mine') { advCustomTab = m; m = 'custom'; }
-        try { localStorage.setItem(ADV_MODE_KEY, m === 'custom' ? 'custom' : 'auto'); } catch (e) {}
-        pickSeg['advGrid'] = advCustomTab === 'pack' ? 'pack' : 'custom';
+        let pick = (m === 'pack' || m === 'mine');
+        if (pick) { advCustomTab = m; m = 'custom'; }
+        try { localStorage.setItem(ADV_MODE_KEY, m === 'custom' ? 'custom' : 'auto'); if (pick) localStorage.setItem('chicky_adv_tab', advCustomTab); } catch (e) {}
         advRenderLevelPage();
+        // 精選／自訂：還沒選過題庫 → 直接跳出選題庫的卡片
+        if (pick) { let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0]; if (!ahDeckChosen(advCustomTab, lv.minWords)) ahOpenDeck(); }
     }
     function advWrongOf(eng) { return (advData.wrongCnt || {})[String(eng || '').toLowerCase()] || 0; }
-    // 出題題庫：冒險題庫（推薦）／精選單字庫／自訂題庫（單選；自選時下面會出現題庫清單）
-    function advRenderModeBox(lv, auto) {
-        let seg = document.getElementById('advModeSeg'), cus = document.getElementById('advCustomBox');
-        if (!seg || !cus) return;
-        let grid = document.getElementById('advGrid');
-        let cnt = k => grid ? grid.querySelectorAll(`.select-card.selected[data-kind="${k}"]`).length : 0;
+    // 出題題庫：冒險題庫（推薦）／精選單字庫／自訂題庫（單選）；精選／自訂選了以後，右邊的膠囊顯示選的題庫，點了換題庫
+    function advRenderModeBox(lv, auto, n) {
+        let seg = document.getElementById('advModeSeg');
+        if (!seg) return;
         let cur = auto ? 'auto' : (advCustomTab === 'pack' ? 'pack' : 'mine');
-        let opt = (key, name, extra) => `<button type="button" class="aq-opt${cur === key ? ' on' : ''}" role="radio" aria-checked="${cur === key}" data-on-click='[["advSetMode",["${key}"]]]'><span class="aq-ring"><i></i></span><span class="aq-opt-name">${name}</span>${extra || ''}</button>`;
+        const ARROW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
+        let opt = (key, name, extra) => `<div class="aq-opt ah-opt${cur === key ? ' on' : ''}" role="radio" aria-checked="${cur === key}" tabindex="0" data-on-click='[["advSetMode",["${key}"]]]'><span class="aq-ring"><i></i></span><span class="aq-opt-name">${name}</span>${extra || ''}</div>`;
         let html = '';
         if (advCanAuto()) {
             let words = advAutoWords(lv), last = ((advData.lastWrong || {})[lv.id] || []).length;
             let key = (Array.isArray(advPlanOf(lv.id)) ? advPlanOf(lv.id)[0] : advPlanOf(advPlanOf(lv.id).review[0])[0]) < advAutoParts().night.length ? 'adv_night' : 'adv_store';
-            html += opt('auto', `冒險・${(WORD_PACKS[key].title || '').replace(/^冒險・/, '')}`, `<span class="aq-rec">推薦</span>${auto ? `<span class="aq-link">${last ? `<span class="cnt">上次錯 <b>${last}</b> 個</span>` : ''}<span class="go" role="link" data-on-click='[["$stop",[]],["advOpenWords",[]]]'>看單字<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></span></span>` : ''}`);
+            html += opt('auto', `冒險・${(WORD_PACKS[key].title || '').replace(/^冒險・/, '')}`, `<span class="aq-rec">推薦</span>${auto ? `<span class="ah-cap ah-cap--link" role="link" data-on-click='[["$stop",[]],["advOpenWords",[]]]'>${last ? `錯 ${last}・` : ''}${words.length} 字・看單字${ARROW}</span>` : ''}`);
         }
-        let sb = n => (n && !auto) ? `<span class="aq-badge-sel">已選 ${n}</span>` : '';
-        html += opt('pack', '精選單字庫', sb(cnt('pack'))) + opt('mine', '自訂題庫', sb(cnt('custom')));
+        let capsule = (k) => {
+            if (cur !== k) return '';
+            let c = ahDeckChosen(k === 'pack' ? 'pack' : 'mine', lv.minWords);
+            let txt = c ? `${escapeHTML(c.l.title)}・${getListWordCount(c.l.content)} 字` : '選擇題庫';
+            return `<span class="ah-cap${c && getListWordCount(c.l.content) < lv.minWords ? ' bad' : ''}" role="button" data-on-click='[["$stop",[]],["ahOpenDeck",[]]]'>${txt}${ARROW}</span>`;
+        };
+        html += opt('pack', '精選單字庫', capsule('pack')) + opt('mine', '自訂題庫', capsule('mine'));
         seg.innerHTML = html;
-        cus.hidden = auto;
     }
     // 這關會考的字：新增的在上面、之前學過的在下面
     function advOpenWords() {
@@ -6737,12 +6764,21 @@
         let ws = (adv.wrongThis || []).slice(), lvId = adv.level ? adv.level.id : (adv.pickLevel || 1);
         advStartPractice(ws, kind, () => goToAdvLevel(lvId));
     }
+    // 備戰卡片：在地圖上從下面滑上來（不換頁）
     function goToAdvLevel(levelId) {
         advAbort();
         adv.pickLevel = (ADV_LEVELS.some(l => l.id === levelId) && advUnlocked(levelId)) ? levelId : 1;
-        advInitGrid();
+        let v = document.getElementById('adventureView');
+        if (!v.classList.contains('active')) {
+            advMapChapter = advChapterOf(adv.pickLevel);
+            switchView('adventureView');
+            ahFit();
+            advRenderMap();
+            ahScrollTo(adv.pickLevel);
+        }
+        ahCloseSheet('Pick'); ahCloseSheet('Deck');
         advRenderLevelPage();
-        switchView('advLevelView');
+        ahOpenSheet('Prep');
     }
     function advBackToLevel() { goToAdvLevel(adv.pickLevel || 1); }
 
@@ -6755,11 +6791,16 @@
         }
         advAbort();
         advSyncDaily();
-        advMapChapter = advChapterOf(fromLevel === true && adv.pickLevel ? adv.pickLevel : advHighestUnlocked());
+        advMapChapter = advChapterOf(fromLevel === true && adv.pickLevel ? adv.pickLevel : ahCurrentId());
+        ['Deck', 'Prep', 'Pick'].forEach(n => { let w = document.getElementById('ah' + n); if (w) { w.classList.remove('open'); w.hidden = true; } });
         switchView('adventureView');
+        ahFit();
         advRenderMap();
-        // 手機：從首頁進來時網址列可能正在展開／收起，等畫面穩定後再量一次地圖高度
-        setTimeout(() => { try { if (document.getElementById('adventureView').classList.contains('active')) advRenderMap(); } catch (e) {} }, 350);
+        let cur = ahCurrentId(), ch = ADV_CHAPTERS.find(c => c.id === advMapChapter);
+        let focus = fromLevel === true && adv.pickLevel ? adv.pickLevel : cur;
+        if (ch && (focus < ch.from || focus > ch.to)) focus = ch.from;
+        ahScrollTo(focus);
+        setTimeout(() => { try { if (document.getElementById('adventureView').classList.contains('active') && !ahHold) { ahFit(); ahScrollTo(focus); } } catch (e) {} }, 350);
     }
     // 畫面可用的高度：取「網址列展開時」的最小高度，避免地圖下面被切掉
     function advViewportH() {
@@ -6777,6 +6818,352 @@
         } catch (e) {}
         return h;
     }
+
+
+    // ═════════ 大冒險首頁（r10 改版）：一章一張長地圖、關卡由下往上、鏡頭跟著進度 ═════════
+    //   畫面：上方一列（返回｜章節切換｜冒險代幣）→ 地圖（可上下捲動）→ 選關／挑戰 → 底部 4 個按鈕
+    //   備戰卡片、選關、選題庫都是從下面滑上來的白色卡片（不換頁）
+    //   地圖座標：寬 390（設計稿 1px），關卡間距 AH_S；所有圖示都是 SVG，地圖上不放文字
+    const AH_W = 390, AH_S = 215, AH_TOP = 175, AH_BOT = 300, AH_CH_TOTAL = 10;     // AH_CH_TOTAL：預計 10 章（顯示「1 / 10 章」）
+    const AH_XS = [128, 262, 136, 258, 128, 264, 140, 256, 132, 252];
+    function ahMapH() { return AH_TOP + AH_BOT + 9 * AH_S; }
+    function ahPts() { let H = ahMapH(); return AH_XS.map((x, i) => ({ x, y: H - AH_BOT - i * AH_S })); }
+    // 路：從畫面最下面一路接到這章最後一關（後面沒有路）
+    function ahRoadD(pts) {
+        let H = ahMapH(), a0 = pts[0];
+        let d = `M ${a0.x + 40} ${H + 20} C ${a0.x + 40} ${H - 60}, ${a0.x} ${a0.y + 110}, ${a0.x} ${a0.y}`;
+        for (let i = 1; i < pts.length; i++) { let a = pts[i - 1], b = pts[i]; d += ` C ${a.x} ${a.y - AH_S * 0.55}, ${b.x} ${b.y + AH_S * 0.55}, ${b.x} ${b.y}`; }
+        return d;
+    }
+    function ahSegD(pts, i) { let a = pts[i], b = pts[i + 1]; return `M ${a.x} ${a.y} C ${a.x} ${a.y - AH_S * 0.55}, ${b.x} ${b.y + AH_S * 0.55}, ${b.x} ${b.y}`; }
+    // 把 advEnemySVG 的圖塞進地圖的 SVG 裡（巢狀 svg）
+    function ahNest(svg, x, y, w, h) { return String(svg).replace('<svg ', `<svg x="${x}" y="${y}" width="${w}" height="${h}" `); }
+    function ahRng(seed) { return () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }; }
+    // ── 夜市的小物件 ──
+    function ahPerson(x, y, shirt, extra) {
+        return `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="22" rx="11" ry="3.5" fill="rgba(0,0,0,0.25)"/><path d="M -9 21 Q -9 4 0 4 Q 9 4 9 21 Z" fill="${shirt}" stroke="#231F20" stroke-width="2"/><circle cx="0" cy="-3" r="8" fill="#FCD9B6" stroke="#231F20" stroke-width="2"/><path d="M -8 -5 Q -7 -12 0 -12 Q 7 -12 8 -5 Q 3 -8 0 -8 Q -3 -8 -8 -5 Z" fill="#231F20"/><circle cx="-3" cy="-2" r="1.2" fill="#231F20"/><circle cx="3" cy="-2" r="1.2" fill="#231F20"/>${extra || ''}</g>`;
+    }
+    function ahBalloon(c) { return `<path d="M 8 10 Q 12 -4 14 -16" stroke="#E2E8F0" stroke-width="1"/><ellipse cx="14" cy="-22" rx="6.5" ry="8" fill="${c}" stroke="#231F20" stroke-width="1.5"/>`; }
+    function ahTable(x, y) {
+        return `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="16" rx="30" ry="6" fill="rgba(0,0,0,0.25)"/><rect x="-26" y="2" width="9" height="9" rx="2" fill="#3B82F6" stroke="#231F20" stroke-width="1.5"/><rect x="17" y="2" width="9" height="9" rx="2" fill="#EF4444" stroke="#231F20" stroke-width="1.5"/><line x1="0" y1="0" x2="0" y2="14" stroke="#231F20" stroke-width="2.5"/><ellipse cx="0" cy="-2" rx="20" ry="6" fill="#FFFFFF" stroke="#231F20" stroke-width="2"/><ellipse cx="-6" cy="-3" rx="4" ry="1.6" fill="#F97316"/><ellipse cx="5" cy="-2" rx="4" ry="1.6" fill="#FBBF24"/></g>`;
+    }
+    function ahLights(y, rnd) {
+        let cols = ['#EF4444', '#FBBF24', '#F97316', '#EF4444'], s = `<path d="M -10 ${y} Q 195 ${y + 34} 400 ${y}" stroke="#1E1B4B" stroke-width="1.6" fill="none" opacity="0.8"/>`;
+        for (let x = 10; x < 390; x += 34) {
+            let t = (x + 10) / 410, yy = y + 34 * 2 * t * (1 - t) * 1 + 3, c = cols[Math.floor(rnd() * cols.length)];
+            s += `<circle cx="${x}" cy="${yy.toFixed(1)}" r="11" fill="${c}" opacity="0.18"/><circle cx="${x}" cy="${yy.toFixed(1)}" r="4.6" fill="${c}" stroke="#7F1D1D" stroke-width="0.8"/>`;
+        }
+        return s;
+    }
+    // 夜市攤位（遮陽棚＋櫃台），敵人站在攤位前面
+    function ahStall(cx, y, col, sprite) {
+        let x = cx - 62, stripes = '';
+        for (let i = 0; i < 6; i++) stripes += `<path d="M ${x + i * 20.6} ${y} h 20.6 v 16 q -10.3 8 -20.6 0 z" fill="${i % 2 ? '#FFFFFF' : col}" stroke="#231F20" stroke-width="1.5"/>`;
+        return `<g><ellipse cx="${cx}" cy="${y + 104}" rx="64" ry="9" fill="rgba(0,0,0,0.28)"/>
+            <rect x="${x + 4}" y="${y + 14}" width="116" height="48" fill="#3B2A55" stroke="#231F20" stroke-width="2"/>
+            <circle cx="${x + 18}" cy="${y + 30}" r="9" fill="#FDE68A" opacity="0.25"/><circle cx="${x + 106}" cy="${y + 30}" r="9" fill="#FDE68A" opacity="0.25"/>
+            <rect x="${x - 2}" y="${y + 58}" width="128" height="44" rx="3" fill="#B45309" stroke="#231F20" stroke-width="2.5"/>
+            <rect x="${x - 2}" y="${y + 58}" width="128" height="9" fill="#92400E"/>
+            <line x1="${x + 2}" y1="${y + 80}" x2="${x + 122}" y2="${y + 80}" stroke="#92400E" stroke-width="2"/>
+            <rect x="${x - 4}" y="${y - 6}" width="132" height="8" rx="3" fill="${col}" stroke="#231F20" stroke-width="2"/>
+            ${stripes}
+            ${ahNest(advEnemySVG(sprite), cx - 40, y + 14, 80, 75)}</g>`;
+    }
+    // ── 便利商店的小物件 ──
+    function ahShelf(x, y, w, rnd) {
+        let cols = ['#F87171', '#60A5FA', '#FBBF24', '#34D399', '#A78BFA', '#F472B6', '#FB923C'], s = `<rect x="${x}" y="${y + 66}" width="${w}" height="8" rx="3" fill="rgba(15,23,42,0.18)"/><rect x="${x}" y="${y}" width="${w}" height="68" rx="4" fill="#F8FAFC" stroke="#334155" stroke-width="2"/>`;
+        for (let r = 0; r < 3; r++) {
+            s += `<rect x="${x + 2}" y="${y + 21 + r * 21}" width="${w - 4}" height="3" fill="#94A3B8"/>`;
+            for (let k = x + 6; k < x + w - 9; k += 11) s += `<rect x="${k}" y="${y + 6 + r * 21}" width="8" height="13" rx="2" fill="${cols[Math.floor(rnd() * cols.length)]}"/>`;
+        }
+        return s;
+    }
+    function ahFridge(x, y) {
+        let s = `<rect x="${x}" y="${y + 92}" width="104" height="8" rx="3" fill="rgba(15,23,42,0.18)"/><rect x="${x}" y="${y}" width="104" height="96" rx="5" fill="#E0F2FE" stroke="#334155" stroke-width="2.5"/><rect x="${x}" y="${y}" width="104" height="9" rx="4" fill="#FFFFFF" stroke="#334155" stroke-width="2"/>`;
+        for (let d = 0; d < 3; d++) {
+            let dx = x + 4 + d * 33;
+            s += `<rect x="${dx}" y="${y + 12}" width="31" height="80" rx="3" fill="#F0F9FF" stroke="#334155" stroke-width="1.5"/>`;
+            for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) s += `<rect x="${dx + 4 + c * 9}" y="${y + 16 + r * 19}" width="6" height="14" rx="2" fill="${['#EF4444', '#22C55E', '#FBBF24', '#3B82F6'][(r + c + d) % 4]}"/>`;
+        }
+        return s;
+    }
+    function ahPlant(x, y) { return `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="22" rx="14" ry="4" fill="rgba(15,23,42,0.18)"/><path d="M -10 6 h 20 l -3 16 h -14 z" fill="#C2410C" stroke="#231F20" stroke-width="2"/><path d="M 0 6 V -22 M 0 -8 Q -10 -10 -10 -20 M 0 -12 Q 10 -14 10 -24" stroke="#16A34A" stroke-width="6" stroke-linecap="round" fill="none"/></g>`; }
+    // 便利商店的展示台（敵人站在上面）
+    function ahStand(cx, y, sprite) {
+        if (sprite === 'clerk') return `<g><ellipse cx="${cx}" cy="${y + 100}" rx="62" ry="8" fill="rgba(15,23,42,0.18)"/>${ahNest(advEnemySVG(sprite), cx - 58, y - 6, 116, 108)}</g>`;
+        return `<g><ellipse cx="${cx}" cy="${y + 100}" rx="58" ry="9" fill="rgba(15,23,42,0.2)"/>
+            <rect x="${cx - 56}" y="${y + 4}" width="112" height="64" rx="6" fill="#FFFFFF" stroke="#334155" stroke-width="2"/>
+            <rect x="${cx - 56}" y="${y + 4}" width="112" height="8" rx="4" fill="#F97316"/>
+            <rect x="${cx - 60}" y="${y + 66}" width="120" height="30" rx="5" fill="#E2E8F0" stroke="#334155" stroke-width="2.5"/>
+            <rect x="${cx - 60}" y="${y + 66}" width="120" height="6" fill="#22C55E"/>
+            ${ahNest(advEnemySVG(sprite), cx - 40, y + 4, 80, 75)}</g>`;
+    }
+    // 整張地圖（背景＋裝飾＋路＋敵人攤位）
+    function ahMapSVG(ch) {
+        let H = ahMapH(), pts = ahPts(), store = ch.id === 2, rnd = ahRng(ch.id * 37 + 11), s = '';
+        if (store) {
+            s += `<defs><pattern id="ahTile" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#EEF2F7"/><rect width="20" height="20" fill="#E4E9F1"/><rect x="20" y="20" width="20" height="20" fill="#E4E9F1"/></pattern></defs><rect width="${AH_W}" height="${H}" fill="url(#ahTile)"/>`;
+        } else {
+            s += `<defs><pattern id="ahNight" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(-20)"><rect width="26" height="26" fill="#2E2152"/><line x1="0" y1="0" x2="26" y2="0" stroke="#35285E" stroke-width="2"/></pattern>
+                <radialGradient id="ahGlow"><stop offset="0" stop-color="#FDBA74" stop-opacity="0.35"/><stop offset="1" stop-color="#FDBA74" stop-opacity="0"/></radialGradient></defs><rect width="${AH_W}" height="${H}" fill="url(#ahNight)"/>`;
+        }
+        // 路旁的裝飾（每兩關中間，左右各一）
+        let deco = '';
+        for (let i = -1; i < pts.length; i++) {
+            let yMid = i < 0 ? H - AH_BOT * 0.45 : pts[i].y - AH_S / 2;
+            if (yMid < 40) continue;
+            if (store) {
+                if (i % 2 === 0) deco += ahShelf(8, yMid - 30, 104, rnd) + ahPerson(350, yMid + 30, ['#A78BFA', '#F472B6', '#34D399'][(i + 3) % 3], `<rect x="7" y="10" width="9" height="7" rx="1.5" fill="#EF4444" stroke="#231F20" stroke-width="1.2"/>`);
+                else deco += ahPlant(48, yMid + 10) + ahShelf(278, yMid - 40, 104, rnd);
+            } else {
+                deco += ahLights(yMid - 70, rnd);
+                deco += `<circle cx="${i % 2 ? 80 : 310}" cy="${yMid}" r="60" fill="url(#ahGlow)"/>`;
+                if (i % 2 === 0) deco += ahTable(62, yMid + 18) + ahPerson(338, yMid + 4, '#22C55E', ahBalloon('#F472B6'));
+                else deco += ahPerson(52, yMid - 4, '#3B82F6') + ahTable(330, yMid + 22) + ahPerson(300, yMid - 30, '#F97316');
+            }
+        }
+        // 路
+        let d = ahRoadD(pts);
+        let road = store
+            ? `<path d="${d}" stroke="rgba(15,23,42,0.18)" stroke-width="74" fill="none" stroke-linecap="round" transform="translate(0 6)"/><path d="${d}" stroke="#60A5FA" stroke-width="70" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#93C5FD" stroke-width="60" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#DBEAFE" stroke-width="3" fill="none" stroke-dasharray="14 22" stroke-linecap="round"/>`
+            : `<path d="${d}" stroke="rgba(0,0,0,0.3)" stroke-width="74" fill="none" stroke-linecap="round" transform="translate(0 6)"/><path d="${d}" stroke="#C9A46E" stroke-width="70" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#EAD3A4" stroke-width="60" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#D9BC85" stroke-width="56" fill="none" stroke-dasharray="3 15"/>`;
+        // 每關旁邊放這關的敵人（攤位／展示台），在路的另一邊
+        let booths = '';
+        pts.forEach((p, i) => {
+            let lv = ADV_LEVELS.find(l => l.id === ch.from + i);
+            if (!lv) return;
+            let cx = p.x < AH_W / 2 ? 312 : 78, y = p.y - 92;
+            booths += store ? ahStand(cx, y, lv.sprite) : ahStall(cx, y, ['#EF4444', '#3B82F6', '#22C55E', '#A855F7', '#F97316'][i % 5], lv.sprite);
+        });
+        return `<svg class="ah-svg" viewBox="0 0 ${AH_W} ${H}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${s}${deco}${road}<path id="ahRoad" d="${d}" fill="none" stroke="none"/>${booths}</svg>`;
+    }
+    const AH_LOCK = '<svg viewBox="0 0 24 28" aria-hidden="true"><path d="M7 12V8a5 5 0 0110 0v4" fill="none" stroke="#E7E5F5" stroke-width="3" stroke-linecap="round"/><rect x="3" y="11" width="18" height="14" rx="3.5" fill="#E7E5F5" stroke="#45426B" stroke-width="1.5"/><circle cx="12" cy="18" r="2.2" fill="#45426B"/></svg>';
+    // 關卡圓台
+    function ahStageSVG(id, st, store) {
+        let C = st === 'current' ? ['#FDE68A', '#F59E0B', '#B45309', '#92400E']
+              : st === 'locked' ? ['#6B6688', '#4B4668', '#36324D', '#E7E5F5']
+              : store ? ['#FFFFFF', '#CBD5E1', '#94A3B8', '#475569'] : ['#EAD3A4', '#B98552', '#8A5A2B', '#7C4A1E'];
+        let inner = st === 'locked'
+            ? `<g transform="translate(37 12) scale(0.92)">${AH_LOCK.replace('<svg viewBox="0 0 24 28" aria-hidden="true">', '').replace('</svg>', '')}</g>`
+            : `<text x="48" y="37" text-anchor="middle" font-size="22" font-weight="900" fill="${C[3]}" font-family="Inter,'Noto Sans TC',sans-serif">${id}</text>`;
+        return `<svg viewBox="0 0 96 64" aria-hidden="true"><ellipse cx="48" cy="40" rx="44" ry="18" fill="${C[2]}" stroke="#231F20" stroke-width="2.5"/><rect x="4" y="27" width="88" height="13" fill="${C[2]}"/><ellipse cx="48" cy="27" rx="44" ry="18" fill="${C[0]}" stroke="#231F20" stroke-width="2.5"/><ellipse cx="48" cy="27" rx="33" ry="12" fill="none" stroke="${C[1]}" stroke-width="2.5"/>${inner}</svg>`;
+    }
+    // 目前要打的關卡（打完全部：最後一關）
+    function ahCurrentId() { let n = ADV_LEVELS.length, id = 1; while (id <= n && advData.cleared[id]) id++; return Math.min(id, n); }
+    function ahChapterUnlocked(c) { return !!c && advUnlocked(c.from); }
+    let ahHold = null;              // 走路動畫進行中：{ id, next }（畫地圖時先把剛打贏的那關當作「目前」）
+    function advRenderMap() {
+        let box = document.getElementById('advMap');
+        if (!box) return;
+        let ch = ADV_CHAPTERS.find(c => c.id === advMapChapter) || ADV_CHAPTERS[0];
+        let store = ch.id === 2, cur = ahHold ? ahHold.id : ahCurrentId();
+        // 上方：章節切換
+        let prevCh = ADV_CHAPTERS.find(c => c.id === ch.id - 1), nextCh = ADV_CHAPTERS.find(c => c.id === ch.id + 1);
+        let nextOpen = ahChapterUnlocked(nextCh);
+        let chBox = document.getElementById('ahChapter');
+        if (chBox) chBox.innerHTML = `<button type="button" class="ah-arrow" ${prevCh ? '' : 'disabled'} aria-label="上一章" data-on-click='[["advMapStep",[-1]]]'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <span class="ah-ch-name"><b>${escapeHTML(ch.name)}</b><small>${ch.id} / ${AH_CH_TOTAL} 章</small></span>
+            ${nextOpen ? `<button type="button" class="ah-arrow" aria-label="下一章" data-on-click='[["advMapStep",[1]]]'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`
+                       : `<span class="ah-arrow is-lock" aria-label="下一章還沒解鎖">${AH_LOCK}</span>`}`;
+        let tk = document.getElementById('ahTokens'); if (tk) tk.innerHTML = `${advShardIcon(20)}<b>${advData.shards}</b>`;
+        let H = ahMapH(), pts = ahPts();
+        let pos = p => `left:${(p.x / AH_W * 100).toFixed(3)}%;top:${(p.y / H * 100).toFixed(3)}%`;
+        let stages = pts.map((p, i) => {
+            let id = ch.from + i, lv = ADV_LEVELS.find(l => l.id === id);
+            if (!lv) return '';
+            let st;
+            if (ahHold) st = id === ahHold.id ? 'current' : (id === ahHold.next || !advUnlocked(id)) ? 'locked' : 'cleared';
+            else st = !advUnlocked(id) ? 'locked' : (id === cur && !advData.cleared[id]) ? 'current' : 'cleared';
+            return `<button type="button" class="ah-stage is-${st}" id="ahStage${id}" style="${pos(p)}" ${st === 'locked' ? 'disabled' : ''} aria-label="第 ${id} 關${st === 'locked' ? '（還沒解鎖）' : ''}" data-on-click='[["goToAdvLevel",[${id}]]]'>${ahStageSVG(id, st, store)}</button>`;
+        }).join('');
+        let chick = '';
+        if (cur >= ch.from && cur <= ch.to) chick = `<div class="ah-chick" id="ahChick" style="${pos(pts[cur - ch.from])}">${advChickenSVG()}</div>`;
+        box.innerHTML = `<div class="ah-world" id="ahWorld" style="aspect-ratio:${AH_W} / ${H}">${ahMapSVG(ch)}${stages}${chick}</div>`;
+        ahUpdateBadges();
+    }
+    // 鏡頭：把某一關放在畫面中間偏下
+    function ahScrollTo(id, smooth) {
+        let box = document.getElementById('advMap'), el = document.getElementById('ahStage' + id);
+        if (!box || !el) return;
+        let top = el.offsetTop - box.clientHeight * 0.58;
+        box.scrollTo({ top: Math.max(0, top), behavior: smooth ? 'smooth' : 'auto' });
+    }
+    function advMapStep(d) {
+        let nc = ADV_CHAPTERS.find(c => c.id === advMapChapter + (parseInt(d) || 0));
+        if (!nc || (d > 0 && !ahChapterUnlocked(nc))) return;
+        advMapChapter = nc.id;
+        advRenderMap();
+        let cur = ahCurrentId();
+        ahScrollTo(cur >= nc.from && cur <= nc.to ? cur : (d > 0 ? nc.from : nc.to));
+    }
+    // 底部按鈕上的紅點：雞塊有點數可以加 → 顯示點數
+    function ahUpdateBadges() {
+        let b = document.getElementById('ahChickBadge');
+        if (!b) return;
+        let n = 0; try { n = advPtsLeft(); } catch (e) {}
+        let other = false; try { other = advGearAlert() || advAnyUnseenMove() || advAnyUnseenGear(); } catch (e) {}
+        b.textContent = n ? String(n) : (other ? '!' : '');
+        b.hidden = !n && !other;
+    }
+    function ahSoon(name) {
+        let t = document.getElementById('ahToast');
+        if (!t) return;
+        t.textContent = `${name}即將推出，敬請期待！`;
+        t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+        clearTimeout(ahSoon._t); ahSoon._t = setTimeout(() => t.classList.remove('show'), 1800);
+    }
+    function ahOpenShop() { openChickenShopModal(1); }
+    function ahChallenge() { goToAdvLevel(ahCurrentId()); }
+    // ── 從下面滑上來的卡片（備戰、選關、選題庫）──
+    function ahOpenSheet(name) {
+        let w = document.getElementById('ah' + name);
+        if (!w) return;
+        w.hidden = false;
+        ahBindSwipe(w, name);
+        requestAnimationFrame(() => requestAnimationFrame(() => w.classList.add('open')));
+        let sh = w.querySelector('.ah-sheet'); if (sh) { sh.style.transform = ''; sh.scrollTop = 0; }
+    }
+    function ahCloseSheet(name) {
+        let w = document.getElementById('ah' + name);
+        if (!w || w.hidden) return;
+        w.classList.remove('open');
+        setTimeout(() => { if (!w.classList.contains('open')) w.hidden = true; }, 220);
+    }
+    function ahCloseAll() { ['Deck', 'Prep', 'Pick'].forEach(ahCloseSheet); }
+    // 往下滑關閉
+    function ahBindSwipe(wrap, name) {
+        let sh = wrap && wrap.querySelector('.ah-sheet');
+        if (!sh || sh.dataset.swipe) return;
+        sh.dataset.swipe = '1';
+        let y0 = null, dy = 0;
+        sh.addEventListener('touchstart', e => { if (sh.scrollTop > 0) { y0 = null; return; } y0 = e.touches[0].clientY; dy = 0; sh.style.transition = 'none'; }, { passive: true });
+        sh.addEventListener('touchmove', e => { if (y0 === null) return; dy = Math.max(0, e.touches[0].clientY - y0); if (dy > 0) sh.style.transform = `translateY(${dy}px)`; }, { passive: true });
+        sh.addEventListener('touchend', () => { if (y0 === null) return; sh.style.transition = ''; if (dy > 90) ahCloseSheet(name); else sh.style.transform = ''; y0 = null; });
+    }
+    // 選關：上面是章節分頁（可以左右滑），下面是這章 10 關
+    let ahPickCh = 1;
+    function ahOpenPick() { ahPickCh = advMapChapter; ahRenderPick(); ahOpenSheet('Pick'); }
+    function ahPickTab(id) { ahPickCh = parseInt(id) || 1; ahRenderPick(); }
+    function ahRenderPick() {
+        let box = document.getElementById('ahPickBody');
+        if (!box) return;
+        let cur = ahCurrentId();
+        let tabs = ADV_CHAPTERS.map(c => `<button type="button" class="ah-tab${c.id === ahPickCh ? ' on' : ''}" ${ahChapterUnlocked(c) ? '' : 'disabled'} data-on-click='[["ahPickTab",[${c.id}]]]'>${ahChapterUnlocked(c) ? '' : `<span class="ah-tab-lock">${AH_LOCK}</span>`}第 ${c.id} 章・${escapeHTML(c.name)}</button>`).join('');
+        let ch = ADV_CHAPTERS.find(c => c.id === ahPickCh) || ADV_CHAPTERS[0], cells = '';
+        for (let id = ch.from; id <= ch.to; id++) {
+            let lv = ADV_LEVELS.find(l => l.id === id);
+            if (!lv) continue;
+            let open = advUnlocked(id), st = !open ? 'locked' : (id === cur && !advData.cleared[id]) ? 'current' : 'cleared';
+            cells += `<button type="button" class="ah-cell is-${st}" ${open ? '' : 'disabled'} aria-label="第 ${id} 關${open ? '' : '（還沒解鎖）'}" data-on-click='[["ahPickGo",[${id}]]]'>
+                <span class="ah-cell-art">${open ? advEnemySVG(lv.sprite) : AH_LOCK}</span><b>${id}</b></button>`;
+        }
+        box.innerHTML = `<div class="ah-tabs">${tabs}</div><div class="ah-grid">${cells}</div>`;
+    }
+    function ahPickGo(id) { ahCloseSheet('Pick'); goToAdvLevel(id); }
+    // ── 選題庫（精選單字庫／自訂題庫）：單選，記住上次選的 ──
+    const AH_PICK_KEY = { pack: 'chicky_adv_pick_pack', mine: 'chicky_adv_pick_mine' };
+    function ahDeckLists(kind) {
+        return wordLists.map((l, i) => ({ l, i })).filter(x => getListWordCount(x.l.content) > 0 && isListInCurrentLang(x.l)
+            && (kind === 'pack' ? (isPackList(x.l) && (WORD_PACKS[x.l.pack] || {}).kind !== 'adv') : !isPackList(x.l)));
+    }
+    function ahDeckChosen(kind, need) {
+        let all = ahDeckLists(kind), id = null;
+        try { id = localStorage.getItem(AH_PICK_KEY[kind]); } catch (e) {}
+        let hit = all.find(x => (x.l.id || ('i' + x.i)) === id);
+        if (hit && getListWordCount(hit.l.content) >= need) return hit;
+        return all.find(x => getListWordCount(x.l.content) >= need) || hit || null;
+    }
+    let ahDeckTmp = null;
+    function ahOpenDeck() {
+        let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0];
+        let kind = advCustomTab === 'pack' ? 'pack' : 'mine', c = ahDeckChosen(kind, lv.minWords);
+        ahDeckTmp = c ? c.i : null;
+        ahRenderDeck();
+        ahOpenSheet('Deck');
+    }
+    function ahRenderDeck() {
+        let box = document.getElementById('ahDeckBody');
+        if (!box) return;
+        let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0];
+        let kind = advCustomTab === 'pack' ? 'pack' : 'mine', all = ahDeckLists(kind);
+        let rows = all.map(x => {
+            let n = getListWordCount(x.l.content), poor = n < lv.minWords, on = x.i === ahDeckTmp;
+            return `<button type="button" class="ah-deck${on ? ' on' : ''}${poor ? ' poor' : ''}" ${poor ? 'disabled' : ''} role="radio" aria-checked="${on}" data-on-click='[["ahDeckTap",[${x.i}]]]'><span class="aq-ring"><i></i></span><span class="ah-deck-name">${escapeHTML(x.l.title)}</span><span class="ah-deck-n">${n} 字${poor ? '・不足' : ''}</span></button>`;
+        }).join('') || `<p class="ah-deck-empty">${kind === 'pack' ? '還沒有精選單字庫，可以到首頁的「題庫」加入。' : '還沒有自訂題庫，可以到首頁的「題庫」建立。'}</p>`;
+        box.innerHTML = `<div class="ah-deck-head"><b>選擇${kind === 'pack' ? '精選單字庫' : '自訂題庫'}</b><small>這關至少要 ${lv.minWords} 個字</small></div>
+            <div class="ah-deck-list" role="radiogroup">${rows}</div>
+            <button type="button" class="ah-btn-indigo" ${ahDeckTmp === null ? 'disabled' : ''} data-on-click='[["ahDeckOk",[]]]'>確定</button>`;
+    }
+    function ahDeckTap(i) { ahDeckTmp = parseInt(i); ahRenderDeck(); }
+    function ahDeckOk() {
+        let kind = advCustomTab === 'pack' ? 'pack' : 'mine', l = wordLists[ahDeckTmp];
+        if (l) { try { localStorage.setItem(AH_PICK_KEY[kind], l.id || ('i' + ahDeckTmp)); } catch (e) {} }
+        ahCloseSheet('Deck');
+        advRenderLevelPage();
+    }
+    // ── 過關走路動畫（約 2.6 秒）：站在剛打贏的關卡 → 一跳一跳走到下一關 → 跳一下、鎖頭飛走、新關卡發光 ──
+    let ahWalkT = [], ahWalkRaf = 0;
+    function ahWalkStop() { ahWalkT.forEach(clearTimeout); ahWalkT = []; cancelAnimationFrame(ahWalkRaf); document.removeEventListener('pointerdown', ahWalkSkip, true); }
+    function ahWalkSkip() { ahWalkStop(); ahHold = null; advRenderMap(); ahScrollTo(ahCurrentId()); }
+    function ahWalk(id, nextLv) {
+        ahWalkStop();
+        let ch = ADV_CHAPTERS.find(c => c.id === advMapChapter) || ADV_CHAPTERS[0];
+        if (!nextLv || nextLv.id > ch.to || id < ch.from) { ahHold = null; advRenderMap(); ahScrollTo(id); return; }   // 這章最後一關：後面沒有路，不走路
+        ahHold = { id, next: nextLv.id };
+        advRenderMap();
+        ahScrollTo(id);
+        let reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) { ahWalkSkip(); return; }
+        setTimeout(() => document.addEventListener('pointerdown', ahWalkSkip, true), 50);
+        let H = ahMapH(), pts = ahPts(), i = id - ch.from;
+        // 0.6 秒：剛打贏的關卡變成「已過」
+        ahWalkT.push(setTimeout(() => { let a = document.getElementById('ahStage' + id); if (a) { a.className = 'ah-stage is-cleared ah-pop'; a.innerHTML = ahStageSVG(id, 'cleared', ch.id === 2); } }, 600));
+        // 0.6～2.0 秒：沿著路一跳一跳走過去，鏡頭跟著
+        ahWalkT.push(setTimeout(() => {
+            let svg = document.querySelector('#ahWorld .ah-svg'), chick = document.getElementById('ahChick'), map = document.getElementById('advMap'), world = document.getElementById('ahWorld');
+            if (!svg || !chick || !map || !world) return;
+            let seg = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            seg.setAttribute('d', ahSegD(pts, i)); seg.setAttribute('fill', 'none');
+            svg.appendChild(seg);
+            let len = seg.getTotalLength(), t0 = performance.now(), dur = 1400;
+            const step = (now) => {
+                let t = Math.min(1, (now - t0) / dur), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+                let p = seg.getPointAtLength(e * len), hop = Math.abs(Math.sin(t * Math.PI * 5)) * 16;
+                chick.style.left = (p.x / AH_W * 100) + '%';
+                chick.style.top = ((p.y - hop) / H * 100) + '%';
+                let py = (p.y / H) * world.offsetHeight;
+                map.scrollTop = Math.max(0, py - map.clientHeight * 0.58);
+                if (t < 1) ahWalkRaf = requestAnimationFrame(step);
+            };
+            ahWalkRaf = requestAnimationFrame(step);
+        }, 600));
+        // 2.0～2.6 秒：到了，原地跳一下，鎖頭彈開飛走，新關卡變金色
+        ahWalkT.push(setTimeout(() => {
+            let chick = document.getElementById('ahChick'), b = document.getElementById('ahStage' + nextLv.id);
+            if (chick) { chick.classList.remove('ah-jump'); void chick.offsetWidth; chick.classList.add('ah-jump'); }
+            if (b) {
+                let fly = document.createElement('div');
+                fly.className = 'ah-lockfly'; fly.innerHTML = AH_LOCK;
+                fly.style.left = b.style.left; fly.style.top = b.style.top;
+                b.parentNode.appendChild(fly);
+                setTimeout(() => fly.remove(), 900);
+                b.className = 'ah-stage is-current ah-pop'; b.disabled = false; b.innerHTML = ahStageSVG(nextLv.id, 'current', ch.id === 2);
+                b.setAttribute('aria-label', `第 ${nextLv.id} 關`);
+            }
+        }, 2050));
+        ahWalkT.push(setTimeout(() => { document.removeEventListener('pointerdown', ahWalkSkip, true); ahHold = null; }, 2700));
+    }
+    // 大冒險首頁的畫面高度（手機網址列展開／收起都用看得到的高度）
+    function ahFit() {
+        let v = document.getElementById('adventureView');
+        if (!v) return;
+        let vv = window.visualViewport;
+        v.style.setProperty('--ah-h', Math.round(vv ? vv.height : window.innerHeight) + 'px');
+    }
+    try {
+        window.addEventListener('resize', ahFit);
+        if (window.visualViewport) window.visualViewport.addEventListener('resize', ahFit);
+    } catch (e) {}
 
     // ── 第 3 頁：雞塊能力值（糖醋醬可讓任一能力 +1）──
     const ADV_STAT_DEFS = [
@@ -7248,7 +7635,7 @@
     // ── 背包：九宮格；右上角篩選（全部／道具／物品）；點格子看說明再使用 ──
     //   道具 = 可以放進裝備欄的東西（同時只能裝 1 個）；物品 = 用掉就沒了的消耗品
     let advBagFilter = 'all';
-    function advPotionIcon(size) { return `<span style="font-size:${Math.round(size * 0.82)}px;line-height:1">🧪</span>`; }
+    function advPotionIcon(size) { size = size || 22; return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-4px"><path d="M9 3h6M10 3v5.2L5.2 17.4A2.4 2.4 0 0 0 7.3 21h9.4a2.4 2.4 0 0 0 2.1-3.6L14 8.2V3" fill="#E0F2FE" stroke="#0F766E" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M7.4 15h9.2l1.6 2.9A1.4 1.4 0 0 1 17 20H7a1.4 1.4 0 0 1-1.2-2.1z" fill="#2DD4BF"/><circle cx="10.5" cy="17.4" r="1" fill="#fff"/></svg>`; }
     function advBagDefs() {
         let defs = [
             { key: 'potion', kind: 'item', name: '小型恢復藥水', icon: s => advPotionIcon(s), n: advData.potions, desc: `使用後 HP +${ADV_POTION_HEAL}（目前 ${advData.hp}/${advMaxHp()}）`, act: '使用', fn: 'advBagUsePotion' },
@@ -7547,7 +7934,7 @@
         }
         ADV_MOVES.filter(m => m.buy.kind === 'shards' && !advOwns(m.key)).forEach(m => {
             let open = advMoveOpen(m);           // 傳說招式：打倒第 20 關後才能買，之前顯示「第 21 關解鎖」並變灰
-            let price = open ? advShardPrice(m.buy.price) : `第 ${(m.buy.open || 20) + 1} 關解鎖`;
+            let price = open ? advShardPrice(m.buy.price) : `第 ${BattleCore.moveUnlockAt(m.key) + 1} 關解鎖`;   // 第幾關開放：battle-core.js
             let poor = open && advData.shards < m.buy.price;
             cells.push(advShopCell({ id: 'shopItem_' + (m.buy.item || 'mv_' + m.key), kind: 'move', icon: advMoveIcon(m, 46), name: m.name, sub: m.mode === 'speed' ? `${advRarity(m.key).label} ｜ ${m.speed.label} +1～${m.speed.cap} ｜ 速答` : `${advRarity(m.key).label} ｜ 威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題 ｜ ${ADV_TYPE_LABEL[m.type]}`, price: price, off: !open, poor: poor, cls: 'rar-' + advRarityKey(m.key) + (open ? '' : ' is-locked'), action: `[["advBuyMove",["${m.key}"]]]` }));
         });
@@ -7867,7 +8254,9 @@
             <linearGradient id="sgE2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A2E22"/><stop offset="1" stop-color="#1F110C"/></linearGradient></defs>${s}</svg>`;
     }
     // 戰鬥場景：便利商店店內（日光燈 + 貨架 + 冷藏櫃 + 地磚）
-    function advStoreStageBG() {
+    function advStoreStageBG(tall) {
+        // tall：新版戰鬥畫面用，地磚一路往下畫到底（跟上面的透視地磚連在一起，不會斷掉）
+        const H = tall ? 520 : 150;
         const FONT = `font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif"`;
         let seed = 23;
         const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
@@ -7890,12 +8279,15 @@
         // 中間：自動門
         s += `<rect x="150" y="38" width="40" height="68" fill="#BAE6FD" stroke="#64748B" stroke-width="1"/><line x1="170" y1="38" x2="170" y2="106" stroke="#64748B" stroke-width="1"/>`;
         // 地磚
-        s += `<rect x="0" y="106" width="340" height="44" fill="url(#sgS2)"/>`;
-        for (let i = -6; i <= 16; i++) s += `<line x1="${170 + i * 30}" y1="106" x2="${170 + i * 60}" y2="150" stroke="#CBD5E1" stroke-width="1"/>`;
-        [118, 132].forEach(y => { s += `<line x1="0" y1="${y}" x2="340" y2="${y}" stroke="#CBD5E1" stroke-width="1"/>`; });
-        return `<svg class="adv-stage-bg" viewBox="0 0 340 150" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+        //   透視：所有直線都朝 (170, 62) 這個消失點；橫線越往下間距越大
+        s += `<rect x="0" y="106" width="340" height="${H - 106}" fill="url(#sgS2)"/>`;
+        for (let i = -40; i <= 40; i++) { let x2 = 170 + i * 30 * (H - 62) / 44; if (Math.abs(x2 - 170) > 6000) continue; s += `<line x1="${170 + i * 30}" y1="106" x2="${x2.toFixed(1)}" y2="${H}" stroke="#CBD5E1" stroke-width="1"/>`; }
+        let rows = [118, 132], gap = 18;
+        while (rows[rows.length - 1] + gap < H) { rows.push(Math.round(rows[rows.length - 1] + gap)); gap *= 1.17; }
+        rows.forEach(y => { if (y < H) s += `<line x1="0" y1="${y}" x2="340" y2="${y}" stroke="#CBD5E1" stroke-width="1"/>`; });
+        return `<svg class="adv-stage-bg${tall ? ' adv-stage-bg--tall' : ''}" viewBox="0 0 340 ${H}" preserveAspectRatio="xMidYMin slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
             <linearGradient id="sgS1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E2E8F0"/><stop offset="1" stop-color="#F8FAFC"/></linearGradient>
-            <linearGradient id="sgS2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E5E7EB"/><stop offset="1" stop-color="#F9FAFB"/></linearGradient></defs>${s}</svg>`;
+            <linearGradient id="sgS2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E5E7EB"/><stop offset="${tall ? 0.25 : 1}" stop-color="#F9FAFB"/>${tall ? '<stop offset="1" stop-color="#EEF2F6"/>' : ''}</linearGradient></defs>${s}</svg>`;
     }
     // 新版戰鬥畫面（前後透視：敵人在右上是主角、雞塊背面在左下）—— 先開放的關卡
     const ADV_BT_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
@@ -7967,7 +8359,11 @@
         adv.btLocked = false; adv.btMenuH = 0; adv.btFullH = 0; adv.btW = 0;
         adv.nextAtk = 0; adv.intBuff = 0; adv.ringOpening = false; if (advSp && advSp.timer) clearInterval(advSp.timer); advSp = null;
         let battle = document.querySelector('#adventureBattleView .adv-battle'), btOn = advBtOn();
-        if (battle) { battle.classList.toggle('bt', btOn); battle.classList.toggle('bt-store', !!(btOn && adv.level && adv.level.id >= 11)); }   // 便利商店：白色地磚
+        if (battle) {
+            battle.classList.toggle('bt', btOn); battle.classList.toggle('bt-store', !!(btOn && adv.level && adv.level.id >= 11));   // 便利商店：白色地磚
+            // 上一場留下來的場景高度、鍵盤狀態清掉（不然換關時舞台會變很矮、下面白色區域很大）
+            battle.classList.remove('bt-kb'); battle.style.removeProperty('--bt-stage-h');
+        }
         let view = document.getElementById('adventureBattleView');
         if (view) view.classList.toggle('bt-view', btOn);
         document.body.classList.toggle('bt-on', btOn);
@@ -7976,7 +8372,7 @@
             try { if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = false; } catch (e) {}
             advBtFit();
             const SHIELD = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3z"/></svg>';
-            st.innerHTML = (adv.level && adv.level.id >= 11 ? advStoreStageBG() : advStageBG()) + `
+            st.innerHTML = (adv.level && adv.level.id >= 11 ? advStoreStageBG(true) : advStageBG()) + `
             <div class="bt-scene">
                 <svg class="bt-plat" viewBox="0 0 390 560" aria-hidden="true">
                     <ellipse cx="280" cy="350" rx="102" ry="20" fill="#fff" opacity="0.35" stroke="#8A5A34" stroke-opacity="0.35" stroke-width="2"/>
@@ -8125,13 +8521,16 @@
             let per = adv.player.atk + m.power + advMasteryAtk(m.key) + (adv.nextAtk || 0);      // 不扣敵人防禦：打下去才知道
             let stamp = adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.has(m.type);
             if (!why && adv.enemy.special === 'clerk' && advImmuneType() === m.type) why = '這回合無效';
+            let rarL = ADV_RARITY[advRarityKey(m.key)].label;          // 普通／稀有／傳說
             if (m.mode === 'speed') {
                 let sp = advSpeedCfg(m), g = advSpeedGuard();
+                // 冥想：這場加的智慧已經到上限 → 不能再用（用了也加不到）
+                if (!why && m.speed.stat === 'int' && (adv.intBuff || 0) >= sp.cap) { why = '這場已達上限'; off = true; }
                 return `<button type="button" class="adv-move rar-${advRarityKey(m.key)}${sealed ? ' sealed' : ''}" ${off ? 'disabled' : ''} data-on-click='[["advChooseMove",["${m.key}"]]]'>
-                ${stamp ? '<span class="adv-stamp">已集點</span>' : ''}<b class="nm">${m.icon} ${m.name}${lvl ? ` <span class="adv-lv-chip">Lv.${lvl}</span>` : ''}</b><span class="dmg">${sp.label} +1～${sp.cap}</span><small>速答${why ? '｜' + why : g ? `｜加成 −${g}` : ''}</small></button>`;
+                ${stamp ? '<span class="adv-stamp">已集點</span>' : ''}<b class="nm">${m.name}${lvl ? ` <span class="adv-lv-chip">Lv.${lvl}</span>` : ''}</b><span class="dmg">${sp.label} +1～${sp.cap}</span><small>速答・${rarL}${why ? '｜' + why : g ? `｜加成 −${g}` : ''}</small></button>`;
             }   // 店員：直接告訴玩家，不用自己試
             return `<button type="button" class="adv-move rar-${advRarityKey(m.key)}${sealed ? ' sealed' : ''}" ${off ? 'disabled' : ''} data-on-click='[["advChooseMove",["${m.key}"]]]'>
-                ${stamp ? '<span class="adv-stamp">已集點</span>' : ''}<b class="nm">${m.icon} ${m.name}${lvl ? ` <span class="adv-lv-chip">Lv.${lvl}</span>` : ''}</b><span class="dmg">傷害 ${m.hits > 1 ? per + '×' + m.hits : per}</span><small>${ADV_TYPE_LABEL[m.type]}${why ? '｜' + why : ''}</small></button>`;
+                ${stamp ? '<span class="adv-stamp">已集點</span>' : ''}<b class="nm">${m.name}${lvl ? ` <span class="adv-lv-chip">Lv.${lvl}</span>` : ''}</b><span class="dmg">傷害 ${m.hits > 1 ? per + '×' + m.hits : per}</span><small>${ADV_TYPE_LABEL[m.type]}・${rarL}${why ? '｜' + why : ''}</small></button>`;
         }).join('');
         if (adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.size >= ADV_STAMP_NEED && !adv.redeemed) {
             moves += `<button type="button" class="adv-move adv-redeem rar-legend" data-on-click='[["advRedeemStamps",[]]]'><b class="nm">🎫 兌換集點卡！</b><span class="dmg">攻擊 +${ADV_STAMP_ATK}・HP +${ADV_STAMP_HEAL}</span><small>不用作答・不消耗行動・一場一次</small></button>`;
@@ -8355,7 +8754,7 @@
         let cell = (side, slot) => {
             let i = (side === 'en' ? sp.en : sp.cn)[slot], w = sp.round[i];
             if (!w) return '<div class="spd-cell gone"></div>';
-            if (sp.done.has(i)) return '<div class="spd-cell gone">✓</div>';
+            if (sp.done.has(i)) return '<div class="spd-cell gone"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>';
             let sel = side === 'en' ? sp.selEn === i : sp.selCn === i;
             let bad = sp.bad && sp.bad[side] === i;
             let txt = side === 'en' ? w.english : advSpeedShort(w);
@@ -8532,26 +8931,51 @@
         let a = advCnNorm(input);
         if (!a) return false;
         if (a === advCnNorm(chinese)) return true;
-        return String(chinese || '').split(/[；;,，、\/／]/).some(p => {
-            let n = advCnNorm(p.replace(/[（(][^）)]*[）)]/g, ''));
-            return n && n === a;
+        let parts = String(chinese || '').split(/[；;,，、\/／]/).map(p => p.trim()).filter(Boolean);
+        return cnLooseMatch(input, parts);       // 熱的=熱、沒禮貌=不禮貌、飽滿的、便利超商…（見 cnCanon）
+    }
+    // 衝鋒撞擊的「搜尋」：打關鍵字，列出這場出題範圍裡含有這個字的中文意思（點一下填進去）
+    function advCnSuggest() {
+        let q = adv.q, inp = document.getElementById('advCnInput'), box = document.getElementById('advCnSugg');
+        if (!q || q.type !== 'typeCn' || q.done || !inp || !box) return;
+        let k = chiNorm(inp.value);
+        if (!k) { box.innerHTML = ''; return; }
+        let seen = {}, hits = [];
+        (adv.cnWords || []).forEach(w => {
+            String(w.chinese || '').split(/[；;,，、\/／]/).map(p => p.trim()).filter(Boolean).forEach(p => {
+                if (!seen[p] && chiNorm(p).includes(k)) { seen[p] = 1; hits.push(p); }
+            });
         });
+        hits.sort((a, b) => a.length - b.length);
+        box.innerHTML = hits.length
+            ? hits.slice(0, 8).map(p => `<button type="button" class="adv-cn-chip" data-on-click='[["advCnPick",[${JSON.stringify(p).replace(/'/g, '&#39;')}]]]'>${escapeHTML(p)}</button>`).join('')
+            : `<span class="adv-cn-none">找不到「${escapeHTML(inp.value.trim())}」</span>`;
+    }
+    function advCnPick(p) {
+        let inp = document.getElementById('advCnInput');
+        if (!inp || !adv.q || adv.q.done) return;
+        inp.value = p;
+        let box = document.getElementById('advCnSugg'); if (box) box.innerHTML = '';
+        try { inp.focus({ preventScroll: true }); } catch (e) {}
     }
     function advAskTypeCn() {
         let w = advNextWord('cn');
         adv.q = { type: 'typeCn', word: w, done: false };
         let m = adv.move;
         document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}：輸入這個單字的中文意思</div>
+            <div class="adv-log" id="advLog">請輸入中文意思</div>
             <div class="adv-qword">${escapeHTML(w.english)}</div>
             <div class="adv-input-row">
                 <input type="text" id="advCnInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入中文意思">
                 ${getSpeechRecognitionCtor() ? `<button type="button" class="adv-cn-mic" id="advCnMic" aria-label="用說的（中文）" data-on-click='[["advCnMicTap",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/></svg></button>` : ''}
                 <button type="button" data-on-click='[["advSubmitCn",[]]]'>送出</button>
             </div>
+            <div class="adv-cn-sugg" id="advCnSugg" aria-live="polite"></div>
             <div class="adv-qsub" id="advCnSub"></div>`;
         let inp = document.getElementById('advCnInput');
         inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); advSubmitCn(); } });
+        inp.addEventListener('input', advCnSuggest);
+        inp.addEventListener('compositionend', advCnSuggest);
         setTimeout(() => { try { inp.focus({ preventScroll: true }); } catch (e) {} }, 50);
     }
     // 衝鋒撞擊：按麥克風用中文說出意思（zh-TW 語音辨識），辨識到的字填進輸入框
@@ -8589,6 +9013,7 @@
         if (!val.trim()) return;
         const id = adv.runId;
         q.done = true;
+        let sg = document.getElementById('advCnSugg'); if (sg) sg.innerHTML = '';
         let ok = advCnMatch(val, q.word.chinese);
         if (inp) inp.blur();
         document.getElementById('advCnSub').innerHTML = ok ? '✅ 正確！' : `❌ 正確答案：<b>${escapeHTML(q.word.chinese)}</b>`;
@@ -8888,6 +9313,7 @@
             await p;
             poof(Math.max(60, P.offsetWidth));
             P.innerHTML = keep; P.classList.remove('is-boar');
+            try { P.getAnimations().forEach(a => a.cancel()); } catch (e) {}   // 蓄力時「往後退」那段留著的變形清掉（不然被打時會忽大忽小）
         } else if (m.fx === 'slash') {
             let p = advAnimate(P, [{ transform: 'translate(0,0)' }, { transform: `translate(${d.dx * 0.5}px, ${d.dy * 0.5}px)`, offset: 0.5 }, { transform: 'translate(0,0)' }], { duration: 380, easing: 'ease-in-out' });
             await advWait(170);
@@ -9144,7 +9570,7 @@
                 let segs = Array.from({ length: ev.cap }, (_, k) => `<i class="${k < ev.got ? 'on' : ''}"></i>`).join('');
                 let guardTxt = ev.guard ? `<div class="spd-guard">🛡️ ${escapeHTML(e.name)}防禦了速答招式！加成 −${ev.guard}${ev.raw ? `（+${ev.raw} → +${ev.got}）` : ''}</div>` : '';
                 let gotTxt = m.speed.stat === 'int'
-                    ? `智慧 +${ev.applied}${ev.applied < ev.got ? `（這場已加到上限 +${ev.cap}）` : ''}`
+                    ? `智慧 +${ev.applied}（這場累計 +${adv.intBuff || 0}${(adv.intBuff || 0) >= ev.cap ? '，已達上限' : ` / 上限 +${ev.cap}`}）`
                     : `下一招攻擊 +${ev.got}（最多 +${ev.cap}）`;
                 let isLast = adv.actionsLeft <= 1;
                 document.getElementById('advPanel').innerHTML = `
@@ -9219,6 +9645,7 @@
                 await advHurt(E, ev.dmg, true, '-' + ev.dmg);
                 if (id !== adv.runId) return true;
                 advFloat(E, '我快過期了..', '#64748B');
+                advBtSay('我快過期了..', 1600);
                 await advWait(500);
                 return false;
             case 'heal':
@@ -9363,7 +9790,7 @@
         // 結算畫面的獎勵：只放 icon＋數量
         let items = [];
         if (gainSauce > 0) items.push({ icon: advSauceIcon(26), n: gainSauce, label: '糖醋醬' });
-        items.unshift({ icon: '<span class="xp-ico big">XP</span>', n: gainXp, label: xpDouble ? '經驗值（今日首勝 ×2）' : '經驗值' });
+        items.unshift({ icon: '<span class="xp-ico big">XP</span>', n: gainXp, xp: true, label: xpDouble ? '經驗值（今日首勝 ×2）' : '經驗值' });
         if (gainShards > 0) items.push({ icon: advShardIcon(26), n: gainShards, label: '冒險代幣' });
         if (gotWipes) items.push({ icon: advWipeIcon(26), n: gotWipes, label: '濕紙巾' });
         if (gotPotions + dropPotion > 0) items.push({ icon: advPotionIcon(26), n: gotPotions + dropPotion, label: '小型恢復藥水' });
@@ -9426,8 +9853,8 @@
             let ws = adv.wrongThis || [];
             mid = `<div class="cr-miss"><span class="cr-miss__label">${ws.length ? `答錯 ${ws.length} 個字` : '這場沒有答錯的字'}</span>${ws.length ? `<div class="cr-miss__words">${ws.map(w => `<span class="cr-word"><b>${escapeHTML(w.english)}</b> ${escapeHTML(w.chinese || '')}</span>`).join('')}</div>` : ''}</div>`;
         } else {
-            let tag = st === 'first' ? '<span class="cr-tag cr-tag--first">首勝</span>' : `<span class="cr-tag cr-tag--today">今日 ${Math.min(used, ADV_REPLAY_PER_DAY)} / ${ADV_REPLAY_PER_DAY}</span>`;
-            let its = (d.items || []).map(it => `<span class="cr-item" role="img" aria-label="${escapeHTML(it.label)} ×${it.n}">${it.icon}<b>×${it.n}</b></span>`).join('');
+            let tag = st === 'first' ? '' : `<span class="cr-tag cr-tag--today">今日 ${Math.min(used, ADV_REPLAY_PER_DAY)} / ${ADV_REPLAY_PER_DAY}</span>`;   // 首勝：上面已經有「首次通關」
+            let its = (d.items || []).map(it => `<span class="cr-item" role="img" aria-label="${escapeHTML(it.label)} ${it.xp ? '+' : '×'}${it.n}">${it.icon}<b>${it.xp ? '+' : '×'}${it.n}</b></span>`).join('');
             if (!its) its = `<span class="cr-none">${d.rewardOK === false ? '今日獎勵已領完' : '這次沒有獎勵'}</span>`;
             mid = `<div class="cr-reward"><div class="cr-reward__head"><span class="cr-reward__label">獲得獎勵</span>${tag}</div><div class="cr-reward__items">${its}</div></div>`;
         }
@@ -9481,6 +9908,8 @@
     var faTimers = [], faState = null;     // var：地圖重畫時可能比這行更早被呼叫
     function advFlagAnim(id, nextLv) {
         faStop();
+        ahWalk(id, nextLv);           // r10：改成雞塊沿著路走到下一關（舊的插旗動畫不再使用）
+        return;
         let map = document.getElementById('advMap');
         if (!map) return;
         let ch = ADV_CHAPTERS.find(c => c.id === advMapChapter) || ADV_CHAPTERS[0];
@@ -11062,7 +11491,7 @@
         copyAppUrl,
         lpBack, lpTogglePause, advDoReplace, advLvTap, advAllocAdd, advAllocCancel, advAllocOk, cpResume, cpStartNew, cpStartNewFlash, cpStartNewSpeak, leaveSpeakPractice, playSpeakMyRecording, cpConfirmClose, cpConfirmBg, cpConfirmOk, fcFlip,
         playSpeakPracticeSample,
-        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSpeedTap, advSpeedDone, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advCnMicTap, advConflictUse, advGiveUpSpeak,
+        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSpeedTap, advSpeedDone, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advCnMicTap, advCnPick, ahSoon, ahOpenShop, ahChallenge, ahOpenPick, ahPickTab, ahPickGo, ahOpenDeck, ahDeckTap, ahDeckOk, ahCloseSheet, advConflictUse, advGiveUpSpeak,
         advSetMode, advOpenWords, advSayWord, advPracticeLevel, advWrongPick, advWrongPractice,
         advOpenSauce, advQuit, advRetry, advRedeemStamps, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
         openMicHelpModal,
