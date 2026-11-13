@@ -5523,6 +5523,8 @@
             if (!confirm('⚠️ 要把雞塊大冒險的進度、道具、裝備、能力全部重設成第一次開 App 的狀態嗎？')) return true;
             let keepOwner = advData.owner;
             try { localStorage.removeItem(advStoreKey()); } catch (e) {}
+            // 訓練場（選的木人、題庫）也回到初始；木人最佳紀錄、解鎖、圖鑑都在存檔裡，跟著一起歸 0
+            try { [TG_IDX_KEY, TG_SRC_KEY, TG_PICK_KEY.pack, TG_PICK_KEY.mine].forEach(k => localStorage.removeItem(k)); } catch (e) {}
             advData = advLoad();
             advData.owner = keepOwner;
             advData.legendReset = true;          // 傳說招式全部回到補給站（熟練度跟著進度一起歸 0）
@@ -5530,7 +5532,7 @@
             advSave();
             try { advRefreshViews(); } catch (e) {}
             try { advRenderShopBox(); } catch (e) {}
-            alert('🔄 雞塊大冒險已重設：進度、道具、裝備、能力、經驗值、熟練度都回到初始值，傳說招式已回到補給站。');
+            alert('🔄 雞塊大冒險已重設：進度、道具、裝備、能力、經驗值、熟練度、訓練場木人紀錄、圖鑑都回到初始值，傳說招式已回到補給站。');
             return true;
         }
         if (code === 'newplayer') {
@@ -5615,7 +5617,7 @@
     const ADV_LOSE_XP_RATE = BattleCore.LOSE_XP_RATE;   // 戰敗：拿勝利經驗值的 20%（至少 1）；中途離開什麼都沒有（算法在 battle-core.js 的 loseXp）
     // 經驗值、等級的算法在 battle-core.js
     const ADV_OLD_XP_RATE = BattleCore.OLD_XP_RATE;   // 已經打贏過的舊關卡：經驗值只有 70%
-    function advWinXp(lv, old, dbl) { return BattleCore.winXp(lv, old, dbl); }
+    function advWinXp(lv, old, dbl) { return BattleCore.titleXp(BattleCore.winXp(lv, old, dbl), advData.title); }   // 稱號（24小時不打烊）經驗值 +5%
     function advLevel(xp) { return BattleCore.levelOf(xp === undefined ? (advData.xp || 0) : xp); }
     function advLevelInfo() {
         let xp = advData.xp || 0, lv = advLevel(xp), max = lv >= ADV_XP_NEED.length;
@@ -5841,7 +5843,10 @@
             lvSeenAt: n0(d.lvSeenAt),
             mapAt: n0(d.mapAt),
             // 訓練場：每隻木人的最佳傷害、第一次打到 999 的時間（一次性獎勵）
-            train: { best: Object.assign({}, (d.train && d.train.best) || {}), first: Object.assign({}, (d.train && d.train.first) || {}) },                                 // 地圖上的雞塊站在第幾關（剛打過／剛選的那關）
+            train: { best: Object.assign({}, (d.train && d.train.best) || {}), first: Object.assign({}, (d.train && d.train.first) || {}) },
+            tgSeen: (d.tgSeen && typeof d.tgSeen === 'object') ? d.tgSeen : {},     // 看過的木人（新解鎖的木人：底部「訓練場」紅色驚嘆號）
+            dex: (d.dex && typeof d.dex === 'object') ? d.dex : {},                 // 敵人圖鑑：情蒐次數、看過的型態、獎勵
+            title: typeof d.title === 'string' ? d.title : '',                     // 配戴中的稱號                                 // 地圖上的雞塊站在第幾關（剛打過／剛選的那關）
             // 看過的招式／裝備（新拿到、還沒點開看過的會有紅色驚嘆號）；舊存檔第一次載入時，已擁有的都算看過
             seen: (d.seen && typeof d.seen === 'object') ? { m: Object.assign({}, d.seen.m || {}), g: Object.assign({}, d.seen.g || {}), init: 1 } : null,                               // 最近一次升級的時間（紅點動畫用）
             resetNotice: d.resetNotice === true,                // 改版重來：下次進大冒險時告訴玩家一次
@@ -6674,7 +6679,7 @@
         if (advCanAuto()) {
             let words = advAutoWords(lv), last = ((advData.lastWrong || {})[lv.id] || []).length;
             let key = (Array.isArray(advPlanOf(lv.id)) ? advPlanOf(lv.id)[0] : advPlanOf(advPlanOf(lv.id).review[0])[0]) < advAutoParts().night.length ? 'adv_night' : 'adv_store';
-            html += opt('auto', `冒險・${(WORD_PACKS[key].title || '').replace(/^冒險・/, '')}`, `<span class="aq-rec">推薦</span>${auto ? `<span class="ah-cap ah-cap--link" role="link" data-on-click='[["$stop",[]],["advOpenWords",[]]]'>${last ? `錯 ${last}・` : ''}${words.length} 字・看單字${ARROW}</span>` : ''}`);
+            html += opt('auto', `冒險・${(WORD_PACKS[key].title || '').replace(/^冒險・/, '')}`, `<span class="aq-rec">推薦</span>${auto ? `<span class="ah-cap ah-cap--link" role="link" data-on-click='[["$stop",[]],["advOpenWords",[]]]'>${words.length} 字・看單字${ARROW}</span>` : ''}`);
         }
         let capsule = (k) => {
             if (cur !== k) return '';
@@ -6769,6 +6774,7 @@
     // 備戰卡片：在地圖上從下面滑上來（不換頁）
     function goToAdvLevel(levelId) {
         advAbort();
+        adv.training = false;                 // 回到冒險關卡：不再是訓練模式（不然「看單字」返回會跑去訓練場）
         adv.pickLevel = (ADV_LEVELS.some(l => l.id === levelId) && advUnlocked(levelId)) ? levelId : 1;
         let v = document.getElementById('adventureView');
         if (!v.classList.contains('active')) {
@@ -6783,6 +6789,7 @@
         ahOpenSheet('Prep');
     }
     function advBackToLevel() { if (adv.training) { goToTraining(); return; } goToAdvLevel(adv.pickLevel || 1); }
+    function advWordsBack() { goToAdvLevel(adv.pickLevel || 1); }   // 「這關會考的字」返回：一定回到這關的備戰卡片
 
     // ── 第 1 頁：地圖 ──
     function goToAdventurePage(fromLevel) {
@@ -6795,7 +6802,8 @@
         advSyncDaily();
         advMapChapter = advChapterOf(fromLevel === true && adv.pickLevel ? adv.pickLevel : ahChickAt());
         ['Deck', 'Prep', 'Pick', 'Train'].forEach(n => { let w = document.getElementById('ah' + n); if (w) { w.classList.remove('open'); w.hidden = true; } });
-        { let tg = document.getElementById('tgHome'); if (tg) tg.hidden = true; tgSetTab(false); }   // 訓練場蓋在地圖上：回地圖時收起來
+        { let dx = document.getElementById('dexHome'); if (dx) dx.hidden = true; }
+        { let tg = document.getElementById('tgHome'); if (tg) tg.hidden = true; tgSetTab(false); let ah = document.querySelector('#adventureView .ah'); if (ah) ah.classList.remove('tg-on'); }   // 訓練場蓋在地圖上：回地圖時收起來
         switchView('adventureView');
         ahFit();
         advRenderMap();
@@ -7011,7 +7019,7 @@
         let nextOpen = ahChapterUnlocked(nextCh);
         let chBox = document.getElementById('ahChapter');
         if (chBox) chBox.innerHTML = `<button type="button" class="ah-arrow" ${prevCh ? '' : 'disabled'} aria-label="上一章" data-on-click='[["advMapStep",[-1]]]'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            <span class="ah-ch-name"><b>${escapeHTML(ch.name)}</b><small>${ch.id} / ${AH_CH_TOTAL} 章</small></span>
+            <span class="ah-ch-name"><b>${escapeHTML(ch.name)}</b></span>
             ${nextOpen ? `<button type="button" class="ah-arrow" aria-label="下一章" data-on-click='[["advMapStep",[1]]]'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`
                        : `<span class="ah-arrow is-lock" aria-label="下一章還沒解鎖">${AH_LOCK}</span>`}`;
         let tk = document.getElementById('ahTokens'); if (tk) tk.innerHTML = `${advShardIcon(20)}<b>${advData.shards}</b>`;
@@ -7054,6 +7062,9 @@
         let other = false; try { other = advGearAlert() || advAnyUnseenMove() || advAnyUnseenGear(); } catch (e) {}
         b.textContent = n ? String(n) : (other ? '!' : '');
         b.hidden = !n && !other;
+        // 新解鎖的木人、圖鑑有新進度：紅色驚嘆號（點開看過才消失）
+        let tb = document.getElementById('ahTrainBadge'); if (tb) tb.hidden = !tgAnyUnseen();
+        let db = document.getElementById('ahDexBadge'); if (db) db.hidden = !dexAlert();
     }
     function ahSoon(name) {
         let t = document.getElementById('ahToast');
@@ -7101,7 +7112,12 @@
         id = parseInt(id);
         if (ahMoving || ahHold || !advUnlocked(id)) return;
         let from = ahChickAt();
-        if (from !== id) { ahMoving = true; try { await ahHopTo(from, id); } catch (e) {} ahMoving = false; }
+        if (from !== id) {
+            ahMoving = true;
+            // 保險：動畫萬一卡住，最多 2 秒後一定放開（不然之後點關卡都沒反應）
+            try { await Promise.race([ahHopTo(from, id), new Promise(r => setTimeout(r, 2000))]); } catch (e) { advRenderMap(); }
+            ahMoving = false;
+        }
         goToAdvLevel(id);
     }
     // 雞塊沿著路快速跳到某一關（同一章才走路；不同章直接換過去）
@@ -7113,6 +7129,7 @@
             let reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             if (reduce || !chick || !svg || from < ch.from || from > ch.to || to < ch.from || to > ch.to) { advRenderMap(); resolve(); return; }
             let H = ahMapH(), pts = ahPts(), a = from - ch.from, b = to - ch.from, dir = b > a ? 1 : -1;
+            if (a === b) { advRenderMap(); resolve(); return; }
             let segs = [];
             for (let i = a; i !== b; i += dir) {
                 let p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -7122,15 +7139,18 @@
             }
             let per = Math.max(110, Math.min(260, 900 / segs.length)), t0 = performance.now(), total = per * segs.length;
             let map = document.getElementById('advMap'), world = document.getElementById('ahWorld');
+            let done = false;
             const step = (now) => {
-                let t = Math.min(1, (now - t0) / total), k = Math.min(segs.length - 1, Math.floor(t * segs.length)), lt = t * segs.length - k;
+                if (done) return;
+                // rAF 的時間戳記可能比 t0 早一點點：t 不能是負的（之前就是這裡出錯，雞塊卡住不能再動）
+                let t = Math.max(0, Math.min(1, (now - t0) / total)), k = Math.max(0, Math.min(segs.length - 1, Math.floor(t * segs.length))), lt = t * segs.length - k;
                 if (t >= 1) { k = segs.length - 1; lt = 1; }
                 let sg = segs[k], q = sg.rev ? 1 - lt : lt, pt = sg.p.getPointAtLength(q * sg.len), hop = Math.sin(lt * Math.PI) * 14;
                 chick.style.left = (pt.x / AH_W * 100) + '%';
                 chick.style.top = ((pt.y - hop) / H * 100) + '%';
                 if (map && world) map.scrollTop = Math.max(0, (pt.y / H) * world.offsetHeight - map.clientHeight * 0.58);
                 if (t < 1) requestAnimationFrame(step);
-                else { segs.forEach(x => x.p.remove()); advRenderMap(); resolve(); }
+                else { done = true; segs.forEach(x => x.p.remove()); advRenderMap(); resolve(); }
             };
             requestAnimationFrame(step);
         });
@@ -7282,7 +7302,7 @@
             svg.appendChild(seg);
             let len = seg.getTotalLength(), t0 = performance.now(), dur = 1400;
             const step = (now) => {
-                let t = Math.min(1, (now - t0) / dur), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+                let t = Math.max(0, Math.min(1, (now - t0) / dur)), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
                 let p = seg.getPointAtLength(e * len), hop = Math.abs(Math.sin(t * Math.PI * 5)) * 16;
                 chick.style.left = (p.x / AH_W * 100) + '%';
                 chick.style.top = ((p.y - hop) / H * 100) + '%';
@@ -7451,7 +7471,8 @@
         let gearBar = (k) => {
             // 綠色＝自己的能力，紫色＝裝備加的（接在後面）
             let gb = advGearBonus(k), base = Math.max(0, s[k]), tot = base + gb;
-            return `<span class="st-bar"><i style="width:${pct(base)}"></i>${gb ? `<i class="st-bar-gear" style="left:${pct(base)};width:${(Math.min(100, tot / ADV_BAR_MAX * 100) - Math.min(100, base / ADV_BAR_MAX * 100)).toFixed(1)}%"></i>` : ''}${preview(k)}</span>`;
+            // 有裝備加成：綠色右邊不要圓角，接著紫色，中間不會有空隙
+            return `<span class="st-bar"><i style="width:${pct(base)}${gb ? ';border-radius:999px 0 0 999px' : ''}"></i>${gb ? `<i class="st-bar-gear" style="left:${pct(base)};width:${(Math.min(100, tot / ADV_BAR_MAX * 100) - Math.min(100, base / ADV_BAR_MAX * 100)).toFixed(1)}%"></i>` : ''}${preview(k)}</span>`;
         };
         let addTag = k => al && al[k] ? `<small class="st-add-plus">+${al[k]}</small>` : '';
         let val = k => { let gb = advGearBonus(k); return `${s[k]}${gb ? `<small class="st-gear-plus">+${gb}</small>` : ''}${addTag(k)}`; };
@@ -7490,7 +7511,7 @@
                 <div class="st-avatar">${advChickenSVG()}</div>
                 ${lvArea}
                 <div class="st-items">${[0, 1].map(i => advMiniGearHTML(i)).join('')}</div>
-            </section>
+            </section>${advTitleChip()}
             <div class="st-main">
                 <nav class="st-tabs" role="tablist">${tab('stats', '基本素質')}${tab('moves', '招式', advAnyUnseenMove() ? ADV_NEW_ALERT : '')}${tab('bag', '背包', advAnyUnseenGear() ? ADV_NEW_ALERT : '')}${tab('gear', '裝備', advGearAlert() ? ADV_ALERT : '')}</nav>
                 <section class="st-panel${advStatsTab === 'stats' ? '' : ' st-panel--other'}" role="tabpanel">${body}</section>
@@ -8610,6 +8631,7 @@
         let eqMoves = advEquipped(), mast = {};
         eqMoves.forEach(m => { mast[m.key] = advMastery(m.key); });
         BattleCore.initBattle(adv, { level: lv, stats: advPlayerStats(), hp: advData.hp, gear: advData.gear, moves: eqMoves, mastery: mast, critOn: advCritOn() });   // 命中加成：開戰時決定這場有沒有爆擊判定
+        adv.dexSeen = new Set([adv.enemy.sprite]);          // 圖鑑：這場實際打到的型態（打完才記錄，中途離開不算）
         advData.hitPrev = advHitTotal();             // 命中的「比上次」用這個比較
         adv.micOk = false;
         adv.active = true;
@@ -8725,12 +8747,14 @@
             <path d="M0 ${horizon - 18}Q${w * 0.3} ${horizon - 44} ${w * 0.62} ${horizon - 30}T${w} ${horizon - 52}V${horizon + 6}H0Z" fill="#A7DB8D"/>
             <rect y="${horizon}" width="${w}" height="${h - horizon}" fill="#E8C99A"/>${dots}`;
     }
-    function tgBattleBG() { return `<svg class="adv-stage-bg adv-stage-bg--tall" viewBox="0 0 340 520" preserveAspectRatio="xMidYMin slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${tgSceneSVG(340, 520, 165)}</svg>`; }
+    // 訓練戰鬥的背景：跟訓練場首頁同一張（藍天、太陽、草地、沙地），鋪滿整個戰鬥場景，天空比例跟首頁一樣
+    function tgBattleBG() { return `<svg class="tg-bt-bg" viewBox="0 0 390 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${tgSceneSVG(390, 600, 268)}</svg>`; }
     function tgAbility(d) {
         let t = (d.traits || []).find(x => x.type === 'immune');
         return t ? `${ADV_TYPE_LABEL[t.moveType] || ''}招式無效` : '無';
     }
     function tgList() { return BattleCore.DUMMIES.filter(d => BattleCore.dummyUnlocked(d, advData.cleared)); }
+    function tgAnyUnseen() { try { return tgList().some(d => !(advData.tgSeen || {})[d.key]); } catch (e) { return false; } }
     function tgCur() { let l = tgList(); tgIdx = Math.max(0, Math.min(tgIdx, l.length - 1)); return l[tgIdx]; }
     function tgData() { if (!advData.train || typeof advData.train !== 'object') advData.train = { best: {}, first: {} }; return advData.train; }
     // 開訓練場（大冒險首頁底部「訓練場」）
@@ -8741,12 +8765,14 @@
         let el = document.getElementById('tgHome');
         if (!el) return;
         el.hidden = false;
+        let ah = document.querySelector('#adventureView .ah'); if (ah) ah.classList.add('tg-on');   // 訓練場：底部四個按鈕收起來，整頁都是訓練場
         document.getElementById('tgBg').innerHTML = `<svg viewBox="0 0 390 760" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${tgSceneSVG(390, 760, 420)}</svg>`;
         tgBindSwipe(el);
         tgRender();
         tgSetTab(true);
     }
-    function tgClose() { let el = document.getElementById('tgHome'); if (el) el.hidden = true; ahCloseSheet('Train'); tgSetTab(false); }
+    function tgClose() { tgClose0(); try { ahUpdateBadges(); } catch (e) {} }
+    function tgClose0() { let el = document.getElementById('tgHome'); if (el) el.hidden = true; ahCloseSheet('Train'); tgSetTab(false); let ah = document.querySelector('#adventureView .ah'); if (ah) ah.classList.remove('tg-on'); }
     function tgSetTab(on) { let b = document.getElementById('ahTabTrain'); if (b) b.classList.toggle('on', !!on); }
     function tgRender() {
         let list = tgList(), d = tgCur();
@@ -8765,10 +8791,14 @@
         document.getElementById('tgName').textContent = d.name;
         document.getElementById('tgPrev').disabled = tgIdx <= 0;
         document.getElementById('tgNext').disabled = tgIdx >= list.length - 1;
-        document.getElementById('tgDots').innerHTML = list.map((x, i) => `<i class="${i === tgIdx ? 'on' : ''}"></i>`).join('');
+        if (!advData.tgSeen) advData.tgSeen = {};
+        document.getElementById('tgDots').innerHTML = list.map((x, i) => `<i class="${i === tgIdx ? 'on' : ''}${i !== tgIdx && !advData.tgSeen[x.key] ? ' new' : ''}"></i>`).join('');
+        if (!advData.tgSeen[d.key]) { advData.tgSeen[d.key] = Date.now(); advSave(true); }   // 看到這隻木人了：紅色驚嘆號消失
         // 訓練不限次數 → 小標改成「第一次打到 999 的獎勵」；拿過了就寫「不限次數」
         let fr = d.firstReward || {}, got = !!tgData().first[d.key];
-        document.getElementById('tgTag').innerHTML = got || !fr.shards ? '不限次數' : `首破 ${d.hp}・${advShardIcon(16)}+${fr.shards}`;
+        let tag = document.getElementById('tgTag');
+        tag.innerHTML = got || !fr.shards ? '' : `首破 ${d.hp}・${advShardIcon(16)}+${fr.shards}`;
+        tag.hidden = got || !fr.shards;                       // 拿過獎勵：小標整個不顯示
         let tk = document.getElementById('tgTokens'); if (tk) tk.innerHTML = `${advShardIcon(24)}<span>${advData.shards}</span>`;
     }
     // 左右切換木人：木人縮小變淡、狀態欄淡出再淡入
@@ -8898,7 +8928,7 @@
         eqMoves.forEach(m => { mast[m.key] = advMastery(m.key); });
         // 不需要體力：雞塊用滿血進場、整場不會扣血（也不會改到冒險的體力）
         BattleCore.initBattle(adv, { level: BattleCore.dummyLevel(d), stats: advPlayerStats(), hp: advMaxHp(), gear: advData.gear, moves: eqMoves, mastery: mast, critOn: advCritOn(), training: true });
-        adv.trainKey = d.key; adv.dStage = 0; adv.comboMax = 0;
+        adv.trainKey = d.key; adv.dStage = 0; adv.comboMax = 0; adv.dexSeen = null;
         adv.micOk = false;
         adv.active = true;
         adv.busy = false;
@@ -8984,6 +9014,166 @@
     function tgAgain() { let k = adv.trainKey; advHideResult(); advStartTraining(k); }
     function tgBack() { advHideResult(); advAbort(); goToTraining(); }
     function crTraining() { advHideResult(); advAbort(); goToTraining(); }
+    // ═════════ 敵人圖鑑 ═════════
+    //   能力值、特殊能力、攻略都讀 battle-core.js 的 dexForms()（數值改了圖鑑會跟著變）
+    //   存檔 advData.dex：n[關卡] 情蒐次數 0～3、form[型態] 實際打到過、seen[型態] 看過的情蒐次數、got[關卡] 情蒐獎勵領過、ch[章] 整章獎勵領過
+    let dexCh = 1, dexObs = null;
+    function dexData() {
+        let d = advData.dex;
+        if (!d || typeof d !== 'object') d = advData.dex = {};
+        ['n', 'form', 'seen', 'got', 'ch'].forEach(k => { if (!d[k] || typeof d[k] !== 'object') d[k] = {}; });
+        return d;
+    }
+    function dexN(lvId) { return Math.min(BattleCore.DEX_NEED, dexData().n[lvId] || 0); }
+    // 這個型態目前看得到幾次的內容（沒實際打到的型態：0 → 黑影）
+    function dexShown(f) { let d = dexData(); return d.form[f.key] ? dexN(f.lv) : 0; }
+    function dexIsNew(f) { let n = dexShown(f); return n > 0 && (dexData().seen[f.key] || 0) < n; }
+    function dexCanClaim(lvId) { return dexN(lvId) >= BattleCore.DEX_NEED && !dexData().got[lvId]; }
+    function dexChLevels(ch) { return ADV_LEVELS.filter(l => l.id >= ch.from && l.id <= ch.to); }
+    function dexChDone(ch) { return dexChLevels(ch).filter(l => dexN(l.id) >= BattleCore.DEX_NEED).length; }
+    function dexChClaimable(ch) { let ls = dexChLevels(ch); return ls.length && dexChDone(ch) === ls.length && !dexData().ch[ch.id]; }
+    function dexTitleOf(chId) { let k = Object.keys(BattleCore.TITLES).find(k => BattleCore.TITLES[k].chapter === chId); return k ? Object.assign({ key: k }, BattleCore.TITLES[k]) : null; }
+    // 打完一場（不論輸贏）：情蒐 +1；這場實際打到的型態才會揭露
+    function advDexRecord() {
+        if (!adv.level || adv.training || !adv.dexSeen) return;
+        let d = dexData(), id = adv.level.id;
+        d.n[id] = Math.min(BattleCore.DEX_NEED, (d.n[id] || 0) + 1);
+        adv.dexSeen.forEach(k => { d.form[k] = true; });
+        adv.dexSeen = null;
+        advSave();
+    }
+    // 底部「圖鑑」紅色驚嘆號：解鎖特殊能力、解鎖攻略、或有獎勵可以領（第 1 次情蒐只解鎖能力值，不亮）
+    function dexAlert() {
+        try {
+            if (BattleCore.dexForms().some(f => { let n = dexShown(f); return n >= 2 && (dexData().seen[f.key] || 0) < n; })) return true;
+            if (ADV_LEVELS.some(l => dexCanClaim(l.id))) return true;
+            return ADV_CHAPTERS.some(c => dexChClaimable(c));
+        } catch (e) { return false; }
+    }
+    function dexChAlert(ch) {
+        return dexChClaimable(ch) || dexChLevels(ch).some(l => dexCanClaim(l.id)) || BattleCore.dexForms().some(f => f.lv >= ch.from && f.lv <= ch.to && dexIsNew(f));
+    }
+    function goToDex() {
+        if (!document.getElementById('adventureView').classList.contains('active')) goToAdventurePage(true);
+        ahCloseAll(); tgClose();
+        let el = document.getElementById('dexHome');
+        if (!el) return;
+        dexCh = advChapterOf(ahChickAt());
+        if (!ADV_CHAPTERS.some(c => c.id === dexCh)) dexCh = 1;
+        el.hidden = false;
+        dexRender();
+        el.scrollTop = 0;
+    }
+    function dexClose() {
+        let el = document.getElementById('dexHome'); if (el) el.hidden = true;
+        if (dexObs) { dexObs.disconnect(); dexObs = null; }
+        ahUpdateBadges();
+    }
+    function dexTab(id) { dexCh = parseInt(id) || 1; dexRender(); let el = document.getElementById('dexHome'); if (el) el.scrollTop = 0; }
+    const DEX_LOCK = '<svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><rect x="1" y="7" width="12" height="8.5" rx="2" fill="#B9A585"/><path d="M3.8 7V5a3.2 3.2 0 0 1 6.4 0v2" fill="none" stroke="#B9A585" stroke-width="2"/></svg>';
+    const DEX_CROWN = '<svg width="24" height="18" viewBox="0 0 26 20" aria-hidden="true"><path d="M2 5l6 5 5-8 5 8 6-5-2.4 12H4.4z" fill="#FCD34D" stroke="#A16207" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+    function dexDiamonds(n) {
+        let s = '';
+        for (let i = 0; i < BattleCore.DEX_NEED; i++) s += `<svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l8.5 8.5-8.5 8.5L1.5 10z" fill="${i < n ? '#A0612A' : 'none'}" stroke="#A0612A" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+        return `<span class="dex-dia" aria-label="情蒐 ${n} / ${BattleCore.DEX_NEED}">${s}</span>`;
+    }
+    function dexRender() {
+        let box = document.getElementById('dexBody');
+        if (!box) return;
+        let ch = ADV_CHAPTERS.find(c => c.id === dexCh) || ADV_CHAPTERS[0];
+        let tabs = ADV_CHAPTERS.map(c => `<button type="button" class="dex-tab${c.id === ch.id ? ' on' : ''}" role="tab" aria-selected="${c.id === ch.id}" data-on-click='[["dexTab",[${c.id}]]]'>${escapeHTML(c.name.replace(/篇$/, ''))}${dexChAlert(c) ? '<em class="dex-bang">!</em>' : ''}</button>`).join('');
+        let lvs = dexChLevels(ch), done = dexChDone(ch), title = dexTitleOf(ch.id), d = dexData();
+        let chBtn = dexChClaimable(ch) ? `<button type="button" class="dex-claim" data-on-click='[["dexClaimCh",[${ch.id}]]]'>領取</button>` : '';
+        let prog = `<div class="dex-prog"><span class="dex-prog__n">情蒐 ${done} / ${lvs.length}</span><span class="dex-prog__bar"><i style="width:${lvs.length ? done / lvs.length * 100 : 0}%"></i></span>${title ? `<span class="dex-prog__title${d.ch[ch.id] ? ' got' : ''}">${DEX_CROWN}${escapeHTML(title.name)}</span>` : ''}${chBtn}</div>`;
+        if (dexChClaimable(ch) && title) prog += `<div class="dex-chnote">整章情蒐完成！領取：冒險代幣 +${BattleCore.DEX_CHAPTER_REWARD.shards}、稱號「${escapeHTML(title.name)}」${title.xpPct ? `（${escapeHTML(title.desc)}）` : ''}</div>`;
+        let forms = BattleCore.dexForms().filter(f => f.lv >= ch.from && f.lv <= ch.to);
+        const LBL = [['hp', 'HP'], ['atk', '攻擊'], ['def', '防禦'], ['agi', '敏捷'], ['int', '智慧'], ['luck', '幸運']];
+        let cards = forms.map(f => {
+            let n = dexShown(f), lvN = dexN(f.lv), isNew = dexIsNew(f), lv = ADV_LEVELS.find(l => l.id === f.lv);
+            let art = n ? advEnemySVG(f.sprite) : `<span class="dex-shadow">${advEnemySVG(f.sprite)}</span>`;
+            let need = k => `<span class="dex-lock">${DEX_LOCK}再打 ${k - n} 次解鎖</span>`;
+            let unknown = `<span class="dex-lock">${DEX_LOCK}未知</span>`;
+            let stats = LBL.map(([k, l]) => `<div class="dex-st"><span>${l}</span><b>${n ? escapeHTML(String(f.stats[k])) : '？'}</b></div>`).join('');
+            let ab = !n ? unknown : n < 2 ? need(2) : escapeHTML(f.ability || '無');
+            let tip = !n ? unknown : n < 3 ? need(3) : escapeHTML(f.tip || '—');
+            let claim = '';
+            if (f.idx === 0 && dexCanClaim(f.lv)) {
+                let r = BattleCore.dexReward(lv, advData.xp || 0);
+                claim = `<button type="button" class="dex-claim dex-claim--card" data-on-click='[["dexClaim",[${f.lv}]]]'>領取 ${advShardIcon(18)}+${r.shards}${r.xp ? `　<span class="xp-ico">XP</span>+${r.xp}` : ''}</button>`;
+            }
+            return `<article class="dex-card" data-dex="${f.key}">
+                <header class="dex-head"><span class="dex-mini">${n ? advEnemySVG(f.sprite) : `<span class="dex-shadow">${advEnemySVG(f.sprite)}</span>`}${isNew ? '<em class="dex-bang">!</em>' : ''}</span>
+                    <span class="dex-name"><small>第 ${f.lv} 關${f.idx ? '・第 2 型態' : ''}</small><b>${n ? escapeHTML(f.name) : '？？？'}</b></span>
+                    ${n >= 3 ? '<span class="dex-stamp">情蒐完成</span>' : ''}${dexDiamonds(n ? lvN : 0)}</header>
+                <div class="dex-row"><div class="dex-art">${art}</div>
+                    <div class="dex-sheet"><div class="dex-stats">${stats}</div>
+                        <div class="dex-sec"><span class="dex-k">特殊能力</span><div class="dex-v">${ab}</div></div>
+                        <div class="dex-sec"><span class="dex-k">攻略</span><div class="dex-v">${tip}</div></div>
+                    </div></div>${claim}
+            </article>`;
+        }).join('');
+        box.innerHTML = `<nav class="dex-tabs" role="tablist">${tabs}</nav>${prog}<div class="dex-list">${cards}</div>`;
+        // 看過的敵人：捲到畫面上就算看過（紅色驚嘆號下次打開就不見）
+        if (dexObs) dexObs.disconnect();
+        let root = document.getElementById('dexHome');
+        if ('IntersectionObserver' in window) {
+            dexObs = new IntersectionObserver(es => es.forEach(e => {
+                if (!e.isIntersecting) return;
+                let k = e.target.dataset.dex, f = forms.find(x => x.key === k);
+                if (f) { let n = dexShown(f); if ((d.seen[k] || 0) < n) { d.seen[k] = n; advSave(true); } }
+            }), { root, threshold: 0.5 });
+            box.querySelectorAll('.dex-card').forEach(c => dexObs.observe(c));
+        } else forms.forEach(f => { d.seen[f.key] = Math.max(d.seen[f.key] || 0, dexShown(f)); });
+    }
+    // 領取情蒐完成獎勵（等級已滿：經驗值換成冒險代幣）
+    function dexClaim(lvId) {
+        lvId = parseInt(lvId);
+        let lv = ADV_LEVELS.find(l => l.id === lvId);
+        if (!lv || !dexCanClaim(lvId)) return;
+        let r = BattleCore.dexReward(lv, advData.xp || 0), d = dexData();
+        d.got[lvId] = Date.now();
+        advData.shards += r.shards;
+        let lvB = advLevel();
+        if (r.xp) { advData.xp = (advData.xp || 0) + r.xp; if (advLevel() > lvB) advData.lvUpAt = Date.now(); }
+        advSave();
+        dexToast(`情蒐獎勵：冒險代幣 +${r.shards}${r.xp ? `、經驗值 +${r.xp}` : r.swapped ? `（等級已滿，經驗值換成代幣）` : ''}`);
+        dexRender(); ahUpdateBadges(); try { advRenderMap(); } catch (e) {}
+    }
+    function dexClaimCh(chId) {
+        chId = parseInt(chId);
+        let ch = ADV_CHAPTERS.find(c => c.id === chId);
+        if (!ch || !dexChClaimable(ch)) return;
+        let d = dexData(), t = dexTitleOf(chId);
+        d.ch[chId] = Date.now();
+        advData.shards += BattleCore.DEX_CHAPTER_REWARD.shards;
+        if (t && !advData.title) advData.title = t.key;      // 還沒戴稱號：直接戴上
+        advSave();
+        dexToast(`整章情蒐完成！冒險代幣 +${BattleCore.DEX_CHAPTER_REWARD.shards}${t ? `、獲得稱號「${t.name}」` : ''}`);
+        dexRender(); ahUpdateBadges();
+    }
+    function dexToast(msg) {
+        let t = document.getElementById('dexToast');
+        if (!t) return;
+        t.textContent = msg;
+        t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+    }
+    // ── 稱號：一次只能戴一個（狀態頁點一下切換）──
+    function advTitlesOwned() { let d = dexData(); return Object.keys(BattleCore.TITLES).filter(k => d.ch[BattleCore.TITLES[k].chapter]); }
+    function advTitleCycle() {
+        let own = advTitlesOwned();
+        if (!own.length) return;
+        let list = [''].concat(own), i = list.indexOf(advData.title || '');
+        advData.title = list[(i + 1) % list.length];
+        advSave();
+        advRenderStatsPage();
+    }
+    function advTitleChip() {
+        let own = advTitlesOwned();
+        if (!own.length) return '';
+        let t = BattleCore.TITLES[advData.title];
+        return `<button type="button" class="st-title-chip" data-on-click='[["advTitleCycle",[]]]' aria-label="切換稱號">${DEX_CROWN}<span>${t ? escapeHTML(t.name) : '未配戴稱號'}</span>${t && t.xpPct ? `<small>經驗值 +${t.xpPct}%</small>` : ''}<em>切換</em></button>`;
+    }
+
 
 
     // ── 回合 ──
@@ -9996,6 +10186,7 @@
                 await advAnimate(E, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.2) rotate(200deg)', opacity: 0 }], { duration: 520, easing: 'ease-in' });
                 return false;
             case 'phaseIn': {
+                if (adv.dexSeen && ev.enemy) adv.dexSeen.add(ev.enemy.sprite);   // 圖鑑：實際打到第 2 型態
                 if (E) E.innerHTML = advEnemySVG(ev.enemy.sprite);
                 let nm = document.getElementById('advEnemyName');
                 if (nm) nm.textContent = ev.enemy.name;
@@ -10007,6 +10198,7 @@
                 return false;
             }
             case 'shift':
+                if (adv.dexSeen) adv.dexSeen.add('clerk2');
                 advSetLog(`🔔 交班中！${e.name}換上新的同事：敏捷、攻擊力、護盾都提升了，還回復 10 點體力`);
                 advFloat(E, '交班中！', '#F97316');
                 advUpdateHud(); advClerkTag();
@@ -10069,6 +10261,7 @@
                 return false;
             // ── 速答 ──
             case 'speedResult': {
+                if (adv.training && ev.pairs > 0) tgComboUpdate(true);   // 訓練：速答答對的題數也算連對
                 let segs = Array.from({ length: ev.cap }, (_, k) => `<i class="${k < ev.got ? 'on' : ''}"></i>`).join('');
                 let guardTxt = ev.guard ? `<div class="spd-guard">🛡️ ${escapeHTML(e.name)}防禦了速答招式！加成 −${ev.guard}${ev.raw ? `（+${ev.raw} → +${ev.got}）` : ''}</div>` : '';
                 let gotTxt = m.speed.stat === 'int'
@@ -10179,8 +10372,8 @@
         if (adv.move) adv.mastery[adv.move.key] = advMastery(adv.move.key);
         if (!ok && adv.q && adv.q.word) advNoteWrong(adv.q.word);
         advSave();
-        let comboBroke = !ok && adv.training && adv.move && adv.move.mode !== 'speed';
-        if (comboBroke) BattleCore.comboAnswer(adv, false);    // 訓練：答錯 → 連對歸 0
+        let comboBroke = !ok && adv.training && adv.move && adv.move.mode !== 'speed' && (adv.combo || 0) > 0;   // 還沒答對過（連對 0）就不播「中斷!!」
+        if (!ok && adv.training) BattleCore.comboAnswer(adv, false);    // 訓練：答錯 → 連對歸 0
         if (!ok) advRecordHit(false);
         const id = adv.runId;
         adv.busy = true;
@@ -10213,6 +10406,7 @@
         adv.active = false;
         releaseWakeLock();
         let lv = adv.level;
+        advDexRecord();                           // 圖鑑：打完一場情蒐 +1（輸贏都算）
         let first = !advData.cleared[lv.id];
         let xpOld = !first;                       // 舊關卡：經驗值 70%
         // 重複通關：每天前 3 次有通關獎勵；之後打贏只增加招式熟練度（熟練度在出招時就累積了）
@@ -10371,8 +10565,7 @@
         else if (st === 'replay') btns = `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crNext",[]]]'>${d.nextLv ? `下一關・${escapeHTML(d.nextLv.name)}` : '回地圖'}</button>
             ${hp > 0 ? `<button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crRetry",[]]]'>再打一次${doneToday ? '<small>今日獎勵已領完</small>' : ''}</button>` : ''}`;
         else btns = `<button type="button" class="cr-btn cr-btn--train" data-on-click='[["crTraining",[]]]'>${tgDummyIcon(24)}訓練場</button>` + (hp > 0 ? `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crRetry",[]]]'>再打一次</button>`
-                            : `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crBack",[]]]'>回關卡頁</button>`) + `
-            ${(adv.wrongThis || []).length ? `<div class="cr-review" id="crReview"><button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crReviewPick",[]]]'>複習答錯的字</button></div>` : ''}`;
+                            : `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crBack",[]]]'>回關卡頁</button>`);   // r12：拿掉「複習答錯的字」（字卡／聽力練習），改用上面的訓練場
         el.innerHTML = `<section class="cr-screen" data-state="${st}" aria-label="戰鬥結算"><div class="cr-card">
             <header class="cr-top"><button type="button" class="cr-back" aria-label="返回" data-on-click='[["crBack",[]]]'>${CR_BACK_SVG}</button><span class="cr-pill">雞塊大冒險</span><span></span></header>
             ${hero}${st === 'lose' ? stats : ''}${mid}${notes}<div class="cr-actions">${btns}</div></div></section>`;
@@ -10533,6 +10726,7 @@
         const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
         adv.active = false;
         releaseWakeLock();
+        advDexRecord();                           // 圖鑑：輸了也算情蒐 +1
         advSaveLastWrong(); advSave();
         let tip = '';
         if (!advData.loseTipShown) { advData.loseTipShown = true; advSave(); tip = '<br>🧪 背包裡的小型恢復藥水可以恢復體力喔！'; }   // 第一次失敗才提醒
@@ -10548,7 +10742,7 @@
             return;
         }
         // 戰敗：拿勝利經驗值的 20%（至少 1）
-        let loseXp = BattleCore.loseXp(adv.level, !!advData.cleared[adv.level.id]);   // 算法在 battle-core.js
+        let loseXp = BattleCore.titleXp(BattleCore.loseXp(adv.level, !!advData.cleared[adv.level.id]), advData.title);   // 算法在 battle-core.js（含稱號加成）
         let lvB = advLevel();
         advData.xp = (advData.xp || 0) + loseXp;
         if (advLevel() > lvB) advData.lvUpAt = Date.now();
@@ -11996,7 +12190,7 @@
         copyAppUrl,
         lpBack, lpTogglePause, advDoReplace, advLvTap, advAllocAdd, advAllocCancel, advAllocOk, cpResume, cpStartNew, cpStartNewFlash, cpStartNewSpeak, leaveSpeakPractice, playSpeakMyRecording, cpConfirmClose, cpConfirmBg, cpConfirmOk, fcFlip,
         playSpeakPracticeSample,
-        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSpeedTap, advSpeedDone, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advCnMicTap, advCnPick, ahTapStage, advNoHpClose, advNoHpUse, goToTraining, tgClose, tgStep, tgOpenPrep, tgSetMode, tgOpenDeck, tgOpenPick, tgPickOk, advStartTraining, tgAgain, tgBack, crTraining, ahSoon, ahOpenShop, ahChallenge, ahOpenPick, ahPickTab, ahPickGo, ahOpenDeck, ahDeckTap, ahDeckOk, ahCloseSheet, advConflictUse, advGiveUpSpeak,
+        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSpeedTap, advSpeedDone, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advCnMicTap, advCnPick, ahTapStage, advWordsBack, goToDex, dexClose, dexTab, dexClaim, dexClaimCh, advTitleCycle, advNoHpClose, advNoHpUse, goToTraining, tgClose, tgStep, tgOpenPrep, tgSetMode, tgOpenDeck, tgOpenPick, tgPickOk, advStartTraining, tgAgain, tgBack, crTraining, ahSoon, ahOpenShop, ahChallenge, ahOpenPick, ahPickTab, ahPickGo, ahOpenDeck, ahDeckTap, ahDeckOk, ahCloseSheet, advConflictUse, advGiveUpSpeak,
         advSetMode, advOpenWords, advSayWord, advPracticeLevel, advWrongPick, advWrongPractice,
         advOpenSauce, advQuit, advRetry, advRedeemStamps, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
         openMicHelpModal,
