@@ -101,7 +101,7 @@
     const MASTERY_STEPS = [20, 100, 300];
 
     // ── 敵人特殊能力用到的數字 ──
-    const COFFEE_BURN = 6;                  // 美式咖啡：開戰燙傷 = 6 − 雞塊的智慧（無視防禦、護盾，直接扣體力）
+    const COFFEE_BURN = 6;                  // 美式咖啡：開戰燙傷 = 6 − 雞塊的智慧（無視防禦；有護盾先扣護盾，剩下的才扣體力）
     // 全能便利商店員工：每回合換崗位（第一階段），各自免疫一類招式
     const CLERK_POSTS = [{ name: '收銀台', immune: 'card' }, { name: '做餐中', immune: 'listen' }, { name: '點貨中', immune: 'speed' }];   // 點貨中：速答加成 −4（不是無效）
     const CLERK_SHIFT_HP = 20, CLERK_CD = 3;          // HP 低於 20 進入交班；下班倒數 3
@@ -140,6 +140,18 @@
     const NECTAR_SHIELD = 2;                // 農場花蜜：護盾 +2
     const CROWN_ATK = 1;                    // 農場花環：攻擊 +1
 
+    // ── 訓練場：木人（不會攻擊、敏捷 0）──
+    //   immune 積木：某一類招式無效（跟冒險敵人共用同一個積木）
+    //   unlock：打完第幾關才出現（0 = 一開始就有）；firstReward：第一次打到 HP 歸零（999）給一次的獎勵
+    const DUMMIES = [
+        { key: 'wood',  name: '木頭人',   sprite: 'dummy_wood',  hp: 999, def: 0, agi: 0, traits: [],                                   unlock: 0,  firstReward: { shards: 10 } },
+        { key: 'noise', name: '抗噪木人', sprite: 'dummy_noise', hp: 999, def: 0, agi: 0, traits: [{ type: 'immune', moveType: 'listen' }], unlock: 7,  firstReward: { shards: 15 } },
+        { key: 'card',  name: '字卡木人', sprite: 'dummy_card',  hp: 999, def: 0, agi: 0, traits: [{ type: 'immune', moveType: 'card' }],   unlock: 8,  firstReward: { shards: 15 } },
+        { key: 'iron',  name: '鐵木人',   sprite: 'dummy_iron',  hp: 999, def: 3, agi: 0, traits: [],                                   unlock: 15, firstReward: { shards: 20 } }
+    ];
+    const TRAIN_ROUNDS = 10;                // 訓練：10 回合結束
+    // 連擊倍率（只有訓練模式）：連續答對 5／10／20 題 → 攻擊力 ×2／×5／×10；答錯歸 0
+    const COMBO_STEPS = [{ at: 20, mul: 10 }, { at: 10, mul: 5 }, { at: 5, mul: 2 }];
     // ── 特殊能力積木（traits）：新敵人用這些組合，不用再寫程式 ──
     //   每個 trait：{ type, ... }，可以放在關卡資料的 traits: [...] 裡
     const TRAIT_TYPES = {
@@ -211,6 +223,19 @@
     // 打輸的經驗值：勝利經驗值（舊關卡算 70%、不乘每日 ×2）的 20%，至少 1
     function loseXp(lv, old) { return Math.max(1, Math.round(winXp(lv, old, false) * LOSE_XP_RATE)); }
 
+    // 連擊倍率
+    function comboMul(n) { let s = COMBO_STEPS.find(x => (n || 0) >= x.at); return s ? s.mul : 1; }
+    // 木人 → 關卡資料（給 initBattle 用）
+    function dummyLevel(d) {
+        if (typeof d === 'string') d = DUMMIES.find(x => x.key === d);
+        if (!d) return null;
+        return { id: 'T_' + d.key, name: d.name, sprite: d.sprite, hp: d.hp, atk: 0, agi: d.agi || 0, def: d.def || 0, int: 0, luck: 0, shield: 0, moveName: '', movePower: 0, special: '', traits: (d.traits || []).map(t => Object.assign({}, t)), noAttack: true, dummy: d.key };
+    }
+    function dummyUnlocked(d, cleared) { if (typeof d === 'string') d = DUMMIES.find(x => x.key === d); return !!d && isUnlocked(d.unlock || 0, cleared); }
+    // 木人受損的樣子：0 完整（100%～50%）／1 裂痕（50%～30%）／2 缺一塊（30% 以下）
+    function dummyStage(hp, max) { let r = max ? hp / max : 1; return r > 0.5 ? 0 : r > 0.3 ? 1 : 2; }
+    // 訓練：每一題答完呼叫一次（答對 +1、答錯歸 0）；回傳新的連對數
+    function comboAnswer(st, ok) { if (!st.training) return 0; st.combo = ok ? (st.combo || 0) + 1 : 0; return st.combo; }
     function critOn(hitPct) { return hitPct !== null && hitPct !== undefined && hitPct >= CRIT_AT; }
     // 打完第幾關才拿得到（Infinity = 1～20 關都拿不到）
     function moveUnlockAt(key) {
@@ -237,7 +262,7 @@
     // 敵人資料：護盾 = 智慧 ÷ 2；有特別指定 shield 的（御飯糰 12 點）照指定
     function makeEnemy(d) {
         let sh = (typeof d.shield === 'number') ? d.shield : shieldMax(d.int);
-        return { name: d.name, sprite: d.sprite, special: d.special || '', traits: (d.traits || []).map(t => Object.assign({}, t)), hp: d.hp, max: d.hp, atk: d.atk, agi: d.agi, def: d.def, int: d.int || 0, shield: sh, shieldMax: sh, luck: d.luck || 0, hits: d.hits || 1, moveName: d.moveName || '攻擊', movePower: d.movePower || 0 };
+        return { name: d.name, sprite: d.sprite, special: d.special || '', traits: (d.traits || []).map(t => Object.assign({}, t)), hp: d.hp, max: d.hp, atk: d.atk, agi: d.agi, def: d.def, int: d.int || 0, shield: sh, shieldMax: sh, luck: d.luck || 0, hits: d.hits || 1, moveName: d.moveName || '攻擊', movePower: d.movePower || 0, noAttack: !!d.noAttack };
     }
     // 裝備加的能力（只在戰鬥中）：防燙杯套 智慧 +3
     function gearStatBonus(gear, key) { return key === 'int' && (gear || []).includes('coaster') ? COASTER_INT : 0; }
@@ -271,6 +296,10 @@
         st.nextAtk = 0; st.intBuff = 0;
         st.actionsLeft = 0; st.actionsTotal = 0;
         st.traitOnce = {};
+        // 訓練模式：10 回合、雞塊不扣血、不能用道具、連擊倍率
+        st.training = !!o.training;
+        st.combo = 0;
+        st.trainRounds = TRAIN_ROUNDS;
         return st;
     }
 
@@ -303,7 +332,9 @@
         let cut = 0;
         traitsOf(st, 'moveMod').forEach(t => { if (!typeMatch(t, m.type)) return; let v = t.value || 0; if (v >= 0) bonus += v; else cut += -v; });
         bonus += st.nextAtk || 0;               // 蓄力：下一招攻擊 +N
-        return Math.max(0, damage(st.player.atk, m.power + masteryAtk(m.key, st.mastery[m.key]) + bonus, st.enemy.def) - cut);
+        let d = Math.max(0, damage(st.player.atk, m.power + masteryAtk(m.key, st.mastery[m.key]) + bonus, st.enemy.def) - cut);
+        // 訓練：連擊倍率乘在「每一下的傷害」上（雞塊基礎攻擊力是 0，只乘攻擊力的話 ×10 也打不出差別）
+        return st.training ? d * comboMul(st.combo) : d;
     }
     // 這招每一下最多幾點（抗性）；沒有限制回傳 Infinity
     function hitCap(st, m) {
@@ -325,7 +356,7 @@
     function moreGearShield(st) { return hasGear(st, 'bag') ? BAG_SHIELD : 0; }
 
     // ═════════ 不需要答題的動作 ═════════
-    function canBoba(st) { return hasGear(st, 'boba') && !st.itemUsed && (st.round || 1) >= 2 && st.player.hp <= BOBA_HP_AT && st.player.hp < st.player.max; }
+    function canBoba(st) { return !st.training && hasGear(st, 'boba') && !st.itemUsed && (st.round || 1) >= 2 && st.player.hp <= BOBA_HP_AT && st.player.hp < st.player.max; }
     function useBoba(st) { if (!canBoba(st)) return 0; st.itemUsed = true; let b = st.player.hp; st.player.hp = Math.min(st.player.max, st.player.hp + 1); return st.player.hp - b; }
     function canRedeem(st) { return st.enemy.special === 'clerk' && st.stamps && st.stamps.size >= STAMP_NEED && !st.redeemed; }
     function redeemStamps(st) {
@@ -359,8 +390,8 @@
     function* opening(st) {
         if (st.enemy.special === 'coffee') {
             let dmg = Math.max(0, COFFEE_BURN - st.player.int);
-            st.player.hp = Math.max(0, st.player.hp - dmg);
-            yield { t: 'coffee', dmg, src: 'coffee' };
+            let r = takeDamage(st.player, dmg);          // 先扣護盾，剩下的才扣體力
+            yield { t: 'coffee', dmg, r, src: 'coffee' };
             if (st.player.hp <= 0) { yield { t: 'lose', why: 'hp', src: 'coffee' }; return; }
         }
         for (let tr of traitsOf(st, 'burn').filter(x => x.when !== 'round')) {
@@ -415,6 +446,7 @@
     // 敵人倒下：還有下一階段就換人（回傳 false），沒有就勝利（回傳 true）
     function* enemyDown(st) {
         if (st.enemy.hp > 0) return false;
+        if (st.training) { yield { t: 'trainEnd', dmg: st.enemy.max, full: true, round: st.round }; return true; }   // 木人打到 0（999 全打完）
         if (st.phases && st.phase < st.phases.length - 1) {
             let old = st.enemy;
             st.phase++;
@@ -490,7 +522,7 @@
             yield { t: 'miss', move: m };
             // 裝備「烤焦臭豆腐」：招式失敗時雙方各扣 1 點體力
             if (hasGear(st, 'tofu')) {
-                let er = takeDamage(st.enemy, 1), pr = takeDamage(st.player, 1);
+                let er = takeDamage(st.enemy, 1), pr = st.training ? { absorbed: 0, loss: 0 } : takeDamage(st.player, 1);   // 訓練：雞塊不扣血
                 yield { t: 'tofu', er, pr, src: 'tofu' };
                 if (st.player.hp <= 0 && st.enemy.hp > 0) { yield { t: 'lose', why: 'hp', src: 'tofu' }; return; }
                 if (st.enemy.hp <= 0) { if (yield* enemyDown(st)) return; }
@@ -568,6 +600,12 @@
     }
     // 敵人的回合
     function* enemyPhase(st, rng) {
+        if (st.enemy.noAttack) {                  // 木人不會攻擊
+            st.round++;
+            yield { t: 'roundEnd' };
+            if (st.training && st.round > st.trainRounds) yield { t: 'trainEnd', dmg: st.enemy.max - st.enemy.hp, full: false, round: st.round - 1 };
+            return;
+        }
         let n = actionCount(st.enemy.agi, st.player.agi);
         for (let i = 0; i < n; i++) {
             yield { t: 'enemyTurn', i, n };
@@ -626,6 +664,7 @@
             if (onEvent) onEvent(ev);
             if (ev.t === 'win') end = 'win';
             if (ev.t === 'lose') { end = 'lose'; why = ev.why; src = ev.src; }
+            if (ev.t === 'trainEnd') end = 'train';
         }
         return { end, why, src };
     }
@@ -636,10 +675,10 @@
         RING_NEED, RING_SECS, RING_PEN, MOVES, LEVELS, TYPE_LABEL, RARITY, MOVE_RARITY, MASTERY_STEPS,
         COFFEE_BURN, CLERK_POSTS, CLERK_SHIFT_HP, CLERK_CD, STAMP_NEED, STAMP_ATK, STAMP_HEAL, RESIST, IMMUNE, WEAK_BONUS,
         SPEED_GUARD, CLERK_SPEED_GUARD, TEA_SPEED_HEAL, EXPIRE_SPEED_DMG, EXPIRE_SPEED_EVERY, MICRO_ATK_UP, EXPIRE_SELF, EGG_CARD_BONUS, IGNORE_SHIELD,
-        ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
+        DUMMIES, TRAIN_ROUNDS, COMBO_STEPS, ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
         // 公式
         levelOf, upMax, moveByKey, rarityKey, rarity, masteryLevel, masteryPerLv, masteryAtk, luckDice, rollLuck, shieldMax, answerSecs,
-        critOn, moveUnlockAt, gearUnlockAt, isUnlocked, unlocks, takeDamage, actionCount, damage, speedCfg, speedBonus, expireSpeedDmg, playerStats, winXp, loseXp, makeEnemy, hasGear, gearStatBonus, winHeal, shuffle,
+        comboMul, dummyLevel, dummyUnlocked, dummyStage, comboAnswer, critOn, moveUnlockAt, gearUnlockAt, isUnlocked, unlocks, takeDamage, actionCount, damage, speedCfg, speedBonus, expireSpeedDmg, playerStats, winXp, loseXp, makeEnemy, hasGear, gearStatBonus, winHeal, shuffle,
         // 戰鬥
         initBattle, immuneType, isImmune, speedGuard, hitDamage, hitCap, enemyIgnoresShield, sealCount,
         canBoba, useBoba, canRedeem, redeemStamps, useFlower, endAction,
