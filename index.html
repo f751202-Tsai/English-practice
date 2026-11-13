@@ -3646,6 +3646,21 @@ body.power-saving-mode #examArea, body.power-saving-mode #cardExamPlayView { bac
 .st-tab { position: relative; }
 .st-tab .adv-alert, .st-tab [class*="alert"] { position: absolute; top: 4px; right: 8px; }
 .st-bag .adv-bag-head { margin-top: 0; }
+/* r11：背包分頁一次 6 格（兩排），超過才在格子裡捲；說明＋裝備按鈕在同一個畫面 */
+.st-bag .adv-bag-grid--6 { max-height: 214px; overflow-y: auto; padding: 9px 3px 3px; scrollbar-width: thin; }
+.st-bag .adv-bag-grid--6 .adv-bag-cell { min-height: 96px; height: 96px; }
+.st-bag .adv-bag-info { margin-top: 10px; }
+.st-bag .adv-bag-detail { padding: 10px 12px; margin-bottom: 10px; }
+.st-bag .adv-bag-dico { width: 52px; flex-basis: 52px; }
+.st-bag .adv-bag-dico svg { width: 48px; height: 48px; }
+.st-bag .adv-bag-detail p { margin: 2px 0 0; font-size: 13px; line-height: 1.45; }
+/* r11：基本素質的能力列往下展開，用掉下面的空白（頁面不會變大） */
+.st-view .st { flex: 1; min-height: 0; }
+.st-view .st-main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.st-view .st-panel:not(.st-panel--other) { flex: 1; }
+.st-view .st-panel:not(.st-panel--other) > .st-row { flex: 1 1 auto; max-height: 64px; }
+/* r11：左上返回鍵跟大冒險首頁一樣（白底、靛藍箭頭） */
+.st-view .cp-back { background: #FFFFFF; color: #4F46E5 !important; box-shadow: 0 4px 12px rgba(15,23,42,.22); }
 #stModal .st-dialog { font-family: var(--st-font); color: var(--st-ink); }
 #stModal button { font-family: inherit; cursor: pointer; }
 .st-cheer span { line-height: 1.5; }
@@ -4432,7 +4447,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .ah-stage { position: absolute; z-index: 2; width: 24.6%; padding: 0; border: none; background: none; cursor: pointer; transform: translate(-50%, -42%); }
 .ah-stage svg { display: block; width: 100%; height: auto; overflow: visible; }
 .ah-stage:disabled { cursor: default; }
-.ah-stage.is-current::before { content: ''; position: absolute; left: -22%; right: -22%; top: -20%; bottom: -30%; border-radius: 50%; background: radial-gradient(closest-side, rgba(253,224,71,.65), rgba(253,224,71,0)); animation: ah-glow 1.8s ease-in-out infinite; z-index: -1; }
+.ah-stage.is-here::before { content: ''; position: absolute; left: -22%; right: -22%; top: -20%; bottom: -30%; border-radius: 50%; background: radial-gradient(closest-side, rgba(253,224,71,.65), rgba(253,224,71,0)); animation: ah-glow 1.8s ease-in-out infinite; z-index: -1; }
 @keyframes ah-glow { 0%,100% { opacity: .65; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.06); } }
 .ah-chick { position: absolute; z-index: 3; width: 19%; transform: translate(-50%, -93%); pointer-events: none; }
 .ah-chick svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -4555,13 +4570,112 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .ah-deck-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 900; color: #1E1B4B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ah-deck-n { font-size: 14px; font-weight: 900; color: #4F46E5; white-space: nowrap; }
 .ah-deck.poor { opacity: .55; cursor: not-allowed; }
+.ah-chk { flex: none; width: 22px; height: 22px; border-radius: 7px; border: 2px solid #CBD5E1; background: #fff; display: inline-flex; align-items: center; justify-content: center; }
+.ah-deck.on .ah-chk { border-color: #4F46E5; background: #4F46E5; }
+.ah-deck-tip { margin: -4px 2px 10px; font-size: 13px; font-weight: 800; color: #4F46E5; }
+.ah-deck-tip.bad { color: #DC2626; }
 .ah-deck.poor .ah-deck-n { color: #F87171; }
 .ah-deck-empty { margin: 4px 2px 6px; font-size: 14px; color: #64748B; }
 .ah-btn-indigo { width: 100%; height: 54px; border: none; border-radius: 16px; background: linear-gradient(180deg, #6366F1, #4F46E5); color: #FFFFFF; font-size: 18px; font-weight: 900; box-shadow: 0 4px 0 #3730A3; cursor: pointer; }
 .ah-btn-indigo:disabled { background: #E2E8F0; color: #94A3B8; box-shadow: none; cursor: not-allowed; }
+/* r11：體力不足的視窗 */
+.ah-dlg-wrap { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 16px; font-family: Inter, 'Noto Sans TC', system-ui, sans-serif; }
+.ah-dlg-wrap[hidden] { display: none; }
+.ah-dlg-bg { position: absolute; inset: 0; background: rgba(15,23,42,.55); }
+.ah-dlg { position: relative; width: 100%; max-width: 340px; padding: 20px 18px 16px; border-radius: 24px; background: #FFFFFF; color: #1E1B4B; text-align: center; box-shadow: 0 20px 50px rgba(15,23,42,.35); animation: ah-dlg-in .22s ease-out; }
+@keyframes ah-dlg-in { from { transform: translateY(14px) scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+.ah-dlg-art { width: 84px; margin: -6px auto 4px; filter: grayscale(.35); opacity: .9; }
+.ah-dlg-art svg { width: 100%; height: auto; display: block; }
+.ah-dlg-title { font-size: 20px; font-weight: 900; }
+.ah-dlg-hp { display: flex; align-items: center; gap: 8px; justify-content: center; margin: 8px auto 2px; max-width: 220px; font-size: 13px; font-weight: 800; color: #64748B; }
+.ah-dlg-hp .aq-bar { flex: 1; }
+.ah-dlg p { margin: 10px 0 12px; font-size: 15px; font-weight: 700; line-height: 1.55; color: #334155; }
+.ah-dlg-item { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 10px 14px; border-radius: 16px; border: 1.5px solid #CCFBF1; background: #F0FDFA; text-align: left; }
+.ah-dlg-item .ic { flex: none; display: flex; }
+.ah-dlg-item .tx { display: flex; flex-direction: column; } .ah-dlg-item b { font-size: 16px; font-weight: 900; } .ah-dlg-item small { font-size: 13px; font-weight: 800; color: #0F766E; }
+.ah-dlg .ah-btn-gold { width: 100%; height: 54px; font-size: 18px; }
+.ah-dlg-sub { width: 100%; height: 44px; margin-top: 10px; border: none; background: none; color: #64748B; font-size: 15px; font-weight: 800; cursor: pointer; }
 /* 「雞塊大冒險」右邊的進度 */
 #advListBadge { margin-left: 8px; vertical-align: 2px; }
-@media (prefers-reduced-motion: reduce) { .ah-stage.is-current::before, .ah-chick.ah-jump, .ah-pop, .ah-lockfly { animation: none; } .ah-sheet, .ah-sheet-bg { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ah-stage.is-here::before, .ah-chick.ah-jump, .ah-pop, .ah-lockfly { animation: none; } .ah-sheet, .ah-sheet-bg { transition: none; } }
+
+/* ═════════ r11：訓練場（木人）═════════ */
+.ah-tabbtn.on { color: #4F46E5; }
+.ah-cell.sel { border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(99,102,241,.4); }
+.ah-pick-note { margin: 12px 2px 10px; font-size: 13px; font-weight: 800; color: #64748B; text-align: center; }
+.tg { position: absolute; z-index: 11; left: 0; right: 0; top: 0; bottom: calc(68px + env(safe-area-inset-bottom)); overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.tg[hidden] { display: none; }
+.tg-bg, .tg-bg svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.tg-top { position: absolute; z-index: 2; top: calc(12px + env(safe-area-inset-top)); left: 12px; right: 12px; display: grid; grid-template-columns: 48px 1fr auto; gap: 8px; align-items: center; }
+.tg-title { justify-self: center; padding: 10px 26px; border-radius: 999px; background: #E0E7FF; color: #4F46E5; font-size: 18px; font-weight: 900; }
+.tg-main { position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; top: calc(76px + env(safe-area-inset-top)); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px; padding: 0 16px 16px; }
+.tg-card { width: 100%; max-width: 360px; padding: 12px; border-radius: 22px; background: #FFFFFF; box-shadow: 0 8px 22px rgba(15,23,42,.14); transition: opacity .2s; }
+.tg-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tg-st { padding: 8px 10px; border-radius: 14px; background: #F8FAFC; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tg-st .k { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 800; color: #64748B; }
+.tg-st b { font-family: Inter, system-ui, sans-serif; font-size: 24px; font-weight: 900; color: #4F46E5; line-height: 1.15; }
+.tg-st b.best { color: #B45309; }
+.tg-st b.none { color: #CBD5E1; }
+.tg-ab { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 9px 12px; border-radius: 12px; background: #EEF0FF; }
+.tg-ab span { font-size: 12.5px; font-weight: 800; color: #6366F1; }
+.tg-ab b { font-size: 15px; font-weight: 900; color: #1E1B4B; }
+.tg-dummy { width: min(62vw, 250px, 30vh); transition: transform .2s, opacity .2s; }
+.tg-dummy svg { width: 100%; height: auto; display: block; overflow: visible; }
+.tg-name { display: flex; align-items: center; gap: 12px; transition: opacity .2s; }
+.tg-nm { min-width: 120px; padding: 9px 20px; border-radius: 999px; background: #FFFFFF; text-align: center; font-size: 18px; font-weight: 900; color: #1E1B4B; box-shadow: 0 4px 12px rgba(15,23,42,.12); }
+.tg-arrow { width: 44px; height: 44px; border-radius: 50%; border: none; background: #4F46E5; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(79,70,229,.35); cursor: pointer; }
+.tg-arrow:disabled { background: rgba(255,255,255,.8); color: #CBD5E1; box-shadow: none; cursor: default; }
+.tg-dots { display: flex; gap: 6px; padding: 6px 10px; border-radius: 999px; background: #FFFFFF; }
+.tg-dots i { width: 8px; height: 8px; border-radius: 99px; background: #CBD5E1; transition: width .2s, background .2s; }
+.tg-dots i.on { width: 26px; background: #4F46E5; }
+.tg-go { width: 100%; max-width: 360px; height: 64px; font-size: 26px; letter-spacing: 2px; }
+.tg-tag { display: inline-flex; align-items: center; gap: 3px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.55); color: #92400E; font-size: 13px; font-weight: 900; letter-spacing: 0; }
+.tg-tag .adv-shard-ico { vertical-align: 0 !important; }
+.tg-main.out-l .tg-dummy { transform: translateX(-38%) scale(.7); opacity: 0; }
+.tg-main.out-r .tg-dummy { transform: translateX(38%) scale(.7); opacity: 0; }
+.tg-main.in-r .tg-dummy { transform: translateX(38%) scale(.7); opacity: 0; transition: none; }
+.tg-main.in-l .tg-dummy { transform: translateX(-38%) scale(.7); opacity: 0; transition: none; }
+.tg-main.out-l .tg-card, .tg-main.out-r .tg-card, .tg-main.out-l .tg-name, .tg-main.out-r .tg-name { opacity: 0; }
+.tg-main.in-l .tg-card, .tg-main.in-r .tg-card, .tg-main.in-l .tg-name, .tg-main.in-r .tg-name { opacity: 0; transition: none; }
+@media (max-height: 700px) { .tg-main { gap: 7px; } .tg-st b { font-size: 20px; } .tg-go { height: 56px; font-size: 22px; } }
+.tg-hero { background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 6px 16px rgba(217,119,6,.3); }
+.tg-hero-art { background: rgba(255,255,255,.28); }
+.tg-hero-art svg { width: 74px; height: 70px; }
+/* 訓練戰鬥：場景＋連對卡 */
+.adv-battle.bt.bt-train .adv-stage { background: linear-gradient(to bottom, #BFE3FB 0, #BFE3FB var(--bt-bgtop), #E8C99A var(--bt-bgtop), #E8C99A 100%); }
+.adv-battle.bt.bt-train .adv-stage::after { background: #BFE3FB; }
+.adv-battle.bt .bt-combo { right: 4.1cqw; left: auto; top: 71%; bottom: auto; gap: 1.2cqw; background: #FFFFFF; border: .7cqw solid transparent; transition: transform .25s, border-color .25s; }
+.bt-combo__top { display: flex; align-items: center; gap: 1.6cqw; font-family: 'Noto Sans TC', system-ui, sans-serif; }
+.bt-combo__k { font-size: 3.4cqw; font-weight: 900; color: #64748B; }
+.bt-combo__n { font-family: Inter, system-ui, sans-serif; font-size: 7cqw; font-weight: 900; line-height: 1; color: #94A3B8; }
+.bt-combo__mul { margin-left: auto; padding: .6cqw 2.2cqw; border-radius: 2.2cqw; background: #E2E8F0; color: #64748B; font-family: Inter, system-ui, sans-serif; font-size: 4cqw; font-weight: 900; }
+.bt-combo__track { position: relative; height: 2.4cqw; border-radius: 999px; background: #E2E8F0; }
+.bt-combo__track > i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 999px; background: #94A3B8; transition: width .3s; }
+.bt-combo__track .t { position: absolute; top: -.8cqw; bottom: -.8cqw; width: .5cqw; margin-left: -.25cqw; border-radius: 1px; background: #94A3B8; }
+.bt-combo__lb { position: relative; height: 3cqw; font-family: Inter, system-ui, sans-serif; font-size: 2.6cqw; font-weight: 800; color: #94A3B8; }
+.bt-combo__lb span { position: absolute; top: 0; transform: translateX(-50%); }
+.bt-combo__lb span:last-child { transform: translateX(-100%); }
+.bt-combo[data-lv="1"] .bt-combo__n { color: #D97706; } .bt-combo[data-lv="1"] .bt-combo__mul { background: linear-gradient(180deg, #FCD34D, #F59E0B); color: #fff; } .bt-combo[data-lv="1"] .bt-combo__track > i { background: linear-gradient(90deg, #FCD34D, #F59E0B); }
+.bt-combo[data-lv="2"] .bt-combo__n { color: #EA580C; } .bt-combo[data-lv="2"] .bt-combo__mul { background: linear-gradient(180deg, #FB923C, #EF4444); color: #fff; } .bt-combo[data-lv="2"] .bt-combo__track > i { background: linear-gradient(90deg, #FB923C, #EF4444); }
+.bt-combo[data-lv="3"] { box-shadow: 0 0 0 .8cqw rgba(168,85,247,.35), 0 0 6cqw rgba(168,85,247,.55); }
+.bt-combo[data-lv="3"] .bt-combo__n { color: #7C3AED; } .bt-combo[data-lv="3"] .bt-combo__mul { background: linear-gradient(180deg, #A855F7, #7C3AED); color: #fff; } .bt-combo[data-lv="3"] .bt-combo__track > i { background: linear-gradient(90deg, #C084FC, #7C3AED); }
+.bt-combo.pop .bt-combo__n { animation: tg-pop .35s cubic-bezier(.2,1.6,.4,1); }
+@keyframes tg-pop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.bt-combo.broken { transform: translateY(2.2cqw); border-color: #475569; }
+/* 答錯「中斷!!」：深灰、像漏氣 */
+.tg-break { position: absolute; inset: 0; z-index: 40; pointer-events: none; background: rgba(71,85,105,.38); animation: tg-fade .2s ease-out; overflow: hidden; }
+.tg-break.out { opacity: 0; transition: opacity .25s; }
+@keyframes tg-fade { from { opacity: 0; } to { opacity: 1; } }
+.tg-break__txt { position: absolute; left: 50%; top: 22%; font-family: 'Noto Sans TC', system-ui, sans-serif; font-size: clamp(54px, 17vw, 84px); font-weight: 900; color: #FFFFFF; white-space: nowrap; -webkit-text-stroke: 5px #334155; paint-order: stroke fill; text-shadow: 0 6px 0 #1E293B; animation: tg-break 1.35s cubic-bezier(.2,1.5,.4,1) forwards; }
+@keyframes tg-break { 0% { transform: translate(-50%, 0) scale(.3); opacity: 0; } 18% { transform: translate(-50%, 0) scale(1.12); opacity: 1; } 30% { transform: translate(-50%, 0) scale(1); } 100% { transform: translate(-50%, 70%) rotate(-7deg) scale(.72); opacity: .9; } }
+.tg-smoke { position: absolute; width: 70px; height: 46px; border-radius: 50%; background: rgba(100,116,139,.55); filter: blur(4px); animation: tg-smoke 1.4s ease-out forwards; }
+.tg-smoke.s0 { left: 18%; top: 30%; } .tg-smoke.s1 { left: 58%; top: 26%; animation-delay: .1s; } .tg-smoke.s2 { left: 38%; top: 38%; animation-delay: .2s; } .tg-smoke.s3 { left: 70%; top: 40%; animation-delay: .15s; } .tg-smoke.s4 { left: 8%; top: 44%; animation-delay: .25s; }
+@keyframes tg-smoke { 0% { transform: translateY(0) scale(.5); opacity: 0; } 25% { opacity: .9; } 100% { transform: translateY(90px) scale(1.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .tg-break__txt, .tg-smoke, .bt-combo.pop .bt-combo__n { animation: none; } .tg-break__txt { transform: translate(-50%, 0); } .tg-smoke { display: none; } }
+/* 輸了的結算：訓練場按鈕（在回關卡頁上面） */
+.cr-btn.cr-btn--train { flex-direction: row; gap: 8px; min-height: 52px; border-radius: 16px; font-size: 17px; color: #78350F; background: linear-gradient(180deg, #FCD34D, #F59E0B); box-shadow: 0 4px 0 #B45309; }
+.cr-btn.cr-btn--train:active { transform: translateY(3px); box-shadow: 0 1px 0 #B45309; }
+.tg-dmg { color: #B45309; }
 </style>
 </head>
 <body>
@@ -5085,9 +5199,29 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
                 <button type="button" class="ah-pickbtn" data-on-click='[["ahOpenPick",[]]]'><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2" fill="currentColor"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2" fill="currentColor"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2" fill="currentColor"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2" fill="currentColor"/></svg><span>選關</span></button>
                 <button type="button" class="ah-btn-gold ah-go" data-on-click='[["ahChallenge",[]]]'><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/><path d="M11 19l-6-6M8 16l-4 4M5 21l-2-2"/></svg>挑戰</button>
             </div>
+            <!-- 訓練場（木人）：蓋在地圖上，底部按鈕列不動 -->
+            <section class="tg" id="tgHome" hidden aria-label="訓練場">
+                <div class="tg-bg" id="tgBg"></div>
+                <div class="tg-top">
+                    <button class="ah-back" type="button" aria-label="返回地圖" data-on-click='[["tgClose",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                    <span class="tg-title">訓練場</span>
+                    <div class="ah-tokens" id="tgTokens"></div>
+                </div>
+                <div class="tg-main" id="tgMain">
+                    <div class="tg-card" id="tgCard"></div>
+                    <div class="tg-dummy" id="tgDummy"></div>
+                    <div class="tg-name">
+                        <button type="button" class="tg-arrow" id="tgPrev" aria-label="上一隻" data-on-click='[["tgStep",[-1]]]'><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+                        <span class="tg-nm" id="tgName"></span>
+                        <button type="button" class="tg-arrow" id="tgNext" aria-label="下一隻" data-on-click='[["tgStep",[1]]]'><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+                    </div>
+                    <div class="tg-dots" id="tgDots"></div>
+                    <button type="button" class="ah-btn-gold tg-go" data-on-click='[["tgOpenPrep",[]]]'>訓練<span class="tg-tag" id="tgTag"></span></button>
+                </div>
+            </section>
             <nav class="ah-bar" aria-label="大冒險">
-                <button type="button" class="ah-tabbtn" data-on-click='[["goToAdvStats",[]]]'><span class="ah-ic"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M13 33l-2 4M27 33l2 4" stroke="#231F20" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="20" cy="21" rx="14" ry="14" fill="#F4A236" stroke="#231F20" stroke-width="2.4"/><circle cx="15" cy="19" r="1.8" fill="#231F20"/><circle cx="25" cy="19" r="1.8" fill="#231F20"/><path d="M17 24q3 3 6 0" stroke="#231F20" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="11.5" cy="23" rx="2.6" ry="1.8" fill="#F87171"/><ellipse cx="28.5" cy="23" rx="2.6" ry="1.8" fill="#F87171"/><path d="M6 19q-3 1-2 5M34 19q3 1 2 5" stroke="#231F20" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg><em class="ah-badge" id="ahChickBadge" hidden></em></span><span>雞塊</span></button>
-                <button type="button" class="ah-tabbtn" data-on-click='[["ahSoon",["訓練場"]]]'><span class="ah-ic"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 24v12M14 37h12" stroke="#C2410C" stroke-width="3" stroke-linecap="round"/><circle cx="20" cy="15" r="12" fill="#FFFFFF" stroke="#DC2626" stroke-width="3"/><circle cx="20" cy="15" r="7.5" fill="#FECACA" stroke="#DC2626" stroke-width="2.6"/><circle cx="20" cy="15" r="3" fill="#DC2626"/></svg></span><span>訓練場</span></button>
+                <button type="button" class="ah-tabbtn" id="ahTabStats" data-on-click='[["goToAdvStats",[]]]'><span class="ah-ic"><svg viewBox="4 22 128 100" fill="none" aria-hidden="true"><path d="M52 108L46 118M46 118L38 118M84 108L88 118M88 118L96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/><ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/><circle cx="36" cy="80" r="4" fill="#E2861E"/><circle cx="66" cy="98" r="3.5" fill="#E2861E"/><circle cx="94" cy="74" r="3.5" fill="#E2861E"/><ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/><ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/><circle cx="54" cy="64" r="4.5" fill="#231F20"/><circle cx="80" cy="64" r="4.5" fill="#231F20"/><path d="M61 73Q67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round"/><path d="M28 68C18 68,12 72,14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/><path d="M108 68C118 68,124 72,122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/></svg><em class="ah-badge" id="ahChickBadge" hidden></em></span><span>狀態</span></button>
+                <button type="button" class="ah-tabbtn" id="ahTabTrain" data-on-click='[["goToTraining",[]]]'><span class="ah-ic"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 30v7M13 37.5h14" stroke="#7C4A1E" stroke-width="3" stroke-linecap="round"/><path d="M6 19.5h28" stroke="#7C4A1E" stroke-width="7.5" stroke-linecap="round"/><path d="M6 19.5h28" stroke="#D29B5E" stroke-width="3.6" stroke-linecap="round"/><rect x="13" y="14" width="14" height="18" rx="5" fill="#D29B5E" stroke="#7C4A1E" stroke-width="2.4"/><path d="M15.5 23h9M15.5 27h9" stroke="#A86A33" stroke-width="1.6" stroke-linecap="round"/><circle cx="20" cy="8.5" r="6.2" fill="#E2B27A" stroke="#7C4A1E" stroke-width="2.4"/><path d="M17.6 7.6q1-1 2-.2" stroke="#A86A33" stroke-width="1.4" stroke-linecap="round"/></svg></span><span>訓練場</span></button>
                 <button type="button" class="ah-tabbtn" data-on-click='[["ahSoon",["圖鑑"]]]'><span class="ah-ic"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 9q8-3 16 1v24q-8-4-16-1z" fill="#BFDBFE" stroke="#1D4ED8" stroke-width="2.4" stroke-linejoin="round"/><path d="M36 9q-8-3-16 1v24q8-4 16-1z" fill="#DBEAFE" stroke="#1D4ED8" stroke-width="2.4" stroke-linejoin="round"/><path d="M9 15h6M9 20h6M25 15h6M25 20h6" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/></svg></span><span>圖鑑</span></button>
                 <button type="button" class="ah-tabbtn" data-on-click='[["ahOpenShop",[]]]'><span class="ah-ic"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 15q8-12 16 0" stroke="#92400E" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M5 15h30l-3.5 19a3 3 0 0 1-3 2.4H11.5a3 3 0 0 1-3-2.4z" fill="#FBBF24" stroke="#92400E" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 21v9M20 21v9M28 21v9M7 25h26" stroke="#B45309" stroke-width="2" stroke-linecap="round"/></svg></span><span>補給站</span></button>
             </nav>
@@ -5095,7 +5229,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
             <!-- 選關 -->
             <div class="ah-sheet-wrap" id="ahPick" hidden>
                 <div class="ah-sheet-bg" data-on-click='[["ahCloseSheet",["Pick"]]]'></div>
-                <div class="ah-sheet"><span class="ah-handle"></span><div class="ah-sheet-title">選關</div><div id="ahPickBody"></div></div>
+                <div class="ah-sheet"><span class="ah-handle"></span><div class="ah-sheet-title" id="ahPickTitle">選關</div><div id="ahPickBody"></div></div>
             </div>
             <!-- 備戰卡片 -->
             <div class="ah-sheet-wrap" id="ahPrep" hidden>
@@ -5109,6 +5243,20 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
                         <p class="ah-err" id="advStatsText"></p>
                     </div>
                     <div class="ah-gobar" id="advGoBar"></div>
+                </div>
+            </div>
+            <!-- 訓練前的卡片：訓練對手＋出題題庫 -->
+            <div class="ah-sheet-wrap" id="ahTrain" hidden>
+                <div class="ah-sheet-bg" data-on-click='[["ahCloseSheet",["Train"]]]'></div>
+                <div class="ah-sheet ah-prep">
+                    <span class="ah-handle"></span>
+                    <div id="tgPrepCard"></div>
+                    <div class="ah-src">
+                        <span class="ah-label">出題題庫</span>
+                        <div class="aq-list ah-list" id="tgModeSeg" role="radiogroup"></div>
+                        <p class="ah-err" id="tgErr"></p>
+                    </div>
+                    <div class="ah-gobar" id="tgGoBar"></div>
                 </div>
             </div>
             <!-- 選題庫 -->
@@ -5887,7 +6035,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 </div>
 
 <!-- 戰鬥規則（app.js 和大冒險敵人模擬器共用同一份），一定要在 app.js 前面載入 -->
-<script src="battle-core.js?v=20261113a"></script>
-<script src="app.js?v=20261113a"></script>
+<script src="battle-core.js?v=20261113b"></script>
+<script src="app.js?v=20261113b"></script>
 </body>
 </html>
