@@ -105,6 +105,7 @@
     // 全能便利商店員工：每回合換崗位（第一階段），各自免疫一類招式
     const CLERK_POSTS = [{ name: '收銀台', immune: 'card' }, { name: '做餐中', immune: 'listen' }, { name: '點貨中', immune: 'speed' }];   // 點貨中：速答加成 −4（不是無效）
     const CLERK_SHIFT_HP = 20, CLERK_CD = 3;          // HP 低於 20 進入交班；下班倒數 3
+    const CLERK_SHIFT_BUFF = { agi: 6, int: 4, atk: 3, heal: 10 };   // 交班：敏捷 +6、智慧 +4、攻擊 +3、回 10 點體力
     const STAMP_NEED = 2, STAMP_ATK = 2, STAMP_HEAL = 5;   // 集點：任兩種 → 兌換集點卡（攻擊 +2、HP +5）
     // 這些敵人對某一類招式有抗性：每一下最多只受到 1 點傷害
     const RESIST = { darts: 'listen', mahjong: 'card', hotdog: 'listen' };
@@ -145,11 +146,74 @@
     //   unlock：打完第幾關才出現（0 = 一開始就有）；firstReward：第一次打到 HP 歸零（999）給一次的獎勵
     const DUMMIES = [
         { key: 'wood',  name: '木頭人',   sprite: 'dummy_wood',  hp: 999, def: 0, agi: 0, traits: [],                                   unlock: 0,  firstReward: { shards: 10 } },
-        { key: 'noise', name: '抗噪木人', sprite: 'dummy_noise', hp: 999, def: 0, agi: 0, traits: [{ type: 'immune', moveType: 'listen' }], unlock: 7,  firstReward: { shards: 15 } },
-        { key: 'card',  name: '字卡木人', sprite: 'dummy_card',  hp: 999, def: 0, agi: 0, traits: [{ type: 'immune', moveType: 'card' }],   unlock: 8,  firstReward: { shards: 15 } },
-        { key: 'iron',  name: '鐵木人',   sprite: 'dummy_iron',  hp: 999, def: 3, agi: 0, traits: [],                                   unlock: 15, firstReward: { shards: 20 } }
+        { key: 'noise', name: '抗噪木人', sprite: 'dummy_noise', hp: 999, def: 0, agi: 0, traits: [{ type: 'immune', moveType: 'listen' }], unlock: 7,  firstReward: { shards: 20 } },
+        { key: 'card',  name: '字卡木人', sprite: 'dummy_card',  hp: 999, def: 0, agi: 0, traits: [{ type: 'immune', moveType: 'card' }],   unlock: 8,  firstReward: { shards: 20 } },
+        { key: 'iron',  name: '鐵木人',   sprite: 'dummy_iron',  hp: 999, def: 10, agi: 0, traits: [],                                   unlock: 15, firstReward: { shards: 30 } }
     ];
     const TRAIN_ROUNDS = 10;                // 訓練：10 回合結束
+
+    // ═════════ 敵人圖鑑 ═════════
+    //   能力值、特殊能力的數字都直接讀上面的 LEVELS／常數（數值改了圖鑑會跟著變）；這裡只多「攻略」文字（圖鑑專用）
+    const DEX_NEED = 3;                     // 情蒐 3 次完全解鎖（打完一場 +1，不論輸贏；中途離開不算）
+    const DEX_REWARD = { shards: 2, xpRate: 0.5 };   // 每隻情蒐完成：冒險代幣 +2、經驗值 = 這關首勝經驗值 50%（至少 1）
+    const DEX_CHAPTER_REWARD = { shards: 10 };       // 整章情蒐完成：冒險代幣 +10 ＋ 稱號
+    const TITLES = {
+        night: { chapter: 1, name: '夜市小霸王', desc: '（純稱號）', xpPct: 0 },
+        store: { chapter: 2, name: '24小時不打烊', desc: '經驗值 +5%（無條件進位）', xpPct: 5 }
+    };
+    // 特殊能力（用上面的常數組字）＋攻略；key = 敵人圖（sprite）
+    const DEX_TEXT = {
+        meatball: { tip: '沒有特殊能力，答對就能穩穩打贏。' },
+        corn: { tip: '有 1 點防禦，用威力高一點的招式比較痛。' },
+        oyster: { tip: '牠比較快，加一點敏捷就能多出招。' },
+        tofu: { ability: '發臭：你的招式失敗時，被臭味反擊扣 1 點體力（無視防禦）', tip: '選最有把握的招式，少失敗就不會被燻到。' },
+        boba: { ability: '治癒：每回合攻擊完回 1 點體力', tip: '一回合多打幾下，打得比牠回血快。加敏捷很有用。' },
+        claw: { ability: '送你娃娃：打贏多掉 1 個冒險代幣', tip: '很適合常來刷冒險代幣。' },
+        darts: { ability: () => `聽力招式每一下只有 1 點傷害`, tip: '改帶字卡招式（衝撞、連續衝撞）比較打得痛。' },
+        mahjong: { ability: () => `字卡招式每一下只有 1 點傷害`, tip: '改帶聽力招式。牠智慧高，答題時間會變短，加智慧可以多一點時間。' },
+        ring: { ability: () => `天女散花：開場 ${RING_SECS} 秒配對，少配 1 組被砸 1 點`, tip: '開場配對要快，單字練熟就不怕。' },
+        pinball: { ability: '打彈珠：每次攻擊前擲骰，可能回 2 點體力或多彈你 1 下', tip: '幸運很高、常爆擊。加 HP 或防禦撐久一點。' },
+        egg: { ability: () => `剝殼：字卡招式每一下傷害 +${EGG_CARD_BONUS}`, tip: '多帶字卡招式，剝殼更快。' },
+        bun: { ability: '打倒麵包後，熱狗會跳出來接著打', tip: '別把力氣用完，後面還有熱狗。' },
+        hotdog: { ability: () => `聽力招式每一下只有 1 點傷害`, tip: '用字卡招式收尾。' },
+        onigiri: { ability: '拆不掉的包裝：一開場就有很厚的護盾', tip: '御飯糰護盾很高，帶竹籤可以無視護盾直接打。' },
+        tea: { ability: () => `回甘：速答招式的加成 −${SPEED_GUARD.tea}`, tip: '少用速答招式，直接攻擊比較划算。' },
+        ibon: { ability: '取票失敗：每回合隨機封印你 2 個招式', tip: '招式帶滿 4 個，被封印也還有招可用。' },
+        salad: { ability: '字卡招式完全無效；攻擊無視你的護盾', tip: '帶聽力招式。護盾沒用，多加 HP 或防禦。' },
+        microwave: { ability: () => `聽力招式完全無效；每次攻擊後攻擊力 +${MICRO_ATK_UP}`, tip: '越拖越痛，用字卡招式速戰速決。' },
+        bento: { ability: '打倒後會變成愛珍食便當', tip: '第一型態不要拖，後面的更硬。' },
+        bento2: { ability: () => `快過期：攻擊完自己扣 ${EXPIRE_SELF} 點；速答每配對 ${EXPIRE_SPEED_EVERY} 組扣牠 ${EXPIRE_SPEED_DMG} 點`, tip: '撐住就好，牠會自己過期；速答也打得到牠。' },
+        coffee: { ability: () => `太燙了：開戰燙傷 ${COFFEE_BURN} − 你的智慧；速答加成 −${SPEED_GUARD.coffee}`, tip: '加智慧或帶防燙杯套，燙傷就變小。' },
+        clerk: { ability: () => `每回合換崗位，免疫一類招式；集滿 ${STAMP_NEED} 種招式點數可兌換集點卡`, tip: '看崗位換招式；集點卡可以回血、加攻擊。' },
+        clerk2: { ability: () => `交班：HP 低於 ${CLERK_SHIFT_HP} 變快變強，${CLERK_CD} 回合內打不倒就下班（你輸）`, tip: '讓店員忙一點，降低他的敏捷（試試繳費單）。' }
+    };
+    // 圖鑑上的每一隻（兩階段的敵人拆成兩格；店員的交班也算一個型態）
+    function dexForms() {
+        let out = [];
+        LEVELS.forEach(lv => {
+            let list = lv.phases && lv.phases.length ? lv.phases : [lv];
+            list.forEach((p, i) => out.push({ key: p.sprite, lv: lv.id, idx: i, name: p.name, sprite: p.sprite,
+                stats: { hp: p.hp, atk: p.atk, def: p.def, agi: p.agi, int: p.int || 0, luck: p.luck || 0 }, shield: p.shield }));
+            if (lv.special === 'clerk') {
+                let B = CLERK_SHIFT_BUFF;
+                out.push({ key: 'clerk2', lv: lv.id, idx: 1, name: lv.name + '（交班）', sprite: lv.sprite, form2: true,
+                    stats: { hp: '≤' + Math.min(lv.hp, CLERK_SHIFT_HP - 1 + B.heal), atk: lv.atk + B.atk, def: lv.def, agi: lv.agi + B.agi, int: (lv.int || 0) + B.int, luck: lv.luck || 0 } });
+            }
+        });
+        return out.map(f => {
+            let t = DEX_TEXT[f.key] || {};
+            let ab = typeof t.ability === 'function' ? t.ability() : t.ability;
+            return Object.assign(f, { ability: ab || '', tip: t.tip || '' });
+        });
+    }
+    // 情蒐完成的獎勵（等級已滿：經驗值改成等量的冒險代幣）
+    function dexReward(lv, xpNow) {
+        let xp = Math.max(1, Math.round((lv.xp || 0) * DEX_REWARD.xpRate));
+        let full = levelOf(xpNow || 0) >= XP_NEED.length;
+        return full ? { shards: DEX_REWARD.shards + xp, xp: 0, swapped: xp } : { shards: DEX_REWARD.shards, xp };
+    }
+    // 稱號的經驗值加成（無條件進位）
+    function titleXp(x, title) { let t = TITLES[title]; return t && t.xpPct ? Math.ceil(x * (100 + t.xpPct) / 100) : x; }
     // 連擊倍率（只有訓練模式）：連續答對 5／10／20 題 → 攻擊力 ×2／×5／×10；答錯歸 0
     const COMBO_STEPS = [{ at: 20, mul: 10 }, { at: 10, mul: 5 }, { at: 5, mul: 2 }];
     // ── 特殊能力積木（traits）：新敵人用這些組合，不用再寫程式 ──
@@ -332,9 +396,10 @@
         let cut = 0;
         traitsOf(st, 'moveMod').forEach(t => { if (!typeMatch(t, m.type)) return; let v = t.value || 0; if (v >= 0) bonus += v; else cut += -v; });
         bonus += st.nextAtk || 0;               // 蓄力：下一招攻擊 +N
-        let d = Math.max(0, damage(st.player.atk, m.power + masteryAtk(m.key, st.mastery[m.key]) + bonus, st.enemy.def) - cut);
-        // 訓練：連擊倍率乘在「每一下的傷害」上（雞塊基礎攻擊力是 0，只乘攻擊力的話 ×10 也打不出差別）
-        return st.training ? d * comboMul(st.combo) : d;
+        let pow = m.power + masteryAtk(m.key, st.mastery[m.key]) + bonus;
+        // 訓練：先算原本的傷害（攻擊＋威力）× 連擊倍率，「再」扣木人的防禦（鐵木人）；最少 1 點
+        let d = st.training ? Math.max(1, (st.player.atk + pow) * comboMul(st.combo) - st.enemy.def) : damage(st.player.atk, pow, st.enemy.def);
+        return Math.max(0, d - cut);
     }
     // 這招每一下最多幾點（抗性）；沒有限制回傳 Infinity
     function hitCap(st, m) {
@@ -468,7 +533,8 @@
         let e = st.enemy;
         if (!e || e.special !== 'clerk' || st.shifted || e.hp <= 0 || e.hp >= CLERK_SHIFT_HP) return;
         st.shifted = true; st.post = null; st.cd = CLERK_CD; st.cdFresh = true;
-        e.agi += 6; e.int += 4; e.atk += 3; e.hp = Math.min(e.max, e.hp + 10);
+        let B = CLERK_SHIFT_BUFF;
+        e.agi += B.agi; e.int += B.int; e.atk += B.atk; e.hp = Math.min(e.max, e.hp + B.heal);
         e.shieldMax = shieldMax(e.int); e.shield = e.shieldMax;
         yield { t: 'shift' };
         if (hasGear(st, 'bill')) {
@@ -547,6 +613,7 @@
     }
     // 速答招式結束：pairs = 配對成功的組數；cfg = speedCfg(...) 開始時算好的設定
     function* speedEnd(st, m, pairs, cfg) {
+        if (st.training && pairs > 0) st.combo = (st.combo || 0) + pairs;   // 訓練：速答答對的題數也累積連對（答錯不歸 0）
         let raw = speedBonus(pairs, cfg), guard = speedGuard(st), got = Math.max(0, raw - guard);
         let applied = got;
         if (m.speed.stat === 'int') {
@@ -561,7 +628,7 @@
             st.nextAtk = Math.max(st.nextAtk || 0, got);
         }
         if (st.enemy.special === 'clerk' && st.stamps && pairs > 0 && !st.stamps.has(m.type)) st.stamps.add(m.type);
-        yield { t: 'speedResult', move: m, pairs, raw, guard, got, applied, cap: cfg.cap };
+        yield { t: 'speedResult', move: m, pairs, raw, guard, got, applied, cap: cfg.cap, combo: st.combo };
         // 愛珍食便當：速答答對會扣牠體力（扣幾點看 expireSpeedDmg）
         let exDmg = st.enemy.special === 'expire' ? expireSpeedDmg(pairs) : 0;
         if (exDmg > 0) {
@@ -675,10 +742,10 @@
         RING_NEED, RING_SECS, RING_PEN, MOVES, LEVELS, TYPE_LABEL, RARITY, MOVE_RARITY, MASTERY_STEPS,
         COFFEE_BURN, CLERK_POSTS, CLERK_SHIFT_HP, CLERK_CD, STAMP_NEED, STAMP_ATK, STAMP_HEAL, RESIST, IMMUNE, WEAK_BONUS,
         SPEED_GUARD, CLERK_SPEED_GUARD, TEA_SPEED_HEAL, EXPIRE_SPEED_DMG, EXPIRE_SPEED_EVERY, MICRO_ATK_UP, EXPIRE_SELF, EGG_CARD_BONUS, IGNORE_SHIELD,
-        DUMMIES, TRAIN_ROUNDS, COMBO_STEPS, ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
+        DUMMIES, TRAIN_ROUNDS, COMBO_STEPS, CLERK_SHIFT_BUFF, DEX_NEED, DEX_REWARD, DEX_CHAPTER_REWARD, TITLES, DEX_TEXT, ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
         // 公式
         levelOf, upMax, moveByKey, rarityKey, rarity, masteryLevel, masteryPerLv, masteryAtk, luckDice, rollLuck, shieldMax, answerSecs,
-        comboMul, dummyLevel, dummyUnlocked, dummyStage, comboAnswer, critOn, moveUnlockAt, gearUnlockAt, isUnlocked, unlocks, takeDamage, actionCount, damage, speedCfg, speedBonus, expireSpeedDmg, playerStats, winXp, loseXp, makeEnemy, hasGear, gearStatBonus, winHeal, shuffle,
+        dexForms, dexReward, titleXp, comboMul, dummyLevel, dummyUnlocked, dummyStage, comboAnswer, critOn, moveUnlockAt, gearUnlockAt, isUnlocked, unlocks, takeDamage, actionCount, damage, speedCfg, speedBonus, expireSpeedDmg, playerStats, winXp, loseXp, makeEnemy, hasGear, gearStatBonus, winHeal, shuffle,
         // 戰鬥
         initBattle, immuneType, isImmune, speedGuard, hitDamage, hitCap, enemyIgnoresShield, sealCount,
         canBoba, useBoba, canRedeem, redeemStamps, useFlower, endAction,
