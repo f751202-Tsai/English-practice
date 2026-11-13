@@ -5839,6 +5839,9 @@
             ver: ADV_DATA_VER,
             lvUpAt: n0(d.lvUpAt),
             lvSeenAt: n0(d.lvSeenAt),
+            mapAt: n0(d.mapAt),
+            // 訓練場：每隻木人的最佳傷害、第一次打到 999 的時間（一次性獎勵）
+            train: { best: Object.assign({}, (d.train && d.train.best) || {}), first: Object.assign({}, (d.train && d.train.first) || {}) },                                 // 地圖上的雞塊站在第幾關（剛打過／剛選的那關）
             // 看過的招式／裝備（新拿到、還沒點開看過的會有紅色驚嘆號）；舊存檔第一次載入時，已擁有的都算看過
             seen: (d.seen && typeof d.seen === 'object') ? { m: Object.assign({}, d.seen.m || {}), g: Object.assign({}, d.seen.g || {}), init: 1 } : null,                               // 最近一次升級的時間（紅點動畫用）
             resetNotice: d.resetNotice === true,                // 改版重來：下次進大冒險時告訴玩家一次
@@ -6121,6 +6124,7 @@
             <ellipse cx="${cx - 22}" cy="${cy + 11}" rx="6.5" ry="4.5" fill="#F87171" opacity="0.7"/><ellipse cx="${cx + 22}" cy="${cy + 11}" rx="6.5" ry="4.5" fill="#F87171" opacity="0.7"/>${extra || ''}`;
     }
     function advEnemySVG(kind) {
+        if (String(kind).indexOf('dummy_') === 0) return advDummySVG(String(kind).slice(6), 0);   // 訓練場的木人
         const wrap = (inner) => `<svg viewBox="0 0 120 112" xmlns="http://www.w3.org/2000/svg" fill="none">${inner}</svg>`;
         const shadow = '<ellipse cx="60" cy="102" rx="32" ry="6" fill="rgba(0,0,0,0.15)"/>';
         if (kind === 'corn') {
@@ -6562,7 +6566,7 @@
     function advRenderLevelPage() {
         let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0];
         let auto = advMode() === 'auto', kind = advCustomTab === 'pack' ? 'pack' : 'mine';
-        if (!auto) { let c = ahDeckChosen(kind, lv.minWords); advSelected = c ? [c.i] : []; }
+        if (!auto) advSelected = ahDeckChosen(AH_PICK_KEY[kind], kind, lv.minWords).map(x => x.i);
         let words = auto ? advAutoWords(lv) : advGetWords();
         let n = words.length;
         advSyncDaily();
@@ -6571,7 +6575,7 @@
         let tired = advData.hp <= 0;
         let max = advMaxHp(), hp = Math.max(0, Math.min(advData.hp, max));
         let isCleared = !!advData.cleared[lv.id];
-        let canGo = ok && !tired;
+        let canGo = ok;                          // 沒有體力也可以按：按了跳出「體力不足」視窗
         let used = advReplaysUsed(), cap = advReplayCap(), rewardLeft = Math.max(0, cap - used);
         let tag = '', off = false;
         if (!isCleared) tag = '<span class="ah-chip gold">首勝</span>';
@@ -6582,7 +6586,6 @@
         let rewards = advRewardList(lv).map(r => `<span class="aq-item" title="${escapeHTML(r.label)}"><span class="ic">${r.icon}</span>${r.text}</span>`);
         let warns = [];
         if (lv.special) warns.push(`<div class="ah-warn">${ADV_WARN_SVG}<span>注意：${escapeHTML(ADV_SPECIAL_TEXT[lv.special] || '')}</span></div>`);
-        if (tired) warns.push(`<div class="ah-warn bad">${ADV_WARN_SVG}<span>雞塊沒有體力了，明天 00:00 恢復</span></div>`);
         let chName = (ADV_CHAPTERS.find(c => c.id === advChapterOf(lv.id)) || {}).name || '';
         let box = document.getElementById('advLevelCard');
         if (box) box.innerHTML = `
@@ -6657,7 +6660,7 @@
         try { localStorage.setItem(ADV_MODE_KEY, m === 'custom' ? 'custom' : 'auto'); if (pick) localStorage.setItem('chicky_adv_tab', advCustomTab); } catch (e) {}
         advRenderLevelPage();
         // 精選／自訂：還沒選過題庫 → 直接跳出選題庫的卡片
-        if (pick) { let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0]; if (!ahDeckChosen(advCustomTab, lv.minWords)) ahOpenDeck(); }
+        if (pick) { let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0]; if (!ahDeckChosen(AH_PICK_KEY[advCustomTab], advCustomTab, lv.minWords).length) ahOpenDeck(); }
     }
     function advWrongOf(eng) { return (advData.wrongCnt || {})[String(eng || '').toLowerCase()] || 0; }
     // 出題題庫：冒險題庫（推薦）／精選單字庫／自訂題庫（單選）；精選／自訂選了以後，右邊的膠囊顯示選的題庫，點了換題庫
@@ -6675,9 +6678,8 @@
         }
         let capsule = (k) => {
             if (cur !== k) return '';
-            let c = ahDeckChosen(k === 'pack' ? 'pack' : 'mine', lv.minWords);
-            let txt = c ? `${escapeHTML(c.l.title)}・${getListWordCount(c.l.content)} 字` : '選擇題庫';
-            return `<span class="ah-cap${c && getListWordCount(c.l.content) < lv.minWords ? ' bad' : ''}" role="button" data-on-click='[["$stop",[]],["ahOpenDeck",[]]]'>${txt}${ARROW}</span>`;
+            let c = ahDeckChosen(AH_PICK_KEY[k], k, lv.minWords), sum = ahDeckSum(c);
+            return `<span class="ah-cap${c.length && sum < lv.minWords ? ' bad' : ''}" role="button" data-on-click='[["$stop",[]],["ahOpenDeck",[]]]'>${ahDeckLabel(c)}${ARROW}</span>`;
         };
         html += opt('pack', '精選單字庫', capsule('pack')) + opt('mine', '自訂題庫', capsule('mine'));
         seg.innerHTML = html;
@@ -6780,7 +6782,7 @@
         advRenderLevelPage();
         ahOpenSheet('Prep');
     }
-    function advBackToLevel() { goToAdvLevel(adv.pickLevel || 1); }
+    function advBackToLevel() { if (adv.training) { goToTraining(); return; } goToAdvLevel(adv.pickLevel || 1); }
 
     // ── 第 1 頁：地圖 ──
     function goToAdventurePage(fromLevel) {
@@ -6791,12 +6793,13 @@
         }
         advAbort();
         advSyncDaily();
-        advMapChapter = advChapterOf(fromLevel === true && adv.pickLevel ? adv.pickLevel : ahCurrentId());
-        ['Deck', 'Prep', 'Pick'].forEach(n => { let w = document.getElementById('ah' + n); if (w) { w.classList.remove('open'); w.hidden = true; } });
+        advMapChapter = advChapterOf(fromLevel === true && adv.pickLevel ? adv.pickLevel : ahChickAt());
+        ['Deck', 'Prep', 'Pick', 'Train'].forEach(n => { let w = document.getElementById('ah' + n); if (w) { w.classList.remove('open'); w.hidden = true; } });
+        { let tg = document.getElementById('tgHome'); if (tg) tg.hidden = true; tgSetTab(false); }   // 訓練場蓋在地圖上：回地圖時收起來
         switchView('adventureView');
         ahFit();
         advRenderMap();
-        let cur = ahCurrentId(), ch = ADV_CHAPTERS.find(c => c.id === advMapChapter);
+        let cur = ahChickAt(), ch = ADV_CHAPTERS.find(c => c.id === advMapChapter);
         let focus = fromLevel === true && adv.pickLevel ? adv.pickLevel : cur;
         if (ch && (focus < ch.from || focus > ch.to)) focus = ch.from;
         ahScrollTo(focus);
@@ -6844,8 +6847,19 @@
         return `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="22" rx="11" ry="3.5" fill="rgba(0,0,0,0.25)"/><path d="M -9 21 Q -9 4 0 4 Q 9 4 9 21 Z" fill="${shirt}" stroke="#231F20" stroke-width="2"/><circle cx="0" cy="-3" r="8" fill="#FCD9B6" stroke="#231F20" stroke-width="2"/><path d="M -8 -5 Q -7 -12 0 -12 Q 7 -12 8 -5 Q 3 -8 0 -8 Q -3 -8 -8 -5 Z" fill="#231F20"/><circle cx="-3" cy="-2" r="1.2" fill="#231F20"/><circle cx="3" cy="-2" r="1.2" fill="#231F20"/>${extra || ''}</g>`;
     }
     function ahBalloon(c) { return `<path d="M 8 10 Q 12 -4 14 -16" stroke="#E2E8F0" stroke-width="1"/><ellipse cx="14" cy="-22" rx="6.5" ry="8" fill="${c}" stroke="#231F20" stroke-width="1.5"/>`; }
-    function ahTable(x, y) {
-        return `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="16" rx="30" ry="6" fill="rgba(0,0,0,0.25)"/><rect x="-26" y="2" width="9" height="9" rx="2" fill="#3B82F6" stroke="#231F20" stroke-width="1.5"/><rect x="17" y="2" width="9" height="9" rx="2" fill="#EF4444" stroke="#231F20" stroke-width="1.5"/><line x1="0" y1="0" x2="0" y2="14" stroke="#231F20" stroke-width="2.5"/><ellipse cx="0" cy="-2" rx="20" ry="6" fill="#FFFFFF" stroke="#231F20" stroke-width="2"/><ellipse cx="-6" cy="-3" rx="4" ry="1.6" fill="#F97316"/><ellipse cx="5" cy="-2" rx="4" ry="1.6" fill="#FBBF24"/></g>`;
+    // 夜市桌子：小陽傘＋旁邊兩張椅子
+    function ahChair(x, c, flip) {
+        let k = flip ? -1 : 1;
+        return `<g transform="translate(${x} 0) scale(${k} 1)"><path d="M -5 -12 V 6" stroke="#231F20" stroke-width="5" stroke-linecap="round"/><path d="M -5 -12 V 6" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/><rect x="-7" y="3" width="15" height="5" rx="2" fill="${c}" stroke="#231F20" stroke-width="1.5"/><path d="M -5 8 V 15 M 6 8 V 15" stroke="#231F20" stroke-width="2" stroke-linecap="round"/></g>`;
+    }
+    function ahTable(x, y, umb) {
+        umb = umb || ['#EF4444', '#FFFFFF'];
+        let pan = '';
+        for (let k = 0; k < 4; k++) pan += `<path d="M ${-24 + k * 12} -30 L ${-12 + k * 12} -30 L 0 -40 Z" fill="${umb[k % 2]}" stroke="#231F20" stroke-width="1.4" stroke-linejoin="round"/>`;
+        return `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="16" rx="38" ry="6" fill="rgba(0,0,0,0.25)"/>
+            ${ahChair(-30, '#3B82F6', false)}${ahChair(30, '#EF4444', true)}
+            <line x1="0" y1="0" x2="0" y2="14" stroke="#231F20" stroke-width="2.5"/><ellipse cx="0" cy="-2" rx="20" ry="6" fill="#FFFFFF" stroke="#231F20" stroke-width="2"/><ellipse cx="-6" cy="-3" rx="4" ry="1.6" fill="#F97316"/><ellipse cx="5" cy="-2" rx="4" ry="1.6" fill="#FBBF24"/>
+            <line x1="0" y1="-4" x2="0" y2="-38" stroke="#231F20" stroke-width="2"/>${pan}<path d="M -24 -30 Q 0 -27 24 -30" stroke="#231F20" stroke-width="1.4" fill="none"/></g>`;
     }
     function ahLights(y, rnd) {
         let cols = ['#EF4444', '#FBBF24', '#F97316', '#EF4444'], s = `<path d="M -10 ${y} Q 195 ${y + 34} 400 ${y}" stroke="#1E1B4B" stroke-width="1.6" fill="none" opacity="0.8"/>`;
@@ -6887,6 +6901,31 @@
         }
         return s;
     }
+    // 零食架（洋芋片、餅乾袋）
+    function ahSnackShelf(x, y, w, rnd) {
+        let cols = ['#F87171', '#FBBF24', '#34D399', '#60A5FA', '#F472B6', '#FB923C'], s = `<rect x="${x}" y="${y + 66}" width="${w}" height="8" rx="3" fill="rgba(15,23,42,0.18)"/><rect x="${x}" y="${y}" width="${w}" height="68" rx="4" fill="#FFF7ED" stroke="#334155" stroke-width="2"/>`;
+        for (let r = 0; r < 3; r++) {
+            s += `<rect x="${x + 2}" y="${y + 21 + r * 21}" width="${w - 4}" height="3" fill="#D6A26B"/>`;
+            for (let k = x + 5; k < x + w - 14; k += 16) {
+                let c = cols[Math.floor(rnd() * cols.length)];
+                s += `<path d="M ${k} ${y + 6 + r * 21} h 13 l -1 3 l 1 3 v 5 l -1 1 h -11 l -1 -1 v -5 l 1 -3 z" fill="${c}" stroke="#7C2D12" stroke-width="0.9" stroke-linejoin="round"/><circle cx="${k + 6.5}" cy="${y + 13 + r * 21}" r="2.4" fill="#FFFFFF" opacity="0.85"/>`;
+            }
+        }
+        return s;
+    }
+    // 內用區：白色圓桌＋兩張白椅子（空的）
+    function ahDineSet(x, y) {
+        const chair = (cx, flip) => `<g transform="translate(${cx} 0) scale(${flip ? -1 : 1} 1)"><path d="M -6 -14 V 6" stroke="#475569" stroke-width="5" stroke-linecap="round"/><path d="M -6 -14 V 6" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round"/><rect x="-8" y="3" width="16" height="5" rx="2" fill="#FFFFFF" stroke="#475569" stroke-width="1.5"/><path d="M -6 8 V 16 M 6 8 V 16" stroke="#475569" stroke-width="2" stroke-linecap="round"/></g>`;
+        return `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="17" rx="40" ry="6" fill="rgba(15,23,42,0.16)"/>${chair(-31, false)}${chair(31, true)}
+            <path d="M 0 0 V 15 M -8 16 H 8" stroke="#475569" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="0" cy="-2" rx="21" ry="7" fill="#FFFFFF" stroke="#475569" stroke-width="2"/><ellipse cx="0" cy="-3" rx="15" ry="4" fill="#F1F5F9"/></g>`;
+    }
+    // 回收桶＋垃圾桶
+    function ahBins(x, y) {
+        const bin = (cx, body, lid, mark) => `<g transform="translate(${cx} 0)"><path d="M -11 -14 h 22 l -2 30 h -18 z" fill="${body}" stroke="#231F20" stroke-width="2" stroke-linejoin="round"/><rect x="-13" y="-19" width="26" height="6" rx="2" fill="${lid}" stroke="#231F20" stroke-width="2"/>${mark}</g>`;
+        const RECY = '<path d="M -5 4 l 3 -6 l 3 6 M 6 6 h -7 M -5 4 l -1 3 h 6" stroke="#FFFFFF" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+        const TRASH = '<rect x="-5" y="-6" width="10" height="2" rx="1" fill="#FFFFFF" opacity="0.8"/><path d="M -3 0 v 10 M 0 0 v 10 M 3 0 v 10" stroke="#FFFFFF" stroke-width="1.4" opacity="0.8" stroke-linecap="round"/>';
+        return `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="17" rx="32" ry="5" fill="rgba(15,23,42,0.16)"/>${bin(-15, '#3B82F6', '#1D4ED8', RECY)}${bin(15, '#64748B', '#334155', TRASH)}</g>`;
+    }
     function ahPlant(x, y) { return `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="22" rx="14" ry="4" fill="rgba(15,23,42,0.18)"/><path d="M -10 6 h 20 l -3 16 h -14 z" fill="#C2410C" stroke="#231F20" stroke-width="2"/><path d="M 0 6 V -22 M 0 -8 Q -10 -10 -10 -20 M 0 -12 Q 10 -14 10 -24" stroke="#16A34A" stroke-width="6" stroke-linecap="round" fill="none"/></g>`; }
     // 便利商店的展示台（敵人站在上面）
     function ahStand(cx, y, sprite) {
@@ -6913,13 +6952,20 @@
             let yMid = i < 0 ? H - AH_BOT * 0.45 : pts[i].y - AH_S / 2;
             if (yMid < 40) continue;
             if (store) {
-                if (i % 2 === 0) deco += ahShelf(8, yMid - 30, 104, rnd) + ahPerson(350, yMid + 30, ['#A78BFA', '#F472B6', '#34D399'][(i + 3) % 3], `<rect x="7" y="10" width="9" height="7" rx="1.5" fill="#EF4444" stroke="#231F20" stroke-width="1.2"/>`);
-                else deco += ahPlant(48, yMid + 10) + ahShelf(278, yMid - 40, 104, rnd);
+                // 一半是飲料架、一半是零食架；客人提著購物籃；內用區（白色桌椅）、回收桶＋垃圾桶
+                const BASKET = `<rect x="7" y="10" width="9" height="7" rx="1.5" fill="#EF4444" stroke="#231F20" stroke-width="1.2"/>`;
+                let shelf = (x, y) => (Math.floor((i + 1) / 2) % 2 ? ahSnackShelf : ahShelf)(x, y, 104, rnd);
+                let cust = (x, y, k) => ahPerson(x, y, ['#A78BFA', '#F472B6', '#34D399', '#FB923C', '#60A5FA'][(i + k + 5) % 5], k % 2 ? '' : BASKET);
+                if (i % 2 === 0) deco += shelf(8, yMid - 30) + cust(122, yMid - 14, 1) + cust(350, yMid - 6, 0);
+                else deco += (i === 1 || i === 5 ? ahDineSet(62, yMid - 22) : i === 3 || i === 7 ? ahBins(48, yMid - 24) : cust(40, yMid - 20, 0)) + shelf(278, yMid - 40) + cust(262, yMid - 22, 1);
             } else {
                 deco += ahLights(yMid - 70, rnd);
                 deco += `<circle cx="${i % 2 ? 80 : 310}" cy="${yMid}" r="60" fill="url(#ahGlow)"/>`;
-                if (i % 2 === 0) deco += ahTable(62, yMid + 18) + ahPerson(338, yMid + 4, '#22C55E', ahBalloon('#F472B6'));
-                else deco += ahPerson(52, yMid - 4, '#3B82F6') + ahTable(330, yMid + 22) + ahPerson(300, yMid - 30, '#F97316');
+                if (i % 2 === 0) deco += ahTable(62, yMid + 18, ['#EF4444', '#FFFFFF']) + ahPerson(338, yMid + 4, '#22C55E', ahBalloon('#F472B6'));
+                else deco += ahPerson(52, yMid - 4, '#3B82F6') + ahTable(330, yMid + 22, ['#2563EB', '#FDE68A']) + ahPerson(300, yMid - 30, '#F97316');
+                // 多幾個逛夜市的路人（共 6 個）
+                if ([0, 2, 4, 6, 8].includes(i)) deco += ahPerson(i % 4 ? 118 : 372, yMid - 36, ['#EC4899', '#14B8A6', '#EAB308', '#8B5CF6', '#F43F5E'][i / 2]);
+                if (i === 3) deco += ahPerson(20, yMid - 34, '#0EA5E9', ahBalloon('#FDE047'));
             }
         }
         // 路
@@ -6950,13 +6996,16 @@
     }
     // 目前要打的關卡（打完全部：最後一關）
     function ahCurrentId() { let n = ADV_LEVELS.length, id = 1; while (id <= n && advData.cleared[id]) id++; return Math.min(id, n); }
+    // 雞塊站在哪一關：剛打過、剛選的那關（沒有紀錄就是目前進度）；「挑戰」也是挑戰這關
+    function ahChickAt() { let a = advData.mapAt || 0; return (a >= 1 && a <= ADV_LEVELS.length && advUnlocked(a)) ? a : ahCurrentId(); }
+    function ahSetChickAt(id) { if (advData.mapAt !== id) { advData.mapAt = id; advSave(true); } }
     function ahChapterUnlocked(c) { return !!c && advUnlocked(c.from); }
     let ahHold = null;              // 走路動畫進行中：{ id, next }（畫地圖時先把剛打贏的那關當作「目前」）
     function advRenderMap() {
         let box = document.getElementById('advMap');
         if (!box) return;
         let ch = ADV_CHAPTERS.find(c => c.id === advMapChapter) || ADV_CHAPTERS[0];
-        let store = ch.id === 2, cur = ahHold ? ahHold.id : ahCurrentId();
+        let store = ch.id === 2, cur = ahHold ? ahHold.id : ahChickAt();
         // 上方：章節切換
         let prevCh = ADV_CHAPTERS.find(c => c.id === ch.id - 1), nextCh = ADV_CHAPTERS.find(c => c.id === ch.id + 1);
         let nextOpen = ahChapterUnlocked(nextCh);
@@ -6971,10 +7020,11 @@
         let stages = pts.map((p, i) => {
             let id = ch.from + i, lv = ADV_LEVELS.find(l => l.id === id);
             if (!lv) return '';
+            // 顏色：打過＝原色（夜市木頭色／便利商店白色）、還沒打過＝金色、沒解鎖＝灰紫＋鎖頭；雞塊站的那關外面有光圈
             let st;
             if (ahHold) st = id === ahHold.id ? 'current' : (id === ahHold.next || !advUnlocked(id)) ? 'locked' : 'cleared';
-            else st = !advUnlocked(id) ? 'locked' : (id === cur && !advData.cleared[id]) ? 'current' : 'cleared';
-            return `<button type="button" class="ah-stage is-${st}" id="ahStage${id}" style="${pos(p)}" ${st === 'locked' ? 'disabled' : ''} aria-label="第 ${id} 關${st === 'locked' ? '（還沒解鎖）' : ''}" data-on-click='[["goToAdvLevel",[${id}]]]'>${ahStageSVG(id, st, store)}</button>`;
+            else st = !advUnlocked(id) ? 'locked' : !advData.cleared[id] ? 'current' : 'cleared';
+            return `<button type="button" class="ah-stage is-${st}${id === cur ? ' is-here' : ''}" id="ahStage${id}" style="${pos(p)}" ${st === 'locked' ? 'disabled' : ''} aria-label="第 ${id} 關${st === 'locked' ? '（還沒解鎖）' : ''}" data-on-click='[["ahTapStage",[${id}]]]'>${ahStageSVG(id, st, store)}</button>`;
         }).join('');
         let chick = '';
         if (cur >= ch.from && cur <= ch.to) chick = `<div class="ah-chick" id="ahChick" style="${pos(pts[cur - ch.from])}">${advChickenSVG()}</div>`;
@@ -6993,7 +7043,7 @@
         if (!nc || (d > 0 && !ahChapterUnlocked(nc))) return;
         advMapChapter = nc.id;
         advRenderMap();
-        let cur = ahCurrentId();
+        let cur = ahChickAt();
         ahScrollTo(cur >= nc.from && cur <= nc.to ? cur : (d > 0 ? nc.from : nc.to));
     }
     // 底部按鈕上的紅點：雞塊有點數可以加 → 顯示點數
@@ -7013,7 +7063,78 @@
         clearTimeout(ahSoon._t); ahSoon._t = setTimeout(() => t.classList.remove('show'), 1800);
     }
     function ahOpenShop() { openChickenShopModal(1); }
-    function ahChallenge() { goToAdvLevel(ahCurrentId()); }
+    function ahChallenge() { goToAdvLevel(ahChickAt()); }
+    // ── 體力不足的視窗：有恢復藥水 → 喝了直接開始；沒有 → 提醒 00:00 恢復（之後有小／中／大藥水，先預設小型）──
+    function advNoHpOpen(levelId) {
+        let el = document.getElementById('ahNoHp');           // 放在 body：冒險首頁、戰鬥結果頁按「再挑戰」都看得到
+        if (!el) { el = document.createElement('div'); el.id = 'ahNoHp'; el.className = 'ah-dlg-wrap'; document.body.appendChild(el); }
+        let n = advData.potions || 0, max = advMaxHp(), heal = Math.min(max, ADV_POTION_HEAL);
+        let body = n > 0
+            ? `<p>要使用 <b>小型恢復藥水</b> 回復體力嗎？</p>
+               <div class="ah-dlg-item"><span class="ic">${advPotionIcon(40)}</span><span class="tx"><b>小型恢復藥水</b><small>HP +${heal}・持有 ×${n}</small></span></div>
+               <button type="button" class="ah-btn-gold" data-on-click='[["advNoHpUse",[${levelId}]]]'>使用並開始</button>
+               <button type="button" class="ah-dlg-sub" data-on-click='[["advNoHpClose",[]]]'>先不要</button>`
+            : `<p>沒有恢復藥水了。<br>00:00 體力恢復後再來吧！</p>
+               <button type="button" class="ah-btn-indigo" data-on-click='[["advNoHpClose",[]]]'>知道了</button>`;
+        el.innerHTML = `<div class="ah-dlg-bg" data-on-click='[["advNoHpClose",[]]]'></div>
+            <div class="ah-dlg" role="dialog" aria-modal="true" aria-labelledby="ahNoHpT">
+                <div class="ah-dlg-art">${advChickenSVG()}</div>
+                <div class="ah-dlg-title" id="ahNoHpT">體力不足</div>
+                <div class="ah-dlg-hp"><span class="aq-bar low"><i style="width:0%"></i></span><span><b>0</b> / ${max}</span></div>
+                ${body}
+            </div>`;
+        el.hidden = false;
+    }
+    function advNoHpClose() { let el = document.getElementById('ahNoHp'); if (el) el.hidden = true; }
+    function advNoHpUse(levelId) {
+        advSyncDaily();
+        if ((advData.potions || 0) < 1) { advNoHpOpen(levelId); return; }
+        advData.potions -= 1;
+        advData.hp = Math.min(advMaxHp(), Math.max(0, advData.hp) + ADV_POTION_HEAL);
+        advSave();
+        advNoHpClose();
+        advStartBattle(parseInt(levelId));
+    }
+    // 點地圖上的關卡：雞塊快速跳過去，再打開備戰卡片
+    let ahMoving = false;
+    async function ahTapStage(id) {
+        id = parseInt(id);
+        if (ahMoving || ahHold || !advUnlocked(id)) return;
+        let from = ahChickAt();
+        if (from !== id) { ahMoving = true; try { await ahHopTo(from, id); } catch (e) {} ahMoving = false; }
+        goToAdvLevel(id);
+    }
+    // 雞塊沿著路快速跳到某一關（同一章才走路；不同章直接換過去）
+    function ahHopTo(from, to) {
+        return new Promise(resolve => {
+            let ch = ADV_CHAPTERS.find(c => c.id === advMapChapter) || ADV_CHAPTERS[0];
+            ahSetChickAt(to);
+            let chick = document.getElementById('ahChick'), svg = document.querySelector('#ahWorld .ah-svg');
+            let reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reduce || !chick || !svg || from < ch.from || from > ch.to || to < ch.from || to > ch.to) { advRenderMap(); resolve(); return; }
+            let H = ahMapH(), pts = ahPts(), a = from - ch.from, b = to - ch.from, dir = b > a ? 1 : -1;
+            let segs = [];
+            for (let i = a; i !== b; i += dir) {
+                let p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                p.setAttribute('d', ahSegD(pts, Math.min(i, i + dir))); p.setAttribute('fill', 'none');
+                svg.appendChild(p);
+                segs.push({ p, len: p.getTotalLength(), rev: dir < 0 });
+            }
+            let per = Math.max(110, Math.min(260, 900 / segs.length)), t0 = performance.now(), total = per * segs.length;
+            let map = document.getElementById('advMap'), world = document.getElementById('ahWorld');
+            const step = (now) => {
+                let t = Math.min(1, (now - t0) / total), k = Math.min(segs.length - 1, Math.floor(t * segs.length)), lt = t * segs.length - k;
+                if (t >= 1) { k = segs.length - 1; lt = 1; }
+                let sg = segs[k], q = sg.rev ? 1 - lt : lt, pt = sg.p.getPointAtLength(q * sg.len), hop = Math.sin(lt * Math.PI) * 14;
+                chick.style.left = (pt.x / AH_W * 100) + '%';
+                chick.style.top = ((pt.y - hop) / H * 100) + '%';
+                if (map && world) map.scrollTop = Math.max(0, (pt.y / H) * world.offsetHeight - map.clientHeight * 0.58);
+                if (t < 1) requestAnimationFrame(step);
+                else { segs.forEach(x => x.p.remove()); advRenderMap(); resolve(); }
+            };
+            requestAnimationFrame(step);
+        });
+    }
     // ── 從下面滑上來的卡片（備戰、選關、選題庫）──
     function ahOpenSheet(name) {
         let w = document.getElementById('ah' + name);
@@ -7029,7 +7150,7 @@
         w.classList.remove('open');
         setTimeout(() => { if (!w.classList.contains('open')) w.hidden = true; }, 220);
     }
-    function ahCloseAll() { ['Deck', 'Prep', 'Pick'].forEach(ahCloseSheet); }
+    function ahCloseAll() { ['Deck', 'Prep', 'Pick', 'Train'].forEach(ahCloseSheet); }
     // 往下滑關閉
     function ahBindSwipe(wrap, name) {
         let sh = wrap && wrap.querySelector('.ah-sheet');
@@ -7041,8 +7162,8 @@
         sh.addEventListener('touchend', () => { if (y0 === null) return; sh.style.transition = ''; if (dy > 90) ahCloseSheet(name); else sh.style.transform = ''; y0 = null; });
     }
     // 選關：上面是章節分頁（可以左右滑），下面是這章 10 關
-    let ahPickCh = 1;
-    function ahOpenPick() { ahPickCh = advMapChapter; ahRenderPick(); ahOpenSheet('Pick'); }
+    let ahPickCh = 1, ahPickTrain = false, ahPickSel = 0;     // ahPickTrain：訓練場選「冒險題庫用哪一關」
+    function ahOpenPick() { ahPickTrain = false; let w = document.getElementById('ahPick'); if (w) w.classList.remove('ah-sheet-wrap--top'); ahPickCh = advMapChapter; ahRenderPick(); ahOpenSheet('Pick'); }
     function ahPickTab(id) { ahPickCh = parseInt(id) || 1; ahRenderPick(); }
     function ahRenderPick() {
         let box = document.getElementById('ahPickBody');
@@ -7054,52 +7175,85 @@
             let lv = ADV_LEVELS.find(l => l.id === id);
             if (!lv) continue;
             let open = advUnlocked(id), st = !open ? 'locked' : (id === cur && !advData.cleared[id]) ? 'current' : 'cleared';
-            cells += `<button type="button" class="ah-cell is-${st}" ${open ? '' : 'disabled'} aria-label="第 ${id} 關${open ? '' : '（還沒解鎖）'}" data-on-click='[["ahPickGo",[${id}]]]'>
+            cells += `<button type="button" class="ah-cell is-${st}${ahPickTrain && id === ahPickSel ? ' sel' : ''}" ${open ? '' : 'disabled'} aria-label="第 ${id} 關${open ? '' : '（還沒解鎖）'}" data-on-click='[["ahPickGo",[${id}]]]'>
                 <span class="ah-cell-art">${open ? advEnemySVG(lv.sprite) : AH_LOCK}</span><b>${id}</b></button>`;
         }
-        box.innerHTML = `<div class="ah-tabs">${tabs}</div><div class="ah-grid">${cells}</div>`;
+        let t = document.getElementById('ahPickTitle'); if (t) t.textContent = ahPickTrain ? '選擇出題關卡' : '選關';
+        box.innerHTML = `<div class="ah-tabs">${tabs}</div><div class="ah-grid">${cells}</div>` + (ahPickTrain
+            ? `<p class="ah-pick-note">只能選已經打過或目前的關卡</p><button type="button" class="ah-btn-indigo" data-on-click='[["tgPickOk",[]]]'>確定</button>` : '');
     }
-    function ahPickGo(id) { ahCloseSheet('Pick'); goToAdvLevel(id); }
-    // ── 選題庫（精選單字庫／自訂題庫）：單選，記住上次選的 ──
+    function ahPickGo(id) {
+        id = parseInt(id);
+        if (ahPickTrain) { if (advUnlocked(id)) { ahPickSel = id; ahRenderPick(); } return; }
+        ahCloseSheet('Pick');
+        ahSetChickAt(id);                                  // 雞塊直接換到選的那關
+        let c = advChapterOf(id);
+        if (c !== advMapChapter) { advMapChapter = c; }
+        advRenderMap(); ahScrollTo(id);
+        goToAdvLevel(id);
+    }
+    // ── 選題庫（精選單字庫／自訂題庫）：可以複選，選的題庫字數加起來夠就可以；記住上次選的 ──
     const AH_PICK_KEY = { pack: 'chicky_adv_pick_pack', mine: 'chicky_adv_pick_mine' };
     function ahDeckLists(kind) {
         return wordLists.map((l, i) => ({ l, i })).filter(x => getListWordCount(x.l.content) > 0 && isListInCurrentLang(x.l)
             && (kind === 'pack' ? (isPackList(x.l) && (WORD_PACKS[x.l.pack] || {}).kind !== 'adv') : !isPackList(x.l)));
     }
-    function ahDeckChosen(kind, need) {
-        let all = ahDeckLists(kind), id = null;
-        try { id = localStorage.getItem(AH_PICK_KEY[kind]); } catch (e) {}
-        let hit = all.find(x => (x.l.id || ('i' + x.i)) === id);
-        if (hit && getListWordCount(hit.l.content) >= need) return hit;
-        return all.find(x => getListWordCount(x.l.content) >= need) || hit || null;
+    function ahDeckKey(x) { return x.l.id || ('i' + x.i); }
+    function ahDeckSum(arr) { return (arr || []).reduce((t, x) => t + getListWordCount(x.l.content), 0); }
+    function ahDeckLabel(arr) {
+        if (!arr || !arr.length) return '選擇題庫';
+        return arr.length === 1 ? `${escapeHTML(arr[0].l.title)}・${ahDeckSum(arr)} 字` : `${arr.length} 本・${ahDeckSum(arr)} 字`;
     }
-    let ahDeckTmp = null;
-    function ahOpenDeck() {
-        let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0];
-        let kind = advCustomTab === 'pack' ? 'pack' : 'mine', c = ahDeckChosen(kind, lv.minWords);
-        ahDeckTmp = c ? c.i : null;
+    // 讀出選了哪些題庫（舊資料只存一個 id 也看得懂）；沒選過就預設第一個字數夠的
+    function ahDeckChosen(store, kind, need) {
+        let all = ahDeckLists(kind), raw = null, ids = [];
+        try { raw = localStorage.getItem(store); } catch (e) {}
+        if (raw) { try { let j = JSON.parse(raw); ids = Array.isArray(j) ? j : [String(j)]; } catch (e) { ids = [raw]; } }
+        let hit = all.filter(x => ids.includes(ahDeckKey(x)));
+        if (hit.length) return hit;
+        let one = all.find(x => getListWordCount(x.l.content) >= need);
+        return one ? [one] : [];
+    }
+    // 選題庫的卡片：冒險備戰、訓練場共用（ctx 記住存在哪、這次至少要幾個字、選完要做什麼）
+    let ahDeckTmp = [], ahDeckCtx = null;
+    function ahOpenDeck(ctx) {
+        if (!ctx || typeof ctx !== 'object') {
+            let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0], kind = advCustomTab === 'pack' ? 'pack' : 'mine';
+            ctx = { kind, store: AH_PICK_KEY[kind], need: lv.minWords, done: () => advRenderLevelPage() };
+        }
+        ahDeckCtx = ctx;
+        ahDeckTmp = ahDeckChosen(ctx.store, ctx.kind, ctx.need).map(x => x.i);
         ahRenderDeck();
         ahOpenSheet('Deck');
     }
     function ahRenderDeck() {
         let box = document.getElementById('ahDeckBody');
-        if (!box) return;
-        let lv = ADV_LEVELS.find(l => l.id === adv.pickLevel) || ADV_LEVELS[0];
-        let kind = advCustomTab === 'pack' ? 'pack' : 'mine', all = ahDeckLists(kind);
+        if (!box || !ahDeckCtx) return;
+        let { kind, need } = ahDeckCtx, all = ahDeckLists(kind);
+        let chosen = all.filter(x => ahDeckTmp.includes(x.i)), sum = ahDeckSum(chosen), enough = sum >= need;
+        const CHK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
         let rows = all.map(x => {
-            let n = getListWordCount(x.l.content), poor = n < lv.minWords, on = x.i === ahDeckTmp;
-            return `<button type="button" class="ah-deck${on ? ' on' : ''}${poor ? ' poor' : ''}" ${poor ? 'disabled' : ''} role="radio" aria-checked="${on}" data-on-click='[["ahDeckTap",[${x.i}]]]'><span class="aq-ring"><i></i></span><span class="ah-deck-name">${escapeHTML(x.l.title)}</span><span class="ah-deck-n">${n} 字${poor ? '・不足' : ''}</span></button>`;
+            let n = getListWordCount(x.l.content), on = ahDeckTmp.includes(x.i);
+            return `<button type="button" class="ah-deck${on ? ' on' : ''}" role="checkbox" aria-checked="${on}" data-on-click='[["ahDeckTap",[${x.i}]]]'><span class="ah-chk">${on ? CHK : ''}</span><span class="ah-deck-name">${escapeHTML(x.l.title)}</span><span class="ah-deck-n">${n} 字</span></button>`;
         }).join('') || `<p class="ah-deck-empty">${kind === 'pack' ? '還沒有精選單字庫，可以到首頁的「題庫」加入。' : '還沒有自訂題庫，可以到首頁的「題庫」建立。'}</p>`;
-        box.innerHTML = `<div class="ah-deck-head"><b>選擇${kind === 'pack' ? '精選單字庫' : '自訂題庫'}</b><small>這關至少要 ${lv.minWords} 個字</small></div>
-            <div class="ah-deck-list" role="radiogroup">${rows}</div>
-            <button type="button" class="ah-btn-indigo" ${ahDeckTmp === null ? 'disabled' : ''} data-on-click='[["ahDeckOk",[]]]'>確定</button>`;
+        let tip = !chosen.length ? `可以選很多本，加起來至少 ${need} 個字` : enough ? `已選 ${chosen.length} 本・共 ${sum} 字` : `已選 ${sum} 字，還差 ${need - sum} 字`;
+        box.innerHTML = `<div class="ah-deck-head"><b>選擇${kind === 'pack' ? '精選單字庫' : '自訂題庫'}</b><small>至少要 ${need} 個字</small></div>
+            <div class="ah-deck-tip${chosen.length && !enough ? ' bad' : ''}">${tip}</div>
+            <div class="ah-deck-list" role="group">${rows}</div>
+            <button type="button" class="ah-btn-indigo" ${enough ? '' : 'disabled'} data-on-click='[["ahDeckOk",[]]]'>${enough ? `確定（${chosen.length} 本・${sum} 字）` : '確定'}</button>`;
     }
-    function ahDeckTap(i) { ahDeckTmp = parseInt(i); ahRenderDeck(); }
+    function ahDeckTap(i) {
+        i = parseInt(i);
+        let k = ahDeckTmp.indexOf(i);
+        if (k >= 0) ahDeckTmp.splice(k, 1); else ahDeckTmp.push(i);
+        ahRenderDeck();
+    }
     function ahDeckOk() {
-        let kind = advCustomTab === 'pack' ? 'pack' : 'mine', l = wordLists[ahDeckTmp];
-        if (l) { try { localStorage.setItem(AH_PICK_KEY[kind], l.id || ('i' + ahDeckTmp)); } catch (e) {} }
+        if (!ahDeckCtx) return;
+        let ids = ahDeckLists(ahDeckCtx.kind).filter(x => ahDeckTmp.includes(x.i)).map(ahDeckKey);
+        try { localStorage.setItem(ahDeckCtx.store, JSON.stringify(ids)); } catch (e) {}
         ahCloseSheet('Deck');
-        advRenderLevelPage();
+        if (ahDeckCtx.done) ahDeckCtx.done();
     }
     // ── 過關走路動畫（約 2.6 秒）：站在剛打贏的關卡 → 一跳一跳走到下一關 → 跳一下、鎖頭飛走、新關卡發光 ──
     let ahWalkT = [], ahWalkRaf = 0;
@@ -7108,8 +7262,9 @@
     function ahWalk(id, nextLv) {
         ahWalkStop();
         let ch = ADV_CHAPTERS.find(c => c.id === advMapChapter) || ADV_CHAPTERS[0];
-        if (!nextLv || nextLv.id > ch.to || id < ch.from) { ahHold = null; advRenderMap(); ahScrollTo(id); return; }   // 這章最後一關：後面沒有路，不走路
+        if (!nextLv || nextLv.id > ch.to || id < ch.from) { ahHold = null; ahSetChickAt(id); advRenderMap(); ahScrollTo(id); return; }   // 這章最後一關：後面沒有路，不走路
         ahHold = { id, next: nextLv.id };
+        ahSetChickAt(nextLv.id);
         advRenderMap();
         ahScrollTo(id);
         let reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -7721,7 +7876,8 @@
         if (advBagSel && !defs.some(d => d.key === advBagSel)) advBagSel = '';
         let cells = defs.map(d => `<button type="button" class="adv-bag-cell${d.on ? ' is-on' : ''}${d.kind === 'gear' ? ' rar-' + advItemRarityKey(d.key) : ''}${d.key === advBagSel ? ' sel' : ''}" data-on-click='[["advBagTap",["${d.key}"]]]'>
                 <span class="adv-bag-cico">${d.icon(34)}</span><b>${d.name}</b><small>${d.kind === 'gear' ? (d.on ? d.hand : '裝備') : '×' + d.n}</small>${d.kind === 'gear' && advGearUnseen(d.key) ? ADV_NEW_ALERT : ''}</button>`);
-        let total = Math.max(9, Math.ceil(cells.length / 3) * 3);
+        let inl = body.id === 'advBagInline';                // 能力值頁的背包分頁：一次 6 格（兩排），說明和按鈕同一個畫面
+        let total = Math.max(inl ? 6 : 9, Math.ceil(cells.length / 3) * 3);
         while (cells.length < total) cells.push('<div class="adv-bag-cell empty"></div>');
         if (!defs.length && advBagGearOnly) cells = [];
         body.innerHTML = `<div class="adv-bag-head">
@@ -7730,21 +7886,21 @@
                     ${[['all', '全部'], ['gear', '裝備'], ['item', '道具']].map(o => `<option value="${o[0]}"${advBagFilter === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}
                 </select>`}
             </div>
-            <div class="adv-bag-grid">${cells.join('')}</div>
-            <div class="adv-bag-info">${advBagInfoHTML(defs)}</div>`;
+            <div class="adv-bag-grid${inl ? ' adv-bag-grid--6' : ''}">${cells.join('')}</div>
+            <div class="adv-bag-info">${advBagInfoHTML(defs, inl)}</div>`;
     }
     // 九宮格下面的說明欄（點了哪一格就顯示哪一格）
-    function advBagInfoHTML(defs) {
+    function advBagInfoHTML(defs, inl) {
         if (advBagGearOnly && !defs.length) return '<div class="adv-bag-hint">還沒有裝備（打贏第 1、4、12、15 關可以拿到，補給站也買得到）。</div>';
         let d = defs.find(x => x.key === advBagSel);
-        if (!d) return '<div class="adv-bag-hint">點一下上面的東西，這裡會顯示說明。</div>';
+        if (!d) return inl ? '' : '<div class="adv-bag-hint">點一下上面的東西，這裡會顯示說明。</div>';   // 背包分頁：沒點選時空白
         let rk = d.kind === 'gear' ? advItemRarityKey(d.key) : '';
         return `<div class="adv-bag-detail">
                 <div class="adv-bag-dico">${d.icon(56)}</div>
                 <div class="adv-bag-dtxt"><div class="adv-bag-dkind">${d.kind === 'gear' ? `🛡️ 裝備${d.on ? '（' + d.hand + '）' : ''}　<span class="adv-rar-badge rar-${rk}">${ADV_RARITY[rk].label}</span>` : `📦 道具　持有 ×${d.n}`}</div><b class="adv-bag-dname">${d.name}</b><p>${d.desc}</p></div>
             </div>
             <button type="button" class="adv-plain-btn ${d.off ? 'danger' : 'main'}" ${d.kind === 'item' && d.n < 1 ? 'disabled' : ''} data-on-click='[["${d.fn}",["${d.key}"]]]'>${d.act}</button>
-            <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagUnselect",[]]]'>返回</button>`;
+            ${inl ? '' : `<button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagUnselect",[]]]'>返回</button>`}`;
     }
     function advBagTap(key) {
         advBagSel = key;
@@ -8219,10 +8375,15 @@
             if (bar) { bar.hidden = sh <= 0; let f = document.getElementById('btShieldFill'); if (f) f.style.width = Math.min(100, sh / Math.max(1, p.max) * 100) + '%'; }
         }
         if (et) et.textContent = `${Math.max(0, e.hp)}/${e.max}` + (e.shield ? ` 🛡️${e.shield}` : '');
+        if (adv.training) {                                      // 木人：依剩下的 HP 換受損的圖
+            let sg = BattleCore.dummyStage(e.hp, e.max), E = document.getElementById('advEnemy');
+            if (E && sg !== adv.dStage) { adv.dStage = sg; E.innerHTML = advDummySVG(adv.trainKey, sg); }
+        }
         let info = document.getElementById('advTopInfo');
         let act = `${Math.min(adv.actionsTotal - adv.actionsLeft + 1, adv.actionsTotal)}/${adv.actionsTotal}`;
         if (info) {
-            if (adv.ringOpening) info.innerHTML = `第 ${adv.level.id} 關 <span>｜</span> 套圈圈技能發動！`;     // 開場「天女散花」：回合還沒開始
+            if (adv.training) info.innerHTML = `訓練場 <span>｜</span> 回合 ${Math.min(adv.round, adv.trainRounds)}/${adv.trainRounds} <span>｜</span> 行動 ${act}`;
+            else if (adv.ringOpening) info.innerHTML = `第 ${adv.level.id} 關 <span>｜</span> 套圈圈技能發動！`;     // 開場「天女散花」：回合還沒開始
             else if (btOn) info.innerHTML = `第 ${adv.level.id} 關 <span>｜</span> 回合 ${adv.round} <span>｜</span> 行動 ${act}`;
             else info.textContent = `第 ${adv.level.id} 關 ｜ 回合 ${adv.round} ｜ 行動 ${act}`;
         }
@@ -8291,7 +8452,7 @@
     }
     // 新版戰鬥畫面（前後透視：敵人在右上是主角、雞塊背面在左下）—— 先開放的關卡
     const ADV_BT_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
-    function advBtOn() { return !!(adv.level && ADV_BT_LEVELS.includes(adv.level.id)); }
+    function advBtOn() { return !!(adv.level && (adv.training || ADV_BT_LEVELS.includes(adv.level.id))); }
     function advBtFit() {
         let b = document.querySelector('#adventureBattleView .adv-battle');
         if (!b || !b.classList.contains('bt')) return;
@@ -8360,7 +8521,8 @@
         adv.nextAtk = 0; adv.intBuff = 0; adv.ringOpening = false; if (advSp && advSp.timer) clearInterval(advSp.timer); advSp = null;
         let battle = document.querySelector('#adventureBattleView .adv-battle'), btOn = advBtOn();
         if (battle) {
-            battle.classList.toggle('bt', btOn); battle.classList.toggle('bt-store', !!(btOn && adv.level && adv.level.id >= 11));   // 便利商店：白色地磚
+            let tr = !!adv.training;
+            battle.classList.toggle('bt', btOn); battle.classList.toggle('bt-store', !!(btOn && !tr && adv.level && adv.level.id >= 11)); battle.classList.toggle('bt-train', tr);   // 便利商店：白色地磚
             // 上一場留下來的場景高度、鍵盤狀態清掉（不然換關時舞台會變很矮、下面白色區域很大）
             battle.classList.remove('bt-kb'); battle.style.removeProperty('--bt-stage-h');
         }
@@ -8372,7 +8534,7 @@
             try { if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = false; } catch (e) {}
             advBtFit();
             const SHIELD = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3z"/></svg>';
-            st.innerHTML = (adv.level && adv.level.id >= 11 ? advStoreStageBG(true) : advStageBG()) + `
+            st.innerHTML = (adv.training ? tgBattleBG() : adv.level && adv.level.id >= 11 ? advStoreStageBG(true) : advStageBG()) + `
             <div class="bt-scene">
                 <svg class="bt-plat" viewBox="0 0 390 560" aria-hidden="true">
                     <ellipse cx="280" cy="350" rx="102" ry="20" fill="#fff" opacity="0.35" stroke="#8A5A34" stroke-opacity="0.35" stroke-width="2"/>
@@ -8383,10 +8545,11 @@
                 <div class="adv-actor adv-enemy" id="advEnemy">${advEnemySVG(adv.enemy.sprite)}</div>
                 <div class="adv-actor adv-player" id="advPlayer">${advChickenBackSVG()}</div>
                 <div class="adv-hud adv-hud-enemy bt-hp bt-hp--enemy"><div class="adv-enemy-tag" id="advEnemyTag" style="display:none"></div><span class="bt-hp__name"><span id="advEnemyName">${escapeHTML(adv.enemy.name)}</span> <b id="advEnemyHpText"></b></span><span class="adv-hpbar bt-bar"><span class="adv-hpfill" id="advEnemyFill"></span></span></div>
-                <div class="adv-hud adv-hud-player bt-hp bt-hp--player"><span class="bt-hp__name">雞塊 <b id="advPlayerHpText"></b><span class="bt-badge-shield" id="btShieldBadge" hidden>${SHIELD}<span id="btShieldNum"></span></span></span><span class="bt-shieldbar" id="btShieldBar" hidden><i id="btShieldFill"></i></span><span class="adv-hpbar bt-bar"><span class="adv-hpfill" id="advPlayerFill"></span></span></div>
+                ${adv.training ? tgComboHTML() : `<div class="adv-hud adv-hud-player bt-hp bt-hp--player"><span class="bt-hp__name">雞塊 <b id="advPlayerHpText"></b><span class="bt-badge-shield" id="btShieldBadge" hidden>${SHIELD}<span id="btShieldNum"></span></span></span><span class="bt-shieldbar" id="btShieldBar" hidden><i id="btShieldFill"></i></span><span class="adv-hpbar bt-bar"><span class="adv-hpfill" id="advPlayerFill"></span></span></div>`}
                 <div class="adv-fx" id="advFx"></div>
             </div>`;
             advUpdateHud();
+            if (adv.training) tgComboUpdate(false);
             return;
         }
         try { if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = true; } catch (e) {}
@@ -8433,7 +8596,8 @@
         if (!autoMode && words.length < lv.minWords) { alert(`⚠️ 這一關需要範圍內至少 ${lv.minWords} 個單字，請多勾選一些題庫。`); return; }
         advAbort();
         advSyncDaily();
-        if (advData.hp <= 0) { alert('雞塊沒有體力了，明天 00:00 會恢復。'); advRenderLevelPage(); return; }
+        if (advData.hp <= 0) { advNoHpOpen(lv.id); return; }   // 沒有體力：跳出「體力不足」視窗（可以喝恢復藥水）
+        advData.mapAt = lv.id;                               // 地圖上的雞塊：站在剛打的這關
         // 已通關的關卡可以一直重複挑戰：每天前 3 次打贏有通關獎勵，之後只累積招式熟練度（在 advWin 計算）
         adv.words = words;
         adv.cnWords = words.filter(w => w.chinese);
@@ -8485,12 +8649,342 @@
     }
     function advMakeEnemy(d) { return BattleCore.makeEnemy(d); }
     function advQuit() {
-        if (adv.active && !confirm('要離開戰鬥嗎？這場戰鬥不會有任何獎勵。')) return;
+        if (adv.active && !confirm(adv.training ? '要離開訓練嗎？這次的傷害不會記錄。' : '要離開戰鬥嗎？這場戰鬥不會有任何獎勵。')) return;
         advAbort();
         advBackToLevel();
     }
     function advBackToMenu() { advAbort(); advBackToLevel(); }
-    function advRetry() { if (adv.level) advStartBattle(adv.level.id); }
+    function advRetry() { if (adv.training) { advStartTraining(adv.trainKey); return; } if (adv.level) advStartBattle(adv.level.id); }
+    // ═════════ 訓練場（木人）═════════
+    //   規則（木人資料、連擊倍率、10 回合、不扣血）都在 battle-core.js；這裡只負責畫面
+    const TG_MIN_WORDS = 10;                                   // 訓練至少要幾個字才能出題
+    const TG_IDX_KEY = 'chicky_tg_idx', TG_SRC_KEY = 'chicky_tg_src';
+    const TG_PICK_KEY = { pack: 'chicky_tg_pick_pack', mine: 'chicky_tg_pick_mine' };
+    let tgIdx = 0, tgBusy = false;
+    let tgSvgN = 0;
+    // 木人圖（受損三階段：0 完整、1 裂痕、2 缺一塊）
+    function advDummySVG(key, stage) {
+        stage = stage || 0;
+        const K = '#231F20', iron = key === 'iron';
+        const head = iron ? '#CBD5E1' : '#E9C08F', grain = iron ? '#94A3B8' : '#C98F55';
+        const bar = iron ? '#64748B' : '#B45309', post = iron ? '#64748B' : '#92400E', foot = '#7C2D12';
+        const id = 'tgh' + (++tgSvgN);
+        const cx = 60, cy = 32, r = 24;
+        let headD = stage < 2 ? `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z`
+            : 'M55.8 8.4A24 24 0 1 0 83.2 38.2L79.5 32L76.5 28L78 23.5L72 20.5L69 14.5L63 13Z';
+        let s = `<ellipse cx="60" cy="106" rx="27" ry="4.5" fill="#000" opacity=".16"/>`;
+        // 腳座、柱子
+        s += `<rect x="55" y="62" width="10" height="38" fill="${post}" stroke="${K}" stroke-width="3"/>`;
+        s += `<rect x="44" y="98" width="32" height="7" rx="3.5" fill="${foot}" stroke="${K}" stroke-width="2.6"/>`;
+        // 橫木（手）：受損 2 時右手變短、斷口不平整
+        s += stage < 2 ? `<rect x="25" y="57" width="70" height="9" rx="4.5" fill="${bar}" stroke="${K}" stroke-width="3"/>`
+            : `<path d="M29.5 57H80l3 2.2-2.4 2.2 3.4 2.4-4 2.2H29.5a4.5 4.5 0 0 1 0-9z" fill="${bar}" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>`;
+        if (stage >= 1) s += `<path d="M33 57.6l3 3-2.6 2.4" stroke="${K}" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;   // 一隻手有裂痕（不裂到底）
+        // 頭
+        s += `<clipPath id="${id}"><path d="${headD}"/></clipPath><path d="${headD}" fill="${head}"/>`;
+        s += `<g clip-path="url(#${id})">`;
+        if (iron) s += `<ellipse cx="49" cy="19" rx="8" ry="4.5" fill="#fff" opacity=".7"/><path d="M38 33H82" stroke="${grain}" stroke-width="2"/>`;
+        else s += `<path d="M39 21Q60 15 81 21M37 33Q60 29 83 33M39 45Q60 51 81 45" stroke="${grain}" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="56" cy="40" rx="3.2" ry="2.2" fill="none" stroke="${grain}" stroke-width="1.6"/>`;
+        s += `</g><path d="${headD}" fill="none" stroke="${K}" stroke-width="3.4" stroke-linejoin="round"/>`;
+        if (iron) [-150, -90, -30, 30, 90, 150].forEach(a => {
+            if (stage >= 2 && (a === -90 || a === -30)) return;
+            let x = cx + (r - 0.5) * Math.cos(a * Math.PI / 180), y = cy + (r - 0.5) * Math.sin(a * Math.PI / 180);
+            s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.3" fill="#64748B" stroke="${K}" stroke-width="1.1"/>`;
+        });
+        if (stage >= 1) s += `<path d="M49 10.5l4 7-4.6 4.6 5.6 5.6-2.6 6" stroke="${K}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+        if (stage >= 2) s += `<path d="M75 45l-4 3.6 3 4" stroke="${K}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M88 5.5l5 1.6-3.6 3.2zM94.5 13.5l5 2.8-5.2 1.8z" fill="${head}" stroke="${K}" stroke-width="1.3" stroke-linejoin="round"/>`;
+        // 抗噪木人：耳機（受損 2：右邊耳罩掉了、頭帶只剩左半）
+        if (key === 'noise') {
+            let band = stage < 2 ? 'M33 33A27 27 0 0 1 87 33' : 'M33 33A27 27 0 0 1 61 6';
+            s += `<path d="${band}" stroke="${K}" stroke-width="9" fill="none" stroke-linecap="round"/><path d="${band}" stroke="#475569" stroke-width="4.6" fill="none" stroke-linecap="round"/>`;
+            const cup = x => `<rect x="${x}" y="23" width="12" height="21" rx="5" fill="#334155" stroke="${K}" stroke-width="2.6"/><rect x="${x + 4}" y="27" width="4" height="13" rx="2" fill="#38BDF8"/>`;
+            s += cup(27);
+            if (stage < 2) s += cup(81);
+        }
+        // 字卡木人：A、Z、Q 三張字卡（受損 1：A 掉了；受損 2：只剩 Q）
+        if (key === 'card') {
+            const card = (x, y, rot, ch, c) => `<g transform="translate(${x} ${y}) rotate(${rot})"><rect x="-8" y="-10" width="16" height="20" rx="2.2" fill="#fff" stroke="${K}" stroke-width="2"/><rect x="-8" y="-10" width="16" height="5" rx="2" fill="${c}" stroke="${K}" stroke-width="2"/><circle cx="0" cy="-7.6" r="1.4" fill="#EF4444"/><text x="0" y="6.5" text-anchor="middle" font-size="10" font-weight="900" fill="${K}" font-family="Inter,Arial,sans-serif">${ch}</text></g>`;
+            if (stage < 1) s += card(46, 25, -16, 'A', '#60A5FA');
+            if (stage < 2) s += card(74, 24, 15, 'Z', '#F472B6');
+            s += card(60, 40, -3, 'Q', '#FBBF24');
+        }
+        return `<svg viewBox="0 0 120 112" xmlns="http://www.w3.org/2000/svg" fill="none">${s}</svg>`;
+    }
+    // 小圖示：木人（底部按鈕、結算頁的「訓練場」按鈕）
+    function tgDummyIcon(size) {
+        size = size || 22;
+        return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" aria-hidden="true" style="vertical-align:-5px"><path d="M20 30v7M13 37.5h14" stroke="#7C4A1E" stroke-width="3" stroke-linecap="round"/><path d="M6 19.5h28" stroke="#7C4A1E" stroke-width="7.5" stroke-linecap="round"/><path d="M6 19.5h28" stroke="#D29B5E" stroke-width="3.6" stroke-linecap="round"/><rect x="13" y="14" width="14" height="18" rx="5" fill="#D29B5E" stroke="#7C4A1E" stroke-width="2.4"/><circle cx="20" cy="8.5" r="6.2" fill="#E2B27A" stroke="#7C4A1E" stroke-width="2.4"/></svg>`;
+    }
+    // 訓練場背景：藍天、太陽、草地、沙地（沒有柵欄）
+    function tgSceneSVG(w, h, horizon) {
+        let seed = 31, dots = '';
+        const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+        for (let i = 0; i < 38; i++) { let y = horizon + 14 + rnd() * (h - horizon - 14); dots += `<ellipse cx="${(rnd() * w).toFixed(0)}" cy="${y.toFixed(0)}" rx="${(5 + rnd() * 9).toFixed(1)}" ry="${(1.6 + rnd() * 1.6).toFixed(1)}" fill="#C9A06A" opacity=".45"/>`; }
+        return `<defs><linearGradient id="tgSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFE3FB"/><stop offset="1" stop-color="#E3F3FD"/></linearGradient><radialGradient id="tgSun"><stop offset="0" stop-color="#FFF3B0" stop-opacity=".95"/><stop offset="1" stop-color="#FFF3B0" stop-opacity="0"/></radialGradient></defs>
+            <rect width="${w}" height="${h}" fill="url(#tgSky)"/><circle cx="${w * 0.74}" cy="${horizon * 0.42}" r="${w * 0.2}" fill="url(#tgSun)"/>
+            <path d="M0 ${horizon - 18}Q${w * 0.3} ${horizon - 44} ${w * 0.62} ${horizon - 30}T${w} ${horizon - 52}V${horizon + 6}H0Z" fill="#A7DB8D"/>
+            <rect y="${horizon}" width="${w}" height="${h - horizon}" fill="#E8C99A"/>${dots}`;
+    }
+    function tgBattleBG() { return `<svg class="adv-stage-bg adv-stage-bg--tall" viewBox="0 0 340 520" preserveAspectRatio="xMidYMin slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${tgSceneSVG(340, 520, 165)}</svg>`; }
+    function tgAbility(d) {
+        let t = (d.traits || []).find(x => x.type === 'immune');
+        return t ? `${ADV_TYPE_LABEL[t.moveType] || ''}招式無效` : '無';
+    }
+    function tgList() { return BattleCore.DUMMIES.filter(d => BattleCore.dummyUnlocked(d, advData.cleared)); }
+    function tgCur() { let l = tgList(); tgIdx = Math.max(0, Math.min(tgIdx, l.length - 1)); return l[tgIdx]; }
+    function tgData() { if (!advData.train || typeof advData.train !== 'object') advData.train = { best: {}, first: {} }; return advData.train; }
+    // 開訓練場（大冒險首頁底部「訓練場」）
+    function goToTraining() {
+        if (!document.getElementById('adventureView').classList.contains('active')) goToAdventurePage(true);
+        ahCloseAll();
+        try { tgIdx = parseInt(localStorage.getItem(TG_IDX_KEY)) || 0; } catch (e) {}
+        let el = document.getElementById('tgHome');
+        if (!el) return;
+        el.hidden = false;
+        document.getElementById('tgBg').innerHTML = `<svg viewBox="0 0 390 760" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${tgSceneSVG(390, 760, 420)}</svg>`;
+        tgBindSwipe(el);
+        tgRender();
+        tgSetTab(true);
+    }
+    function tgClose() { let el = document.getElementById('tgHome'); if (el) el.hidden = true; ahCloseSheet('Train'); tgSetTab(false); }
+    function tgSetTab(on) { let b = document.getElementById('ahTabTrain'); if (b) b.classList.toggle('on', !!on); }
+    function tgRender() {
+        let list = tgList(), d = tgCur();
+        if (!d) return;
+        let best = tgData().best[d.key], has = Number.isFinite(best);
+        const HEART = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2.2 0 3.7 1.2 5.4 3.2 1.7-2 3.2-3.2 5.4-3.2 3.6 0 5.8 3.7 4.2 7.3C19.5 16.4 12 21 12 21z" fill="#F87171" stroke="#B91C1C" stroke-width="1.6"/></svg>';
+        const SHIELD = '<svg width="15" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8.5 3.2v6.3c0 5-3.6 9.3-8.5 10.5C7.1 20.8 3.5 16.5 3.5 11.5V5.2z" fill="#C7D2FE" stroke="#4F46E5" stroke-width="1.8"/></svg>';
+        const CROWN = '<svg width="20" height="16" viewBox="0 0 26 20" aria-hidden="true"><path d="M2 5l6 5 5-8 5 8 6-5-2.4 12H4.4z" fill="#FCD34D" stroke="#B45309" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+        let full = has && best >= d.hp;
+        document.getElementById('tgCard').innerHTML = `<div class="tg-stats">
+                <div class="tg-st"><span class="k">${HEART}HP</span><b>${d.hp}</b></div>
+                <div class="tg-st"><span class="k">${SHIELD}防禦</span><b>${d.def}</b></div>
+                <div class="tg-st"><span class="k">${full ? CROWN : ''}最佳</span>${has ? `<b class="best">${best}</b>` : '<b class="none">—</b>'}</div>
+            </div><div class="tg-ab"><span>特殊能力</span><b>${tgAbility(d)}</b></div>`;
+        document.getElementById('tgDummy').innerHTML = advDummySVG(d.key, 0);
+        document.getElementById('tgName').textContent = d.name;
+        document.getElementById('tgPrev').disabled = tgIdx <= 0;
+        document.getElementById('tgNext').disabled = tgIdx >= list.length - 1;
+        document.getElementById('tgDots').innerHTML = list.map((x, i) => `<i class="${i === tgIdx ? 'on' : ''}"></i>`).join('');
+        // 訓練不限次數 → 小標改成「第一次打到 999 的獎勵」；拿過了就寫「不限次數」
+        let fr = d.firstReward || {}, got = !!tgData().first[d.key];
+        document.getElementById('tgTag').innerHTML = got || !fr.shards ? '不限次數' : `首破 ${d.hp}・${advShardIcon(16)}+${fr.shards}`;
+        let tk = document.getElementById('tgTokens'); if (tk) tk.innerHTML = `${advShardIcon(24)}<span>${advData.shards}</span>`;
+    }
+    // 左右切換木人：木人縮小變淡、狀態欄淡出再淡入
+    function tgStep(dir) {
+        dir = parseInt(dir) || 0;
+        let n = tgList().length, to = tgIdx + dir;
+        if (tgBusy || to < 0 || to >= n || !dir) return;
+        tgBusy = true;
+        let main = document.getElementById('tgMain');
+        main.classList.add(dir > 0 ? 'out-l' : 'out-r');
+        setTimeout(() => {
+            tgIdx = to;
+            try { localStorage.setItem(TG_IDX_KEY, String(tgIdx)); } catch (e) {}
+            tgRender();
+            main.classList.remove('out-l', 'out-r');
+            main.classList.add(dir > 0 ? 'in-r' : 'in-l');
+            requestAnimationFrame(() => requestAnimationFrame(() => { main.classList.remove('in-r', 'in-l'); }));
+            setTimeout(() => { tgBusy = false; }, 240);
+        }, 200);
+    }
+    function tgBindSwipe(el) {
+        if (el.dataset.swipe) return;
+        el.dataset.swipe = '1';
+        let x0 = null, y0 = 0;
+        el.addEventListener('pointerdown', e => { if (e.target.closest('button')) { x0 = null; return; } x0 = e.clientX; y0 = e.clientY; });
+        el.addEventListener('pointerup', e => {
+            if (x0 === null) return;
+            let dx = e.clientX - x0, dy = e.clientY - y0; x0 = null;
+            if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) tgStep(dx < 0 ? 1 : -1);
+        });
+    }
+    // ── 訓練前的卡片：訓練對手＋出題題庫 ──
+    function tgSrc() {
+        let s = null;
+        try { s = JSON.parse(localStorage.getItem(TG_SRC_KEY) || 'null'); } catch (e) {}
+        s = (s && typeof s === 'object') ? s : {};
+        let mode = ['auto', 'pack', 'mine'].includes(s.mode) ? s.mode : 'auto';
+        let lv = parseInt(s.lv); if (!lv || !advUnlocked(lv)) lv = ahCurrentId();
+        return { mode, lv };
+    }
+    function tgSaveSrc(o) { try { localStorage.setItem(TG_SRC_KEY, JSON.stringify(Object.assign(tgSrc(), o))); } catch (e) {} }
+    // 這次訓練用的字
+    function tgWords() {
+        let s = tgSrc();
+        if (s.mode === 'auto') {
+            let lv = ADV_LEVELS.find(l => l.id === s.lv) || ADV_LEVELS[0];
+            let w = advAutoWords(lv);
+            if (!advIsReview(lv.id)) { let seen = new Set(w.map(advWordKey)); w = w.concat(advOldWords(lv).filter(x => !seen.has(advWordKey(x)))); }
+            return w;
+        }
+        let text = '';
+        ahDeckChosen(TG_PICK_KEY[s.mode], s.mode, TG_MIN_WORDS).forEach(x => { if (x.l.content) text += x.l.content + '\n'; });
+        return parseWordsRaw(text);
+    }
+    function tgOpenPrep() { tgRenderPrep(); ahOpenSheet('Train'); }
+    function tgSetMode(m) {
+        tgSaveSrc({ mode: m });
+        tgRenderPrep();
+        if (m !== 'auto' && !ahDeckChosen(TG_PICK_KEY[m], m, TG_MIN_WORDS).length) tgOpenDeck();
+    }
+    function tgOpenDeck() {
+        let m = tgSrc().mode;
+        if (m === 'auto') return;
+        ahOpenDeck({ kind: m, store: TG_PICK_KEY[m], need: TG_MIN_WORDS, done: tgRenderPrep });
+    }
+    function tgRenderPrep() {
+        let d = tgCur(), s = tgSrc();
+        if (!d) return;
+        let box = document.getElementById('tgPrepCard');
+        if (box) box.innerHTML = `<div class="ah-hero tg-hero">
+                <div class="ah-hero-art tg-hero-art">${advDummySVG(d.key, 0)}</div>
+                <div class="ah-hero-info">
+                    <div class="ah-hero-lv">訓練對手</div>
+                    <b class="ah-hero-name">${escapeHTML(d.name)}</b>
+                    <span class="ah-hero-sub">${BattleCore.TRAIN_ROUNDS} 回合・不扣體力${tgAbility(d) !== "無" ? "・" + tgAbility(d) : ""}</span>
+                </div>
+            </div>`;
+        const ARROW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
+        let opt = (key, name, extra) => `<div class="aq-opt ah-opt${s.mode === key ? ' on' : ''}" role="radio" aria-checked="${s.mode === key}" tabindex="0" data-on-click='[["tgSetMode",["${key}"]]]'><span class="aq-ring"><i></i></span><span class="aq-opt-name">${name}</span>${extra || ''}</div>`;
+        let html = '';
+        if (advCanAuto()) {
+            let ch = ADV_CHAPTERS.find(c => c.id === advChapterOf(s.lv)) || {};
+            html += opt('auto', '冒險題庫', s.mode === 'auto' ? `<span class="ah-cap" role="button" data-on-click='[["$stop",[]],["tgOpenPick",[]]]'>${escapeHTML((ch.name || '').replace(/篇$/, ''))}・第 ${s.lv} 關${ARROW}</span>` : '');
+        }
+        let cap = k => {
+            if (s.mode !== k) return '';
+            let c = ahDeckChosen(TG_PICK_KEY[k], k, TG_MIN_WORDS);
+            return `<span class="ah-cap${c.length && ahDeckSum(c) < TG_MIN_WORDS ? ' bad' : ''}" role="button" data-on-click='[["$stop",[]],["tgOpenDeck",[]]]'>${ahDeckLabel(c)}${ARROW}</span>`;
+        };
+        html += opt('pack', '精選單字庫', cap('pack')) + opt('mine', '自訂題庫', cap('mine'));
+        let seg = document.getElementById('tgModeSeg'); if (seg) seg.innerHTML = html;
+        let n = tgWords().length, ok = n >= TG_MIN_WORDS;
+        let er = document.getElementById('tgErr'); if (er) er.innerHTML = ok ? '' : `<span class="bad">訓練至少要 ${TG_MIN_WORDS} 個字（目前 ${n} 個），請換一個題庫</span>`;
+        let bar = document.getElementById('tgGoBar');
+        if (bar) bar.innerHTML = `<button type="button" class="ah-btn-gold ah-start" ${ok ? '' : 'disabled'} data-on-click='[["advStartTraining",[]]]'>開始訓練</button>`;
+    }
+    // 冒險題庫：選哪一關的字（只能選打過或目前的關卡）
+    function tgOpenPick() {
+        let s = tgSrc();
+        ahPickTrain = true; ahPickSel = s.lv; ahPickCh = advChapterOf(s.lv);
+        let w = document.getElementById('ahPick'); if (w) w.classList.add('ah-sheet-wrap--top');
+        ahRenderPick();
+        ahOpenSheet('Pick');
+    }
+    function tgPickOk() {
+        if (ahPickSel && advUnlocked(ahPickSel)) tgSaveSrc({ mode: 'auto', lv: ahPickSel });
+        ahCloseSheet('Pick');
+        tgRenderPrep();
+    }
+    // ── 開始訓練：用 battle-core 的同一套戰鬥規則（training 模式）──
+    function advStartTraining(key) {
+        let d = key ? BattleCore.DUMMIES.find(x => x.key === key) : tgCur();
+        if (!d || !BattleCore.dummyUnlocked(d, advData.cleared)) return;
+        let words = tgWords();
+        if (words.length < TG_MIN_WORDS) { tgRenderPrep(); return; }
+        ahCloseSheet('Train');
+        advAbort();
+        advSyncDaily();
+        adv.words = words;
+        adv.cnWords = words.filter(w => w.chinese);
+        adv.decks = { all: [], cn: [] };
+        adv.seen = new Set();
+        adv.wrongThis = [];
+        adv.stOk = 0; adv.stAll = 0;
+        adv.plan = null;
+        let eqMoves = advEquipped(), mast = {};
+        eqMoves.forEach(m => { mast[m.key] = advMastery(m.key); });
+        // 不需要體力：雞塊用滿血進場、整場不會扣血（也不會改到冒險的體力）
+        BattleCore.initBattle(adv, { level: BattleCore.dummyLevel(d), stats: advPlayerStats(), hp: advMaxHp(), gear: advData.gear, moves: eqMoves, mastery: mast, critOn: advCritOn(), training: true });
+        adv.trainKey = d.key; adv.dStage = 0; adv.comboMax = 0;
+        adv.micOk = false;
+        adv.active = true;
+        adv.busy = false;
+        requestWakeLock();
+        if (!document.getElementById('adventureBattleView').classList.contains('active')) advLockBattleHeight();
+        switchView('adventureBattleView');
+        advBuildStage();
+        advOpening(adv.runId);
+    }
+    // 連對卡：連對 N ＋ 倍率；進度條 0～20，刻度 5／10／20
+    function tgComboHTML() {
+        let ticks = BattleCore.COMBO_STEPS.slice().reverse().map(x => `<span class="t" style="left:${x.at / 20 * 100}%"></span>`).join('');
+        let labels = BattleCore.COMBO_STEPS.slice().reverse().map(x => `<span style="left:${x.at / 20 * 100}%">×${x.mul}</span>`).join('');
+        return `<div class="adv-hud bt-hp bt-combo" id="btCombo" data-lv="0"><div class="bt-combo__top"><span class="bt-combo__k">連對</span><b class="bt-combo__n" id="btComboN">0</b><span class="bt-combo__mul" id="btComboMul">×1</span></div><div class="bt-combo__track"><i id="btComboFill"></i>${ticks}</div><div class="bt-combo__lb">${labels}</div></div>`;
+    }
+    function tgComboUpdate(pop) {
+        let n = adv.combo || 0, mul = BattleCore.comboMul(n), c = document.getElementById('btCombo');
+        if (!c) return;
+        adv.comboMax = Math.max(adv.comboMax || 0, n);
+        c.dataset.lv = n >= 20 ? 3 : n >= 10 ? 2 : n >= 5 ? 1 : 0;
+        document.getElementById('btComboN').textContent = n;
+        document.getElementById('btComboMul').textContent = '×' + mul;
+        document.getElementById('btComboFill').style.width = Math.min(100, n / 20 * 100) + '%';
+        if (pop) { c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); }
+    }
+    // 答錯：「中斷!!」（深灰色、像漏氣；約 1.5 秒）
+    async function tgComboBreak() {
+        let b = document.querySelector('#adventureBattleView .adv-battle'), c = document.getElementById('btCombo');
+        if (!b) return;
+        let ov = document.createElement('div');
+        ov.className = 'tg-break';
+        ov.innerHTML = `<div class="tg-break__txt">中斷!!</div>${[0, 1, 2, 3, 4].map(i => `<i class="tg-smoke s${i}"></i>`).join('')}`;
+        b.appendChild(ov);
+        if (c) c.classList.add('broken');
+        await advWait(450);
+        tgComboUpdate(false);
+        await advWait(900);
+        if (c) c.classList.remove('broken');
+        ov.classList.add('out');
+        setTimeout(() => ov.remove(), 260);
+    }
+    // 10 回合結束（或 999 全打完）：結算
+    function tgEnd(ev) {
+        adv.active = false;
+        advStopTimer();
+        releaseWakeLock();
+        let d = BattleCore.DUMMIES.find(x => x.key === adv.trainKey) || BattleCore.DUMMIES[0];
+        let dmg = Math.max(0, Math.min(d.hp, ev.dmg || 0)), T = tgData();
+        let prev = T.best[d.key], rec = !Number.isFinite(prev) || dmg > prev;
+        if (rec) T.best[d.key] = dmg;
+        let reward = null;
+        if (dmg >= d.hp && !T.first[d.key]) {                 // 每隻木人第一次打到 999：一次性獎勵
+            T.first[d.key] = Date.now();
+            reward = d.firstReward || {};
+            if (reward.shards) advData.shards += reward.shards;
+        }
+        advSave();
+        tgShowResult({ d, dmg, rec: rec && dmg > 0, prev, reward, full: dmg >= d.hp, round: ev.round || 0 });
+    }
+    function tgShowResult(r) {
+        crData = { train: true };
+        let el = advResultEl(), ok = adv.stOk || 0, all = Math.max(ok, adv.stAll || 0);
+        let title = r.full ? `打到 ${r.d.hp}！` : '訓練結束';
+        let hero = `<div class="cr-hero ${r.full ? 'cr-hero--first' : 'cr-hero--win'}">${r.full ? CR_FX_FIRST : CR_FX_WIN}<h1 class="cr-hero__title">${title}</h1>${r.rec ? '<div class="cr-ribbon"><span>新紀錄！</span></div>' : ''}
+            <div class="cr-enemy"><span class="cr-enemy__art">${advDummySVG(r.d.key, BattleCore.dummyStage(r.d.hp - r.dmg, r.d.hp))}</span></div>
+            <p class="cr-hero__sub">${escapeHTML(r.d.name)}・${r.full ? `第 ${r.round} 回合打完` : `${BattleCore.TRAIN_ROUNDS} 回合`}</p></div>`;
+        let stats = `<div class="cr-stats">
+            <div class="cr-stat cr-stat--score"><span class="cr-stat__label">總傷害</span><span class="cr-num tg-dmg">${r.dmg} <small>/ ${r.d.hp}</small></span></div>
+            <div class="cr-stat cr-stat--score"><span class="cr-stat__label">答對・最多連對</span><span class="cr-num">${ok} <small>/ ${all}</small>・${adv.comboMax || 0}</span></div></div>`;
+        let best = tgData().best[r.d.key];
+        let mid = r.reward && r.reward.shards
+            ? `<div class="cr-reward"><div class="cr-reward__head"><span class="cr-reward__label">第一次打到 ${r.d.hp} 的獎勵</span></div><div class="cr-reward__items"><span class="cr-item">${advShardIcon(26)}<b>×${r.reward.shards}</b></span></div></div>`
+            : `<div class="cr-reward"><div class="cr-reward__head"><span class="cr-reward__label">最佳紀錄</span></div><div class="cr-reward__items"><span class="cr-none">${best}${r.rec && Number.isFinite(r.prev) ? `（上次最佳 ${r.prev}）` : ''}・練習沒有經驗值</span></div></div>`;
+        let btns = `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["tgAgain",[]]]'>再練一次</button>
+            <button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["tgBack",[]]]'>回訓練場</button>`;
+        el.innerHTML = `<section class="cr-screen" data-state="${r.full ? 'first' : 'replay'}" aria-label="訓練結算"><div class="cr-card">
+            <header class="cr-top"><button type="button" class="cr-back" aria-label="返回" data-on-click='[["tgBack",[]]]'>${CR_BACK_SVG}</button><span class="cr-pill">訓練場</span><span></span></header>
+            ${hero}${stats}${mid}<div class="cr-actions">${btns}</div></div></section>`;
+        el.hidden = false;
+        el.scrollTop = 0;
+        document.body.classList.add('cr-open');
+    }
+    function tgAgain() { let k = adv.trainKey; advHideResult(); advStartTraining(k); }
+    function tgBack() { advHideResult(); advAbort(); goToTraining(); }
+    function crTraining() { advHideResult(); advAbort(); goToTraining(); }
+
 
     // ── 回合 ──
     function advBeginRound() {
@@ -8519,6 +9013,7 @@
             if (sealed) { off = true; why = '封印中'; }
             let lvl = advMastery(m.key);
             let per = adv.player.atk + m.power + advMasteryAtk(m.key) + (adv.nextAtk || 0);      // 不扣敵人防禦：打下去才知道
+            if (adv.training) per *= BattleCore.comboMul(adv.combo);                               // 訓練：連擊倍率
             let stamp = adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.has(m.type);
             if (!why && adv.enemy.special === 'clerk' && advImmuneType() === m.type) why = '這回合無效';
             let rarL = ADV_RARITY[advRarityKey(m.key)].label;          // 普通／稀有／傳說
@@ -8550,6 +9045,7 @@
         });
         if (advHasGear('tofu')) itemBtn += `<div class="adv-item-tip">${advTofuIcon(16)} 裝備烤焦臭豆腐：招式失敗時雙方各扣 1 點體力</div>`;
         if (advHasGear('skewer')) itemBtn += `<div class="adv-item-tip">${advSkewerIcon(16)} 裝備竹籤：攻擊無視對方護盾</div>`;
+        if (adv.training) itemBtn = '';                                   // 訓練：不能用道具（拿掉道具列）
         if (adv.nextAtk) itemBtn = `<div class="adv-item-tip">⚡ 蓄力中：下一招攻擊 +${adv.nextAtk}</div>` + itemBtn;
         document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">選擇招式！（本回合還可行動 ${adv.actionsLeft} 次）</div><div class="adv-moves">${moves}</div>${itemBtn}`;
         if (advBtOn() && !adv.btLocked) { adv.btLocked = true; requestAnimationFrame(() => advBtLock(true)); }
@@ -8616,7 +9112,7 @@
     function advRecordHit(ok) {
         if (adv.active) { adv.stAll = (adv.stAll || 0) + 1; if (ok) adv.stOk = (adv.stOk || 0) + 1; }   // 結算畫面的「答對 x / y」
         let t = adv.move && adv.move.type;
-        if (!t || !advData.hits[t]) return;
+        if (!t || !advData.hits[t] || adv.training) return;     // 訓練的作答不算進命中率
         [t, 'all'].forEach(k => { advData.hits[k].push(ok ? 1 : 0); if (advData.hits[k].length > ADV_HIT_N) advData.hits[k].splice(0, advData.hits[k].length - ADV_HIT_N); });
     }
     function advHitPct(arr) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 100) : null; }
@@ -8629,6 +9125,7 @@
     function advHitTotal() { let a = advHitAll(); return a.length >= ADV_HIT_N ? advHitPct(a) : null; }
     function advQuestionPassed() {
         advRecordHit(true);
+        if (adv.training) { BattleCore.comboAnswer(adv, true); tgComboUpdate(true); }   // 訓練：每答對一題連對 +1
         adv.progress++;
         if (adv.progress < adv.move.q) { advNextQuestion(); return; }
         advResolveMove(true);
@@ -8812,7 +9309,7 @@
         adv.busy = true;
         adv.q = null;
         adv.resolvedSeq = adv.moveSeq;
-        let masteryUp = advAddMasteryUse(m.key);
+        let masteryUp = adv.training ? 0 : advAddMasteryUse(m.key);
         adv.mastery[m.key] = advMastery(m.key);
         advSave();
         // 加成怎麼算、敵人怎麼防禦：battle-core.js 的 speedEnd
@@ -9425,7 +9922,7 @@
         for (let r = gen.next(); !r.done; r = gen.next()) {
             if (id !== adv.runId || !adv.active) return true;
             let stop = await advOnEvent(r.value, id);
-            if (adv.player && advData.hp !== adv.player.hp && adv.active) { advData.hp = adv.player.hp; advSave(); }   // 體力會繼承到之後的戰鬥
+            if (adv.player && !adv.training && advData.hp !== adv.player.hp && adv.active) { advData.hp = adv.player.hp; advSave(); }   // 訓練不會改到冒險的體力   // 體力會繼承到之後的戰鬥
             if (stop || id !== adv.runId) return true;
         }
         return id !== adv.runId;
@@ -9437,6 +9934,10 @@
         switch (ev.t) {
             case 'win':
                 await advWin(id); return true;
+            case 'trainEnd':                                        // 訓練場：10 回合結束或木人打完
+                advUpdateHud();
+                await advWait(500);
+                tgEnd(ev); return true;
             case 'lose':
                 if (ev.why === 'shift') { advClerkTag(); advLose(id, 'shift'); return true; }
                 await advLose(id); return true;
@@ -9447,9 +9948,10 @@
                 if (id !== adv.runId) return true;
                 advFloat(E, '太燙了！', '#B45309');
                 if (ev.dmg > 0) {
-                    advSetLog(`☕ 好燙！雞塊被燙傷了，受到 ${ev.dmg} 點傷害`);
+                    let cr = ev.r || { absorbed: 0, loss: ev.dmg };
+                    advSetLog(`☕ 好燙！${cr.absorbed ? `護盾擋下 ${cr.absorbed} 點，` : ''}${cr.loss ? `雞塊被燙傷了，受到 ${cr.loss} 點傷害` : '雞塊沒有受傷'}`);
                     advUpdateHud();
-                    await advHurt(P, ev.dmg, false, '-' + ev.dmg);
+                    await advHurt(P, cr.loss, false, advHurtLabel(cr));
                 } else {
                     advSetLog('☕ 好燙！還好雞塊夠聰明，沒有被燙傷');
                     await advWait(500);
@@ -9673,10 +10175,12 @@
         if (adv.resolvedSeq === adv.moveSeq) { console.warn('同一招重複結算，已忽略'); return; }
         adv.resolvedSeq = adv.moveSeq;
         // 熟練度：不論成功或失敗，用一次就 +1（先算好，打倒敵人直接勝利時也會算到）
-        let masteryUp = adv.move ? advAddMasteryUse(adv.move.key) : 0;
+        let masteryUp = adv.move && !adv.training ? advAddMasteryUse(adv.move.key) : 0;   // 訓練：沒有任何獎勵（熟練度也不加）
         if (adv.move) adv.mastery[adv.move.key] = advMastery(adv.move.key);
         if (!ok && adv.q && adv.q.word) advNoteWrong(adv.q.word);
         advSave();
+        let comboBroke = !ok && adv.training && adv.move && adv.move.mode !== 'speed';
+        if (comboBroke) BattleCore.comboAnswer(adv, false);    // 訓練：答錯 → 連對歸 0
         if (!ok) advRecordHit(false);
         const id = adv.runId;
         adv.busy = true;
@@ -9684,6 +10188,7 @@
         const P = document.getElementById('advPlayer');
         advStopTimer();
         adv.q = null;
+        if (comboBroke) { await tgComboBreak(); if (id !== adv.runId) return; }   // 訓練：「中斷!!」動畫
         // 傷害、特殊能力、裝備效果：battle-core.js 的 playerMove
         if (await advPlay(BattleCore.playerMove(adv, m, ok), id)) return;
         let up = masteryUp;
@@ -9865,7 +10370,7 @@
             ${hp > 0 ? `<button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crRetry",[]]]'>再打一次</button>` : ''}`;
         else if (st === 'replay') btns = `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crNext",[]]]'>${d.nextLv ? `下一關・${escapeHTML(d.nextLv.name)}` : '回地圖'}</button>
             ${hp > 0 ? `<button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crRetry",[]]]'>再打一次${doneToday ? '<small>今日獎勵已領完</small>' : ''}</button>` : ''}`;
-        else btns = (hp > 0 ? `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crRetry",[]]]'>再打一次</button>`
+        else btns = `<button type="button" class="cr-btn cr-btn--train" data-on-click='[["crTraining",[]]]'>${tgDummyIcon(24)}訓練場</button>` + (hp > 0 ? `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crRetry",[]]]'>再打一次</button>`
                             : `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["crBack",[]]]'>回關卡頁</button>`) + `
             ${(adv.wrongThis || []).length ? `<div class="cr-review" id="crReview"><button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["crReviewPick",[]]]'>複習答錯的字</button></div>` : ''}`;
         el.innerHTML = `<section class="cr-screen" data-state="${st}" aria-label="戰鬥結算"><div class="cr-card">
@@ -11491,7 +11996,7 @@
         copyAppUrl,
         lpBack, lpTogglePause, advDoReplace, advLvTap, advAllocAdd, advAllocCancel, advAllocOk, cpResume, cpStartNew, cpStartNewFlash, cpStartNewSpeak, leaveSpeakPractice, playSpeakMyRecording, cpConfirmClose, cpConfirmBg, cpConfirmOk, fcFlip,
         playSpeakPracticeSample,
-        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSpeedTap, advSpeedDone, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advCnMicTap, advCnPick, ahSoon, ahOpenShop, ahChallenge, ahOpenPick, ahPickTab, ahPickGo, ahOpenDeck, ahDeckTap, ahDeckOk, ahCloseSheet, advConflictUse, advGiveUpSpeak,
+        toggleAdvCard, advToggleMove, advMapStep, advOpenGearSlot, advOpenHit, advCloseHit, advBagUnselect, advSetStatsTab, advFocusMove, advSetBagFilter, advBagTap, advBagUseTicket, advBagWipe, advWipeFrom, advWipeApply, advBuyWipe, advSetMoveFilter, advToggleEquip, advUseBoba, advToggleMoreMoves, advNextLevel, advCloseReward, advOpenBag, advCloseBag, advBagSauce, advBagBack, advBagUseSauce, advBagUsePotion, advBuyPotion, advBuyMove, advWeeklyExchange, setShopTab, advStartBattle, advChooseMove, advAnswerCard, advSpeedTap, advSpeedDone, advSubmitListen, advSubmitCn, advAnswerListen, advReplayListen, advCnMicTap, advCnPick, ahTapStage, advNoHpClose, advNoHpUse, goToTraining, tgClose, tgStep, tgOpenPrep, tgSetMode, tgOpenDeck, tgOpenPick, tgPickOk, advStartTraining, tgAgain, tgBack, crTraining, ahSoon, ahOpenShop, ahChallenge, ahOpenPick, ahPickTab, ahPickGo, ahOpenDeck, ahDeckTap, ahDeckOk, ahCloseSheet, advConflictUse, advGiveUpSpeak,
         advSetMode, advOpenWords, advSayWord, advPracticeLevel, advWrongPick, advWrongPractice,
         advOpenSauce, advQuit, advRetry, advRedeemStamps, advBackToMenu, advBackToLevel, goToAdvLevel, goToAdvStats, advOpenStatInfo, advMoveStep, advUpgrade, advExchangeShards,
         openMicHelpModal,
