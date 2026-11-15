@@ -4694,6 +4694,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .dex-tab { position: relative; flex: 1; height: 46px; border: none; border-radius: 10px; background: transparent; color: #B39470; font-size: 17px; font-weight: 900; cursor: pointer; }
 .dex-tab.on { background: #FFFBF2; color: #4A2C12; box-shadow: 0 2px 6px rgba(92,58,22,.12); }
 .dex-bang { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #EF4444; color: #fff; border: 2px solid #fff; font-style: normal; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+.dex-bang.dex-bang--name { position: relative; top: -3px; right: auto; display: inline-flex; margin-left: 8px; vertical-align: middle; }
 .dex-tab .dex-bang { position: static; display: inline-flex; margin-left: 6px; vertical-align: 2px; }
 .dex-prog { display: flex; align-items: center; gap: 10px; padding: 12px 2px 4px; font-weight: 900; }
 .dex-prog__n { font-size: 15px; white-space: nowrap; color: #8A6440; }
@@ -4741,6 +4742,57 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .st-title-chip { display: flex; align-items: center; gap: 6px; margin: -4px auto 10px; padding: 6px 12px; border: 1.5px solid #FDE68A; border-radius: 999px; background: #FFFBEB; color: #78350F; font-size: 14px; font-weight: 900; cursor: pointer; }
 .st-title-chip small { font-size: 12px; color: #B45309; }
 .st-title-chip em { font-style: normal; font-size: 12px; color: #A16207; padding-left: 6px; border-left: 1px solid #FDE68A; }
+
+/* r13：地圖上的路人會走動（左右走、上下晃、停一下再走）；移動距離 ×2 */
+.ah-walk { transform-box: fill-box; transform-origin: 50% 100%; animation: ah-walk-x 5s ease-in-out infinite; will-change: transform; }
+.ah-walk1 { animation: ah-walk-y 1.6s ease-in-out infinite; }
+.ah-walk2 { animation: ah-walk-x2 6.4s ease-in-out infinite; }
+.ah-walk3 { animation: ah-walk-look 3.4s ease-in-out infinite; }
+.ah-walk4 { animation: ah-walk-xy 5.4s ease-in-out infinite; }
+@keyframes ah-walk-x { 0%, 100% { transform: translateX(-14px); } 12% { transform: translate(-10px, -3px); } 25% { transform: translateX(-6px); } 37% { transform: translate(-2px, -3px); } 50% { transform: translateX(14px); } 62% { transform: translate(10px, -3px); } 75% { transform: translateX(6px); } 87% { transform: translate(2px, -3px); } }
+@keyframes ah-walk-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes ah-walk-x2 { 0%, 30% { transform: translateX(0); } 45% { transform: translate(10px, -3px); } 60%, 75% { transform: translateX(20px); } 90% { transform: translate(10px, -3px); } 100% { transform: translateX(0); } }
+@keyframes ah-walk-look { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-10deg) translateX(-4px); } 50% { transform: rotate(0) translateY(-4px); } 75% { transform: rotate(10deg) translateX(4px); } }
+@keyframes ah-walk-xy { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(8px, -8px); } 50% { transform: translate(0, -12px); } 75% { transform: translate(-8px, -6px); } }
+/* r13：坐在椅子上的客人：輕輕晃動（像在聊天、吃東西） */
+.ah-sit { transform-box: fill-box; transform-origin: 50% 100%; animation: ah-sit 2.8s ease-in-out infinite; }
+@keyframes ah-sit { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-1.5px) rotate(-3deg); } 60% { transform: translateY(0) rotate(2deg); } }
+/* r13：夜市燈籠的霓虹光：慢慢變亮、變暗 */
+.ah-neon { animation: ah-neon 4s ease-in-out infinite; }
+.ah-neon-bulb { animation: ah-neon-bulb 4s ease-in-out infinite; }
+@keyframes ah-neon { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+@keyframes ah-neon-bulb { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
+/* r13：頭目每 5～10 秒隨機左右晃或上下彈跳（app.js 的 ahBossTick 加 class） */
+.ah-boss { transform-box: fill-box; transform-origin: 50% 100%; }
+.ah-boss.do-shake { animation: ah-boss-shake .9s ease-in-out; }
+.ah-boss.do-hop { animation: ah-boss-hop .9s cubic-bezier(.3,.7,.4,1); }
+@keyframes ah-boss-shake { 0%, 100% { transform: translateX(0) rotate(0); } 15% { transform: translateX(-6px) rotate(-6deg); } 35% { transform: translateX(6px) rotate(6deg); } 55% { transform: translateX(-4px) rotate(-4deg); } 75% { transform: translateX(3px) rotate(3deg); } }
+@keyframes ah-boss-hop { 0%, 100% { transform: translateY(0) scale(1, 1); } 12% { transform: translateY(0) scale(1.08, .9); } 35% { transform: translateY(-16px) scale(.95, 1.06); } 55% { transform: translateY(0) scale(1.06, .92); } 70% { transform: translateY(-6px) scale(1, 1); } 85% { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .ah-walk, .ah-neon, .ah-neon-bulb, .ah-boss, .ah-sit { animation: none !important; } }
+
+/* r14：稱號（狀態頁：等級上面）＋稱號一覽 */
+.st-hero-mid { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.st-hero-mid .st-lv { width: 100%; }
+.st-hero-mid .st-title-chip { margin: 0 0 0 4px; padding: 4px 10px; font-size: 13px; gap: 5px; position: relative; }
+.st-hero-mid .st-title-chip svg:first-child { width: 18px; height: 14px; }
+.st-title-bang { position: static; display: inline-flex; width: 18px; height: 18px; border-radius: 50%; background: #EF4444; color: #fff; font-style: normal; font-size: 11px; font-weight: 900; align-items: center; justify-content: center; border: none !important; padding: 0 !important; }
+.st-title-list { display: flex; flex-direction: column; gap: 8px; }
+.st-title-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 14px; border: 1.5px solid #E2E8F0; background: #FFFFFF; text-align: left; cursor: pointer; }
+.st-title-row.on { border-color: #F59E0B; background: #FFFBEB; }
+.st-title-row .tx { flex: 1; display: flex; flex-direction: column; } .st-title-row b { font-size: 16px; font-weight: 900; color: #1E1B4B; } .st-title-row small { font-size: 12px; font-weight: 800; color: #64748B; }
+.st-title-state { flex: none; padding: 4px 10px; border-radius: 999px; background: #EEF2FF; color: #4F46E5; font-size: 12px; font-weight: 900; }
+.st-title-row.on .st-title-state { background: #F59E0B; color: #fff; }
+
+/* r14：備戰卡片的體力框：左邊雞塊（紅點同底部「狀態」），點一下到雞塊狀態 */
+.ah-hpbox--chick { flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.ah-hpbox--chick:active { transform: scale(.98); }
+.ah-hp-chick { position: relative; flex: none; width: 44px; height: 40px; }
+.ah-hp-chick svg { width: 100%; height: 100%; display: block; }
+.ah-hp-chick .ah-badge { position: absolute; top: -6px; right: -6px; }
+.ah-hp-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.ah-hp-top { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.ah-hpbox--chick .aq-bar { display: block; }
+.adv-log-sub { display: inline-block; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -6106,7 +6158,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 </div>
 
 <!-- 戰鬥規則（app.js 和大冒險敵人模擬器共用同一份），一定要在 app.js 前面載入 -->
-<script src="battle-core.js?v=20261114a"></script>
-<script src="app.js?v=20261114a"></script>
+<script src="battle-core.js?v=20261116a"></script>
+<script src="app.js?v=20261116a"></script>
 </body>
 </html>
