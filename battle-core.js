@@ -103,12 +103,19 @@
     // ── 敵人特殊能力用到的數字 ──
     const COFFEE_BURN = 6;                  // 美式咖啡：開戰燙傷 = 6 − 雞塊的智慧（無視防禦；有護盾先扣護盾，剩下的才扣體力）
     // 全能便利商店員工：每回合換崗位（第一階段），各自免疫一類招式
-    const CLERK_POSTS = [{ name: '收銀台', immune: 'card' }, { name: '做餐中', immune: 'listen' }, { name: '點貨中', immune: 'speed' }];   // 點貨中：速答加成 −4（不是無效）
+    const CLERK_POSTS = [{ name: '收銀台', immune: 'card', sprite: 'clerk' }, { name: '做餐中', immune: 'listen', sprite: 'clerk_cook' }, { name: '點貨中', immune: 'speed', sprite: 'clerk_stock' }];   // sprite：換崗位時店員的圖   // 點貨中：速答加成 −4（不是無效）
     const CLERK_SHIFT_HP = 20, CLERK_CD = 3;          // HP 低於 20 進入交班；下班倒數 3
     const CLERK_SHIFT_BUFF = { agi: 6, int: 4, atk: 3, heal: 10 };   // 交班：敏捷 +6、智慧 +4、攻擊 +3、回 10 點體力
     const STAMP_NEED = 2, STAMP_ATK = 2, STAMP_HEAL = 5;   // 集點：任兩種 → 兌換集點卡（攻擊 +2、HP +5）
     // 這些敵人對某一類招式有抗性：每一下最多只受到 1 點傷害
-    const RESIST = { darts: 'listen', mahjong: 'card', hotdog: 'listen' };
+    const RESIST = { darts: 'listen', mahjong: 'card', hotdog: 'card' };   // 這類招式每一下最多 RESIST_CAP 點（熱狗：字卡）
+    const RESIST_CAP = 1;
+    // 特殊能力用到的數字（戰鬥規則和圖鑑說明都讀這裡；改這裡兩邊會一起變）
+    const STINK_DMG = 1;                 // 臭豆腐「臭氣」：招式失敗被反擊幾點（無視防禦）
+    const BOBA_HEAL = 1;                 // 珍珠奶茶「治癒」：每回合攻擊完回幾點
+    const CLAW_BONUS = 1;                // 娃娃機：打贏（有獎勵的場次）多掉幾個冒險代幣
+    const PINBALL_HEAL = 2, PINBALL_HIT = 1;   // 彈珠台：擲到 1～2 回幾點；擲到 5～6 多彈幾點
+    const SEAL_COUNT = 2;                // ibon「取票失敗」：每回合封印幾個招式
     // 這些敵人完全不受某一類招式的傷害
     const IMMUNE = { salad: 'card', microwave: 'listen' };
     const WEAK_BONUS = {};
@@ -128,13 +135,18 @@
         bill: { name: '繁瑣的繳費單', desc: '？？？' },
         bag: { name: '夜市塑膠袋', desc: '每場戰鬥開始時護盾 +1' },
         soda: { name: '彈珠汽水', desc: '戰鬥勝利後 HP +1' },
-        coaster: { name: '防燙杯套', desc: '智慧 +3' }
+        coaster: { name: '防燙杯套', desc: '智慧 +3' },
+        // 第 21 關以後（模擬器先測試用；App 目前只有 20 關，拿不到）
+        helmet: { name: '狂暴頭盔', desc: '攻擊 +1、智慧 −3、作答時間 −2 秒' },
+        net: { name: '破掉的金魚撈網', desc: '智慧 0 以下才有效果：攻擊 +1' }
     };
+    const HELMET = { atk: 1, int: -3, time: 2 };   // 狂暴頭盔：攻擊 +1、智慧 −3、作答時間（每題、速答）−2 秒
+    const NET_ATK = 1, NET_MAX_INT = 0;            // 金魚撈網：智慧 ≤ 0 時攻擊 +1
     // 補給站的裝備：打完第幾關才開放（0 = 一開始就能買）；其他裝備是關卡的第一次通關獎勵（LEVELS 的 firstItem）
-    const SHOP_OPEN = { soda: 0, boba: 4, coaster: 10 };
+    const SHOP_OPEN = { soda: 0, boba: 4, coaster: 10, helmet: 21, net: 21 };
     // 命中加成：最近的命中率 ≥ 90% 時，每次攻擊多 1 次爆擊判定（擲 1 枚硬幣，正面 +1）
     const CRIT_AT = 90;
-    const ITEM_RARITY = { boba: 'common', tofu: 'common', skewer: 'rare', bill: 'common', bag: 'common', soda: 'common', coaster: 'common' };
+    const ITEM_RARITY = { boba: 'common', tofu: 'common', skewer: 'rare', bill: 'common', bag: 'common', soda: 'common', coaster: 'common', helmet: 'rare', net: 'rare' };
     const COASTER_INT = 3;
     const BAG_SHIELD = 1;
     const BOBA_HP_AT = 3;                   // 珍珠奶茶：HP 剩 3 以下才能喝
@@ -164,29 +176,30 @@
     // 特殊能力（用上面的常數組字）＋攻略；key = 敵人圖（sprite）
     const DEX_TEXT = {
         meatball: { tip: '沒有特殊能力，答對就能穩穩打贏。' },
-        corn: { tip: '有 1 點防禦，用威力高一點的招式比較痛。' },
-        oyster: { tip: '牠比較快，加一點敏捷就能多出招。' },
-        tofu: { ability: '發臭：你的招式失敗時，被臭味反擊扣 1 點體力（無視防禦）', tip: '選最有把握的招式，少失敗就不會被燻到。' },
-        boba: { ability: '治癒：每回合攻擊完回 1 點體力', tip: '一回合多打幾下，打得比牠回血快。加敏捷很有用。' },
-        claw: { ability: '送你娃娃：打贏多掉 1 個冒險代幣', tip: '很適合常來刷冒險代幣。' },
-        darts: { ability: () => `聽力招式每一下只有 1 點傷害`, tip: '改帶字卡招式（衝撞、連續衝撞）比較打得痛。' },
-        mahjong: { ability: () => `字卡招式每一下只有 1 點傷害`, tip: '改帶聽力招式。牠智慧高，答題時間會變短，加智慧可以多一點時間。' },
+        corn: { tip: '沒有特殊能力，答對就能穩穩打贏。' },
+        oyster: { tip: '沒有特殊能力，答對就能穩穩打贏。' },
+        tofu: { ability: () => `臭氣：你的招式失敗時，被臭味反擊扣 ${STINK_DMG} 點體力（無視防禦）`, tip: '選最有把握的招式，少失敗就不會被燻到。' },
+        boba: { ability: () => `治癒：每回合攻擊完回 ${BOBA_HEAL} 點體力`, tip: '一回合多打幾下，打得比牠回血快。加敏捷很有用。' },
+        claw: { ability: () => `送你娃娃：打贏有機會多掉 ${CLAW_BONUS} 個冒險代幣`, tip: '很適合常來刷冒險代幣。' },
+        darts: { ability: () => `${resistText('darts')}每一下只有 ${RESIST_CAP} 點傷害`, tip: '改帶字卡招式（衝撞、連續衝撞）比較打得痛。' },
+        mahjong: { ability: () => `${resistText('mahjong')}每一下只有 ${RESIST_CAP} 點傷害`, tip: '改帶聽力招式。牠智慧高，答題時間會變短，加智慧可以多一點時間。' },
         ring: { ability: () => `天女散花：開場 ${RING_SECS} 秒配對，少配 1 組被砸 1 點`, tip: '開場配對要快，單字練熟就不怕。' },
-        pinball: { ability: '打彈珠：每次攻擊前擲骰，可能回 2 點體力或多彈你 1 下', tip: '幸運很高、常爆擊。加 HP 或防禦撐久一點。' },
+        pinball: { ability: () => `打彈珠：每次攻擊前擲骰，可能回 ${PINBALL_HEAL} 點體力或多彈你 ${PINBALL_HIT} 點`, tip: '幸運很高、常爆擊，所以加防禦或是加敏捷快速擊敗他。' },
         egg: { ability: () => `剝殼：字卡招式每一下傷害 +${EGG_CARD_BONUS}`, tip: '多帶字卡招式，剝殼更快。' },
         bun: { ability: '打倒麵包後，熱狗會跳出來接著打', tip: '別把力氣用完，後面還有熱狗。' },
-        hotdog: { ability: () => `聽力招式每一下只有 1 點傷害`, tip: '用字卡招式收尾。' },
+        hotdog: { ability: () => `${resistText('hotdog')}每一下只有 ${RESIST_CAP} 點傷害`, tip: '改用聽力招式收尾。' },
         onigiri: { ability: '拆不掉的包裝：一開場就有很厚的護盾', tip: '御飯糰護盾很高，帶竹籤可以無視護盾直接打。' },
         tea: { ability: () => `回甘：速答招式的加成 −${SPEED_GUARD.tea}`, tip: '少用速答招式，直接攻擊比較划算。' },
-        ibon: { ability: '取票失敗：每回合隨機封印你 2 個招式', tip: '招式帶滿 4 個，被封印也還有招可用。' },
+        ibon: { ability: () => `取票失敗：每回合隨機封印你 ${SEAL_COUNT} 個招式`, tip: 'ibon 防禦力很高，請嘗試用高傷害的單次招式；聽力和字卡招式都要熟悉，以免攻擊招式被封印。' },
         salad: { ability: '字卡招式完全無效；攻擊無視你的護盾', tip: '帶聽力招式。護盾沒用，多加 HP 或防禦。' },
-        microwave: { ability: () => `聽力招式完全無效；每次攻擊後攻擊力 +${MICRO_ATK_UP}`, tip: '越拖越痛，用字卡招式速戰速決。' },
-        bento: { ability: '打倒後會變成愛珍食便當', tip: '第一型態不要拖，後面的更硬。' },
-        bento2: { ability: () => `快過期：攻擊完自己扣 ${EXPIRE_SELF} 點；速答每配對 ${EXPIRE_SPEED_EVERY} 組扣牠 ${EXPIRE_SPEED_DMG} 點`, tip: '撐住就好，牠會自己過期；速答也打得到牠。' },
+        microwave: { ability: () => `聽力招式完全無效；每次攻擊後攻擊力 +${MICRO_ATK_UP}`, tip: '請用字卡的高傷害單次招式，儘快解決它。' },
+        bento: { ability: '打倒後會變成愛珍食便當', tip: '智慧高、作答時間短，選用有把握的招式回答。' },
+        bento2: { ability: () => `快過期：攻擊完自己扣 ${EXPIRE_SELF} 點；速答每配對 ${EXPIRE_SPEED_EVERY} 組扣牠 ${EXPIRE_SPEED_DMG} 點`, tip: '先使用冥想增加護盾跟智慧，而且還能造成傷害，之後再全力攻擊。' },
         coffee: { ability: () => `太燙了：開戰燙傷 ${COFFEE_BURN} − 你的智慧；速答加成 −${SPEED_GUARD.coffee}`, tip: '加智慧或帶防燙杯套，燙傷就變小。' },
         clerk: { ability: () => `每回合換崗位，免疫一類招式；集滿 ${STAMP_NEED} 種招式點數可兌換集點卡`, tip: '看崗位換招式；集點卡可以回血、加攻擊。' },
         clerk2: { ability: () => `交班：HP 低於 ${CLERK_SHIFT_HP} 變快變強，${CLERK_CD} 回合內打不倒就下班（你輸）`, tip: '讓店員忙一點，降低他的敏捷（試試繳費單）。' }
     };
+    function resistText(sp) { return { card: '字卡招式', listen: '聽力招式' }[RESIST[sp]] || ''; }
     // 圖鑑上的每一隻（兩階段的敵人拆成兩格；店員的交班也算一個型態）
     function dexForms() {
         let out = [];
@@ -196,7 +209,7 @@
                 stats: { hp: p.hp, atk: p.atk, def: p.def, agi: p.agi, int: p.int || 0, luck: p.luck || 0 }, shield: p.shield }));
             if (lv.special === 'clerk') {
                 let B = CLERK_SHIFT_BUFF;
-                out.push({ key: 'clerk2', lv: lv.id, idx: 1, name: lv.name + '（交班）', sprite: lv.sprite, form2: true,
+                out.push({ key: 'clerk2', lv: lv.id, idx: 1, name: lv.name + '（交班）', sprite: 'clerk2', form2: true,
                     stats: { hp: '≤' + Math.min(lv.hp, CLERK_SHIFT_HP - 1 + B.heal), atk: lv.atk + B.atk, def: lv.def, agi: lv.agi + B.agi, int: (lv.int || 0) + B.int, luck: lv.luck || 0 } });
             }
         });
@@ -256,7 +269,7 @@
     // 護盾：智慧 ÷ 2 無條件捨去，最多 10
     function shieldMax(int) { return Math.min(SHIELD_CAP, Math.floor(Math.max(0, int || 0) / 2)); }
     // 每題作答秒數：15 秒 + 我方智慧；敵人智慧比我方高時，再扣掉差額（至少 5 秒）
-    function answerSecs(myInt, foeInt) { return Math.max(5, BASE_SECS + myInt - Math.max(0, foeInt - myInt)); }
+    function answerSecs(myInt, foeInt, minus) { return Math.max(5, BASE_SECS + myInt - Math.max(0, foeInt - myInt) - (minus || 0)); }
     // 受到傷害：先扣護盾，剩下的才扣體力
     function takeDamage(t, dmg, ignoreShield) {
         let absorbed = ignoreShield ? 0 : Math.min(t.shield || 0, dmg);
@@ -269,10 +282,11 @@
     // 傷害：攻擊力 + 招式威力 − 對方防禦，至少 1
     function damage(atk, power, def) { return Math.max(1, atk + power - def); }
     // 速答招式設定：秒數 = 20 + 熟練度加的秒數 +（雞塊智慧 − 敵人智慧），最少 10 秒
-    function speedCfg(m, lvl, myInt, foeInt) {
+    //   minus：裝備扣的秒數（狂暴頭盔 −2）
+    function speedCfg(m, lvl, myInt, foeInt, minus) {
         let c = m.speed; lvl = lvl || 0;
         let diff = (myInt || 0) - (foeInt || 0);
-        return { label: c.label, stat: c.stat, every: c.every, pen: c.pen, base: c.secs + lvl * c.lvSecs, secs: Math.max(SPEED_MIN_SECS, c.secs + lvl * c.lvSecs + diff), cap: Math.min(c.maxCap, c.cap + lvl * c.lvCap) };
+        return { label: c.label, stat: c.stat, every: c.every, pen: c.pen, base: c.secs + lvl * c.lvSecs, secs: Math.max(SPEED_MIN_SECS, c.secs + lvl * c.lvSecs + diff - (minus || 0)), cap: Math.min(c.maxCap, c.cap + lvl * c.lvCap) };
     }
     // 愛珍食便當：速答配對 pairs 組，牠要扣幾點（無視護盾）：每配對 2 組扣 1 點
     function expireSpeedDmg(pairs) { return Math.floor(Math.max(0, pairs || 0) / EXPIRE_SPEED_EVERY) * EXPIRE_SPEED_DMG; }
@@ -329,7 +343,16 @@
         return { name: d.name, sprite: d.sprite, special: d.special || '', traits: (d.traits || []).map(t => Object.assign({}, t)), hp: d.hp, max: d.hp, atk: d.atk, agi: d.agi, def: d.def, int: d.int || 0, shield: sh, shieldMax: sh, luck: d.luck || 0, hits: d.hits || 1, moveName: d.moveName || '攻擊', movePower: d.movePower || 0, noAttack: !!d.noAttack };
     }
     // 裝備加的能力（只在戰鬥中）：防燙杯套 智慧 +3
-    function gearStatBonus(gear, key) { return key === 'int' && (gear || []).includes('coaster') ? COASTER_INT : 0; }
+    // 裝備加的能力值。金魚撈網要看「裝備後的智慧」：intNow ≤ 0 才有效（沒給 intNow 就當作有效，只用來顯示）
+    function gearStatBonus(gear, key, intNow) {
+        let g = gear || [], v = 0;
+        if (key === 'int') { if (g.includes('coaster')) v += COASTER_INT; if (g.includes('helmet')) v += HELMET.int; }
+        if (key === 'atk') { if (g.includes('helmet')) v += HELMET.atk; if (g.includes('net') && (intNow === undefined || intNow <= NET_MAX_INT)) v += NET_ATK; }
+        return v;
+    }
+    function netActive(gear, intNow) { return (gear || []).includes('net') && intNow <= NET_MAX_INT; }
+    // 裝備讓作答時間少幾秒（狂暴頭盔）
+    function gearTimeMinus(gear) { return (gear || []).includes('helmet') ? HELMET.time : 0; }
     // 彈珠汽水：戰鬥勝利後 HP +1（不超過上限；已經倒下不算）
     function winHeal(gear, hp, max) { return (gear || []).includes('soda') && hp > 0 && hp < max ? 1 : 0; }
     function hasGear(st, k) { return Array.isArray(st.gear) && st.gear.includes(k); }
@@ -350,7 +373,9 @@
         st.sealed = [];
         st.round = 1;
         st.gear = (o.gear || []).filter(Boolean);
-        if (gearStatBonus(st.gear, 'int')) { st.player.int += gearStatBonus(st.gear, 'int'); st.player.shield = st.player.shieldMax = shieldMax(st.player.int); }   // 防燙杯套：智慧 +3
+        if (gearStatBonus(st.gear, 'int')) { st.player.int += gearStatBonus(st.gear, 'int'); st.player.shield = st.player.shieldMax = shieldMax(st.player.int); }   // 防燙杯套：智慧 +3；狂暴頭盔：智慧 −3（護盾跟著變少）
+        st.player.atk += gearStatBonus(st.gear, 'atk', st.player.int);   // 狂暴頭盔、金魚撈網（智慧 ≤ 0 才有效）：攻擊 +1
+        st.timeMinus = gearTimeMinus(st.gear);
         if (hasGear(st, 'bag')) { st.player.shield += BAG_SHIELD; st.player.shieldMax += BAG_SHIELD; }
         st.critOn = !!o.critOn;
         st.itemUsed = false;
@@ -403,13 +428,13 @@
     }
     // 這招每一下最多幾點（抗性）；沒有限制回傳 Infinity
     function hitCap(st, m) {
-        let cap = RESIST[st.enemy.special] === m.type ? 1 : Infinity;
+        let cap = RESIST[st.enemy.special] === m.type ? RESIST_CAP : Infinity;
         traitsOf(st, 'moveCap').forEach(t => { if (typeMatch(t, m.type)) cap = Math.min(cap, t.value || 0); });
         return cap;
     }
     function enemyIgnoresShield(st) { return !!IGNORE_SHIELD[st.enemy.special] || traitsOf(st, 'ignoreShield').length > 0; }
     function sealCount(st) {
-        if (st.enemy.special === 'seal') return 2;
+        if (st.enemy.special === 'seal') return SEAL_COUNT;
         let t = traitsOf(st, 'seal')[0];
         return t ? (t.count || 1) : 0;
     }
@@ -595,9 +620,9 @@
                 if (st.player.hp <= 0) { yield { t: 'lose', why: 'hp', src: 'tofu' }; return; }
                 yield* clerkShift(st);
             }
-            // 臭豆腐的「發臭」：招式失敗就被臭味反擊，無視防禦，固定 1 點
+            // 臭豆腐的「臭氣」：招式失敗就被臭味反擊，無視防禦，固定 STINK_DMG 點
             if (st.enemy.special === 'stink') {
-                let r = takeDamage(st.player, 1);
+                let r = takeDamage(st.player, STINK_DMG);
                 yield { t: 'stink', r, src: 'stink' };
                 if (st.player.hp <= 0) { yield { t: 'lose', why: 'hp', src: 'stink' }; return; }
             }
@@ -679,12 +704,12 @@
             if (st.enemy.special === 'pinball') {
                 let r = 1 + Math.floor(R(rng) * 6);
                 if (r <= 2) {
-                    st.enemy.hp = Math.min(st.enemy.max, st.enemy.hp + 2);
+                    st.enemy.hp = Math.min(st.enemy.max, st.enemy.hp + PINBALL_HEAL);
                     yield { t: 'pinball', r, effect: 'heal' };
                 } else if (r <= 4) {
                     yield { t: 'pinball', r, effect: 'none' };
                 } else {
-                    let pr = takeDamage(st.player, 1);
+                    let pr = takeDamage(st.player, PINBALL_HIT);
                     yield { t: 'pinball', r, effect: 'hit', r2: pr, src: 'pinball' };
                     if (st.player.hp <= 0) { yield { t: 'lose', why: 'hp', src: 'pinball' }; return; }
                 }
@@ -710,10 +735,11 @@
                 if (st.enemy.hp <= 0) { yield* enemyDown(st); return; }
             }
         }
-        // 珍珠奶茶的「治癒」：敵人攻擊結束後回 1 點體力
+        // 珍珠奶茶的「治癒」：敵人攻擊結束後回 BOBA_HEAL 點體力
         if (st.enemy.special === 'heal' && st.enemy.hp < st.enemy.max) {
-            st.enemy.hp = Math.min(st.enemy.max, st.enemy.hp + 1);
-            yield { t: 'heal', value: 1 };
+            let b0 = st.enemy.hp;
+            st.enemy.hp = Math.min(st.enemy.max, st.enemy.hp + BOBA_HEAL);
+            yield { t: 'heal', value: st.enemy.hp - b0 };
         }
         for (let tr of traitsOf(st, 'regen')) {
             if (st.enemy.hp >= st.enemy.max) continue;
@@ -740,12 +766,13 @@
         // 資料
         BASE_STATS, STAT_KEYS, STAT_MAX, XP_NEED, OLD_XP_RATE, LOSE_XP_RATE, MAX_EQUIP, MIN_EQUIP, BASE_SECS, LUCK_CAP, SHIELD_CAP, SPEED_MIN_SECS,
         RING_NEED, RING_SECS, RING_PEN, MOVES, LEVELS, TYPE_LABEL, RARITY, MOVE_RARITY, MASTERY_STEPS,
+        RESIST_CAP, STINK_DMG, BOBA_HEAL, CLAW_BONUS, PINBALL_HEAL, PINBALL_HIT, SEAL_COUNT,
         COFFEE_BURN, CLERK_POSTS, CLERK_SHIFT_HP, CLERK_CD, STAMP_NEED, STAMP_ATK, STAMP_HEAL, RESIST, IMMUNE, WEAK_BONUS,
         SPEED_GUARD, CLERK_SPEED_GUARD, TEA_SPEED_HEAL, EXPIRE_SPEED_DMG, EXPIRE_SPEED_EVERY, MICRO_ATK_UP, EXPIRE_SELF, EGG_CARD_BONUS, IGNORE_SHIELD,
         DUMMIES, TRAIN_ROUNDS, COMBO_STEPS, CLERK_SHIFT_BUFF, DEX_NEED, DEX_REWARD, DEX_CHAPTER_REWARD, TITLES, DEX_TEXT, ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
         // 公式
         levelOf, upMax, moveByKey, rarityKey, rarity, masteryLevel, masteryPerLv, masteryAtk, luckDice, rollLuck, shieldMax, answerSecs,
-        dexForms, dexReward, titleXp, comboMul, dummyLevel, dummyUnlocked, dummyStage, comboAnswer, critOn, moveUnlockAt, gearUnlockAt, isUnlocked, unlocks, takeDamage, actionCount, damage, speedCfg, speedBonus, expireSpeedDmg, playerStats, winXp, loseXp, makeEnemy, hasGear, gearStatBonus, winHeal, shuffle,
+        dexForms, dexReward, titleXp, comboMul, dummyLevel, dummyUnlocked, dummyStage, comboAnswer, critOn, moveUnlockAt, gearUnlockAt, isUnlocked, unlocks, takeDamage, actionCount, damage, speedCfg, speedBonus, expireSpeedDmg, playerStats, winXp, loseXp, makeEnemy, hasGear, gearStatBonus, gearTimeMinus, netActive, HELMET, NET_ATK, NET_MAX_INT, winHeal, shuffle,
         // 戰鬥
         initBattle, immuneType, isImmune, speedGuard, hitDamage, hitCap, enemyIgnoresShield, sealCount,
         canBoba, useBoba, canRedeem, redeemStamps, useFlower, endAction,
