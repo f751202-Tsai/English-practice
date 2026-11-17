@@ -693,6 +693,7 @@
 
     function closeChickenShopModal() {
         document.getElementById('chickenShopModal').style.display = 'none';
+        try { advShopNew = new Set(); } catch (e) {}
         setTimeout(() => { try { ahTutCheck(); } catch (e) {} }, 300);
     }
 
@@ -1644,6 +1645,12 @@
         let advNeedUpload = false;
         let email = await cloudGetEmail();
         let gotCloudLists = false;
+        // r15 修正：這台裝置暫存的「Google 大冒險進度」如果是另一個 Google 帳號的（例如之前在這台登入過別的帳號），先丟掉
+        //   不然新帳號（或刪除後雲端已經沒有存檔的帳號）會把別人的進度當成自己的上傳
+        try {
+            let prevOwner = localStorage.getItem(LOCAL_OWNER_KEY) || '';
+            if (email && prevOwner && prevOwner !== email) advDropGoogleCache();
+        } catch (e) {}
         try {
             let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
             let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder`, {
@@ -5924,9 +5931,10 @@
     //   舊存檔（還沒有 tut）：已經開放的東西都當作看過，不會突然冒出一堆紅點
     function advTutLoad(d) {
         let t = (d && d.tut && typeof d.tut === 'object') ? d.tut : null, c = (d && d.cleared) || {};
-        if (t) { let sn = (t.seen && typeof t.seen === 'object') ? t.seen : {}; return { intro: !!t.intro, bag: !!t.bag, seen: { shop: !!sn.shop, train: !!sn.train, dex: !!sn.dex, soda: !!sn.soda, tgGo: !!sn.tgGo } }; }
+        let ss = (t && Array.isArray(t.shopSeen)) ? t.shopSeen.filter(x => typeof x === 'string') : null;   // 補給站看過的裝備／招式（null：還沒建立，第一次用到時再決定）
+        if (t) { let sn = (t.seen && typeof t.seen === 'object') ? t.seen : {}; return { intro: !!t.intro, bag: !!t.bag, seen: { shop: !!sn.shop, train: !!sn.train, dex: !!sn.dex, soda: !!sn.soda, tgGo: !!sn.tgGo }, shopSeen: ss }; }
         let open = (k) => BattleCore.tabOpen(k, c);
-        return { intro: !!c['1'], bag: !!c['1'], seen: { shop: open('shop'), train: open('train'), dex: open('dex'), soda: open('shop'), tgGo: open('train') } };
+        return { intro: !!c['1'], bag: !!c['1'], seen: { shop: open('shop'), train: open('train'), dex: open('dex'), soda: open('shop'), tgGo: open('train') }, shopSeen: null };
     }
     function advLoad() {
         let d = {};
@@ -6132,6 +6140,13 @@
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(() => { try { advPullCloud(); } catch (e) {} }, 400); });
     window.addEventListener('focus', () => { setTimeout(() => { try { advPullCloud(); } catch (e) {} }, 400); });
     // 從 Google 雲端載入進度：以「最後存檔時間」較新的為準；不同 Google 帳號的進度不會混在一起
+    // 丟掉這台裝置暫存的 Google 大冒險進度（換成全新的），連「上次同步時間」一起清掉
+    function advDropGoogleCache() {
+        try { localStorage.removeItem(ADV_STORE_G); localStorage.removeItem(ADV_SYNC_BASE_KEY); } catch (e) {}
+        try { advAbort(); } catch (e) {}
+        advDirty = false;
+        if (advIsGoogleMode()) { advData = advLoad(); advSyncDaily(); try { advRefreshViews(); } catch (e) {} }
+    }
     function advMergeFromCloud(c, cloudOwner) {
         let local = advData;
         let mismatch = !!(cloudOwner && local.owner && local.owner !== cloudOwner);
@@ -6157,12 +6172,13 @@
             if (cts === local.ts) advSetSyncBase(cts);
             return cts < local.ts;               // 本機比較新 → 要上傳
         }
-        if (mismatch) {                          // 雲端是另一個帳號、沒有進度：本機暫存不能沿用
-            try { localStorage.removeItem(ADV_STORE_G); } catch (e) {}
-            advData = advLoad(); advSyncDaily(); advRefreshViews();
+        // 雲端沒有大冒險存檔，但本機暫存已經屬於某個帳號（有 owner）：那是別的帳號、或這個帳號已經刪除前的進度 → 不能上傳，從頭開始
+        //   （以前只有 mismatch 才丟掉；雲端是空的時候拿不到雲端的 owner，所以會把別的帳號的進度上傳上去）
+        if (mismatch || (local.owner && local.owner !== cloudOwner)) {   // 雲端檔案在、而且是同一個錢包（owner 一樣）→ 是自己的，照常上傳
+            advDropGoogleCache();
             return false;
         }
-        return true;                             // 雲端還沒有進度：把本機的上傳
+        return true;                             // 雲端還沒有進度、本機也是全新的：把本機的上傳
     }
     // 每天前 3 次重複通關有獎勵
     // 首頁「雞塊樂園」標題旁的小標籤：目前要打第幾關
@@ -7363,11 +7379,26 @@
         // 新解鎖的木人、圖鑑有新進度：紅色驚嘆號（點開看過才消失）
         let tb = document.getElementById('ahTrainBadge'); if (tb) tb.hidden = !(BattleCore.tabOpen('train', advData.cleared) && (!tut.seen.train || tgAnyUnseen()));
         let db = document.getElementById('ahDexBadge'); if (db) db.hidden = !(BattleCore.tabOpen('dex', advData.cleared) && (!tut.seen.dex || dexAlert()));
-        let sb = document.getElementById('ahShopBadge'); if (sb) sb.hidden = !(BattleCore.tabOpen('shop', advData.cleared) && !tut.seen.shop);
+        let sb = document.getElementById('ahShopBadge'); if (sb) sb.hidden = !(BattleCore.tabOpen('shop', advData.cleared) && (!tut.seen.shop || advShopUnseen().length > 0));
         clearTimeout(ahUpdateBadges._t); ahUpdateBadges._t = setTimeout(ahTutCheck, 350);
     }
     // ═════════ 大冒險新手導引 ═════════
-    function advTut() { if (!advData.tut || typeof advData.tut !== 'object') advData.tut = advTutLoad({}); if (!advData.tut.seen) advData.tut.seen = {}; return advData.tut; }
+    function advTut() {
+        if (!advData.tut || typeof advData.tut !== 'object') advData.tut = advTutLoad({});
+        if (!advData.tut.seen) advData.tut.seen = {};
+        // 補給站「看過的新東西」第一次建立：補給站已經開放的舊玩家 → 現在架上的都當作看過（不會突然一堆 NEW）；還沒開放 → 空的
+        if (!Array.isArray(advData.tut.shopSeen)) advData.tut.shopSeen = BattleCore.tabOpen('shop', advData.cleared) ? advShopVisibleKeys() : [];
+        return advData.tut;
+    }
+    // ── 補給站：還沒解鎖的裝備／招式完全不顯示；解鎖後補給站按鈕亮紅點、格子上寫 NEW（打開補給站看過就算看過）──
+    function advShopVisibleKeys() {
+        let k = [];
+        ['soda', 'boba', 'coaster'].forEach(g => { if (!advData.items[g] && advGearOpen(g)) k.push('g:' + g); });
+        ADV_MOVES.filter(m => m.buy.kind === 'shards' && !advOwns(m.key) && advMoveOpen(m)).forEach(m => k.push('m:' + m.key));
+        return k;
+    }
+    function advShopUnseen() { let t = advTut(); return advShopVisibleKeys().filter(k => !t.shopSeen.includes(k)); }
+    let advShopNew = new Set();          // 這次打開補給站時是 NEW 的東西（關掉補給站就清掉）
     function advTutSet(k, sub) { let t = advTut(); if (sub) { if (t.seen[sub]) return; t.seen[sub] = true; } else { if (t[k]) return; t[k] = true; } advSave(true); }
     // 底部按鈕（補給站／訓練場／圖鑑）：還沒開放 → 提示打完第幾關；開放了 → 點過就不再亮紅點
     function ahTab(k) {
@@ -7447,7 +7478,14 @@
         t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
         clearTimeout(ahSoon._t); ahSoon._t = setTimeout(() => t.classList.remove('show'), 1800);
     }
-    function ahOpenShop() { openChickenShopModal(1); }
+    function ahOpenShop() {
+        // 這次的 NEW：還沒看過的新裝備／招式；打開就算看過（地圖上的紅點消失，NEW 這次還會顯示）
+        let un = advShopUnseen(), t = advTut();
+        advShopNew = new Set(un);
+        if (un.length) { t.shopSeen = t.shopSeen.concat(un); advSave(true); }
+        openChickenShopModal(1);
+        try { ahUpdateBadges(); } catch (e) {}
+    }
     // 地圖上每一關的頭目：各自每 5～10 秒隨機「左右晃」或「上下彈跳」一次
     let ahBossTimer = null;
     function ahBossTick() {
@@ -7489,12 +7527,43 @@
         el.hidden = false;
     }
     function advNoHpClose() { let el = document.getElementById('ahNoHp'); if (el) el.hidden = true; }
-    function advNoHpUse(levelId) {
+    let advNoHpBusy = false;
+    async function advNoHpUse(levelId) {
+        if (advNoHpBusy) return;
         advSyncDaily();
         if ((advData.potions || 0) < 1) { advNoHpOpen(levelId); return; }
+        advNoHpBusy = true;
+        let from = Math.max(0, advData.hp), max = advMaxHp();
         advData.potions -= 1;
-        advData.hp = Math.min(advMaxHp(), Math.max(0, advData.hp) + ADV_POTION_HEAL);
+        advData.hp = Math.min(max, from + ADV_POTION_HEAL);
         advSave();
+        // r16：約 1 秒的回血動畫（體力條往上長、數字跳上去、雞塊跳一下、+N 飄起來），之後才開始戰鬥
+        try {
+            let el = document.getElementById('ahNoHp'), to = advData.hp;
+            if (el && !el.hidden) {
+                el.querySelectorAll('button').forEach(b => { b.disabled = true; });
+                let bar = el.querySelector('.ah-dlg-hp .aq-bar'), fill = bar && bar.querySelector('i'), num = el.querySelector('.ah-dlg-hp b'), art = el.querySelector('.ah-dlg-art');
+                let title = el.querySelector('.ah-dlg-title'); if (title) title.textContent = '體力恢復中…';
+                if (art) {
+                    art.classList.add('ah-heal');
+                    art.insertAdjacentHTML('beforeend', `<span class="ah-heal-pop">+${to - from}</span>`);
+                }
+                let reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                let t0 = performance.now(), dur = reduce ? 1 : 900;
+                await new Promise(res => {
+                    const step = (now) => {
+                        let t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3), v = from + (to - from) * e;
+                        if (fill) fill.style.width = (v / max * 100).toFixed(1) + '%';
+                        if (num) num.textContent = Math.round(v);
+                        if (bar && v / max >= 0.3) bar.classList.remove('low');
+                        if (t < 1) requestAnimationFrame(step); else res();
+                    };
+                    requestAnimationFrame(step);
+                });
+                await new Promise(r => setTimeout(r, reduce ? 300 : 250));
+            }
+        } catch (e) {}
+        advNoHpBusy = false;
         advNoHpClose();
         advStartBattle(parseInt(levelId));
     }
@@ -8486,7 +8555,7 @@
     function advSetShopFilter(v) { advShopFilter = String(v || 'all'); advRenderShopBox(); }
     function advShopCell(o) {
         return `<button type="button" id="${o.id}" data-kind="${o.kind || 'item'}" class="shop-cell shop-item${o.off ? ' is-maxed' : ''}${o.poor ? ' is-poor' : ''}${o.cls ? ' ' + o.cls : ''}" data-on-click='${o.action}'>
-            ${o.bang ? '<span class="adv-alert shop-bang" aria-label="新的">!</span>' : ''}<div class="shop-emoji">${o.icon}</div>
+            ${o.isNew ? '<span class="shop-new">NEW</span>' : ''}<div class="shop-emoji">${o.icon}</div>
             <div class="shop-name">${o.name}</div>
             <div class="shop-sub">${o.sub}</div>
             <div class="shop-price">${o.price}</div>
@@ -8509,20 +8578,12 @@
         cells.push(advShopCell({ id: 'advCell_potion', icon: advPotionIcon(46), name: '小型恢復藥水', sub: `HP +${ADV_POTION_HEAL}`, price: advShardPrice(ADV_POTION_COST), poor: advData.shards < ADV_POTION_COST, action: '[["advBuyPotion",[]]]' }));
         cells.push(advShopCell({ id: 'advCell_wipe', icon: advWipeIcon(46), name: '濕紙巾', sub: '能力 1 點轉移', price: advShardPrice(ADV_WIPE_COST), poor: advData.shards < ADV_WIPE_COST, action: '[["advBuyWipe",[]]]' }));
         // 已經擁有的裝備、招式不顯示（只留還能買的）
-        if (!advData.items.soda) cells.push(advShopCell({ id: 'advCell_soda', kind: 'gear', icon: advSodaIcon(46), name: '彈珠汽水', sub: `普通裝備｜${ADV_ITEMS.soda.desc}`, price: advShardPrice(ADV_SODA_PRICE), poor: advData.shards < ADV_SODA_PRICE, cls: 'rar-common', action: '[["advBuySoda",[]]]', bang: BattleCore.tabOpen('shop', advData.cleared) && !advTut().seen.soda }));   // 新手導引：補給站開放後彈珠汽水有驚嘆號，點過才消失
-        if (!advData.items.boba) {
-            let open = advGearOpen('boba');
-            cells.push(advShopCell({ id: 'advCell_boba', kind: 'gear', icon: ADV_ITEMS.boba.icon(46), name: '快喝光的珍珠奶茶', sub: `普通裝備｜${ADV_ITEMS.boba.desc}`, price: open ? advShardPrice(ADV_BOBA_PRICE) : `第 ${BattleCore.SHOP_OPEN.boba + 1} 關解鎖`, off: !open, poor: open && advData.shards < ADV_BOBA_PRICE, cls: 'rar-common' + (open ? '' : ' is-locked'), action: '[["advBuyBoba",[]]]' }));
-        }
-        if (!advData.items.coaster) {
-            let open = advGearOpen('coaster');
-            cells.push(advShopCell({ id: 'advCell_coaster', kind: 'gear', icon: advCoasterIcon(46), name: '防燙杯套', sub: `普通裝備｜${ADV_ITEMS.coaster.desc}`, price: open ? advShardPrice(ADV_COASTER_PRICE) : `第 ${BattleCore.SHOP_OPEN.coaster + 1} 關解鎖`, off: !open, poor: open && advData.shards < ADV_COASTER_PRICE, cls: 'rar-common' + (open ? '' : ' is-locked'), action: '[["advBuyCoaster",[]]]' }));
-        }
-        ADV_MOVES.filter(m => m.buy.kind === 'shards' && !advOwns(m.key)).forEach(m => {
-            let open = advMoveOpen(m);           // 傳說招式：打倒第 20 關後才能買，之前顯示「第 21 關解鎖」並變灰
-            let price = open ? advShardPrice(m.buy.price) : `第 ${BattleCore.moveUnlockAt(m.key) + 1} 關解鎖`;   // 第幾關開放：battle-core.js
-            let poor = open && advData.shards < m.buy.price;
-            cells.push(advShopCell({ id: 'shopItem_' + (m.buy.item || 'mv_' + m.key), kind: 'move', icon: advMoveIcon(m, 46), name: m.name, sub: m.mode === 'speed' ? `${advRarity(m.key).label} ｜ ${m.speed.label} +1～${m.speed.cap} ｜ 速答` : `${advRarity(m.key).label} ｜ 威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題 ｜ ${ADV_TYPE_LABEL[m.type]}`, price: price, off: !open, poor: poor, cls: 'rar-' + advRarityKey(m.key) + (open ? '' : ' is-locked'), action: `[["advBuyMove",["${m.key}"]]]` }));
+        // r16：還沒解鎖的裝備、招式完全不顯示（連灰色都沒有）；新解鎖的寫 NEW
+        if (!advData.items.soda && advGearOpen('soda')) cells.push(advShopCell({ id: 'advCell_soda', kind: 'gear', icon: advSodaIcon(46), name: '彈珠汽水', sub: `普通裝備｜${ADV_ITEMS.soda.desc}`, price: advShardPrice(ADV_SODA_PRICE), poor: advData.shards < ADV_SODA_PRICE, cls: 'rar-common', action: '[["advBuySoda",[]]]', isNew: advShopNew.has('g:soda') }));
+        if (!advData.items.boba && advGearOpen('boba')) cells.push(advShopCell({ id: 'advCell_boba', kind: 'gear', icon: ADV_ITEMS.boba.icon(46), name: '快喝光的珍珠奶茶', sub: `普通裝備｜${ADV_ITEMS.boba.desc}`, price: advShardPrice(ADV_BOBA_PRICE), poor: advData.shards < ADV_BOBA_PRICE, cls: 'rar-common', action: '[["advBuyBoba",[]]]', isNew: advShopNew.has('g:boba') }));
+        if (!advData.items.coaster && advGearOpen('coaster')) cells.push(advShopCell({ id: 'advCell_coaster', kind: 'gear', icon: advCoasterIcon(46), name: '防燙杯套', sub: `普通裝備｜${ADV_ITEMS.coaster.desc}`, price: advShardPrice(ADV_COASTER_PRICE), poor: advData.shards < ADV_COASTER_PRICE, cls: 'rar-common', action: '[["advBuyCoaster",[]]]', isNew: advShopNew.has('g:coaster') }));
+        ADV_MOVES.filter(m => m.buy.kind === 'shards' && !advOwns(m.key) && advMoveOpen(m)).forEach(m => {
+            cells.push(advShopCell({ id: 'shopItem_' + (m.buy.item || 'mv_' + m.key), kind: 'move', icon: advMoveIcon(m, 46), name: m.name, sub: m.mode === 'speed' ? `${advRarity(m.key).label} ｜ ${m.speed.label} +1～${m.speed.cap} ｜ 速答` : `${advRarity(m.key).label} ｜ 威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''} ｜ ${m.q} 題 ｜ ${ADV_TYPE_LABEL[m.type]}`, price: advShardPrice(m.buy.price), poor: advData.shards < m.buy.price, cls: 'rar-' + advRarityKey(m.key), action: `[["advBuyMove",["${m.key}"]]]`, isNew: advShopNew.has('m:' + m.key) }));
         });
         // 篩選：全部／道具／裝備／招式（沒寫 kind 的是道具）
         let f = ADV_SHOP_FILTERS[advShopTab] || ADV_SHOP_FILTERS[0];
@@ -8561,7 +8622,6 @@
         advShardFloat(-ADV_POTION_COST);
     }
     function advBuySoda() {
-        if (!advTut().seen.soda) { advTutSet('seen', 'soda'); try { advRenderShopBox(); } catch (e) {} }   // 點過彈珠汽水：驚嘆號消失
         if (advData.items.soda) { alert('已經擁有彈珠汽水了。'); return; }
         if (advData.shards < ADV_SODA_PRICE) return;
         if (!confirm(`要用 ${ADV_SODA_PRICE} 個冒險代幣購買彈珠汽水嗎？\n\n${ADV_ITEMS.soda.desc}`)) return;
@@ -9445,18 +9505,14 @@
         let stats = `<div class="cr-stats">
             <div class="cr-stat cr-stat--score"><span class="cr-stat__label">總傷害</span><span class="cr-num tg-dmg">${r.dmg} <small>/ ${r.d.hp}</small></span></div>
             <div class="cr-stat cr-stat--score"><span class="cr-stat__label">答對・最多連對</span><span class="cr-num">${ok} <small>/ ${all}</small>・${adv.comboMax || 0}</span></div></div>`;
-        let best = tgData().best[r.d.key];
         let its = (r.xp ? `<span class="cr-item"><span class="xp-ico">XP</span><b>+${r.xp}</b></span>` : '') + (r.reward && r.reward.shards ? `<span class="cr-item">${advShardIcon(26)}<b>×${r.reward.shards}</b></span>` : '');
-        let tiers = BattleCore.dummyXpTiers(r.d).map(t => `<span class="tg-tier${r.dmg >= t.dmg ? ' on' : ''}">${t.pct === 100 ? '打倒' : t.pct + '%'} +${t.xp}</span>`).join('');
         let mid = `<div class="cr-reward tg-reward"><div class="cr-reward__head"><span class="cr-reward__label">${r.reward && r.reward.shards ? `獲得獎勵（含第一次打到 ${r.d.hp}）` : '獲得獎勵'}</span>${r.lvUp ? '<span class="cr-tag cr-tag--today">升級了！</span>' : ''}</div>
-            <div class="cr-reward__items">${its || '<span class="cr-none">傷害還沒到 30%，沒有經驗值</span>'}</div>
-            <div class="tg-tiers">${tiers}</div>
-            <div class="tg-best">最佳紀錄 ${best}${r.rec && Number.isFinite(r.prev) ? `（上次最佳 ${r.prev}）` : ''}</div></div>`;
-        let btns = `<button type="button" class="cr-btn cr-btn--primary" data-on-click='[["tgAgain",[]]]'>再練一次</button>
-            <button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["tgBack",[]]]'>回訓練場</button>`;
+            <div class="cr-reward__items">${its || '<span class="cr-none">沒有經驗值</span>'}</div></div>`;   // r16：字太多 → 拿掉經驗值門檻和最佳紀錄（新紀錄有緞帶）
+        let btns = `<button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["tgBack",[]]]'>回訓練場</button>
+            <button type="button" class="cr-btn cr-btn--primary" data-on-click='[["tgAgain",[]]]'>再練一次</button>`;
         el.innerHTML = `<section class="cr-screen" data-state="${r.full ? 'first' : 'replay'}" aria-label="訓練結算"><div class="cr-card">
             <header class="cr-top"><button type="button" class="cr-back" aria-label="返回" data-on-click='[["tgBack",[]]]'>${CR_BACK_SVG}</button><span class="cr-pill">訓練場</span><span></span></header>
-            ${hero}${stats}${mid}<div class="cr-actions">${btns}</div></div></section>`;
+            ${hero}${stats}${mid}<div class="cr-actions cr-actions--row">${btns}</div></div></section>`;
         el.hidden = false;
         el.scrollTop = 0;
         document.body.classList.add('cr-open');
@@ -9514,13 +9570,13 @@
     // 底部「圖鑑」紅色驚嘆號：解鎖特殊能力、解鎖攻略、或有獎勵可以領（第 1 次情蒐只解鎖能力值，不亮）
     function dexAlert() {
         try {
-            if (BattleCore.dexForms().some(f => { let n = dexShown(f); return n >= 2 && (dexData().seen[f.key] || 0) < n; })) return true;
+            // r16：紅色驚嘆號只在三種時候出現：圖鑑剛開放（tut.seen.dex）、某一關情蒐完成可以領獎、某一章全部情蒐完成
             if (ADV_LEVELS.some(l => dexCanClaim(l.id))) return true;
             return ADV_CHAPTERS.some(c => dexChClaimable(c));
         } catch (e) { return false; }
     }
     function dexChAlert(ch) {
-        return dexChClaimable(ch) || dexChLevels(ch).some(l => dexCanClaim(l.id)) || BattleCore.dexForms().some(f => f.lv >= ch.from && f.lv <= ch.to && dexIsNew(f));
+        return dexChClaimable(ch) || dexChLevels(ch).some(l => dexCanClaim(l.id));
     }
     function goToDex() {
         if (!document.getElementById('adventureView').classList.contains('active')) goToAdventurePage(true);
@@ -9559,7 +9615,7 @@
         let forms = BattleCore.dexForms().filter(f => f.lv >= ch.from && f.lv <= ch.to && (f.idx === 0 || d.form[f.key]));
         const LBL = [['hp', 'HP'], ['atk', '攻擊'], ['def', '防禦'], ['agi', '敏捷'], ['int', '智慧'], ['luck', '幸運']];
         let cards = forms.map(f => {
-            let n = dexShown(f), isNew = dexIsNew(f), lv = ADV_LEVELS.find(l => l.id === f.lv);
+            let n = dexShown(f), isNew = f.idx === 0 && dexCanClaim(f.lv), lv = ADV_LEVELS.find(l => l.id === f.lv);   // r16：名字旁的驚嘆號只在「情蒐完成、可以領獎」時出現
             let art = n ? advEnemySVG(f.sprite) : `<span class="dex-shadow">${advEnemySVG(f.sprite)}</span>`;
             let need = k => `<span class="dex-lock">${DEX_LOCK}再打 ${k - n} 次解鎖</span>`;
             let unknown = `<span class="dex-lock">${DEX_LOCK}未知</span>`;
