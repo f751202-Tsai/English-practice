@@ -18,7 +18,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="icon" href="data:,">
     <!-- 引入 Google Identity Services SDK -->
-    <script src="boot.js?v=20261117a"></script>
+    <script src="boot.js?v=20261117c"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -3480,6 +3480,19 @@ body.cr-open{overflow:hidden}
 .cr-actions--row .cr-btn{flex:1 1 0;min-width:0;height:58px;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .cr-actions--row .cr-btn--primary{flex-direction:row;gap:4px}
 .cr-actions--row .cr-btn--secondary{border-radius:18px;font-size:17px}
+@media (max-height: 820px){ .cr-actions--row .cr-btn{height:52px;min-height:52px} }
+/* r16：很矮的螢幕（360×640 之類）：再縮主視覺，結算畫面整頁不用捲 */
+@media (max-height: 700px){
+  .cr-screen{padding-top:10px;padding-bottom:max(10px, env(safe-area-inset-bottom))}
+  .cr-card{gap:8px;padding:12px 12px 12px}
+  .cr-hero{padding:12px 12px 12px;gap:4px}
+  .cr-hero__title{font-size:26px}
+  .cr-hero--first .cr-hero__title{font-size:28px}
+  .cr-enemy{width:80px;height:80px}
+  .cr-enemy__art{width:62px;height:62px}
+  .cr-actions--row .cr-btn{height:48px;min-height:48px}
+  .cr-back{width:40px;height:40px}
+}
 .cr-btn{border:none;cursor:pointer;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;font-family:var(--cr-font)}
 .cr-btn--primary{height:58px;border-radius:18px;font-size:18px;color:#fff;background:linear-gradient(135deg,var(--cr-indigo-2),var(--cr-indigo));box-shadow:0 6px 0 var(--cr-indigo-dark),0 10px 20px rgba(79,70,229,.3)}
 .cr-btn--primary:active{transform:translateY(4px);box-shadow:0 2px 0 var(--cr-indigo-dark)}
@@ -4513,7 +4526,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .ah-tabbtn.is-locked .ah-ic { filter: grayscale(1); opacity: .45; }
 .ah-tabbtn.is-locked > span:last-child { color: #94A3B8; }
 .shop-cell { position: relative; }
-.shop-cell .shop-bang { top: 6px; right: 6px; }
+.shop-cell .shop-new { position: absolute; top: 6px; right: 6px; padding: 1px 6px; border-radius: 999px; background: #EF4444; color: #fff; font-size: 10.5px; font-weight: 900; letter-spacing: .03em; line-height: 16px; box-shadow: 0 0 0 2px #fff; pointer-events: none; z-index: 2; }
 .tg-go { position: relative; }
 .tg-go .tg-bang { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; border-radius: 50%; background: #EF4444; color: #fff; font-style: normal; font-size: 14px; font-weight: 900; line-height: 22px; text-align: center; box-shadow: 0 0 0 2px #fff; }
 /* r15：大冒險新手導引（聚光燈＋說明泡泡；不擋點擊） */
@@ -4690,9 +4703,10 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .tg-hero-art { background: rgba(255,255,255,.28); }
 .tg-hero-art svg { width: 74px; height: 70px; }
 /* 訓練戰鬥：場景＋連對卡 */
-.adv-battle.bt.bt-train .adv-stage { background: linear-gradient(to bottom, #BFE3FB 0, #BFE3FB var(--bt-bgtop), #E8C99A var(--bt-bgtop), #E8C99A 100%); }
+/* r16：訓練場戰鬥的底色也是藍天（上半）＋沙地（下半），就算背景圖在某些手機上沒有鋪滿，上面也一定是天空 */
+.adv-battle.bt.bt-train .adv-stage { background: linear-gradient(to bottom, #BFE3FB 0, #E3F3FD 44%, #A7DB8D 44%, #A7DB8D 47%, #E8C99A 47%, #E8C99A 100%) !important; }
 .adv-battle.bt.bt-train .adv-stage::after { display: none; }
-.adv-battle.bt .tg-bt-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+.adv-battle.bt .tg-bt-bg { position: absolute; inset: 0; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; display: block; z-index: 0; margin: 0; }
 /* r12：訓練場整頁（底部四個按鈕收起來） */
 .ah.tg-on .ah-bar { display: none; }
 .ah.tg-on .tg { bottom: 0; }
@@ -4859,6 +4873,13 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .ui-cf__s { text-align: left; }
 .ui-cf__in { display: block; width: 100%; box-sizing: border-box; margin-top: 14px; height: 46px; padding: 0 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 16px; font-family: inherit; text-align: center; }
 @keyframes uiCfIn { from { opacity: 0; } to { opacity: 1; } }
+.ah-dlg-art { position: relative; }
+.ah-dlg-art.ah-heal { animation: ahHealHop .5s ease-out 2; }
+.ah-heal-pop { position: absolute; left: 50%; top: 10%; transform: translateX(-50%); color: #10B981; font-size: 24px; font-weight: 900; text-shadow: 0 2px 0 #fff; animation: ahHealPop 1s ease-out forwards; pointer-events: none; }
+.ah-dlg-hp .aq-bar i { transition: none; }
+@keyframes ahHealHop { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-10px); } }
+@keyframes ahHealPop { from { opacity: 0; transform: translate(-50%, 10px); } 20% { opacity: 1; } to { opacity: 0; transform: translate(-50%, -26px); } }
+@media (prefers-reduced-motion: reduce) { .ah-dlg-art.ah-heal, .ah-heal-pop { animation: none; } }
 </style>
 </head>
 <body>
@@ -6234,7 +6255,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 </div>
 
 <!-- 戰鬥規則（app.js 和大冒險敵人模擬器共用同一份），一定要在 app.js 前面載入 -->
-<script src="battle-core.js?v=20261117a"></script>
-<script src="app.js?v=20261117a"></script>
+<script src="battle-core.js?v=20261117c"></script>
+<script src="app.js?v=20261117c"></script>
 </body>
 </html>
