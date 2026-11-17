@@ -18,6 +18,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="icon" href="data:,">
     <!-- 引入 Google Identity Services SDK -->
+    <script src="boot.js?v=20261117a"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2359,6 +2360,7 @@
         body.power-saving-mode .sync-chick { background: #232733; border-color: #2B303C; color: #A5B4FC; }
 
         /* ══ 🐣 新手教學：① 歡迎頁 → ②～⑤ 遮罩介紹分頁 → ⑥ 打開題庫放第一個字 ══ */
+        html.ob-wait::after { content: ''; position: fixed; inset: 0; z-index: 4999; background: #FFFFFF; }
         #obWelcome { position: fixed; inset: 0; z-index: 5000; background: #FFFFFF; display: flex; justify-content: center; overflow-y: auto; color: #0F172A; -webkit-font-smoothing: antialiased; }
         .ob-w { width: 100%; max-width: 480px; min-height: 100%; display: flex; flex-direction: column; background: #FFFFFF; }
         .ob-top { position: relative; height: 360px; flex: 0 0 360px; background: #6366F1; border-radius: 0 0 40px 40px; overflow: hidden; }
@@ -3474,6 +3476,10 @@ body.cr-open{overflow:hidden}
 .cr-notes{display:flex;flex-direction:column;gap:4px;margin-top:-4px}
 .cr-notes span{font-size:12.5px;font-weight:700;color:var(--cr-sub);text-align:center}
 .cr-actions{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.cr-actions--row{flex-direction:row;align-items:stretch}
+.cr-actions--row .cr-btn{flex:1 1 0;min-width:0;height:58px;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.cr-actions--row .cr-btn--primary{flex-direction:row;gap:4px}
+.cr-actions--row .cr-btn--secondary{border-radius:18px;font-size:17px}
 .cr-btn{border:none;cursor:pointer;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;font-family:var(--cr-font)}
 .cr-btn--primary{height:58px;border-radius:18px;font-size:18px;color:#fff;background:linear-gradient(135deg,var(--cr-indigo-2),var(--cr-indigo));box-shadow:0 6px 0 var(--cr-indigo-dark),0 10px 20px rgba(79,70,229,.3)}
 .cr-btn--primary:active{transform:translateY(4px);box-shadow:0 2px 0 var(--cr-indigo-dark)}
@@ -4169,6 +4175,19 @@ body.bt-on { overflow: hidden; }
 .adv-battle.bt .adv-move .dmg { font-size: calc(16 * var(--u)); font-weight: 900; color: #5b5bd6; }
 .adv-battle.bt .adv-move small { font-size: calc(12 * var(--u)); color: #6b7090; }
 .adv-battle.bt .adv-lv-chip { padding: 0 calc(5 * var(--u)); border-radius: 999px; background: #6366f1; color: #fff; font-size: calc(10.5 * var(--u)); font-weight: 800; }
+/* r15：招式卡（左：名稱＋傷害；右：聽力／字卡／速答直條，底色＝稀有度：普通灰、稀有黃、傳說紫） */
+.adv-move.mv2 { display: flex; flex-direction: row; align-items: stretch; padding: 0; overflow: hidden; border-color: #E2E8F0; }
+.adv-move.mv2 .mv-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 7px 10px; }
+.adv-move.mv2 .mv-type { flex: 0 0 auto; width: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: #E2E8F0; color: #64748B; font-size: 15px; font-weight: 900; line-height: 1.15; }
+.adv-move.mv2 .mv-type i { font-style: normal; }
+.adv-move.mv2.rar-rare .mv-type { background: #FDE68A; color: #92400E; }
+.adv-move.mv2.rar-legend .mv-type { background: #F5D0FE; color: #86198F; }
+.adv-battle.bt .adv-move.mv2, .adv-battle.bt .adv-move.mv2.rar-common, .adv-battle.bt .adv-move.mv2.rar-rare, .adv-battle.bt .adv-move.mv2.rar-legend { flex-direction: row; padding: 0; gap: 0; border-color: #E2E8F0; }
+.adv-battle.bt .adv-move.mv2 .mv-main { padding: calc(8 * var(--u)) calc(12 * var(--u)); }
+.adv-battle.bt .adv-move.mv2 .mv-type { width: calc(34 * var(--u)); font-size: calc(17 * var(--u)); }
+body.power-saving-mode .adv-move.mv2 .mv-type { background: #334155 !important; color: #CBD5E1 !important; }
+body.power-saving-mode .adv-move.mv2.rar-rare .mv-type { background: #854D0E !important; color: #FEF3C7 !important; }
+body.power-saving-mode .adv-move.mv2.rar-legend .mv-type { background: #701A75 !important; color: #FAE8FF !important; }
 @media (max-height: 640px) {
   .adv-battle.bt .adv-log { padding: calc(5 * var(--u)) calc(10 * var(--u)); font-size: calc(13 * var(--u)); }
   .adv-battle.bt .adv-moves { grid-auto-rows: calc(84 * var(--u)); }
@@ -4278,6 +4297,9 @@ body.power-saving-mode .spd-cell:not(.gone) { background: #1B1E27; border-color:
 .st-alloc-cancel { border: 1.5px solid #dfe2ff; background: #fff; color: #4f46e5; }
 .st-alloc-ok { border: none; background: #4f46e5; color: #fff; box-shadow: 0 4px 0 #3730a3; }
 .st-alloc-ok:disabled { background: #c7cbf3; box-shadow: none; cursor: default; }
+/* r15：.cp button { color: inherit } 會把字變成深藍色 → 紫色按鈕上的字一律白色 */
+.st-view .st-plus, .st-view .st-plus:disabled, .st-view .st-alloc-ok { color: #fff; }
+.st-view .st-alloc-cancel { color: #4f46e5; }
 /* 攻擊的爆擊硬幣：在攻擊條上方、靠左（幾次爆擊判定就幾個） */
 .st-coins { display: flex; gap: 2px; height: 16px; }
 .st-coins .st-coin { width: 16px; height: 16px; }
@@ -4417,6 +4439,7 @@ body.power-saving-mode .sc-card { background: #12141B; border-color: #2B303C; }
 .adv-cn-sugg:empty { display: none; }
 .adv-cn-chip { border: 1.5px solid #C7D2FE; background: #EEF2FF; color: #3730A3; border-radius: 999px; padding: 5px 12px; font-size: 14px; font-weight: 800; font-family: inherit; cursor: pointer; }
 .adv-cn-none { font-size: 13px; color: #94A3B8; font-weight: 700; padding: 4px 0; }
+.chi-sugg { justify-content: flex-start; margin: 6px 0 0; }
 body.power-saving-mode .adv-cn-chip { background: #1E1B4B; color: #E0E7FF; border-color: #4338CA; }
 
 /* r10：戰鬥招式卡的稀有度顏色（普通灰、稀有金、傳說紫） */
@@ -4487,6 +4510,21 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .ah-tabbtn { border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12.5px; font-weight: 800; color: #334155; cursor: pointer; }
 .ah-ic { position: relative; width: 32px; height: 32px; }
 .ah-ic svg { width: 100%; height: 100%; display: block; }
+.ah-tabbtn.is-locked .ah-ic { filter: grayscale(1); opacity: .45; }
+.ah-tabbtn.is-locked > span:last-child { color: #94A3B8; }
+.shop-cell { position: relative; }
+.shop-cell .shop-bang { top: 6px; right: 6px; }
+.tg-go { position: relative; }
+.tg-go .tg-bang { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; border-radius: 50%; background: #EF4444; color: #fff; font-style: normal; font-size: 14px; font-weight: 900; line-height: 22px; text-align: center; box-shadow: 0 0 0 2px #fff; }
+/* r15：大冒險新手導引（聚光燈＋說明泡泡；不擋點擊） */
+#tutCoach { position: fixed; inset: 0; z-index: 4500; pointer-events: none; }
+#tutCoach .tut-ring { position: absolute; border-radius: 20px; box-shadow: 0 0 0 9999px rgba(15, 23, 42, .55); outline: 3px solid #FDE047; outline-offset: 2px; animation: tutRing 1.2s ease-in-out infinite; }
+#tutCoach .tut-bubble { position: absolute; width: max-content; max-width: min(280px, calc(100vw - 32px)); padding: 12px 14px; border-radius: 16px; background: #fff; color: #1e1b4b; font-family: 'Noto Sans TC', system-ui, sans-serif; font-size: 15px; font-weight: 900; line-height: 1.5; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+#tutCoach .tut-bubble::after { content: ''; position: absolute; left: var(--ax, 50%); width: 14px; height: 14px; background: #fff; transform: translateX(-50%) rotate(45deg); }
+#tutCoach .tut-bubble.up::after { bottom: -6px; }
+#tutCoach .tut-bubble.down::after { top: -6px; }
+@keyframes tutRing { 0%,100% { outline-color: #FDE047; } 50% { outline-color: #F97316; } }
+@media (prefers-reduced-motion: reduce) { #tutCoach .tut-ring { animation: none; } }
 .ah-badge { position: absolute; top: -5px; right: -10px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px; background: #EF4444; color: #FFFFFF; font-style: normal; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF; box-sizing: content-box; }
 .ah-badge[hidden] { display: none; }
 .ah-toast { position: absolute; z-index: 40; left: 50%; bottom: 170px; transform: translate(-50%, 10px); padding: 10px 18px; border-radius: 999px; background: rgba(30,27,75,.92); color: #FFFFFF; font-size: 14px; font-weight: 800; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
@@ -4556,6 +4594,15 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .ah-cell.is-current { background: linear-gradient(180deg, #FEF3C7, #FCD34D); border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(251,191,36,.35); }
 .ah-cell.is-current b { color: #78350F; }
 .ah-cell.is-locked { background: #F1F0F7; border-color: #E4E2EF; cursor: default; }
+.ah-cell.is-off { opacity: .38; filter: grayscale(1); cursor: default; }
+.tg-rule { display: block; font-size: 12.5px; font-weight: 700; color: #6B7280; }
+.cr-reward.tg-reward { flex-direction: column; align-items: stretch; gap: 8px; }
+.cr-reward.tg-reward .cr-reward__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cr-reward.tg-reward .cr-reward__items { justify-content: flex-start; }
+.tg-tiers { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.tg-tier { padding: 3px 9px; border-radius: 999px; background: #F1F5F9; color: #94A3B8; font-size: 12.5px; font-weight: 800; }
+.tg-tier.on { background: #EDE9FE; color: #6D28D9; }
+.tg-best { margin-top: 6px; font-size: 12.5px; font-weight: 700; color: #6B7280; }
 .ah-cell.is-locked .ah-cell-art { width: 34%; }
 .ah-cell.is-locked .ah-cell-art svg path, .ah-cell.is-locked .ah-cell-art svg rect { stroke: #8B87A8; } .ah-cell.is-locked .ah-cell-art svg rect { fill: #C9C6DC; }
 .ah-cell.is-locked b { color: #A8A3C2; }
@@ -4727,6 +4774,8 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .dex-st:nth-child(3n) { border-right: none; }
 .dex-st span { font-size: 12px; font-weight: 800; color: #9A7651; }
 .dex-st b { font-family: Inter, system-ui, sans-serif; font-size: 17px; font-weight: 900; color: #4A2C12; }
+.dex-st b { display: inline-flex; align-items: center; gap: 4px; }
+.dex-shield { display: inline-flex; align-items: center; gap: 1px; font-style: normal; font-size: 12px; font-weight: 900; color: #4338CA; background: #EEF2FF; border-radius: 8px; padding: 1px 4px 1px 2px; line-height: 1.2; }
 .dex-sec { padding: 8px 11px; border-bottom: 1px solid #EBDDC2; }
 .dex-sec:last-child { border-bottom: none; }
 .dex-k { display: block; font-size: 12px; font-weight: 800; color: #9A7651; }
@@ -4793,6 +4842,23 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .ah-hp-top { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
 .ah-hpbox--chick .aq-bar { display: block; }
 .adv-log-sub { display: inline-block; margin-top: 2px; }
+.adv-log-sub.playing { color: #7C3AED; animation: advListenPulse 1s ease-in-out infinite; }
+@keyframes advListenPulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .adv-log-sub.playing { animation: none; } }
+/* r15：App 自己的確認視窗（取代瀏覽器 confirm，iPhone 不會被擋） */
+.ui-cf { position: fixed; inset: 0; z-index: 99990; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(15, 23, 42, .5); animation: uiCfIn .15s ease-out; }
+.ui-cf__box { width: min(340px, 100%); background: #fff; border-radius: 20px; padding: 22px 20px 18px; box-shadow: 0 20px 50px rgba(0,0,0,.3); font-family: 'Noto Sans TC', system-ui, sans-serif; text-align: center; }
+.ui-cf__t { margin: 0; font-size: 18px; font-weight: 900; color: #1e1b4b; line-height: 1.45; }
+.ui-cf__s { margin: 8px 0 0; font-size: 14px; font-weight: 600; color: #64748b; line-height: 1.55; }
+.ui-cf__btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+.ui-cf__btns button { height: 48px; border-radius: 14px; font-size: 16px; font-weight: 900; font-family: inherit; cursor: pointer; }
+.ui-cf__no { border: 1.5px solid #dfe2ff; background: #fff; color: #4f46e5; }
+.ui-cf__ok { border: none; background: #4f46e5; color: #fff; box-shadow: 0 4px 0 #3730a3; }
+.ui-cf__ok--danger { background: #dc2626; box-shadow: 0 4px 0 #991b1b; }
+.ui-cf__ok:disabled { background: #cbd5e1; box-shadow: none; cursor: default; }
+.ui-cf__s { text-align: left; }
+.ui-cf__in { display: block; width: 100%; box-sizing: border-box; margin-top: 14px; height: 46px; padding: 0 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 16px; font-family: inherit; text-align: center; }
+@keyframes uiCfIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 </head>
 <body>
@@ -5191,6 +5257,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
                         <button type="button" class="qz-mic voice-chi-btn" id="cardExamVoiceBtn" aria-label="用說的輸入中文" style="display: none;" data-on-click='[["voiceChiToggle",["cardExamInputChi"]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3.5M8.5 21.5h7"/></svg></button>
                     </span>
                     <div class="chi-input-tip" id="cardExamInputChiTip"></div>
+                    <div class="adv-cn-sugg chi-sugg" id="cardExamInputChiSugg" aria-live="polite"></div>
                 </div>
             </div>
             <button type="button" class="qz-submit" id="cardExamSubmitBtn" data-on-click='[["submitCardExamAnswer",[]]]'>送出答案<span class="qz-kbd">Enter</span></button>
@@ -5344,9 +5411,9 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
             </section>
             <nav class="ah-bar" aria-label="大冒險">
                 <button type="button" class="ah-tabbtn" id="ahTabStats" data-on-click='[["goToAdvStats",[]]]'><span class="ah-ic"><svg viewBox="4 22 128 100" fill="none" aria-hidden="true"><path d="M52 108L46 118M46 118L38 118M84 108L88 118M88 118L96 118" stroke="#231F20" stroke-width="6" stroke-linecap="round"/><ellipse cx="68" cy="68" rx="40" ry="42" fill="#F4A236" stroke="#231F20" stroke-width="5.5"/><circle cx="36" cy="80" r="4" fill="#E2861E"/><circle cx="66" cy="98" r="3.5" fill="#E2861E"/><circle cx="94" cy="74" r="3.5" fill="#E2861E"/><ellipse cx="48" cy="74" rx="7.5" ry="5.5" fill="#F87171"/><ellipse cx="86" cy="74" rx="7.5" ry="5.5" fill="#F87171"/><circle cx="54" cy="64" r="4.5" fill="#231F20"/><circle cx="80" cy="64" r="4.5" fill="#231F20"/><path d="M61 73Q67 80 73 73" stroke="#231F20" stroke-width="4.5" stroke-linecap="round"/><path d="M28 68C18 68,12 72,14 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/><path d="M108 68C118 68,124 72,122 80" stroke="#231F20" stroke-width="6" stroke-linecap="round"/></svg><em class="ah-badge" id="ahChickBadge" hidden></em></span><span>狀態</span></button>
-                <button type="button" class="ah-tabbtn" id="ahTabTrain" data-on-click='[["goToTraining",[]]]'><span class="ah-ic"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 30v7M13 37.5h14" stroke="#7C4A1E" stroke-width="3" stroke-linecap="round"/><path d="M6 19.5h28" stroke="#7C4A1E" stroke-width="7.5" stroke-linecap="round"/><path d="M6 19.5h28" stroke="#D29B5E" stroke-width="3.6" stroke-linecap="round"/><rect x="13" y="14" width="14" height="18" rx="5" fill="#D29B5E" stroke="#7C4A1E" stroke-width="2.4"/><path d="M15.5 23h9M15.5 27h9" stroke="#A86A33" stroke-width="1.6" stroke-linecap="round"/><circle cx="20" cy="8.5" r="6.2" fill="#E2B27A" stroke="#7C4A1E" stroke-width="2.4"/><path d="M17.6 7.6q1-1 2-.2" stroke="#A86A33" stroke-width="1.4" stroke-linecap="round"/></svg><em class="ah-badge" id="ahTrainBadge" hidden>!</em></span><span>訓練場</span></button>
-                <button type="button" class="ah-tabbtn" id="ahTabDex" data-on-click='[["goToDex",[]]]'><span class="ah-ic"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="7" y="5" width="25" height="31" rx="3" fill="#8B5A2B" stroke="#4A2C12" stroke-width="2.2"/><rect x="11" y="7.5" width="19" height="25" rx="1.5" fill="#F5E9D0" stroke="#4A2C12" stroke-width="1.4"/><path d="M7 31.5q0 4 4 4h21" stroke="#4A2C12" stroke-width="2.2" fill="none"/><path d="M14.5 13h11M14.5 17h11M14.5 21h7" stroke="#B08A5A" stroke-width="1.8" stroke-linecap="round"/><path d="M25 5v11l2.6-2 2.6 2V5z" fill="#DC2626" stroke="#7F1D1D" stroke-width="1.2" stroke-linejoin="round"/></svg><em class="ah-badge" id="ahDexBadge" hidden>!</em></span><span>圖鑑</span></button>
-                <button type="button" class="ah-tabbtn" data-on-click='[["ahOpenShop",[]]]'><span class="ah-ic"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 15q8-12 16 0" stroke="#92400E" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M5 15h30l-3.5 19a3 3 0 0 1-3 2.4H11.5a3 3 0 0 1-3-2.4z" fill="#FBBF24" stroke="#92400E" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 21v9M20 21v9M28 21v9M7 25h26" stroke="#B45309" stroke-width="2" stroke-linecap="round"/></svg></span><span>補給站</span></button>
+                <button type="button" class="ah-tabbtn" id="ahTabTrain" data-on-click='[["ahTab",["train"]]]'><span class="ah-ic"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 30v7M13 37.5h14" stroke="#7C4A1E" stroke-width="3" stroke-linecap="round"/><path d="M6 19.5h28" stroke="#7C4A1E" stroke-width="7.5" stroke-linecap="round"/><path d="M6 19.5h28" stroke="#D29B5E" stroke-width="3.6" stroke-linecap="round"/><rect x="13" y="14" width="14" height="18" rx="5" fill="#D29B5E" stroke="#7C4A1E" stroke-width="2.4"/><path d="M15.5 23h9M15.5 27h9" stroke="#A86A33" stroke-width="1.6" stroke-linecap="round"/><circle cx="20" cy="8.5" r="6.2" fill="#E2B27A" stroke="#7C4A1E" stroke-width="2.4"/><path d="M17.6 7.6q1-1 2-.2" stroke="#A86A33" stroke-width="1.4" stroke-linecap="round"/></svg><em class="ah-badge" id="ahTrainBadge" hidden>!</em></span><span>訓練場</span></button>
+                <button type="button" class="ah-tabbtn" id="ahTabDex" data-on-click='[["ahTab",["dex"]]]'><span class="ah-ic"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="7" y="5" width="25" height="31" rx="3" fill="#8B5A2B" stroke="#4A2C12" stroke-width="2.2"/><rect x="11" y="7.5" width="19" height="25" rx="1.5" fill="#F5E9D0" stroke="#4A2C12" stroke-width="1.4"/><path d="M7 31.5q0 4 4 4h21" stroke="#4A2C12" stroke-width="2.2" fill="none"/><path d="M14.5 13h11M14.5 17h11M14.5 21h7" stroke="#B08A5A" stroke-width="1.8" stroke-linecap="round"/><path d="M25 5v11l2.6-2 2.6 2V5z" fill="#DC2626" stroke="#7F1D1D" stroke-width="1.2" stroke-linejoin="round"/></svg><em class="ah-badge" id="ahDexBadge" hidden>!</em></span><span>圖鑑</span></button>
+                <button type="button" class="ah-tabbtn"  id="ahTabShop" data-on-click='[["ahTab",["shop"]]]'><span class="ah-ic"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 15q8-12 16 0" stroke="#92400E" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M5 15h30l-3.5 19a3 3 0 0 1-3 2.4H11.5a3 3 0 0 1-3-2.4z" fill="#FBBF24" stroke="#92400E" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 21v9M20 21v9M28 21v9M7 25h26" stroke="#B45309" stroke-width="2" stroke-linecap="round"/></svg><em class="ah-badge" id="ahShopBadge" hidden>!</em></span><span>補給站</span></button>
             </nav>
             <div class="ah-toast" id="ahToast" role="status"></div>
             <!-- 選關 -->
@@ -5417,7 +5484,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
         <!-- ================= 🏰 雞塊大冒險 第 3 頁：雞塊能力值 ================= -->
         <div id="advStatsView" class="app-view cp st-view">
             <header class="cp-header">
-                <button class="cp-back" type="button" aria-label="返回" data-on-click='[["goToAdventurePage",[true]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+                <button class="cp-back" type="button" aria-label="返回" data-on-click='[["advStatsBack",[]]]'><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
                 <div class="cp-title st-title">雞塊能力值</div>
                 <span id="advNavCounts" class="st-gem-wrap"></span>
             </header>
@@ -5610,6 +5677,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
                             <button type="button" class="qz-mic voice-chi-btn" id="examVoiceBtn" aria-label="用說的輸入中文" style="display: none;" data-on-click='[["voiceChiToggle",["examInputChi"]]]'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3.5M8.5 21.5h7"/></svg></button>
                         </span>
                         <div class="chi-input-tip" id="examInputChiTip"></div>
+                    <div class="adv-cn-sugg chi-sugg" id="examInputChiSugg" aria-live="polite"></div>
                     </div>
                 </div>
                 <button type="button" class="qz-submit" id="examSubmitBtn" data-on-click='[["submitExamAnswer",[]]]'>送出答案<span class="qz-kbd">Enter</span></button>
@@ -5966,6 +6034,14 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
             <button class="cloud-btn" style="background: var(--primary-gradient);" data-on-click='[["openAboutModal",[]]]'>關於</button>
         </div>
 
+        <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+            <div>
+                <label style="margin-top:0;">刪除帳號</label>
+                <span style="font-size: 12.5px; color: var(--text-muted);">永久刪除雲端和這台裝置上的所有資料</span>
+            </div>
+            <button class="cloud-btn" style="background: #DC2626; white-space: nowrap;" data-on-click='[["accountDelete",[]]]'>刪除</button>
+        </div>
+
         <button class="action-btn btn-start" id="closeSettingsBtn" style="margin-top: 20px; width: 100%;" data-on-click='[["closeSystemSettingsModal",[]]]'>關閉設定</button>
     </div>
 </div>
@@ -6158,7 +6234,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 </div>
 
 <!-- 戰鬥規則（app.js 和大冒險敵人模擬器共用同一份），一定要在 app.js 前面載入 -->
-<script src="battle-core.js?v=20261116a"></script>
-<script src="app.js?v=20261116a"></script>
+<script src="battle-core.js?v=20261117a"></script>
+<script src="app.js?v=20261117a"></script>
 </body>
 </html>
