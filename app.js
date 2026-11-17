@@ -1793,6 +1793,113 @@
         }
     }
 
+    // ═════════ 玩家使用統計（後台 player_stats；一天回傳一次）═════════
+    //   這台裝置先累加：c 計數器、win 每關打贏次數、days 每天遊玩分鐘；
+    //   新的一天第一次打開 App（或從背景回來）時，把之前累積的一次送到後台（report_stats 會加總、順便帶回補發），送成功才清掉
+    //   snap：送出當下的大冒險狀態（等級、打到哪、熟練度、冒險代幣…），後台整份換掉
+    //   計數器名稱（解碼 App 用同一份對照表）：
+    //     listNew 新增題庫　listSave 編輯題庫按儲存　wordAdd 新增單字　wordEdit 修改單字
+    //     pracListen 聽力練習　pracCard 字卡練習　pracSpeak 朗讀練習　exListen 聽力測驗　exCard 字卡測驗
+    //     advPlay 大冒險開打　advWin 打贏　advLose 打輸　train 訓練場
+    const PS_KEY = 'chicky_pstats_v1', PS_ID_KEY = 'chicky_player_id';
+    let ps = psLoad(), psSending = false;
+    function psBlank() { return { c: {}, win: {}, days: {}, since: getLocalDateStr() }; }
+    function psLoad() {
+        try {
+            let o = JSON.parse(localStorage.getItem(PS_KEY) || 'null');
+            if (o && typeof o === 'object') return { c: o.c || {}, win: o.win || {}, days: o.days || {}, since: o.since || getLocalDateStr() };
+        } catch (e) {}
+        return psBlank();
+    }
+    function psSave() { try { localStorage.setItem(PS_KEY, JSON.stringify(ps)); } catch (e) {} }
+    function psCount(k, n) { try { ps.c[k] = (ps.c[k] || 0) + (n || 1); psSave(); } catch (e) {} }
+    function psWin(lvId) { try { ps.win[lvId] = (ps.win[lvId] || 0) + 1; psCount('advWin'); } catch (e) {} }
+    // 遊玩時間：App 在前景時每分鐘 +1（這一天）
+    setInterval(() => { try { if (document.visibilityState !== 'visible') return; let d = getLocalDateStr(); ps.days[d] = (ps.days[d] || 0) + 1; psSave(); } catch (e) {} }, 60000);
+    function psHasData() { return Object.keys(ps.c).length || Object.keys(ps.win).length || Object.keys(ps.days).length; }
+    // 大冒險目前的狀態
+    function psSnap() {
+        let d = advData || {}, cl = Object.keys(d.cleared || {}).filter(k => d.cleared[k]).map(Number);
+        let words = 0; try { words = wordLists.filter(l => !isPackList(l)).reduce((t, l) => t + getListWordCount(l.content), 0); } catch (e) {}
+        return {
+            lv: advLevel(), xp: d.xp || 0, stage: cl.length ? Math.max(...cl) : 0, cleared: cl.length,
+            shards: d.shards || 0, potions: d.potions || 0, wipes: d.wipes || 0, hp: d.hp || 0,
+            mast: d.mastery || {}, eq: (d.eq || []).slice(0, 4), gear: (d.gear || []).filter(Boolean),
+            items: Object.keys(d.items || {}).filter(k => d.items[k]), up: d.up || {}, title: d.title || '',
+            dex: (() => { try { return ADV_LEVELS.filter(l => dexLvDone(l.id)).length; } catch (e) { return 0; } })(),
+            lists: (() => { try { return wordLists.filter(l => !isPackList(l)).length; } catch (e) { return 0; } })(), words,
+            google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
+        };
+    }
+    const PS_APP_VER = '20261117d';
+    // 新的一天：把之前累積的送出去（一天最多一次；沒有新資料就不送）
+    async function psMaybeSend(force) {
+        if (psSending || !supabaseClient) return;
+        let today = getLocalDateStr();
+        if (!force && (ps.since >= today || !psHasData())) return;
+        psSending = true;
+        let sent = { c: ps.c, win: ps.win, days: ps.days };
+        try {
+            let res = await walletRpc('report_stats', { p_delta: Object.assign({ v: 1 }, sent, { snap: psSnap() }) });
+            // 送出期間又多的次數留著（下次再送）
+            let left = psBlank();
+            ['c', 'win', 'days'].forEach(sec => Object.keys(ps[sec]).forEach(k => { let r = (ps[sec][k] || 0) - ((sent[sec] && sent[sec][k]) || 0); if (r > 0) left[sec][k] = r; }));
+            ps = left; psSave();
+            if (res && res.id) { try { localStorage.setItem(PS_ID_KEY, String(res.id)); } catch (e) {} }
+            if (res && Array.isArray(res.gifts) && res.gifts.length) psApplyGifts(res.gifts);
+        } catch (e) { console.warn('使用統計回傳失敗（下次再送）', e); }
+        psSending = false;
+    }
+    // 補發：冒險代幣／恢復藥水／濕紙巾加進大冒險；雞塊後台已經加好了，這裡只更新畫面
+    function psApplyGifts(list) {
+        const NAME = { shards: '冒險代幣', potions: '小型恢復藥水', wipes: '濕紙巾', chickens: '雞塊' };
+        let lines = [];
+        list.forEach(g => {
+            let n = parseInt(g.amount) || 0;
+            if (n <= 0 || !NAME[g.kind]) return;
+            if (g.kind === 'shards') advData.shards = (advData.shards || 0) + n;
+            else if (g.kind === 'potions') advData.potions = (advData.potions || 0) + n;
+            else if (g.kind === 'wipes') advData.wipes = (advData.wipes || 0) + n;
+            lines.push(`${NAME[g.kind]} +${n}${g.note ? `（${String(g.note).slice(0, 40)}）` : ''}`);
+        });
+        if (!lines.length) return;
+        advSave();
+        try { advRefreshViews(); } catch (e) {}
+        try { refreshWallet(); } catch (e) {}
+        uiConfirm('收到補發！\n' + lines.join('\n'), '好', '', { single: true });
+    }
+    // 設定頁：玩家 ID（回報問題、補發用）＋檢查補發
+    async function psShowId() {
+        let el = document.getElementById('playerIdText');
+        if (!el) return;
+        let id = ''; try { id = localStorage.getItem(PS_ID_KEY) || ''; } catch (e) {}
+        el.textContent = id ? psShortId(id) : '讀取中…';
+        try {
+            let r = await walletRpc('my_player_id', {});
+            if (r) { id = String(r); try { localStorage.setItem(PS_ID_KEY, id); } catch (e) {} }
+        } catch (e) {}
+        el.textContent = id ? psShortId(id) : '（無法連線）';
+    }
+    function psShortId(id) { return String(id || '').replace(/-/g, '').slice(0, 8).toUpperCase(); }
+    function psCopyId() {
+        let id = ''; try { id = localStorage.getItem(PS_ID_KEY) || ''; } catch (e) {}
+        if (!id) return;
+        let t = psShortId(id);
+        try { navigator.clipboard.writeText(t).then(() => weToastSafe('已複製玩家 ID ' + t)); } catch (e) { prompt('玩家 ID', t); }
+    }
+    function weToastSafe(m) { try { let t = document.getElementById('ahToast'); if (t && document.getElementById('adventureView').classList.contains('active')) { t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1600); return; } } catch (e) {} let b = document.getElementById('playerIdText'); if (b) { let o = b.textContent; b.textContent = '已複製'; setTimeout(() => { b.textContent = o; }, 1200); } }
+    async function psCheckGifts() {
+        let b = document.getElementById('playerGiftBtn'); if (b) b.disabled = true;
+        try {
+            let r = await walletRpc('claim_gifts', {});
+            if (Array.isArray(r) && r.length) psApplyGifts(r);
+            else uiConfirm('目前沒有補發。', '好', '', { single: true });
+        } catch (e) { uiConfirm('連不上後台，請稍後再試。', '好', '', { single: true }); }
+        if (b) b.disabled = false;
+    }
+    setTimeout(() => { try { psMaybeSend(); } catch (e) {} }, 5000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(() => { try { psMaybeSend(); } catch (e) {} }, 1500); });
+
     // ── App 自己的確認視窗（取代瀏覽器的 confirm）──
     //   iPhone 的瀏覽器有時會默默擋掉網頁的 confirm()（不跳視窗、直接當作「取消」），按返回就像沒反應；
     //   改用畫在畫面上的視窗，不受瀏覽器限制。回傳 Promise<boolean>
@@ -1805,13 +1912,13 @@
             let lines = String(msg || '').split('\n');
             w.innerHTML = `<div class="ui-cf__box"><p class="ui-cf__t">${escapeHTML(lines[0])}</p>${lines.length > 1 ? `<p class="ui-cf__s">${lines.slice(1).filter(x => x.trim()).map(escapeHTML).join('<br>')}</p>` : ''}
                 ${opt.type ? `<input class="ui-cf__in" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="請輸入「${escapeHTML(opt.type)}」">` : ''}
-                <div class="ui-cf__btns"><button type="button" class="ui-cf__no">${escapeHTML(cancelText || '取消')}</button><button type="button" class="ui-cf__ok${opt.danger ? ' ui-cf__ok--danger' : ''}"${opt.type ? ' disabled' : ''}>${escapeHTML(okText || '確定')}</button></div></div>`;
+                <div class="ui-cf__btns${opt.single ? ' ui-cf__btns--one' : ''}">${opt.single ? '' : `<button type="button" class="ui-cf__no">${escapeHTML(cancelText || '取消')}</button>`}<button type="button" class="ui-cf__ok${opt.danger ? ' ui-cf__ok--danger' : ''}"${opt.type ? ' disabled' : ''}>${escapeHTML(okText || '確定')}</button></div></div>`;
             let inp = w.querySelector('.ui-cf__in');
             if (inp) inp.addEventListener('input', () => { w.querySelector('.ui-cf__ok').disabled = inp.value.trim() !== opt.type; });
             let done = (v) => { w.remove(); document.removeEventListener('keydown', key, true); resolve(v); };
             let key = (e) => { if (e.key === 'Escape') { e.preventDefault(); done(false); } };
             w.addEventListener('click', (e) => { if (e.target === w) done(false); });
-            w.querySelector('.ui-cf__no').addEventListener('click', () => done(false));
+            let no = w.querySelector('.ui-cf__no'); if (no) no.addEventListener('click', () => done(false));
             w.querySelector('.ui-cf__ok').addEventListener('click', () => done(true));
             document.addEventListener('keydown', key, true);
             document.body.appendChild(w);
@@ -2248,7 +2355,7 @@
         if (wePack) refreshListViewsSoon();
         else { try { initPracticeCardGrid(); initExamCardGrid(); initFlashcardGrid(); initCardExamGrid(); initSpeakPracticeGrid(); } catch (e) {} }
         weDirty = false;
-        if (!silent) weToast('已儲存');
+        if (!silent) { weToast('已儲存'); psCount('listSave'); }
     }
     function backToListFromDetail() {
         weClosePos();
@@ -2313,6 +2420,7 @@
         let err = weDraftError();
         if (err) { if (err !== 'empty') weToast(err); return; }
         let w = { star: weDraft.star, en: weDraft.en.trim().replace(/\s+/g, ' '), means: weDraft.means.filter(m => m.zh.trim()).map(m => ({ zh: m.zh.trim(), pos: m.pos })), raw: '' };
+        psCount(weEditAt >= 0 ? 'wordEdit' : 'wordAdd');
         if (weEditAt >= 0) { weWords[weEditAt] = w; }
         else { weWords.unshift(w); weSort = null; we$('#weSortLabel').textContent = 'A-Z'; }
         weDirty = true;
@@ -2469,6 +2577,7 @@
         if (!title || !title.trim()) return;
 
         wordLists.push({ id: newListId(), title: title.trim(), content: "", createdAt: Date.now(), lang: curLang });
+        psCount('listNew');
         triggerAutoSaveToCloud();
         initEditorListCards();
         initPracticeCardGrid();
@@ -2762,6 +2871,7 @@
         }
         if (words.length === 0) { alert('⚠️ 範圍內沒有符合條件的單字，請重新勾選！'); return; }
         requestWakeLock();
+        psCount('pracCard');
         flashcardActiveList = words;
         currentFcIndex = resume ? Math.min(resume.idx || 0, words.length - 1) : 0;
         switchView('flashcardPlayView');
@@ -3098,6 +3208,7 @@
         cardExamResults = [];
         cardExamBuildPos(words);
         let bk = document.getElementById('cardExamBookName'); if (bk) bk.textContent = currentCardExamRanges ? `題庫 ${currentCardExamRanges}・測驗` : '';
+        psCount('exCard');
         switchView('cardExamPlayView');
         qzFitViewport();
         playCurrentCardExamQuestion();
@@ -3578,6 +3689,7 @@
         speakPracticeResults = resume && Array.isArray(resume.results) ? resume.results.slice(0, currentSpeakPracticeIndex) : [];
         speakBooks = resume ? (resume.books || '') : cpSelectedTitles('speakPracticeGrid');
         speakSaveResume();
+        psCount('pracSpeak');
         switchView('speakPracticePlayView');
         showSpeakPracticeQuestion();
     }
@@ -4537,6 +4649,7 @@
         if (wordsData.length === 0) { alert('找不到有效單字或無符合條件的單字！'); return; }
         requestWakeLock();
         isPlaying = true; isPaused = false;
+        psCount('pracListen');
         lpShowPart(true);
         playNextWord();
     }
@@ -4791,6 +4904,7 @@
 
         wordsData = words;
         currentWordIndex = 0; isPlaying = true; isExamRunning = true; examResults = [];
+        psCount('exListen');
         clearExamInputs();
         
         document.getElementById('examRangeContainer').style.display = 'none';
@@ -5082,6 +5196,7 @@
 
     function openSystemSettingsModal() { 
         document.getElementById('systemSettingsModal').style.display = 'block'; 
+        try { psShowId(); } catch (e) {}
         let volSlider = document.getElementById('systemVolume');
         if (volSlider) updateSliderProgress(volSlider);
     }
@@ -9098,6 +9213,7 @@
         if (!autoMode && words.length < lv.minWords) { alert(`⚠️ 這一關需要範圍內至少 ${lv.minWords} 個單字，請多勾選一些題庫。`); return; }
         advAbort();
         advSyncDaily();
+        psCount('advPlay');
         if (advData.hp <= 0) { advNoHpOpen(lv.id); return; }   // 沒有體力：跳出「體力不足」視窗（可以喝恢復藥水）
         advData.mapAt = lv.id;                               // 地圖上的雞塊：站在剛打的這關
         // 已通關的關卡可以一直重複挑戰：每天前 3 次打贏有通關獎勵，之後只累積招式熟練度（在 advWin 計算）
@@ -9418,6 +9534,7 @@
         if (!d || !BattleCore.dummyUnlocked(d, advData.cleared)) return;
         let words = tgWords();
         if (words.length < tgNeed(d) || (tgSrc().mode === 'auto' && !tgLvOk(tgSrc().lv, d))) { tgRenderPrep(); return; }
+        psCount('train');
         ahCloseSheet('Train');
         advAbort();
         advSyncDaily();
@@ -10985,6 +11102,7 @@
         let rewardOK = first || advReplaysUsed() < ADV_REPLAY_PER_DAY;
         if (!first && rewardOK) { advData.replays = advReplaysUsed() + 1; advData.replayDay = getLocalDateStr(); }
         advData.cleared[lv.id] = true;
+        psWin(lv.id);
         advSaveLastWrong();
         try {   // 每日任務：在大冒險中打贏一場敵人
             checkDailyReset();
@@ -11299,6 +11417,7 @@
     }
     async function advLose(id, why) {
         const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
+        if (adv.active && !adv.training) psCount('advLose');
         adv.active = false;
         releaseWakeLock();
         advDexRecord();                           // 圖鑑：輸了也算情蒐 +1
@@ -12858,7 +12977,7 @@
         startCardExamSession,
         startExamMode,
         startFlashcardSession,
-        submitCardExamAnswer, chiSuggPick, accountDelete,
+        submitCardExamAnswer, chiSuggPick, accountDelete, psCopyId, psCheckGifts,
         submitExamAnswer,
         switchHistoryTab,
         syncEditorScroll,
