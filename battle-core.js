@@ -22,7 +22,8 @@
     const STAT_KEYS = ['hp', 'atk', 'agi', 'def', 'int', 'luck'];
     const STAT_MAX = 10;                    // 每項能力（含 HP、智慧）最多 10：能強化的次數 = 10 − 基礎值
     // XP_NEED[n-1] = 升到 Lv.n 需要的「累積」經驗值；從 Lv.0 開始，最高 Lv.20
-    const XP_NEED = [3, 7, 37, 75, 124, 187, 268, 371, 503, 672, 888, 1165, 1519, 1903, 2317, 2771, 3265, 3799, 4373, 5007];
+    // r16：有圖鑑經驗值，6～10 級每級多 +5/+7/+9/+11/+13、11～15 級 +15～+35、16～20 級 +40～+120
+    const XP_NEED = [3, 7, 37, 75, 124, 192, 280, 392, 535, 717, 948, 1245, 1624, 2038, 2487, 2981, 3535, 4149, 4823, 5577];
     const OLD_XP_RATE = 0.7;                // 已經打贏過的舊關卡：經驗值只有 70%
     const LOSE_XP_RATE = 0.2;               // 戰敗：拿這關勝利經驗值（不含每日 ×2）的 20%，至少 1；中途離開什麼都沒有
     const MAX_EQUIP = 4;
@@ -38,10 +39,10 @@
     //   power：每一下的威力；hits：打幾下；q：要連續答對幾題
     const MOVES = [
         { key: 'tackle',  name: '衝撞',         icon: '💥', type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                              desc: '看單字，選出正確的中文意思' },
-        { key: 'combo',   name: '連續衝撞',     icon: '💥', type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 5 },                         desc: '看單字，選出正確的中文意思' },
+        { key: 'combo',   name: '連續衝撞',     icon: '💥', type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 6 },                         desc: '看單字，選出正確的中文意思' },   // r16：第 6 關獲勝
         { key: 'charge',  name: '衝鋒撞擊',     icon: '🐗', type: 'card',   mode: 'typeCn',      fx: 'charge', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'reward', level: 8 }, desc: '看英文單字，寫出中文意思' },
         { key: 'slash',   name: '斬擊',         icon: '⚔️', type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '聽發音，選中文意思' },
-        { key: 'slash2',  name: '連續斬擊',     icon: '⚔️', type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 6, item: 'mv_slash2' },       desc: '聽發音，選中文意思' },
+        { key: 'slash2',  name: '連續斬擊',     icon: '⚔️', type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 5, item: 'mv_slash2' },  /* r16：第 5 關獲勝 */       desc: '聽發音，選中文意思' },
         { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'reward', level: 7 }, desc: '聽發音，拼出英文單字（提示第一個字母和字母數）' },
         { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 2, hidden: true, buy: { kind: 'none' },                                       desc: '看單字，並唸出單字' },
         { key: 'wave2',   name: '雙重衝擊波',   icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 2, hidden: true, buy: { kind: 'none' },        desc: '看單字，並唸出單字' },
