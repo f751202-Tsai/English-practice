@@ -18,7 +18,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="icon" href="data:,">
     <!-- 引入 Google Identity Services SDK -->
-    <script src="boot.js?v=20261117c"></script>
+    <script src="boot.js?v=20261117d"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -4868,6 +4868,8 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .ui-cf__btns button { height: 48px; border-radius: 14px; font-size: 16px; font-weight: 900; font-family: inherit; cursor: pointer; }
 .ui-cf__no { border: 1.5px solid #dfe2ff; background: #fff; color: #4f46e5; }
 .ui-cf__ok { border: none; background: #4f46e5; color: #fff; box-shadow: 0 4px 0 #3730a3; }
+.ui-cf__btns--one { grid-template-columns: 1fr; }
+.ui-cf__s { white-space: normal; }
 .ui-cf__ok--danger { background: #dc2626; box-shadow: 0 4px 0 #991b1b; }
 .ui-cf__ok:disabled { background: #cbd5e1; box-shadow: none; cursor: default; }
 .ui-cf__s { text-align: left; }
@@ -6055,6 +6057,16 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
             <button class="cloud-btn" style="background: var(--primary-gradient);" data-on-click='[["openAboutModal",[]]]'>關於</button>
         </div>
 
+        <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 8px;">
+            <div>
+                <label style="margin-top:0;">玩家 ID</label>
+                <span style="font-size: 12.5px; color: var(--text-muted);">回報問題或補發時提供這組號碼：<b id="playerIdText" style="font-family: Inter, monospace; letter-spacing: .06em; color: var(--text-main);">—</b></span>
+            </div>
+            <div style="display:flex; gap:6px; flex: none;">
+                <button class="cloud-btn" style="background: var(--primary-gradient); white-space: nowrap;" data-on-click='[["psCopyId",[]]]'>複製</button>
+                <button class="cloud-btn" id="playerGiftBtn" style="background: var(--primary-gradient); white-space: nowrap;" data-on-click='[["psCheckGifts",[]]]'>檢查補發</button>
+            </div>
+        </div>
         <div class="config-group" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
             <div>
                 <label style="margin-top:0;">刪除帳號</label>
@@ -6255,7 +6267,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 </div>
 
 <!-- 戰鬥規則（app.js 和大冒險敵人模擬器共用同一份），一定要在 app.js 前面載入 -->
-<script src="battle-core.js?v=20261117c"></script>
-<script src="app.js?v=20261117c"></script>
+<script src="battle-core.js?v=20261117d"></script>
+<script src="app.js?v=20261117d"></script>
 </body>
 </html>
