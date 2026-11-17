@@ -156,13 +156,19 @@
     // ── 訓練場：木人（不會攻擊、敏捷 0）──
     //   immune 積木：某一類招式無效（跟冒險敵人共用同一個積木）
     //   unlock：打完第幾關才出現（0 = 一開始就有）；firstReward：第一次打到 HP 歸零（999）給一次的獎勵
+    //   xp：這一場打到 HP 的幾成給多少經驗值（累積）：[打到比例, 經驗值]；例：木頭人 30% +1、60% 再 +1、100% 再 +2 → 打倒共 4
+    //   src：題庫限制（auto：冒險題庫只能選第 from～to 關；minWords：精選／自訂題庫至少幾個字）；沒寫 = 一般訓練（至少 TRAIN_MIN_WORDS 字）
+    //   訓練場每天可以打無限次
+    const TRAIN_MIN_WORDS = 10;
     const DUMMIES = [
-        { key: 'wood',  name: '木頭人',   sprite: 'dummy_wood',  hp: 999, def: 0, agi: 0, traits: [],                                   unlock: 0,  firstReward: { shards: 10 } },
-        { key: 'noise', name: '抗噪木人', sprite: 'dummy_noise', hp: 999, def: 0, agi: 0, traits: [{ type: 'immune', moveType: 'listen' }], unlock: 7,  firstReward: { shards: 20 } },
-        { key: 'card',  name: '字卡木人', sprite: 'dummy_card',  hp: 999, def: 0, agi: 0, traits: [{ type: 'immune', moveType: 'card' }],   unlock: 8,  firstReward: { shards: 20 } },
-        { key: 'iron',  name: '鐵木人',   sprite: 'dummy_iron',  hp: 999, def: 10, agi: 0, traits: [],                                   unlock: 15, firstReward: { shards: 30 } }
+        { key: 'wood',  name: '木頭人',   sprite: 'dummy_wood',  hp: 999, def: 0,  agi: 0, traits: [],                                       unlock: 3,  firstReward: { shards: 10 }, xp: [[0.3, 1], [0.6, 1], [1, 2]] },
+        { key: 'noise', name: '抗噪木人', sprite: 'dummy_noise', hp: 999, def: 10, agi: 0, traits: [{ type: 'immune', moveType: 'listen' }], unlock: 7,  firstReward: { shards: 20 }, xp: [[0.3, 1], [0.6, 2], [1, 3]] },
+        { key: 'card',  name: '字卡木人', sprite: 'dummy_card',  hp: 999, def: 10, agi: 0, traits: [{ type: 'immune', moveType: 'card' }],   unlock: 8,  firstReward: { shards: 20 }, xp: [[0.3, 1], [0.6, 2], [1, 3]] },
+        { key: 'iron',  name: '鐵木人',   sprite: 'dummy_iron',  hp: 999, def: 30, agi: 0, traits: [],                                       unlock: 15, firstReward: { shards: 30 }, xp: [[0.3, 2], [0.6, 3], [1, 4]], src: { from: 11, to: 20, minWords: 50 } }
     ];
     const TRAIN_ROUNDS = 10;                // 訓練：10 回合結束
+    // 大冒險首頁底部按鈕：打完第幾關才能按（新手導引；狀態一開始就能按）
+    const TAB_OPEN = { shop: 2, train: 3, dex: 4 };
 
     // ═════════ 敵人圖鑑 ═════════
     //   能力值、特殊能力的數字都直接讀上面的 LEVELS／常數（數值改了圖鑑會跟著變）；這裡只多「攻略」文字（圖鑑專用）
@@ -170,8 +176,8 @@
     const DEX_REWARD = { shards: 2, xpRate: 0.5 };   // 每隻情蒐完成：冒險代幣 +2、經驗值 = 這關首勝經驗值 50%（至少 1）
     const DEX_CHAPTER_REWARD = { shards: 10 };       // 整章情蒐完成：冒險代幣 +10 ＋ 稱號
     const TITLES = {
-        night: { chapter: 1, name: '夜市小霸王', desc: '（純稱號）', xpPct: 0 },
-        store: { chapter: 2, name: '24小時不打烊', desc: '經驗值 +5%（無條件進位）', xpPct: 5 }
+        night: { chapter: 1, name: '夜市小霸王', desc: '可以在夜市橫著走', xpPct: 0 },   // 純稱號（沒有能力加成）
+        store: { chapter: 2, name: '24小時不打烊', desc: '經驗值 +5%', xpPct: 5 }          // 經驗值 +5%（程式無條件進位）
     };
     // 特殊能力（用上面的常數組字）＋攻略；key = 敵人圖（sprite）
     const DEX_TEXT = {
@@ -206,11 +212,11 @@
         LEVELS.forEach(lv => {
             let list = lv.phases && lv.phases.length ? lv.phases : [lv];
             list.forEach((p, i) => out.push({ key: p.sprite, lv: lv.id, idx: i, name: p.name, sprite: p.sprite,
-                stats: { hp: p.hp, atk: p.atk, def: p.def, agi: p.agi, int: p.int || 0, luck: p.luck || 0 }, shield: p.shield }));
+                stats: { hp: p.hp, atk: p.atk, def: p.def, agi: p.agi, int: p.int || 0, luck: p.luck || 0 }, shield: (typeof p.shield === 'number') ? p.shield : shieldMax(p.int) }));   // 護盾：跟 makeEnemy 同一套算法
             if (lv.special === 'clerk') {
                 let B = CLERK_SHIFT_BUFF;
                 out.push({ key: 'clerk2', lv: lv.id, idx: 1, name: lv.name + '（交班）', sprite: 'clerk2', form2: true,
-                    stats: { hp: '≤' + Math.min(lv.hp, CLERK_SHIFT_HP - 1 + B.heal), atk: lv.atk + B.atk, def: lv.def, agi: lv.agi + B.agi, int: (lv.int || 0) + B.int, luck: lv.luck || 0 } });
+                    stats: { hp: '≤' + Math.min(lv.hp, CLERK_SHIFT_HP - 1 + B.heal), atk: lv.atk + B.atk, def: lv.def, agi: lv.agi + B.agi, int: (lv.int || 0) + B.int, luck: lv.luck || 0 }, shield: shieldMax((lv.int || 0) + B.int) });   // 交班時護盾重新充滿
             }
         });
         return out.map(f => {
@@ -311,6 +317,13 @@
     }
     function dummyUnlocked(d, cleared) { if (typeof d === 'string') d = DUMMIES.find(x => x.key === d); return !!d && isUnlocked(d.unlock || 0, cleared); }
     // 木人受損的樣子：0 完整（100%～50%）／1 裂痕（50%～30%）／2 缺一塊（30% 以下）
+    // 木人經驗值的門檻：[{ dmg: 要打到多少傷害, xp: 這一段給多少 }]（打到比例 × HP，無條件進位）
+    function dummyXpTiers(d) { if (typeof d === 'string') d = DUMMIES.find(x => x.key === d); return d ? (d.xp || []).map(([r, x]) => ({ dmg: Math.ceil(d.hp * r - 1e-9), xp: x, pct: Math.round(r * 100) })) : []; }
+    // 這場打了 dmg 傷害 → 拿到多少經驗值（累積所有已達到的門檻）
+    function dummyXp(d, dmg) { return dummyXpTiers(d).filter(t => (dmg || 0) >= t.dmg).reduce((a, t) => a + t.xp, 0); }
+    // 這隻木人的題庫限制
+    function dummySrc(d) { if (typeof d === 'string') d = DUMMIES.find(x => x.key === d); let s = (d && d.src) || {}; return { from: s.from || 1, to: s.to || 999, minWords: s.minWords || TRAIN_MIN_WORDS }; }
+    function tabOpen(tab, cleared) { return isUnlocked(TAB_OPEN[tab] || 0, cleared); }
     function dummyStage(hp, max) { let r = max ? hp / max : 1; return r > 0.5 ? 0 : r > 0.3 ? 1 : 2; }
     // 訓練：每一題答完呼叫一次（答對 +1、答錯歸 0）；回傳新的連對數
     function comboAnswer(st, ok) { if (!st.training) return 0; st.combo = ok ? (st.combo || 0) + 1 : 0; return st.combo; }
@@ -769,7 +782,7 @@
         RESIST_CAP, STINK_DMG, BOBA_HEAL, CLAW_BONUS, PINBALL_HEAL, PINBALL_HIT, SEAL_COUNT,
         COFFEE_BURN, CLERK_POSTS, CLERK_SHIFT_HP, CLERK_CD, STAMP_NEED, STAMP_ATK, STAMP_HEAL, RESIST, IMMUNE, WEAK_BONUS,
         SPEED_GUARD, CLERK_SPEED_GUARD, TEA_SPEED_HEAL, EXPIRE_SPEED_DMG, EXPIRE_SPEED_EVERY, MICRO_ATK_UP, EXPIRE_SELF, EGG_CARD_BONUS, IGNORE_SHIELD,
-        DUMMIES, TRAIN_ROUNDS, COMBO_STEPS, CLERK_SHIFT_BUFF, DEX_NEED, DEX_REWARD, DEX_CHAPTER_REWARD, TITLES, DEX_TEXT, ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
+        DUMMIES, TRAIN_ROUNDS, TRAIN_MIN_WORDS, TAB_OPEN, dummyXpTiers, dummyXp, dummySrc, tabOpen, COMBO_STEPS, CLERK_SHIFT_BUFF, DEX_NEED, DEX_REWARD, DEX_CHAPTER_REWARD, TITLES, DEX_TEXT, ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
         // 公式
         levelOf, upMax, moveByKey, rarityKey, rarity, masteryLevel, masteryPerLv, masteryAtk, luckDice, rollLuck, shieldMax, answerSecs,
         dexForms, dexReward, titleXp, comboMul, dummyLevel, dummyUnlocked, dummyStage, comboAnswer, critOn, moveUnlockAt, gearUnlockAt, isUnlocked, unlocks, takeDamage, actionCount, damage, speedCfg, speedBonus, expireSpeedDmg, playerStats, winXp, loseXp, makeEnemy, hasGear, gearStatBonus, gearTimeMinus, netActive, HELMET, NET_ATK, NET_MAX_INT, winHeal, shuffle,
