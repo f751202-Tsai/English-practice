@@ -963,7 +963,7 @@
                     localStorage.setItem(GOOGLE_LINKED_FLAG, '1');
                     scheduleTokenRefresh(resp.expires_in);
                     let renewing = wasAuto && accessToken;           // 只是換新權杖：不必重新同步與綁定
-                    if (!renewing) { try { psSwitchSnap = psSnap(); } catch (e) {} cloudWalletKey = null; walletBoundThisLogin = false; advSwitchStore(); }   // 換成 Google 進度（r18：先拍下原本帳號的大冒險狀態，換錢包時統計要用）
+                    if (!renewing) { try { psSwitchSnap = psSnapSafe(); } catch (e) {} cloudWalletKey = null; walletBoundThisLogin = false; advSwitchStore(); }   // 換成 Google 進度（r18：先拍下原本帳號的大冒險狀態，換錢包時統計要用）
                     accessToken = resp.access_token;
                     isCloudSyncActive = true;
                     updateCloudStatusText(`✅ 已連結 Google 雲端`);
@@ -1867,11 +1867,17 @@
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261119a';
+    const PS_APP_VER = '20261119b';
+    // r18：要附上的大冒險現況。錢包已經綁過 Google、但現在顯示的是「離線進度」（登出中）→ 不附（null）
+    //   不然登出時（或登出後換帳號時）送出的會是空白的離線進度，把後台這個玩家真正的等級、關卡蓋成 0
+    function psSnapSafe() {
+        try { if (!advLoadedG && isValidWalletKey(localStorage.getItem(WALLET_KEY_STORAGE))) return null; } catch (e) {}
+        return psSnap();
+    }
     // 新的時段（00:00、12:00 之後）：把之前累積的送出去（一個時段最多一次；沒有新資料就不送）
     //   舊版存的 since 是「2026-11-19」（沒有 a／b），比任何時段都早，更新後會直接送一次，沒關係
     let psFailAt = 0;
-    async function psMaybeSend(force, snap) {
+    async function psMaybeSend(force, snap) {      // snap：不給＝現在的大冒險現況；null＝不附（後台保留上一次的）
         if (psSending || !supabaseClient) return false;
         if (!force && (ps.since >= psPeriod() || !psHasData())) return false;
         if (!force && Date.now() - psFailAt < 10 * 60 * 1000) return false;      // 剛失敗過：10 分鐘後再試
@@ -1879,7 +1885,8 @@
         let ok = false;
         let sent = { c: ps.c, win: ps.win, days: ps.days, t: ps.t || {}, lvx: ps.lvx || {} };
         try {
-            let res = await walletRpc('report_stats', { p_delta: Object.assign({ v: 1 }, sent, { snap: snap || psSnap() }) });
+            if (snap === undefined) snap = psSnapSafe();
+            let res = await walletRpc('report_stats', { p_delta: Object.assign({ v: 1 }, sent, snap ? { snap } : {}) });
             // 送出期間又多的次數留著（下次再送）
             let left = psBlank();
             ['c', 'win', 'days', 't', 'lvx'].forEach(sec => Object.keys(ps[sec] || {}).forEach(k => { let r = (ps[sec][k] || 0) - ((sent[sec] && sent[sec][k]) || 0); if (r > 0) left[sec][k] = r; }));
@@ -6131,8 +6138,10 @@
         let seen = { shop: open('shop'), train: open('train'), dex: open('dex'), soda: open('shop'), tgGo: open('train') };
         return Object.assign({ intro: !!c['1'], bag: !!c['1'], seen, shopSeen: null }, more({ bag: !!c['1'] }, seen));
     }
+    var advLoadedG = false;                       // r18：目前的 advData 是不是「Google 進度」（使用統計判斷要不要附上大冒險現況）
     function advLoad() {
         let d = {};
+        advLoadedG = advStoreKey() === ADV_STORE_G;
         try { d = JSON.parse(localStorage.getItem(advStoreKey())) || {}; } catch (e) { d = {}; }
         // 改成經驗值系統：舊存檔（糖醋醬版）的進度、道具、裝備、能力、熟練度全部重來，傳說招式回到補給站
         //   只留：帳號、今天的登入代幣有沒有領過、錯字紀錄（學習用）
