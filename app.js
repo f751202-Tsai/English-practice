@@ -417,6 +417,7 @@
         // r18：要換成另一個錢包（＝另一個玩家）：先把這台裝置累積的使用統計送給原本的錢包，再清空
         if (isValidWalletKey(localKey) && key !== localKey) await psFlushForSwitch();
         else psSwitchSnap = null;
+        psHoldAt = 0;                                // 錢包確定了：之後可以照常送
         walletBusy = true;
         try {
             if (fresh) await switchToFreshAnonymousWallet();
@@ -963,7 +964,7 @@
                     localStorage.setItem(GOOGLE_LINKED_FLAG, '1');
                     scheduleTokenRefresh(resp.expires_in);
                     let renewing = wasAuto && accessToken;           // 只是換新權杖：不必重新同步與綁定
-                    if (!renewing) { try { psSwitchSnap = psSnapSafe(); } catch (e) {} cloudWalletKey = null; walletBoundThisLogin = false; advSwitchStore(); }   // 換成 Google 進度（r18：先拍下原本帳號的大冒險狀態，換錢包時統計要用）
+                    if (!renewing) { try { psSwitchSnap = psSnapSafe(); psHoldAt = Date.now(); } catch (e) {} cloudWalletKey = null; walletBoundThisLogin = false; advSwitchStore(); }   // 換成 Google 進度（r18：先拍下原本帳號的大冒險狀態，換錢包時統計要用）
                     accessToken = resp.access_token;
                     isCloudSyncActive = true;
                     updateCloudStatusText(`✅ 已連結 Google 雲端`);
@@ -1867,11 +1868,13 @@
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261119b';
+    const PS_APP_VER = '20261119c';
     // r18：要附上的大冒險現況。錢包已經綁過 Google、但現在顯示的是「離線進度」（登出中）→ 不附（null）
     //   不然登出時（或登出後換帳號時）送出的會是空白的離線進度，把後台這個玩家真正的等級、關卡蓋成 0
     function psSnapSafe() {
         try { if (!advLoadedG && isValidWalletKey(localStorage.getItem(WALLET_KEY_STORAGE))) return null; } catch (e) {}
+        // r18b：Google 進度還沒從雲端載入完成（剛打開、剛登入）：手機上的暫存可能是空的或別的帳號的 → 不附
+        if (advLoadedG && !advCloudReady) return null;
         return psSnap();
     }
     // 新的時段（00:00、12:00 之後）：把之前累積的送出去（一個時段最多一次；沒有新資料就不送）
@@ -1881,6 +1884,8 @@
         if (psSending || !supabaseClient) return false;
         if (!force && (ps.since >= psPeriod() || !psHasData())) return false;
         if (!force && Date.now() - psFailAt < 10 * 60 * 1000) return false;      // 剛失敗過：10 分鐘後再試
+        if (!force && Date.now() - psHoldAt < 60000) return false;                // 正在登入／換帳號：等錢包換好再送（不然會送給錯的人）
+        if (!force && advLoadedG && !advCloudReady && Date.now() - PS_T0 < 60000) return false;   // 剛打開：先等雲端進度載入，大冒險現況才會正確
         psSending = true;
         let ok = false;
         let sent = { c: ps.c, win: ps.win, days: ps.days, t: ps.t || {}, lvx: ps.lvx || {} };
@@ -1901,6 +1906,8 @@
     }
     // r18：同一台裝置換帳號（換成另一個雞塊錢包）之前：先把累積的送給「原本的帳號」，再清空，新帳號從零開始記
     //   送不出去（沒網路等）就丟掉，不算給新帳號（寧可少記，不要算錯人）
+    let psHoldAt = 0;                                // 開始登入的時間（登入、換錢包期間先不送，最多等 60 秒）
+    const PS_T0 = Date.now();
     let psSwitchSnap = null;                         // 開始登入時先拍下「原本帳號」的大冒險狀態（登入後 advData 會換成新帳號的）
     async function psFlushForSwitch() {
         try {
