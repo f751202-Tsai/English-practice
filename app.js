@@ -414,6 +414,9 @@
         } else {
             key = generateWalletKey();
         }
+        // r18：要換成另一個錢包（＝另一個玩家）：先把這台裝置累積的使用統計送給原本的錢包，再清空
+        if (isValidWalletKey(localKey) && key !== localKey) await psFlushForSwitch();
+        else psSwitchSnap = null;
         walletBusy = true;
         try {
             if (fresh) await switchToFreshAnonymousWallet();
@@ -960,7 +963,7 @@
                     localStorage.setItem(GOOGLE_LINKED_FLAG, '1');
                     scheduleTokenRefresh(resp.expires_in);
                     let renewing = wasAuto && accessToken;           // 只是換新權杖：不必重新同步與綁定
-                    if (!renewing) { cloudWalletKey = null; walletBoundThisLogin = false; advSwitchStore(); }   // 換成 Google 進度
+                    if (!renewing) { try { psSwitchSnap = psSnap(); } catch (e) {} cloudWalletKey = null; walletBoundThisLogin = false; advSwitchStore(); }   // 換成 Google 進度（r18：先拍下原本帳號的大冒險狀態，換錢包時統計要用）
                     accessToken = resp.access_token;
                     isCloudSyncActive = true;
                     updateCloudStatusText(`✅ 已連結 Google 雲端`);
@@ -1794,9 +1797,9 @@
         }
     }
 
-    // ═════════ 玩家使用統計（後台 player_stats；一天回傳一次）═════════
+    // ═════════ 玩家使用統計（後台 player_stats；12 小時回傳一次）═════════
     //   這台裝置先累加：c 計數器、win 每關打贏次數、days 每天遊玩分鐘；
-    //   新的一天第一次打開 App（或從背景回來）時，把之前累積的一次送到後台（report_stats 會加總、順便帶回補發），送成功才清掉
+    //   每過 00:00 或 12:00 後第一次打開 App（或從背景回來、或 App 一直開著）時，把之前累積的一次送到後台（report_stats 會加總、順便帶回補發），送成功才清掉
     //   snap：送出當下的大冒險狀態（等級、打到哪、熟練度、冒險代幣…），後台整份換掉
     //   計數器名稱（解碼 App 用同一份對照表）：
     //     listNew 新增題庫　listSave 編輯題庫按儲存　wordAdd 新增單字　wordEdit 修改單字
@@ -1804,11 +1807,13 @@
     //     advPlay 大冒險開打　advWin 打贏　advLose 打輸　train 訓練場
     const PS_KEY = 'chicky_pstats_v1', PS_ID_KEY = 'chicky_player_id';
     let ps = psLoad(), psSending = false;
-    function psBlank() { return { c: {}, win: {}, days: {}, t: {}, lvx: {}, since: getLocalDateStr() }; }
+    // r18：改成 12 小時回傳一次：每天 00:00 和 12:00 各是一個新的「時段」（例如 2026-11-19a＝上午、2026-11-19b＝下午）
+    function psPeriod() { return getLocalDateStr() + (new Date().getHours() < 12 ? 'a' : 'b'); }
+    function psBlank() { return { c: {}, win: {}, days: {}, t: {}, lvx: {}, since: psPeriod() }; }
     function psLoad() {
         try {
             let o = JSON.parse(localStorage.getItem(PS_KEY) || 'null');
-            if (o && typeof o === 'object') return { c: o.c || {}, win: o.win || {}, days: o.days || {}, t: o.t || {}, lvx: o.lvx || {}, dsec: o.dsec || 0, since: o.since || getLocalDateStr() };
+            if (o && typeof o === 'object') return { c: o.c || {}, win: o.win || {}, days: o.days || {}, t: o.t || {}, lvx: o.lvx || {}, dsec: o.dsec || 0, since: o.since || psPeriod() };
         } catch (e) {}
         return psBlank();
     }
@@ -1862,16 +1867,19 @@
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261118b';
-    // 新的一天：把之前累積的送出去（一天最多一次；沒有新資料就不送）
-    async function psMaybeSend(force) {
-        if (psSending || !supabaseClient) return;
-        let today = getLocalDateStr();
-        if (!force && (ps.since >= today || !psHasData())) return;
+    const PS_APP_VER = '20261119a';
+    // 新的時段（00:00、12:00 之後）：把之前累積的送出去（一個時段最多一次；沒有新資料就不送）
+    //   舊版存的 since 是「2026-11-19」（沒有 a／b），比任何時段都早，更新後會直接送一次，沒關係
+    let psFailAt = 0;
+    async function psMaybeSend(force, snap) {
+        if (psSending || !supabaseClient) return false;
+        if (!force && (ps.since >= psPeriod() || !psHasData())) return false;
+        if (!force && Date.now() - psFailAt < 10 * 60 * 1000) return false;      // 剛失敗過：10 分鐘後再試
         psSending = true;
+        let ok = false;
         let sent = { c: ps.c, win: ps.win, days: ps.days, t: ps.t || {}, lvx: ps.lvx || {} };
         try {
-            let res = await walletRpc('report_stats', { p_delta: Object.assign({ v: 1 }, sent, { snap: psSnap() }) });
+            let res = await walletRpc('report_stats', { p_delta: Object.assign({ v: 1 }, sent, { snap: snap || psSnap() }) });
             // 送出期間又多的次數留著（下次再送）
             let left = psBlank();
             ['c', 'win', 'days', 't', 'lvx'].forEach(sec => Object.keys(ps[sec] || {}).forEach(k => { let r = (ps[sec][k] || 0) - ((sent[sec] && sent[sec][k]) || 0); if (r > 0) left[sec][k] = r; }));
@@ -1879,8 +1887,26 @@
             ps = left; psSave();
             if (res && res.id) { try { localStorage.setItem(PS_ID_KEY, String(res.id)); } catch (e) {} }
             if (res && Array.isArray(res.gifts) && res.gifts.length) psApplyGifts(res.gifts);
-        } catch (e) { console.warn('使用統計回傳失敗（下次再送）', e); }
+            ok = true;
+        } catch (e) { psFailAt = Date.now(); console.warn('使用統計回傳失敗（下次再送）', e); }
         psSending = false;
+        return ok;
+    }
+    // r18：同一台裝置換帳號（換成另一個雞塊錢包）之前：先把累積的送給「原本的帳號」，再清空，新帳號從零開始記
+    //   送不出去（沒網路等）就丟掉，不算給新帳號（寧可少記，不要算錯人）
+    let psSwitchSnap = null;                         // 開始登入時先拍下「原本帳號」的大冒險狀態（登入後 advData 會換成新帳號的）
+    async function psFlushForSwitch() {
+        try {
+            for (let i = 0; i < 30 && psSending; i++) await new Promise(r => setTimeout(r, 100));
+            if (psHasData()) {
+                let t = new Promise(r => setTimeout(() => r(false), 6000));
+                let ok = await Promise.race([psMaybeSend(true, psSwitchSnap), t]);
+                if (!ok) console.warn('換帳號前的使用統計沒送出，已丟掉（不算給新帳號）');
+            }
+        } catch (e) {}
+        ps = psBlank(); psSave();
+        psSwitchSnap = null;
+        try { localStorage.removeItem(PS_ID_KEY); } catch (e) {}
     }
     // 補發：冒險代幣／恢復藥水／濕紙巾加進大冒險；雞塊後台已經加好了，這裡只更新畫面
     function psApplyGifts(list) {
@@ -1930,6 +1956,8 @@
         if (b) b.disabled = false;
     }
     setTimeout(() => { try { psMaybeSend(); } catch (e) {} }, 5000);
+    // App 一直開著跨過 00:00／12:00：每分鐘看一次要不要送
+    setInterval(() => { try { if (document.visibilityState === 'visible') psMaybeSend(); } catch (e) {} }, 60000);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(() => { try { psMaybeSend(); } catch (e) {} }, 1500); });
 
     // ── App 自己的確認視窗（取代瀏覽器的 confirm）──
