@@ -42,7 +42,7 @@
         { key: 'combo',   name: '連續衝撞',     icon: '💥', type: 'card',   mode: 'choice',      fx: 'dash',   power: 1, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 6 },                         desc: '看單字，選出正確的中文意思' },   // r16：第 6 關獲勝
         { key: 'charge',  name: '衝鋒撞擊',     icon: '🐗', type: 'card',   mode: 'typeCn',      fx: 'charge', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'reward', level: 8 }, desc: '看英文單字，寫出中文意思' },
         { key: 'slash',   name: '斬擊',         icon: '⚔️', type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 1, q: 1, tries: 1, buy: { kind: 'free' },                                       desc: '聽發音，選中文意思' },
-        { key: 'slash2',  name: '連續斬擊',     icon: '⚔️', type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 5, item: 'mv_slash2' },  /* r16：第 5 關獲勝 */       desc: '聽發音，選中文意思' },
+        { key: 'slash2',  name: '二連斬',     icon: '⚔️', type: 'listen', mode: 'listenCn',     fx: 'slash',  power: 2, hits: 2, q: 3, tries: 1, buy: { kind: 'reward', level: 5, item: 'mv_slash2' },  /* r16：第 5 關獲勝 */       desc: '聽發音，選中文意思' },
         { key: 'thrust',  name: '突刺',         icon: '🔱', type: 'listen', mode: 'listenSpell',  fx: 'thrust', power: 5, hits: 1, q: 2, tries: 1, buy: { kind: 'reward', level: 7 }, desc: '聽發音，拼出英文單字（提示第一個字母和字母數）' },
         { key: 'wave',    name: '衝擊波',       icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 1, q: 1, tries: 2, hidden: true, buy: { kind: 'none' },                                       desc: '看單字，並唸出單字' },
         { key: 'wave2',   name: '雙重衝擊波',   icon: '🌊', type: 'speak',  mode: 'speak',        fx: 'wave',   power: 2, hits: 2, q: 2, tries: 2, hidden: true, buy: { kind: 'none' },        desc: '看單字，並唸出單字' },
@@ -168,6 +168,7 @@
         { key: 'iron',  name: '鐵木人',   sprite: 'dummy_iron',  hp: 999, def: 30, agi: 0, traits: [],                                       unlock: 15, firstReward: { shards: 30 }, xp: [[0.3, 2], [0.6, 3], [1, 4]], src: { from: 11, to: 20, minWords: 50 } }
     ];
     const TRAIN_ROUNDS = 10;                // 訓練：10 回合結束
+    const TRAIN_FIRST_GIFT = { shards: 2, xp: 2 };   // r17：第一次訓練打完、木人有受到傷害 → 冒險代幣 +2、經驗 +2（只給一次）
     // 大冒險首頁底部按鈕：打完第幾關才能按（新手導引；狀態一開始就能按）
     const TAB_OPEN = { shop: 2, train: 3, dex: 4 };
 
@@ -783,7 +784,7 @@
         RESIST_CAP, STINK_DMG, BOBA_HEAL, CLAW_BONUS, PINBALL_HEAL, PINBALL_HIT, SEAL_COUNT,
         COFFEE_BURN, CLERK_POSTS, CLERK_SHIFT_HP, CLERK_CD, STAMP_NEED, STAMP_ATK, STAMP_HEAL, RESIST, IMMUNE, WEAK_BONUS,
         SPEED_GUARD, CLERK_SPEED_GUARD, TEA_SPEED_HEAL, EXPIRE_SPEED_DMG, EXPIRE_SPEED_EVERY, MICRO_ATK_UP, EXPIRE_SELF, EGG_CARD_BONUS, IGNORE_SHIELD,
-        DUMMIES, TRAIN_ROUNDS, TRAIN_MIN_WORDS, TAB_OPEN, dummyXpTiers, dummyXp, dummySrc, tabOpen, COMBO_STEPS, CLERK_SHIFT_BUFF, DEX_NEED, DEX_REWARD, DEX_CHAPTER_REWARD, TITLES, DEX_TEXT, ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
+        DUMMIES, TRAIN_ROUNDS, TRAIN_FIRST_GIFT, TRAIN_MIN_WORDS, TAB_OPEN, dummyXpTiers, dummyXp, dummySrc, tabOpen, COMBO_STEPS, CLERK_SHIFT_BUFF, DEX_NEED, DEX_REWARD, DEX_CHAPTER_REWARD, TITLES, DEX_TEXT, ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
         // 公式
         levelOf, upMax, moveByKey, rarityKey, rarity, masteryLevel, masteryPerLv, masteryAtk, luckDice, rollLuck, shieldMax, answerSecs,
         dexForms, dexReward, titleXp, comboMul, dummyLevel, dummyUnlocked, dummyStage, comboAnswer, critOn, moveUnlockAt, gearUnlockAt, isUnlocked, unlocks, takeDamage, actionCount, damage, speedCfg, speedBonus, expireSpeedDmg, playerStats, winXp, loseXp, makeEnemy, hasGear, gearStatBonus, gearTimeMinus, netActive, HELMET, NET_ATK, NET_MAX_INT, winHeal, shuffle,
