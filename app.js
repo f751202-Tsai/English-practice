@@ -126,7 +126,7 @@
         word_cap_50: { name: '單字上限 +100',  desc: '指定一本題庫，單字上限 +100' },
         list_slot_1: { name: '題庫數量 +1',   desc: '增加 1 本空白題庫（可存放 100 個單字）' },
         mv_charge:   { name: '衝鋒撞擊',     desc: '雞塊大冒險新招式（字卡：輸入中文，威力 3）' },
-        mv_slash2:   { name: '連續斬擊',     desc: '雞塊大冒險新招式（聽力：斬 2 下）' },
+        mv_slash2:   { name: '二連斬',     desc: '雞塊大冒險新招式（聽力：斬 2 下）' },
         mv_thrust:   { name: '突刺',         desc: '雞塊大冒險新招式（聽力：拼出英文，威力 3）' },
         pack_toeic_job: { name: '多益-職場', desc: '購買後多一本「多益-職場」英文單字庫（300 個職場單字），不占用你原本的題庫數量。\n這本單字庫不能清空、刪除或更換語言。' }
     };
@@ -185,7 +185,7 @@
         farm_1_5: "January 1月 名詞\nFebruary 2月 名詞\nMarch 3月 名詞\nApril 4月 名詞\nMay 5月 名詞\nJune 6月 名詞\nJuly 7月 名詞\nAugust 8月 名詞\nSeptember 9月 名詞\nOctober 10月 名詞\nNovember 11月 名詞\nDecember 12月 名詞\nMonday 星期一 名詞\nTuesday 星期二 名詞\nWednesday 星期三 名詞\nThursday 星期四 名詞\nFriday 星期五 名詞\nSaturday 星期六 名詞\nSunday 星期日 名詞\nspring 春天 名詞\nsummer 夏天 名詞\nautumn 秋天 名詞\nwinter 冬天 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\nyesterday 昨天 名詞 副詞\nmorning 早上 名詞\nnight 夜晚 名詞\nsun 太陽 名詞\nrain 雨 名詞\nwind 風 名詞\ncloud 雲 名詞\nsnow 雪 名詞\nwarm 溫暖的 形容詞\nseed 種子 名詞\nflower 花 名詞\nleaf 葉子 名詞\ntree 樹 名詞\ngrass 草 名詞\nroot 根 名詞\nfruit 水果 名詞\ncorn 玉米 名詞\nrice 米 名詞\npotato 馬鈴薯 名詞\ncarrot 紅蘿蔔 名詞\napple 蘋果 名詞\nbanana 香蕉 名詞\nwatermelon 西瓜 名詞\nsunflower 向日葵 名詞\nchicken 雞 名詞\ndog 狗 名詞\ncat 貓 名詞\ncow 乳牛 名詞\npig 豬 名詞\nduck 鴨 名詞\nbird 鳥 名詞\nbee 蜜蜂 名詞\nhoney 蜂蜜 名詞\nplant 種植 動詞\nwater 澆水 動詞\ngrow 生長 動詞\npick 摘 動詞\ndig 挖 動詞\nfeed 餵 動詞\nwait 等待 動詞\nsell 賣 動詞\nharvest 收成 動詞\nfarm 農場 名詞\nfield 田地 名詞\ngarden 花園 名詞\nfence 圍籬 名詞\nhouse 房子 名詞\nbasket 籃子 名詞\nmarket 市場 名詞\nvegetable 蔬菜 名詞\nstrawberry 草莓 名詞\npineapple 鳳梨 名詞\nbutterfly 蝴蝶 名詞\nafternoon 下午 名詞\nbeautiful 美麗的 形容詞\ntemperature 溫度 名詞\nscarecrow 稻草人 名詞",
         adv_night: "hot 熱的 形容詞\ncup 杯子 名詞\nsoup 湯 名詞\nmeatball 貢丸 肉丸 名詞\neat 吃 動詞\ngood 好的 好吃的 形容詞\ncorn 玉米 名詞\ngrill 烤 動詞 烤架 名詞\nsalt 鹽 名詞\nbutter 奶油 名詞\nsweet 甜的 形容詞\nbuy 買 動詞\noyster 蚵仔 牡蠣 名詞\negg 蛋 名詞\nrice 飯 米 名詞\nsauce 醬料 名詞\nspicy 辣的 形容詞\norder 點餐 動詞\ntofu 豆腐 名詞\nstinky 臭的 形容詞\nbubble tea 珍珠奶茶 名詞\nmilk tea 奶茶 名詞\nice 冰塊 名詞\nsugar 糖 名詞\nstraw 吸管 名詞\ndoll 娃娃 名詞\ncoin 硬幣 名詞\ngrab 抓 動詞\ntry 嘗試 動詞\nprize 獎品 名詞\nplay 玩 動詞\ndart 飛鏢 名詞\nthrow 丟 投擲 動詞\nhit 打中 動詞\nmiss 沒打中 錯過 動詞\nscore 分數 名詞 得分 動詞\nlucky 幸運的 形容詞\nwin 贏 動詞\nlose 輸 動詞\neast 東方 名詞\nwest 西方 名詞\nsouth 南方 名詞\nnorth 北方 名詞\nring 圈圈 戒指 名詞\nstall 攤位 名詞\nline 隊伍 名詞 排隊 動詞\ncrowded 擁擠的 形容詞\ncheap 便宜的 形容詞\nprice 價格 名詞\nnight market 夜市 名詞",
         adv_store: "convenience store 便利商店 名詞\nopen 營業中的 形容詞 打開 動詞\nclose 關門 關閉 動詞\nwelcome 歡迎 動詞 形容詞\nclerk 店員 名詞\ntea egg 茶葉蛋 名詞\nboil 煮 煮沸 動詞\nhungry 餓的 形容詞\nsnack 零食 名詞\nbreakfast 早餐 名詞\nhot dog 熱狗 名詞\nskewer 竹籤 名詞\nbread 麵包 名詞\nsandwich 三明治 名詞\nketchup 番茄醬 名詞\ncheese 起司 名詞\nnapkin 餐巾紙 名詞\ninstant noodles 泡麵 名詞\nfull 飽的 滿的 形容詞\ndelicious 好吃的 美味的 形容詞\nrice ball 飯糰 名詞\nseaweed 海苔 名詞\ntuna 鮪魚 名詞\nsalmon 鮭魚 名詞\ntriangle 三角形 名詞\nwrap 包裝 名詞 包起來 動詞\ntear 撕開 動詞\nplastic 塑膠 名詞\nfridge 冰箱 名詞\ncold 冰的 冷的 形容詞\nbottle 瓶子 名詞\nwater 水 名詞\ndrink 飲料 名詞 喝 動詞\nsugar-free 無糖的 形容詞\ngreen tea 綠茶 名詞\nprint 列印 動詞\nticket 票 名詞\nmachine 機器 名詞\nbill 帳單 名詞\nreceipt 收據 發票 名詞\nsalad 沙拉 名詞\nvegetable 蔬菜 名詞\nfresh 新鮮的 形容詞\nlid 蓋子 名詞\nfork 叉子 名詞\nhealthy 健康的 形容詞\nlettuce 生菜 萵苣 名詞\ntomato 番茄 名詞\ndressing 沙拉醬 名詞\nlight 清淡的 輕的 形容詞\nmicrowave 微波爐 名詞 微波加熱 動詞\nheat 加熱 動詞 熱度 名詞\nwarm 溫的 溫暖的 形容詞\nminute 分鐘 名詞\nsecond 秒 名詞\nbutton 按鈕 名詞\nwait 等待 動詞\ncareful 小心的 形容詞\nsteam 蒸氣 名詞\nnoise 噪音 聲音 名詞\nlunch box 便當 名詞\nchopsticks 筷子 名詞\nspoon 湯匙 名詞\nexpire 過期 動詞\ndiscount 折扣 名詞\nhalf price 半價 名詞\nsticker 貼紙 名詞\nmeat 肉 名詞\nchicken 雞肉 名詞\npoint 點數 名詞\ncoffee 咖啡 名詞\nlatte 拿鐵 名詞\niced 加冰的 形容詞\nbitter 苦的 形容詞\nsleepy 想睡的 形容詞\ncashier 收銀員 名詞\ncustomer 顧客 名詞\npay 付錢 動詞\ncash 現金 名詞\ncredit card 信用卡 名詞",
-        basic_noun: "activity 活動 名詞\nafternoon 下午 名詞\nage 年齡 名詞\napplication form 申請表 名詞\narea 區域 名詞\nart 藝術 美術 名詞\nauditorium 禮堂 名詞\nback 後面 名詞\nbackpack 背包 名詞\nbag 包包 名詞\nbank 銀行 名詞\nbe late for 遲到 動詞\nbeginner 初學者 名詞\nbike 腳踏車 名詞\nbirthday 生日 名詞\nbook 書籍 名詞 預訂 動詞\nbookshelf 書架 名詞\nbookstore 書店 名詞\nboss 老闆 名詞\nbottle 瓶子 名詞\nbottom 底部 名詞\nbox 箱子 名詞\nbreakfast 早餐 名詞\nbuilding 建築物 名詞\nbus 公車 名詞\nbusiness card 名片 名詞\ncafeteria 自助餐廳 名詞\ncalendar 日曆 名詞\ncampus 校園 名詞\ncar 汽車 名詞\ncard 卡片 名詞\ncenter 中心 名詞\nchair 椅子 名詞\nchance 機會 名詞\nchapter 章節 名詞\nchild 小孩 名詞\ncity 城市 名詞\nclass 班級 課堂 名詞\nclassmate 同學 名詞\nclassroom 教室 名詞\nclock 時鐘 名詞\nclosing time 打烊時間 名詞\nclothes 衣服 名詞\nclub 社團 俱樂部 名詞\ncoffee 咖啡 名詞\ncoffee break 休息時間 名詞\ncoin 硬幣 名詞\ncollege 大學 學院 名詞\ncolor 顏色 名詞\ncompany 公司 名詞\ncomputer 電腦 名詞\ncontest 比賽 名詞\ncorner 角落 轉角 名詞\ncountry 國家 名詞\ncourse 課程 名詞\ncup 杯子 名詞\ndaily 每日的 形容詞 每天 副詞\ndate 日期 名詞\nday 天 名詞\nday shift 日班 名詞\ndebate 辯論 名詞 動詞\ndesk 書桌 名詞\ndictionary 字典 名詞\ndinner 晚餐 名詞\ndiscussion 討論 名詞\ndoctor 醫生 名詞\ndoor 門 名詞\ndormitory 宿舍 名詞\ndrawing 圖畫 名詞\ndream 夢想 名詞 做夢 動詞\ndriver 司機 名詞\neducation 教育 名詞\nelevator 電梯 名詞\nemail 電子郵件 名詞 寄電子郵件 動詞\nemail address 電子郵件地址 名詞\nenrollment 註冊 名詞\nentrance 入口 名詞\neraser 橡皮擦 名詞\nessay 短文 論文 名詞\nevening 傍晚 名詞\nevent 活動 事件 名詞\nexam 考試 名詞\nexample 例子 名詞\nexcited 興奮的 形容詞\nexit 出口 名詞 離開 動詞\nexperience 經驗 名詞\nextracurricular 課外的 形容詞\nfaculty 全體教職員 名詞\nfamily 家庭 名詞\nfirst day 第一天 名詞\nfirst job 第一份工作 名詞\nfirst name 名字 名詞\nfloor 地板 樓層 名詞\nfood 食物 名詞\nfriend 朋友 名詞\nfront 前面 名詞\nfull-time 全職的 形容詞\ngame 遊戲 比賽 名詞\ngift 禮物 名詞\ngoal 目標 名詞\ngrade 成績 年級 名詞\ngraduate 畢業 動詞 畢業生 名詞\ngraduation 畢業 畢業典禮 名詞\ngroup 群體 小組 名詞\ngroup project 小組作業 名詞\nguest 客人 來賓 名詞\nguidance 輔導 指導 名詞\ngym 體育館 健身房 名詞\nhabit 習慣 名詞\nhall 大廳 走廊 名詞\nhallway 走廊 名詞\nhand in 繳交 動詞\nhardworking 努力的 形容詞\nhat 帽子 名詞\nheadphones 耳機 名詞\nhealth 健康 名詞\nhelper 幫手 名詞\nhistory 歷史 名詞\nhobby 嗜好 名詞\nholiday 假日 名詞\nhometown 家鄉 名詞\nhomework 家庭作業 名詞\nhospital 醫院 名詞\nhour 小時 名詞\nidea 主意 想法 名詞\ninstructor 講師 名詞\ninternet 網際網路 名詞\nintroduction 介紹 名詞\njob 工作 名詞\njob hunting 找工作 名詞\njob title 職稱 名詞\nkey 鑰匙 關鍵 名詞\nkeyboard 鍵盤 名詞\nknowledge 知識 名詞\nlaboratory 實驗室 名詞\nlanguage 語言 名詞\nlaptop 筆記型電腦 名詞\nlast name 姓氏 名詞\nleader 領導者 名詞\nlecture 講課 名詞 演講 動詞\nlesson 課程 教訓 名詞\nletter 信件 字母 名詞\nlevel 程度 等級 名詞\nlibrarian 圖書館員 名詞\nlibrary 圖書館 名詞\nline 線 隊伍 名詞\nlist 清單 名詞 列出 動詞\nlocation 地點 位置 名詞\nlunch 午餐 名詞\nlunch break 午休 名詞\nlunchroom 員工餐廳 名詞\nlunchtime 午餐時間 名詞\nmagazine 雜誌 名詞\nmajor 主修 名詞 動詞\nmap 地圖 名詞\nmark 分數 名詞 打分數 動詞\nmarket 市場 名詞\nmath 數學 名詞\nmeal 餐點 名詞\nmeasure 測量 動詞 措施 名詞\nmember 成員 名詞\nmessage 訊息 名詞\nmiddle 中間 名詞\nminute 分鐘 名詞\nmistake 錯誤 名詞\nmoney 金錢 名詞\nmonth 月份 名詞\nmorning 早晨 名詞\nmusic 音樂 名詞\nnameplate 名牌 名詞\nnationality 國籍 名詞\nnervous 緊張的 形容詞\nnewcomer 新人 名詞\nnews 新聞 消息 名詞\nnewspaper 報紙 名詞\nnight 夜晚 名詞\nnight shift 夜班 名詞\nnote 筆記 名詞 記下 動詞\nnotebook 筆記本 名詞\nnumber 數字 號碼 名詞\nnurse 護士 名詞\noffice 辦公室 名詞\noffice worker 上班族 名詞\nowner 擁有者 老闆 名詞\npage 頁 名詞\npaper 紙張 報告 名詞\nparents 父母 名詞\npark 公園 名詞 停車 動詞\nparking lot 停車場 名詞\npart-time 兼職的 形容詞\npart-time job 打工 名詞\npartner 夥伴 名詞\nparty 派對 名詞\npassword 密碼 名詞\npay attention to 注意 動詞\npen 原子筆 名詞\npencil 鉛筆 名詞\npeople 人們 名詞\nperson 個人 名詞\nphone 電話 名詞\nphone number 電話號碼 名詞\nphoto 照片 名詞\nphysics 物理 名詞\npicture 圖片 照片 名詞\npiece 一片 一件 名詞\npost 郵件 名詞 張貼 動詞\npractice 練習 名詞 動詞\npresentation 簡報 名詞\nprice 價格 名詞\nprincipal 校長 名詞 主要的 形容詞\nprize 獎品 名詞\nproblem 問題 名詞\nprofessor 教授 名詞\nproject 專案 計畫 名詞\nquestion 問題 名詞 質問 動詞\nquiz 小考 名詞\nreason 原因 理由 名詞\nresearch 研究 名詞 動詞\nrestaurant 餐廳 名詞\nrestroom 洗手間 名詞\nresult 結果 名詞\nroad 道路 名詞\nroom 房間 空間 名詞\nroommate 室友 名詞\nrule 規則 名詞\nsalesclerk 店員 名詞\nsalesperson 售貨員 名詞\nscholarship 獎學金 名詞\nschool 學校 名詞\nscience 科學 名詞\nscore 分數 名詞 得分 動詞\nseat 座位 名詞\nsemester 學期 名詞\nseminar 研討會 名詞\nsentence 句子 名詞\nshape 形狀 名詞\nshirt 襯衫 名詞\nshoe 鞋子 名詞\nshop 商店 名詞 購物 動詞\nside 旁邊 一側 名詞\nsign 招牌 標誌 名詞 簽名 動詞\nsize 尺寸 名詞\nskill 技能 名詞\nsmart 聰明的 形容詞\nsnack 點心 名詞\nspace 空間 名詞\nspeaker 演講者 喇叭 名詞\nspeech 演講 名詞\nsport 運動 名詞\nstairs 樓梯 名詞\nstation 車站 名詞\nstep 步驟 名詞\nstore 商店 名詞 儲存 動詞\nstory 故事 樓層 名詞\nstreet 街道 名詞\nstudent 學生 名詞\nstudy group 讀書會 名詞\nsubject 科目 主題 名詞\nsubway 地鐵 名詞\ntable 桌子 表格 名詞\ntake notes 做筆記 動詞\ntaxi 計程車 名詞\ntea 茶 名詞\nteacher 老師 名詞\nteam 團隊 名詞\nteam member 團隊成員 名詞\nteammate 隊友 名詞\ntelephone 電話 名詞\nterm 學期 期限 名詞\ntest 測驗 名詞 測試 動詞\nticket 票 名詞\ntime 時間 次數 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\ntop 頂端 名詞\ntopic 主題 名詞\ntown 城鎮 名詞\ntrain 火車 名詞 訓練 動詞\ntranslate 翻譯 動詞\ntranslation 翻譯 名詞\ntype 類型 名詞 打字 動詞\numbrella 雨傘 名詞\nuniform 制服 名詞 一致的 形容詞\nvocabulary 字彙 名詞\nvolunteer 志工 名詞 自願 動詞\nwaiter 服務生 名詞\nwall 牆壁 名詞\nwater 水 名詞\nweather 天氣 名詞\nwebsite 網站 名詞\nweek 星期 名詞\nweekday 平日 名詞\nweekend 週末 名詞\nwindow 窗戶 名詞\nword 單字 名詞\nwork hours 工作時數 名詞\nworker 工人 員工 名詞\nyear 年 名詞\nyearly 每年的 形容詞\nyesterday 昨天 名詞 副詞",
+        basic_noun: "activity 活動 名詞\nafternoon 下午 名詞\nage 年齡 名詞\napplication form 申請表 名詞\narea 區域 名詞\nart 藝術 美術 名詞\nauditorium 禮堂 名詞\nback 後面 名詞\nbackpack 背包 名詞\nbag 包包 名詞\nbank 銀行 名詞\nbe late for 遲到 動詞\nbeginner 初學者 名詞\nbike 腳踏車 名詞\nbirthday 生日 名詞\nbook 書籍 名詞 預訂 動詞\nbookshelf 書架 名詞\nbookstore 書店 名詞\nboss 老闆 名詞\nbottle 瓶子 名詞\nbottom 底部 名詞\nbox 箱子 名詞\nbreakfast 早餐 名詞\nbuilding 建築物 名詞\nbus 公車 名詞\nbusiness card 名片 名詞\ncafeteria 自助餐廳 名詞\ncalendar 日曆 名詞\ncampus 校園 名詞\ncar 汽車 名詞\ncard 卡片 名詞\ncenter 中心 名詞\nchair 椅子 名詞\nchance 機會 名詞\nchapter 章節 名詞\nchild 小孩 名詞\ncity 城市 名詞\nclass 班級 課堂 名詞\nclassmate 同學 名詞\nclassroom 教室 名詞\nclock 時鐘 名詞\nclosing time 打烊時間 名詞\nclothes 衣服 名詞\nclub 社團 俱樂部 名詞\ncoffee 咖啡 名詞\ncoffee break 休息時間 名詞\ncoin 硬幣 名詞\ncollege 大學 學院 名詞\ncolor 顏色 名詞\ncompany 公司 名詞\ncomputer 電腦 名詞\ncontest 比賽 名詞\ncorner 角落 轉角 名詞\ncountry 國家 名詞\ncourse 課程 名詞\ncup 杯子 名詞\ndaily 每日的 形容詞 每天 副詞\ndate 日期 名詞\nday 天 名詞\nday shift 日班 名詞\ndebate 辯論 名詞 動詞\ndesk 書桌 名詞\ndictionary 字典 名詞\ndinner 晚餐 名詞\ndiscussion 討論 名詞\ndoctor 醫生 名詞\ndoor 門 名詞\ndormitory 宿舍 名詞\ndrawing 圖畫 名詞\ndream 夢想 名詞 做夢 動詞\ndriver 司機 名詞\neducation 教育 名詞\nelevator 電梯 名詞\nemail 電子郵件 名詞 寄電子郵件 動詞\nemail address 電子郵件地址 名詞\nenrollment 註冊 名詞\nentrance 入口 名詞\neraser 橡皮擦 名詞\nessay 短文 論文 名詞\nevening 傍晚 名詞\nevent 活動 事件 名詞\nexam 考試 名詞\nexample 例子 名詞\nexcited 興奮的 形容詞\nexit 出口 名詞 離開 動詞\nexperience 經驗 名詞\nextracurricular 課外的 形容詞\nfaculty 全體教職員 名詞\nfamily 家庭 名詞\nfirst day 第一天 名詞\nfirst job 第一份工作 名詞\nfirst name 名字 名詞\nfloor 地板 樓層 名詞\nfood 食物 名詞\nfriend 朋友 名詞\nfront 前面 名詞\nfull-time 全職的 形容詞\ngame 遊戲 比賽 名詞\ngift 禮物 名詞\ngoal 目標 名詞\ngrade 成績 年級 名詞\ngraduate 畢業 動詞 畢業生 名詞\ngraduation 畢業 畢業典禮 名詞\ngroup 群體 小組 名詞\ngroup project 小組作業 名詞\nguest 客人 來賓 名詞\nguidance 輔導 指導 名詞\ngym 體育館 健身房 名詞\nhabit 習慣 名詞\nhall 大廳 走廊 名詞\nhallway 走廊 名詞\nhand in 繳交 動詞\nhardworking 努力的 形容詞\nhat 帽子 名詞\nheadphones 耳機 名詞\nhealth 健康 名詞\nhelper 幫手 名詞\nhistory 歷史 名詞\nhobby 嗜好 名詞\nholiday 假日 名詞\nhometown 家鄉 名詞\nhomework 家庭作業 名詞\nhospital 醫院 名詞\nhour 小時 名詞\nidea 主意 想法 名詞\ninstructor 講師 名詞\ninternet 網際網路 名詞\nintroduction 介紹 名詞\njob 工作 名詞\njob hunting 找工作 名詞\njob title 職稱 名詞\nkey 鑰匙 關鍵 名詞\nkeyboard 鍵盤 名詞\nknowledge 知識 名詞\nlaboratory 實驗室 名詞\nlanguage 語言 名詞\nlaptop 筆記型電腦 名詞\nlast name 姓氏 名詞\nleader 領導者 名詞\nlecture 講課 名詞 演講 動詞\nlesson 課程 教訓 名詞\nletter 信件 字母 名詞\nlevel 程度 等級 名詞\nlibrarian 圖書館員 名詞\nlibrary 圖書館 名詞\nline 線 隊伍 名詞\nlist 清單 名詞 列出 動詞\nlocation 地點 位置 名詞\nlunch 午餐 名詞\nlunch break 午休 名詞\nlunchroom 員工餐廳 名詞\nlunchtime 午餐時間 名詞\nmagazine 雜誌 名詞\nmajor 主修 名詞 動詞\nmap 地圖 名詞\nmark 分數 名詞 打分數 動詞\nmarket 市場 名詞\nmathematics 數學 名詞\nmeal 餐點 名詞\nmeasure 測量 動詞 措施 名詞\nmember 成員 名詞\nmessage 訊息 名詞\nmiddle 中間 名詞\nminute 分鐘 名詞\nmistake 錯誤 名詞\nmoney 金錢 名詞\nmonth 月份 名詞\nmorning 早晨 名詞\nmusic 音樂 名詞\nnameplate 名牌 名詞\nnationality 國籍 名詞\nnervous 緊張的 形容詞\nnewcomer 新人 名詞\nnews 新聞 消息 名詞\nnewspaper 報紙 名詞\nnight 夜晚 名詞\nnight shift 夜班 名詞\nnote 筆記 名詞 記下 動詞\nnotebook 筆記本 名詞\nnumber 數字 號碼 名詞\nnurse 護士 名詞\noffice 辦公室 名詞\noffice worker 上班族 名詞\nowner 擁有者 老闆 名詞\npage 頁 名詞\npaper 紙張 報告 名詞\nparents 父母 名詞\npark 公園 名詞 停車 動詞\nparking lot 停車場 名詞\npart-time 兼職的 形容詞\npart-time job 打工 名詞\npartner 夥伴 名詞\nparty 派對 名詞\npassword 密碼 名詞\npay attention to 注意 動詞\npen 原子筆 名詞\npencil 鉛筆 名詞\npeople 人們 名詞\nperson 個人 名詞\nphone 電話 名詞\nphone number 電話號碼 名詞\nphoto 照片 名詞\nphysics 物理 名詞\npicture 圖片 照片 名詞\npiece 一片 一件 名詞\npost 郵件 名詞 張貼 動詞\npractice 練習 名詞 動詞\npresentation 簡報 名詞\nprice 價格 名詞\nprincipal 校長 名詞 主要的 形容詞\nprize 獎品 名詞\nproblem 問題 名詞\nprofessor 教授 名詞\nproject 專案 計畫 名詞\nquestion 問題 名詞 質問 動詞\nquiz 小考 名詞\nreason 原因 理由 名詞\nresearch 研究 名詞 動詞\nrestaurant 餐廳 名詞\nrestroom 洗手間 名詞\nresult 結果 名詞\nroad 道路 名詞\nroom 房間 空間 名詞\nroommate 室友 名詞\nrule 規則 名詞\nsalesclerk 店員 名詞\nsalesperson 售貨員 名詞\nscholarship 獎學金 名詞\nschool 學校 名詞\nscience 科學 名詞\nscore 分數 名詞 得分 動詞\nseat 座位 名詞\nsemester 學期 名詞\nseminar 研討會 名詞\nsentence 句子 名詞\nshape 形狀 名詞\nshirt 襯衫 名詞\nshoe 鞋子 名詞\nshop 商店 名詞 購物 動詞\nside 旁邊 一側 名詞\nsign 招牌 標誌 名詞 簽名 動詞\nsize 尺寸 名詞\nskill 技能 名詞\nsmart 聰明的 形容詞\nsnack 點心 名詞\nspace 空間 名詞\nspeaker 演講者 喇叭 名詞\nspeech 演講 名詞\nsport 運動 名詞\nstairs 樓梯 名詞\nstation 車站 名詞\nstep 步驟 名詞\nstore 商店 名詞 儲存 動詞\nstory 故事 樓層 名詞\nstreet 街道 名詞\nstudent 學生 名詞\nstudy group 讀書會 名詞\nsubject 科目 主題 名詞\nsubway 地鐵 名詞\ntable 桌子 表格 名詞\ntake notes 做筆記 動詞\ntaxi 計程車 名詞\ntea 茶 名詞\nteacher 老師 名詞\nteam 團隊 名詞\nteam member 團隊成員 名詞\nteammate 隊友 名詞\ntelephone 電話 名詞\nterm 學期 期限 名詞\ntest 測驗 名詞 測試 動詞\nticket 票 名詞\ntime 時間 次數 名詞\ntoday 今天 名詞 副詞\ntomorrow 明天 名詞 副詞\ntop 頂端 名詞\ntopic 主題 名詞\ntown 城鎮 名詞\ntrain 火車 名詞 訓練 動詞\ntranslate 翻譯 動詞\ntranslation 翻譯 名詞\ntype 類型 名詞 打字 動詞\numbrella 雨傘 名詞\nuniform 制服 名詞 一致的 形容詞\nvocabulary 字彙 名詞\nvolunteer 志工 名詞 自願 動詞\nwaiter 服務生 名詞\nwall 牆壁 名詞\nwater 水 名詞\nweather 天氣 名詞\nwebsite 網站 名詞\nweek 星期 名詞\nweekday 平日 名詞\nweekend 週末 名詞\nwindow 窗戶 名詞\nword 單字 名詞\nwork hours 工作時數 名詞\nworker 工人 員工 名詞\nyear 年 名詞\nyearly 每年的 形容詞\nyesterday 昨天 名詞 副詞",
         basic_verb: "able 有能力的 形容詞\naccept 接受 動詞\nachieve 達成 動詞\nact 行動 動詞\nactive 積極的 形容詞\nadd 增加 動詞\nafford 負擔得起 動詞\nafraid 害怕的 形容詞\nagree 同意 動詞\nallow 允許 動詞\nalone 單獨的 形容詞\nangry 生氣的 形容詞\nanswer 回答 動詞 名詞\narrive 到達 動詞\nask 詢問 動詞\navoid 避免 動詞\nbad 壞的 形容詞\nbeautiful 美麗的 形容詞\nbegin 開始 動詞\nbelieve 相信 動詞\nbelong 屬於 動詞\nbig 大的 形容詞\nborrow 借入 動詞\nbreak 打破 動詞 休息 名詞\nbright 明亮的 聰明的 形容詞\nbring 帶來 動詞\nbuild 建造 動詞\nbusy 忙碌的 形容詞\nbuy 購買 動詞\ncall 打電話 呼叫 動詞\ncall off 取消 動詞\ncarry 攜帶 搬運 動詞\ncarry out 執行 動詞\ncatch 抓住 趕上 動詞\nchange 改變 動詞 零錢 名詞\ncheap 便宜的 形容詞\nchoose 選擇 動詞\nclean 打掃 動詞 乾淨的 形容詞\nclear 清楚的 形容詞\nclose 關閉 動詞 接近的 形容詞\ncold 冷的 形容詞 感冒 名詞\ncome 來 動詞\ncome up with 想出 動詞\ncomfortable 舒適的 形容詞\ncompare 比較 動詞\ncomplete 完成 動詞 完整的 形容詞\nconsider 考慮 動詞\ncontinue 繼續 動詞\ncook 烹調 動詞 廚師 名詞\ncopy 複製 動詞 副本 名詞\ncorrect 正確的 形容詞 改正 動詞\ncreate 創造 動詞\ncross 穿越 動詞\ncut 切 剪 動詞\ndark 黑暗的 形容詞\ndecide 決定 動詞\ndeliver 遞送 動詞\ndepend 依賴 動詞\ndevelop 發展 動詞\ndifferent 不同的 形容詞\ndifficult 困難的 形容詞\ndirty 髒的 形容詞\ndisappear 消失 動詞\ndiscover 發現 動詞\ndiscuss 討論 動詞\ndo 做 動詞\ndraw 畫畫 動詞\ndrink 喝 動詞 飲料 名詞\ndrive 開車 動詞\ndrop 落下 動詞\ndrop off 放下 送達 動詞\nearly 早的 形容詞\neasy 簡單的 形容詞\neat 吃 動詞\nempty 空的 形容詞\nenjoy 享受 動詞\nenter 進入 動詞\nexpect 期待 預期 動詞\nexpensive 昂貴的 形容詞\nexplain 解釋 動詞\nfail 失敗 動詞\nfall 落下 動詞\nfamous 有名的 形容詞\nfast 快的 形容詞\nfeel 感覺 動詞\nfew 很少的 形容詞\nfigure out 想出 弄清楚 動詞\nfill 填滿 填寫 動詞\nfind 找到 動詞\nfind out 查明 發現 動詞\nfine 好的 形容詞 罰款 名詞\nfinish 完成 動詞\nfit 合身 動詞 健康的 形容詞\nfix 修理 固定 動詞\nfly 飛 搭飛機 動詞\nfollow 跟隨 遵循 動詞\nforget 忘記 動詞\nfree 免費的 自由的 形容詞\nfresh 新鮮的 形容詞\nfull 滿的 形容詞\nget 得到 動詞\nget rid of 擺脫 丟掉 動詞\ngive 給予 動詞\ngive up 放棄 動詞\ngo 去 動詞\ngood 好的 形容詞\ngreat 很棒的 偉大的 形容詞\ngrow 生長 成長 動詞\nguess 猜測 動詞\nhang 懸掛 動詞\nhappen 發生 動詞\nhappy 快樂的 形容詞\nhard 困難的 堅硬的 形容詞\nhave 有 動詞\nhealthy 健康的 形容詞\nhear 聽到 動詞\nheavy 重的 形容詞\nhelp 幫助 動詞 名詞\nhigh 高的 形容詞\nhold 握住 舉行 動詞\nhope 希望 動詞\nhot 熱的 形容詞\nhuge 巨大的 形容詞\nhurry 趕快 動詞\nimagine 想像 動詞\nimportant 重要的 形容詞\nimprove 改善 動詞\ninclude 包含 動詞\ninteresting 有趣的 形容詞\ninvite 邀請 動詞\njoin 加入 動詞\nkeep 保持 動詞\nkind 親切的 形容詞 種類 名詞\nknow 知道 動詞\nlarge 大的 形容詞\nlate 遲的 晚的 形容詞\nlaugh 笑 動詞\nlearn 學習 動詞\nleave 離開 動詞\nlift 舉起 動詞\nlight 輕的 形容詞 光線 名詞\nlike 喜歡 動詞\nlisten 聽 動詞\nlittle 小的 形容詞\nlive 居住 動詞\nlong 長的 形容詞\nlook 看 動詞\nlook for 尋找 動詞\nlook forward to 期待 動詞\nlose 失去 動詞\nloud 大聲的 形容詞\nlow 低的 形容詞\nlucky 幸運的 形容詞\nmain 主要的 形容詞\nmake 製作 動詞\nmake sure 確定 動詞\nmany 許多的 形容詞\nmature 成熟的 形容詞 成熟 動詞\nmean 意指 動詞 刻薄的 形容詞\nmeet 見面 動詞\nmind 介意 動詞 頭腦 名詞\nmiss 錯過 想念 動詞\nmodern 現代的 形容詞\nmove 移動 搬家 動詞\nmuch 許多的 形容詞\nnarrow 狹窄的 形容詞\nnear 接近的 形容詞\nneed 需要 動詞\nnew 新的 形容詞\nnice 不錯的 形容詞\nnoisy 吵鬧的 形容詞\nnormal 正常的 形容詞\nnotice 注意到 動詞 通知 名詞\nold 老的 舊的 形容詞\nopen 打開 動詞 開放的 形容詞\npack 打包 動詞\npay 支付 動詞\npick 挑選 撿起 動詞\npick up 撿起 接送 動詞\nplace 放置 動詞 地方 名詞\nplan 計劃 動詞 名詞\nplay 玩 動詞\npoint 指向 動詞\npoor 貧窮的 差的 形容詞\npopular 受歡迎的 形容詞\npossible 可能的 形容詞\nprefer 更喜歡 動詞\nprepare 準備 動詞\nprotect 保護 動詞\nprove 證明 動詞\nprovide 提供 動詞\npull 拉 動詞\npush 推 動詞\nput 放置 動詞\nput off 延後 動詞\nquick 快速的 形容詞\nquiet 安靜的 形容詞\nread 閱讀 動詞\nready 準備好的 形容詞\nreal 真實的 形容詞\nreceive 收到 動詞\nreduce 減少 動詞\nremember 記得 動詞\nremove 移除 動詞\nrepeat 重複 動詞\nreply 回覆 動詞 名詞\nrest 休息 動詞 名詞\nreturn 返回 歸還 動詞\nrich 富有的 形容詞\nride 騎 搭乘 動詞\nright 正確的 右邊的 形容詞\nring 響 動詞 戒指 名詞\nrise 上升 動詞\nrun 跑 動詞\nrun out of 用完 動詞\nsafe 安全的 形容詞\nsame 相同的 形容詞\nsave 節省 拯救 動詞\nsay 說 動詞\nsee 看見 動詞\nseem 似乎 動詞\nsell 銷售 動詞\nsend 寄出 動詞\nserious 嚴重的 認真的 形容詞\nset up 設立 安排 動詞\nshare 分享 動詞\nshort 短的 矮的 形容詞\nshow 顯示 動詞 表演 名詞\nshow up 出現 動詞\nshut 關上 動詞\nsick 生病的 形容詞\nsign up 報名 動詞\nsimple 簡單的 形容詞\nsit 坐 動詞\nsleep 睡眠 動詞 名詞\nslow 慢的 形容詞\nsmall 小的 形容詞\nsmell 聞 動詞 氣味 名詞\nsmile 微笑 動詞 名詞\nsoft 柔軟的 形容詞\nspeak 說話 動詞\nspecial 特別的 形容詞\nspend 花費 動詞\nstand 站立 動詞\nstart 開始 動詞\nstay 停留 動詞\nstop 停止 動詞\nstrong 強壯的 形容詞\nstudy 學習 動詞\nsucceed 成功 動詞\nsuggest 建議 動詞\nsure 確定的 形容詞\nsweet 甜的 形容詞\ntake 拿取 動詞\ntake care of 照顧 處理 動詞\ntalk 談話 動詞\ntall 高的 形容詞\ntaste 品嚐 動詞 味道 名詞\nteach 教導 動詞\ntell 告訴 動詞\nthick 厚的 形容詞\nthin 薄的 瘦的 形容詞\nthink 想 動詞\nthrow 投擲 動詞\ntired 疲倦的 形容詞\ntouch 觸摸 動詞\ntrue 真實的 形容詞\ntry 嘗試 動詞\ntry on 試穿 動詞\nturn 轉動 動詞\nturn down 拒絕 調低 動詞\nturn off 關掉 動詞\nturn on 打開 動詞\nunderstand 理解 動詞\nuse 使用 動詞\nuseful 有用的 形容詞\nusual 通常的 形容詞\nvisit 參觀 拜訪 動詞\nwait 等待 動詞\nwake 醒來 動詞\nwake up 醒來 動詞\nwalk 走路 動詞\nwant 想要 動詞\nwarm 溫暖的 形容詞\nwash 洗 動詞\nwatch 觀看 動詞 手錶 名詞\nweak 虛弱的 形容詞\nwear 穿戴 動詞\nwet 濕的 形容詞\nwide 寬的 形容詞\nwin 贏 動詞\nwise 明智的 形容詞\nwish 希望 動詞\nwonder 想知道 動詞\nwonderful 美好的 形容詞\nwork 工作 動詞 名詞\nworry 擔心 動詞\nwrite 書寫 動詞\nwrong 錯誤的 形容詞\nyoung 年輕的 形容詞"
     };
     const PACK_WORD_CAP = 300;
@@ -394,7 +394,7 @@
             let other = owners[cloudKey];
             // 這個帳號雲端裡的錢包，其實是另一個帳號的（以前在這台裝置換帳號時被合併過）
             if (email && other && other !== email) {
-                if (confirm(`這個 Google 帳號（${email}）的雞塊錢包，跟 ${other} 是同一個（以前在這台裝置換帳號登入時被合併了）。
+                if (await uiConfirm(`這個 Google 帳號（${email}）的雞塊錢包，跟 ${other} 是同一個（以前在這台裝置換帳號登入時被合併了）。
 
 按「確定」：${email} 改用全新的錢包（雞塊、農場、買的題庫從頭開始；${other} 的東西不受影響）
 按「取消」：維持兩個帳號共用`)) { key = generateWalletKey(); fresh = true; }
@@ -406,7 +406,7 @@
             key = localKey;
         } else if (isValidWalletKey(localKey)) {
             // 這台裝置的錢包以前綁過 Google 帳號，但現在登入的帳號雲端裡沒有金鑰
-            if (confirm(`這台裝置的雞塊錢包，以前綁定過另一次 Google 登入，但 ${email || '這個帳號'} 的雲端裡沒有錢包資料。\n\n按「確定」：沿用這台裝置的錢包（只有「同一個帳號」重新登入才選這個）\n按「取消」：${email || '這個帳號'} 改用全新的錢包（換成另一個人的帳號請選這個，雞塊、農場、買的題庫會分開）`)) {
+            if (await uiConfirm(`這台裝置的雞塊錢包，以前綁定過另一次 Google 登入，但 ${email || '這個帳號'} 的雲端裡沒有錢包資料。\n\n按「確定」：沿用這台裝置的錢包（只有「同一個帳號」重新登入才選這個）\n按「取消」：${email || '這個帳號'} 改用全新的錢包（換成另一個人的帳號請選這個，雞塊、農場、買的題庫會分開）`)) {
                 key = localKey;
             } else {
                 key = generateWalletKey(); fresh = true;
@@ -442,7 +442,7 @@
     function isWalletBound() { return isValidWalletKey(localStorage.getItem(WALLET_KEY_STORAGE)); }
     function ensureLoginBeforeSpend() {
         if (isWalletBound()) return true;
-        if (confirm('兌換雞塊前，需要先登入 Google 雲端。\n\n這樣不同裝置的雞塊才能合併，不會被重複花掉。現在要登入嗎？')) handleAuthClick();
+        uiConfirm('兌換雞塊前，需要先登入 Google 雲端。\n這樣不同裝置的雞塊才能合併，不會被重複花掉。現在要登入嗎？', '登入', '先不要').then(ok => { if (ok) handleAuthClick(); });
         return false;
     }
 
@@ -693,6 +693,7 @@
 
     function closeChickenShopModal() {
         document.getElementById('chickenShopModal').style.display = 'none';
+        try { tutCoachClear(); } catch (e) {}
         try { advShopNew = new Set(); } catch (e) {}
         setTimeout(() => { try { ahTutCheck(); } catch (e) {} }, 300);
     }
@@ -769,7 +770,7 @@
             return;
         }
         if (wallet.balance < cat.price) return;              // 雞塊不夠：格子已經是灰底，不另外跳訊息
-        if (!confirm(`要用 ${cat.price} 個雞塊兌換「${meta.name}」嗎？\n\n${meta.desc}`)) return;
+        if (!await uiConfirm(`要用 ${cat.price} 個雞塊兌換「${meta.name}」嗎？\n\n${meta.desc}`)) return;
 
         walletBusy = true;
         try {
@@ -837,7 +838,7 @@
             return;
         }
         let cap = getListWordCap(list);
-        if (!confirm(`要用 ${cat.price} 個雞塊，為「${list.title}」擴增單字上限嗎？\n\n${cap} 字 → ${cap + WORD_CAP_STEP} 字\n（只增加這一本題庫，其他題庫不變）`)) return;
+        if (!await uiConfirm(`要用 ${cat.price} 個雞塊，為「${list.title}」擴增單字上限嗎？\n\n${cap} 字 → ${cap + WORD_CAP_STEP} 字\n（只增加這一本題庫，其他題庫不變）`)) return;
 
         walletBusy = true;
         try {
@@ -1397,7 +1398,7 @@
     }
 
     // 題庫選單：更換語言（內容中語言不符的行會被刪除，先確認）
-    function changeListLanguageFromMenu(idx) {
+    async function changeListLanguageFromMenu(idx) {
         let list = wordLists[idx];
         if (!list) return;
         if (isPackList(list)) { alert('🔒 官方單字庫無法更換語言。'); return; }
@@ -1405,7 +1406,7 @@
         let r = splitLinesByLanguage(list.content, to);
         let msg = `要把「${list.title}」從${getLangName(from)}題庫改成${getLangName(to)}題庫嗎？`;
         if (r.removed.length > 0) msg += `\n\n⚠️ 其中 ${r.removed.length} 行含有${getLangName(from)}單字，更換後會被刪除：\n${formatRemovedLines(r.removed)}`;
-        if (!confirm(msg)) return;
+        if (!await uiConfirm(msg)) return;
         list.lang = to;
         list.content = r.kept.join('\n');
         localStorage.setItem('dictation_word_lists', JSON.stringify(wordLists));
@@ -1803,20 +1804,47 @@
     //     advPlay 大冒險開打　advWin 打贏　advLose 打輸　train 訓練場
     const PS_KEY = 'chicky_pstats_v1', PS_ID_KEY = 'chicky_player_id';
     let ps = psLoad(), psSending = false;
-    function psBlank() { return { c: {}, win: {}, days: {}, since: getLocalDateStr() }; }
+    function psBlank() { return { c: {}, win: {}, days: {}, t: {}, lvx: {}, since: getLocalDateStr() }; }
     function psLoad() {
         try {
             let o = JSON.parse(localStorage.getItem(PS_KEY) || 'null');
-            if (o && typeof o === 'object') return { c: o.c || {}, win: o.win || {}, days: o.days || {}, since: o.since || getLocalDateStr() };
+            if (o && typeof o === 'object') return { c: o.c || {}, win: o.win || {}, days: o.days || {}, t: o.t || {}, lvx: o.lvx || {}, dsec: o.dsec || 0, since: o.since || getLocalDateStr() };
         } catch (e) {}
         return psBlank();
     }
     function psSave() { try { localStorage.setItem(PS_KEY, JSON.stringify(ps)); } catch (e) {} }
     function psCount(k, n) { try { ps.c[k] = (ps.c[k] || 0) + (n || 1); psSave(); } catch (e) {} }
     function psWin(lvId) { try { ps.win[lvId] = (ps.win[lvId] || 0) + 1; psCount('advWin'); } catch (e) {} }
-    // 遊玩時間：App 在前景時每分鐘 +1（這一天）
-    setInterval(() => { try { if (document.visibilityState !== 'visible') return; let d = getLocalDateStr(); ps.days[d] = (ps.days[d] || 0) + 1; psSave(); } catch (e) {} }, 60000);
-    function psHasData() { return Object.keys(ps.c).length || Object.keys(ps.win).length || Object.keys(ps.days).length; }
+    // r17：每一頁停留多久（秒）：App 在前景時每 15 秒記一次「現在在哪一類畫面」
+    //   card 字卡練習　listen 聽力練習　speak 朗讀練習　exCard 字卡測驗　exListen 聽力測驗　history 歷史紀錄　lists 題庫
+    //   adv 雞塊大冒險　farm 雞塊農場　home 首頁
+    const PS_VIEW_CAT = {
+        flashcardSetupView: 'card', flashcardPlayView: 'card', practiceView: 'listen', speakPracticeSetupView: 'speak', speakPracticePlayView: 'speak',
+        cardExamSetupView: 'exCard', cardExamPlayView: 'exCard', examView: 'exListen', historyView: 'history', editorListView: 'lists', editorDetailView: 'lists',
+        adventureView: 'adv', adventureBattleView: 'adv', advStatsView: 'adv', advWordsView: 'adv', farmView: 'farm', farmPlantView: 'farm', farmWaterView: 'farm', homeDashboardView: 'home'
+    };
+    function psCat() { let v = document.querySelector('.app-view.active'); return (v && PS_VIEW_CAT[v.id]) || 'other'; }
+    // 遊玩時間：App 在前景時累計；每滿 60 秒，這一天的遊玩分鐘 +1
+    setInterval(() => {
+        try {
+            if (document.visibilityState !== 'visible') return;
+            let k = psCat(); ps.t[k] = (ps.t[k] || 0) + 15;
+            ps.dsec = (ps.dsec || 0) + 15;
+            if (ps.dsec >= 60) { ps.dsec -= 60; let d = getLocalDateStr(); ps.days[d] = (ps.days[d] || 0) + 1; }
+            psSave();
+        } catch (e) {}
+    }, 15000);
+    // r17：每一級是怎麼升上去的：在 Lv.N 的時候打了哪些關卡（贏／輸）、哪些木人、領了圖鑑，各拿到多少經驗
+    //   key：「等級|來源|項目」，例如 5|s3|w（Lv.5 時打贏第 3 關的次數）、5|s3|xp、5|t:wood|n、5|dex|xp
+    function psLv(src, kind, xp) {
+        try {
+            let L = advLevel(), add = (k, n) => { if (n > 0) ps.lvx[k] = (ps.lvx[k] || 0) + n; };
+            add(`${L}|${src}|${kind}`, 1);
+            add(`${L}|${src}|xp`, Math.round(xp || 0));
+            psSave();
+        } catch (e) {}
+    }
+    function psHasData() { return Object.keys(ps.c).length || Object.keys(ps.win).length || Object.keys(ps.days).length || Object.keys(ps.t || {}).length || Object.keys(ps.lvx || {}).length; }
     // 大冒險目前的狀態
     function psSnap() {
         let d = advData || {}, cl = Object.keys(d.cleared || {}).filter(k => d.cleared[k]).map(Number);
@@ -1827,23 +1855,27 @@
             mast: d.mastery || {}, eq: (d.eq || []).slice(0, 4), gear: (d.gear || []).filter(Boolean),
             items: Object.keys(d.items || {}).filter(k => d.items[k]), up: d.up || {}, title: d.title || '',
             dex: (() => { try { return ADV_LEVELS.filter(l => dexLvDone(l.id)).length; } catch (e) { return 0; } })(),
+            // r17：圖鑑進度（每個型態情蒐了幾次 0～3）和已拿到的稱號
+            dexN: (() => { try { let o = {}; BattleCore.dexForms().forEach(f => { let n = dexFormN(f); if (n) o[f.key] = Math.min(3, n); }); return o; } catch (e) { return {}; } })(),
+            titles: (() => { try { return advTitlesOwned(); } catch (e) { return []; } })(),
             lists: (() => { try { return wordLists.filter(l => !isPackList(l)).length; } catch (e) { return 0; } })(), words,
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261117d';
+    const PS_APP_VER = '20261118a';
     // 新的一天：把之前累積的送出去（一天最多一次；沒有新資料就不送）
     async function psMaybeSend(force) {
         if (psSending || !supabaseClient) return;
         let today = getLocalDateStr();
         if (!force && (ps.since >= today || !psHasData())) return;
         psSending = true;
-        let sent = { c: ps.c, win: ps.win, days: ps.days };
+        let sent = { c: ps.c, win: ps.win, days: ps.days, t: ps.t || {}, lvx: ps.lvx || {} };
         try {
             let res = await walletRpc('report_stats', { p_delta: Object.assign({ v: 1 }, sent, { snap: psSnap() }) });
             // 送出期間又多的次數留著（下次再送）
             let left = psBlank();
-            ['c', 'win', 'days'].forEach(sec => Object.keys(ps[sec]).forEach(k => { let r = (ps[sec][k] || 0) - ((sent[sec] && sent[sec][k]) || 0); if (r > 0) left[sec][k] = r; }));
+            ['c', 'win', 'days', 't', 'lvx'].forEach(sec => Object.keys(ps[sec] || {}).forEach(k => { let r = (ps[sec][k] || 0) - ((sent[sec] && sent[sec][k]) || 0); if (r > 0) left[sec][k] = r; }));
+            left.dsec = ps.dsec || 0;
             ps = left; psSave();
             if (res && res.id) { try { localStorage.setItem(PS_ID_KEY, String(res.id)); } catch (e) {} }
             if (res && Array.isArray(res.gifts) && res.gifts.length) psApplyGifts(res.gifts);
@@ -2429,10 +2461,10 @@
         weSetMode('list'); weRenderRows(); weToast(msg);
         try { let c = document.getElementById('obCoach'); if (c) c.remove(); } catch (e) {}
     }
-    function weDeleteDraft() {
+    async function weDeleteDraft() {
         if (weEditAt < 0) return;
         let w = weWords[weEditAt];
-        if (!confirm(`要刪除「${w.en}」嗎？`)) return;
+        if (!await uiConfirm(`要刪除「${w.en}」嗎？`)) return;
         weWords.splice(weEditAt, 1); weEditAt = -1; weDirty = true;
         weSetMode('list'); weRenderRows(); weToast('已刪除 ' + w.en);
     }
@@ -2537,10 +2569,10 @@
         }
     }
 
-    function clearListContentFromMenu(idx) {
+    async function clearListContentFromMenu(idx) {
         if (!wordLists[idx]) return;
         if (isPackList(wordLists[idx])) { alert('🔒 官方單字庫無法清空。'); return; }
-        if (confirm(`確定要清空「${wordLists[idx].title}」裡的所有單字嗎？`)) {
+        if (await uiConfirm(`確定要清空「${wordLists[idx].title}」裡的所有單字嗎？`)) {
             wordLists[idx].content = "";
             triggerAutoSaveToCloud();
             initEditorListCards();
@@ -2548,7 +2580,7 @@
         }
     }
 
-    function deleteListFromMenu(idx) {
+    async function deleteListFromMenu(idx) {
         if (!wordLists[idx]) return;
         if (isPackList(wordLists[idx])) { alert('🔒 官方單字庫無法刪除。'); return; }
         if (countUserLists() <= 1) {
@@ -2557,7 +2589,7 @@
         }
         let upgraded = Number((wallet.listCaps || {})[wordLists[idx].id]) || 0;
         let upgradeWarn = upgraded > 0 ? `\n\n⚠️ 這本題庫已兌換 ${upgraded * WORD_CAP_STEP} 字的單字上限，刪除後不會退還雞塊。` : '';
-        if (confirm(`確定要刪除題庫「${wordLists[idx].title}」嗎？${upgradeWarn}`)) {
+        if (await uiConfirm(`確定要刪除題庫「${wordLists[idx].title}」嗎？${upgradeWarn}`)) {
             wordLists.splice(idx, 1);
             triggerAutoSaveToCloud();
             initEditorListCards();
@@ -5774,7 +5806,13 @@
     function advRunTestCode(code) {
         code = String(code || '').trim().toLowerCase();
         if (code === 'testreset') {
-            if (!confirm('⚠️ 要把雞塊大冒險的進度、道具、裝備、能力全部重設成第一次開 App 的狀態嗎？')) return true;
+            uiConfirm('要把雞塊大冒險全部重設嗎？\n進度、道具、裝備、能力都會回到第一次開 App 的狀態。', '重設', '取消', { danger: true }).then(ok => { if (ok) advTestReset(); });
+            return true;
+        }
+        return advRunTestCode2(code);
+    }
+    function advTestReset() {
+        {
             let keepOwner = advData.owner;
             try { localStorage.removeItem(advStoreKey()); } catch (e) {}
             // 訓練場（選的木人、題庫）也回到初始；木人最佳紀錄、解鎖、圖鑑都在存檔裡，跟著一起歸 0
@@ -5787,8 +5825,9 @@
             try { advRefreshViews(); } catch (e) {}
             try { advRenderShopBox(); } catch (e) {}
             alert('🔄 雞塊大冒險已重設：進度、道具、裝備、能力、經驗值、熟練度、訓練場木人紀錄、圖鑑都回到初始值，傳說招式已回到補給站。');
-            return true;
         }
+    }
+    function advRunTestCode2(code) {
         if (code === 'newplayer') {
             try { localStorage.setItem(OB_FORCE_KEY, '1'); localStorage.removeItem(OB_DONE_KEY); } catch (e) {}
             alert('🐣 下次打開 App 會再跑一次新手教學。');
@@ -5842,7 +5881,7 @@
         localStorage.removeItem('dictation_card_exam_history');
         alert('所有考試紀錄已清空'); 
     }
-    function loadInitialSettings() { if(confirm("確定重設？")) location.reload(); }
+    async function loadInitialSettings() { if (await uiConfirm("確定重設？")) location.reload(); }
 
 
     // ═════════════════════════════════════════════════════════════
@@ -5908,7 +5947,7 @@
     //   buy：free 一開始就有 / shards 用碎片買 / chicken 用雞塊買（item 是商店商品代號）
     // 招式圖示（SVG，會跟著文字大小縮放）
     const advSvg = (vb, inner) => `<svg viewBox="${vb}" width="1.2em" height="1.2em" style="vertical-align:-0.22em;overflow:visible" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${inner}</svg>`;
-    // 斬擊、連續斬擊共用的那把劍
+    // 斬擊、二連斬共用的那把劍
     const advSword = (r) => `<g transform="rotate(${r} 12 12)"><path d="M 12 1 L 14.2 4 V 15 H 9.8 V 4 Z" fill="#E2E8F0" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/><path d="M 12 3 V 14" stroke="#FFFFFF" stroke-width="1"/><rect x="7.5" y="15" width="9" height="2.4" rx="1" fill="#F59E0B" stroke="#92400E" stroke-width="1"/><rect x="10.8" y="17.4" width="2.4" height="4.6" fill="#92400E"/></g>`;
     const ADV_ICONS = {
         combo: () => { const c = (x, y, o) => `<g opacity="${o}"><ellipse cx="${x}" cy="${y}" rx="10" ry="10" fill="#F4A236" stroke="#231F20" stroke-width="2.2"/><circle cx="${x - 3.5}" cy="${y - 1.5}" r="1.5" fill="#231F20"/><circle cx="${x + 3.5}" cy="${y - 1.5}" r="1.5" fill="#231F20"/><path d="M ${x - 2.5} ${y + 3} Q ${x} ${y + 5} ${x + 2.5} ${y + 3}" stroke="#231F20" stroke-width="1.5" fill="none" stroke-linecap="round"/></g>`; return advSvg('0 0 52 28', `<path d="M 2 9 H 7 M 0 15 H 6 M 2 21 H 7" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>${c(18, 14, 0.5)}${c(36, 14, 1)}<path d="M 44 4 l 4 -3 M 46 8 l 5 -1" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>`); },
@@ -6047,9 +6086,22 @@
     function advTutLoad(d) {
         let t = (d && d.tut && typeof d.tut === 'object') ? d.tut : null, c = (d && d.cleared) || {};
         let ss = (t && Array.isArray(t.shopSeen)) ? t.shopSeen.filter(x => typeof x === 'string') : null;   // 補給站看過的裝備／招式（null：還沒建立，第一次用到時再決定）
-        if (t) { let sn = (t.seen && typeof t.seen === 'object') ? t.seen : {}; return { intro: !!t.intro, bag: !!t.bag, seen: { shop: !!sn.shop, train: !!sn.train, dex: !!sn.dex, soda: !!sn.soda, tgGo: !!sn.tgGo }, shopSeen: ss }; }
+        // r17 新增的導引步驟：b1 第一場戰鬥教出招和作答、next 勝利後按下一關、alloc 分配升級點數、sodaBuy 買彈珠汽水、
+        //   tgStart 開始訓練、combo 連對系統說明、trainGift 第一次訓練獎勵（只給一次）、dexIntro 圖鑑說明
+        //   舊存檔沒有這些欄位：已經走過的階段當作做過（不會回頭再教一次）
+        let items = (d && d.items) || {};
+        let more = (o, sn) => {
+            let has = (k) => typeof o[k] === 'boolean';
+            return {
+                b1: has('b1') ? o.b1 : !!c['1'], next: has('next') ? o.next : !!c['1'], alloc: has('alloc') ? o.alloc : !!(o.bag),
+                sodaBuy: has('sodaBuy') ? o.sodaBuy : !!(items.soda || c['3']), tgStart: has('tgStart') ? o.tgStart : !!sn.tgGo,
+                combo: has('combo') ? o.combo : !!sn.tgGo, trainGift: has('trainGift') ? o.trainGift : !!sn.tgGo, dexIntro: has('dexIntro') ? o.dexIntro : !!sn.dex
+            };
+        };
+        if (t) { let sn = (t.seen && typeof t.seen === 'object') ? t.seen : {}; let seen = { shop: !!sn.shop, train: !!sn.train, dex: !!sn.dex, soda: !!sn.soda, tgGo: !!sn.tgGo }; return Object.assign({ intro: !!t.intro, bag: !!t.bag, seen, shopSeen: ss }, more(t, seen)); }
         let open = (k) => BattleCore.tabOpen(k, c);
-        return { intro: !!c['1'], bag: !!c['1'], seen: { shop: open('shop'), train: open('train'), dex: open('dex'), soda: open('shop'), tgGo: open('train') }, shopSeen: null };
+        let seen = { shop: open('shop'), train: open('train'), dex: open('dex'), soda: open('shop'), tgGo: open('train') };
+        return Object.assign({ intro: !!c['1'], bag: !!c['1'], seen, shopSeen: null }, more({ bag: !!c['1'] }, seen));
     }
     function advLoad() {
         let d = {};
@@ -6172,6 +6224,7 @@
         if (document.getElementById('advLevelCard')) advRenderLevelPage();
         advRenderShopBox();
         try { homeAdvBadge(); } catch (e) {}          // r15：換帳號／載入雲端進度後，首頁「雞塊大冒險 第 N 關」也馬上更新
+        try { updateChickenBadgeUI(); } catch (e) {}  // r17：大冒險進度換了（今天的登入代幣可能領在另一份進度）→ 今日任務紅點重新判斷
     }
     // ── 雲端同步衝突 ──
     //   記住「這台裝置最後一次跟雲端同步」的存檔時間（base）
@@ -6319,7 +6372,7 @@
         if (m.buy.kind === 'free') return true;
         if (advData.own[key] === true) return true;
         if (advData.legendReset && advRarityKey(key) === 'legend') return false;   // testreset 後：傳說招式要重新在補給站買
-        if (m.buy.kind !== 'shards') return false;             // 關卡獎勵的招式（例如連續斬擊）：只看存檔，不看以前用雞塊買過的紀錄（testreset 後要重打）
+        if (m.buy.kind !== 'shards') return false;             // 關卡獎勵的招式（例如二連斬）：只看存檔，不看以前用雞塊買過的紀錄（testreset 後要重打）
         return !!(m.buy.item && walletQty(m.buy.item) > 0);    // 以前用雞塊買過的
 
     }
@@ -7547,33 +7600,60 @@
             if (!t.bag && (advData.gear || []).includes('bag')) advTutSet('bag');
             let onMap = document.getElementById('adventureView') && document.getElementById('adventureView').classList.contains('active');
             if (!onMap) return;
-            if (!ahTutIdle()) { tutCoachClear(); return; }
+            // 不在地圖上（開著訓練場、圖鑑、卡片…）：只收掉「地圖上的」導引，別的畫面自己的導引不要動
+            if (!ahTutIdle()) { let c = document.getElementById('tutCoach'), sel = c ? c.dataset.sel : ''; if (sel && (sel.indexOf('#ahTab') === 0 || sel.indexOf('#adventureView .ah-go') === 0)) tutCoachClear(); return; }
             // ① 第一次進大冒險：按「挑戰」
             if (!t.intro && !advData.cleared[1]) { tutCoach('#adventureView .ah-go', '點「挑戰」開始第一場戰鬥！'); return; }
             // ② 打完第 1 關拿到塑膠袋：按「狀態」去裝備
             if (!t.bag && advData.cleared[1] && advData.items.bag) { tutCoach('#ahTabStats', '拿到「夜市塑膠袋」了！點「狀態」去裝備它'); return; }
+            // ③ 裝好了、還有升級點數沒分配：再按一次「狀態」
+            if (t.bag && !t.alloc && advPtsLeft() > 0) { tutCoach('#ahTabStats', '升級了！點「狀態」分配升級點數'); return; }
+            // ④ 打完第 2 關：補給站 → 買彈珠汽水
+            if (BattleCore.tabOpen('shop', advData.cleared) && !t.seen.shop) { tutCoach('#ahTabShop', '補給站開放了！點進去看看'); return; }
+            if (BattleCore.tabOpen('shop', advData.cleared) && !t.sodaBuy && !advData.items.soda && !advData.cleared[3]) { tutCoach('#ahTabShop', '到補給站買一瓶「彈珠汽水」吧'); return; }
+            // ⑤ 打完第 3 關：訓練場
+            if (BattleCore.tabOpen('train', advData.cleared) && !t.seen.train) { tutCoach('#ahTabTrain', '訓練場開放了！點進去練習'); return; }
+            // ⑥ 打完第 4 關：圖鑑
+            if (BattleCore.tabOpen('dex', advData.cleared) && !t.seen.dex) { tutCoach('#ahTabDex', '敵人圖鑑開放了！點進去看看'); return; }
             tutCoachClear();
         } catch (e) {}
     }
     // 聚光燈＋說明泡泡（跟著目標的位置；不擋點擊）
     let tutCoachRaf = 0;
     function tutCoachClear() { cancelAnimationFrame(tutCoachRaf); tutCoachRaf = 0; let c = document.getElementById('tutCoach'); if (c) c.remove(); }
-    function tutCoach(sel, text) {
-        let el = document.querySelector(sel);
-        if (!el || !el.getClientRects().length) { tutCoachClear(); return; }
+    // 導引的目標位置：一般是一個元素；「ALL:選擇器」＝把符合的元素全部框在一起（例如所有的「＋」）
+    function tutRect(sel) {
+        let els = sel.indexOf('ALL:') === 0 ? [...document.querySelectorAll(sel.slice(4))] : [document.querySelector(sel)];
+        els = els.filter(e => e && e.getClientRects().length);
+        if (!els.length) return null;
+        let rs = els.map(e => e.getBoundingClientRect());
+        let l = Math.min(...rs.map(r => r.left)), t = Math.min(...rs.map(r => r.top)), r2 = Math.max(...rs.map(r => r.right)), b = Math.max(...rs.map(r => r.bottom));
+        return { left: l, top: t, right: r2, bottom: b, width: r2 - l, height: b - t };
+    }
+    // tutCoach(目標, 說明, { btn: '知道了', onBtn: 按了之後 })：有按鈕的泡泡可以點；目標是 null → 泡泡放在畫面中間
+    function tutCoach(sel, text, opt) {
+        opt = opt || {};
+        if (sel && !tutRect(sel)) { tutCoachClear(); return; }
+        let key = (sel || 'center') + '|' + text;
         let c = document.getElementById('tutCoach');
-        if (!c || c.dataset.sel !== sel) {
+        if (!c || c.dataset.key !== key) {
             tutCoachClear();
             c = document.createElement('div');
-            c.id = 'tutCoach'; c.dataset.sel = sel; c.setAttribute('role', 'status');
-            c.innerHTML = `<div class="tut-ring"></div><div class="tut-bubble">${escapeHTML(text)}</div>`;
+            c.id = 'tutCoach'; c.dataset.key = key; c.dataset.sel = sel || ''; c.setAttribute('role', 'status');
+            if (!sel) c.classList.add('is-center');
+            c.innerHTML = `<div class="tut-ring"${sel ? '' : ' hidden'}></div><div class="tut-bubble${opt.btn ? ' has-btn' : ''}">${escapeHTML(text)}${opt.btn ? `<button type="button" class="tut-btn">${escapeHTML(opt.btn)}</button>` : ''}</div>`;
             document.body.appendChild(c);
+            let b = c.querySelector('.tut-btn');
+            if (b) b.addEventListener('click', (e) => { e.stopPropagation(); if (opt.onBtn) opt.onBtn(); else tutCoachClear(); });
         }
         let ring = c.querySelector('.tut-ring'), bub = c.querySelector('.tut-bubble');
+        if (!sel) { cancelAnimationFrame(tutCoachRaf); return; }      // 中間的泡泡：不用跟著誰動
         const place = () => {
-            let t = document.querySelector(sel), cc = document.getElementById('tutCoach');
-            if (!t || !cc || cc !== c) return;
-            let r = t.getBoundingClientRect(), pad = 6, vw = window.innerWidth, vh = window.innerHeight;
+            let cc = document.getElementById('tutCoach');
+            if (!cc || cc !== c) return;
+            let r = tutRect(sel);
+            if (!r) { tutCoachRaf = requestAnimationFrame(place); return; }
+            let pad = 6, vw = window.innerWidth, vh = window.innerHeight;
             Object.assign(ring.style, { left: (r.left - pad) + 'px', top: (r.top - pad) + 'px', width: (r.width + pad * 2) + 'px', height: (r.height + pad * 2) + 'px' });
             let bw = bub.offsetWidth, bh = bub.offsetHeight, up = r.top - bh - 18 > 8;
             let left = Math.max(12, Math.min(vw - bw - 12, r.left + r.width / 2 - bw / 2));
@@ -7600,6 +7680,13 @@
         if (un.length) { t.shopSeen = t.shopSeen.concat(un); advSave(true); }
         openChickenShopModal(1);
         try { ahUpdateBadges(); } catch (e) {}
+        // r17 新手導引：指彈珠汽水
+        setTimeout(() => {
+            let t = advTut(), cell = document.getElementById('advCell_soda');
+            if (t.sodaBuy || advData.items.soda || !cell || document.getElementById('chickenShopModal').style.display !== 'block') return;
+            try { cell.scrollIntoView({ block: 'center' }); } catch (e) {}
+            tutCoach('#advCell_soda', '點「彈珠汽水」把它買下來\n裝備後戰鬥會更有利');
+        }, 400);
     }
     // 地圖上每一關的頭目：各自每 5～10 秒隨機「左右晃」或「上下彈跳」一次
     let ahBossTimer = null;
@@ -8003,9 +8090,10 @@
         advAlloc[key]++;
         advRenderStatsPage();
     }
-    function advAllocCancel() { advAlloc = null; advRenderStatsPage(); }
+    function advAllocCancel() { advAlloc = null; if (advTut().bag) advTutSet('alloc'); tutCoachClear(); advRenderStatsPage(); }
     function advAllocOk() {
         if (!advAlloc || !advAllocUsed()) return;
+        if (advTut().bag) { advTutSet('alloc'); tutCoachClear(); }
         advSyncDaily();
         Object.keys(advAlloc).forEach(k => {
             let n = Math.min(advAlloc[k], advUpMax(k) - advData.up[k], advPtsLeft());
@@ -8111,7 +8199,20 @@
             let t = advTut();
             if (!t.bag && (advData.gear || []).includes('bag')) advTutSet('bag');
             let bagOpen = document.getElementById('advBagModal') && document.getElementById('advBagModal').style.display === 'block';
-            if (t.bag || !advData.items.bag || bagOpen) { tutCoachClear(); return; }
+            if (bagOpen) return;
+            if (t.bag || !advData.items.bag) {
+                // 塑膠袋裝好了 → 下一步：分配升級點數（不強迫點哪一個能力；按取消也算完成）
+                if (t.bag && !t.alloc && document.getElementById('advStatsView').classList.contains('active')) {
+                    setTimeout(() => {
+                        if (advTut().alloc || !document.getElementById('advStatsView').classList.contains('active')) return;
+                        if (advAlloc) tutCoach('ALL:#advStatsBox .st-plus', '點「＋」幫雞塊加能力\n加哪一項都可以，不想加也可以按「取消」');
+                        else if (advPtsLeft() > 0) tutCoach('#stLvArea', '升級了！點這裡分配升級點數');
+                        else { advTutSet('alloc'); tutCoachClear(); }
+                    }, 150);
+                    return;
+                }
+                tutCoachClear(); return;
+            }
             setTimeout(() => { let bo = document.getElementById('advBagModal'); if (!advTut().bag && document.getElementById('advStatsView').classList.contains('active') && !(bo && bo.style.display === 'block')) tutCoach('#advStatsBox .adv-mini-slot.empty', '點這裡，裝備「夜市塑膠袋」'); }, 150);
         } catch (e) {}
     }
@@ -8155,8 +8256,8 @@
             <div class="adv-car-hint">（${idx + 1} / ${n}）</div>`;
         }
         return `
-            <div class="adv-sec-title">招式選擇　<span id="advEquipCount">已裝備 ${eqKeys.length}/${ADV_MAX_EQUIP}</span>
-                <select class="adv-move-filter" aria-label="篩選招式" data-on-change='[["advSetMoveFilter",["$value"]]]'>
+            <div class="st-tabhead"><span></span><span class="st-tabhead__mid" id="advEquipCount">已裝備 ${eqKeys.length}/${ADV_MAX_EQUIP}</span>
+                <select class="st-filter adv-move-filter" aria-label="篩選招式" data-on-change='[["advSetMoveFilter",["$value"]]]'>
                     ${ADV_MOVE_FILTERS.map(o => `<option value="${o[0]}"${advMoveFilter === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}
                 </select></div>
             ${car}
@@ -8494,7 +8595,13 @@
         let total = Math.max(inl ? 6 : 9, Math.ceil(cells.length / 3) * 3);
         while (cells.length < total) cells.push('<div class="adv-bag-cell empty"></div>');
         if (!defs.length && advBagGearOnly) cells = [];
-        body.innerHTML = `<div class="adv-bag-head">
+        // r17：能力值頁的「背包」分頁：不再重複寫「背包」，篩選放在跟「招式」分頁一樣的位置（st-tabhead）
+        body.innerHTML = (inl && !advBagGearOnly) ? `<div class="st-tabhead"><span></span><span class="st-tabhead__mid"></span>
+                <select class="st-filter adv-bag-filter" aria-label="篩選背包" data-on-change='[["advSetBagFilter",["$value"]]]'>
+                    ${[['all', '全部'], ['gear', '裝備'], ['item', '道具']].map(o => `<option value="${o[0]}"${advBagFilter === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}
+                </select></div>
+            <div class="adv-bag-grid${inl ? ' adv-bag-grid--6' : ''}">${cells.join('')}</div>
+            <div class="adv-bag-info">${advBagInfoHTML(defs, inl)}</div>` : `<div class="adv-bag-head">
                 <div class="adv-bag-title">${advBagGearOnly ? `${advSkewerIcon(20)} ${advBagSlot !== null ? '選擇' + ADV_HANDS[advBagSlot] + '的裝備' : '裝備欄'}` : `${advBagIcon(22)} 背包`}</div>
                 ${advBagGearOnly ? '' : `<select class="adv-bag-filter" aria-label="篩選背包" data-on-change='[["advSetBagFilter",["$value"]]]'>
                     ${[['all', '全部'], ['gear', '裝備'], ['item', '道具']].map(o => `<option value="${o[0]}"${advBagFilter === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}
@@ -8502,6 +8609,20 @@
             </div>
             <div class="adv-bag-grid${inl ? ' adv-bag-grid--6' : ''}">${cells.join('')}</div>
             <div class="adv-bag-info">${advBagInfoHTML(defs, inl)}</div>`;
+        advBagTut();
+    }
+    // r17 新手導引：裝備欄的視窗裡 → 先點塑膠袋 → 再按「裝備」
+    function advBagTut() {
+        try {
+            let t = advTut();
+            if (t.bag || !advData.items.bag || (advData.gear || []).includes('bag')) return;
+            setTimeout(() => {                     // 視窗是畫完內容之後才打開 → 晚一點再看視窗開了沒
+                let m = document.getElementById('advBagModal');
+                if (advTut().bag || !m || m.style.display !== 'block') return;
+                if (advBagSel !== 'bag') tutCoach(`#advBagModal .adv-bag-cell[data-on-click*='"bag"']`, '點「夜市塑膠袋」');
+                else tutCoach('#advBagModal .adv-bag-detail ~ .adv-plain-btn.main', '按「裝備」把它戴上！');
+            }, 150);
+        } catch (e) {}
     }
     // 九宮格下面的說明欄（點了哪一格就顯示哪一格）
     function advBagInfoHTML(defs, inl) {
@@ -8525,9 +8646,9 @@
     }
     function advBagUnselect() { advBagSel = ''; advBagBack(); }
     // 冒險卷：今天的重複挑戰次數 +1
-    function advBagUseTicket() {
+    async function advBagUseTicket() {
         if (advData.tickets < 1) return;
-        if (!confirm(`要使用 1 張冒險卷嗎？\n\n今天重複挑戰已通關關卡的次數 +1（目前還能挑戰 ${advReplaysLeft()} 次）`)) return;
+        if (!await uiConfirm(`要使用 1 張冒險卷嗎？\n\n今天重複挑戰已通關關卡的次數 +1（目前還能挑戰 ${advReplaysLeft()} 次）`)) return;
         let today = getLocalDateStr();
         if (advData.replayBonusDay !== today) { advData.replayBonusDay = today; advData.replayBonus = 0; }
         advData.replayBonus += 1;
@@ -8565,9 +8686,9 @@
             <div class="adv-note" style="margin:0 0 8px;">${advStatLabel(from)}：${s[from]} → ${s[from] - 1}</div>${rows}
             <button type="button" class="adv-plain-btn sub" style="margin-top:8px;" data-on-click='[["advBagWipe",[]]]'>上一步</button>`;
     }
-    function advWipeApply(from, to) {
+    async function advWipeApply(from, to) {
         if (advData.wipes < 1 || from === to || !(advData.up[from] > 0) || !Object.prototype.hasOwnProperty.call(advData.up, to) || advData.up[to] >= advUpMax(to)) return;
-        if (!confirm(`要用 1 張濕紙巾，把 1 點「${advStatLabel(from)}」轉到「${advStatLabel(to)}」嗎？`)) return;
+        if (!await uiConfirm(`要用 1 張濕紙巾，把 1 點「${advStatLabel(from)}」轉到「${advStatLabel(to)}」嗎？`)) return;
         advSyncDaily();
         advData.wipes -= 1;
         advData.up[from] -= 1;
@@ -8718,28 +8839,29 @@
     }
     // 補給站右上角的碎片數字旁，跳出「-15」之類的紅色數字（跟雞塊一樣）
     function advShardFloat(n) { if (n) showChickenFloat('advShopShardCount', (n > 0 ? '+' : '-') + Math.abs(n), n > 0 ? '#10B981' : '#EF4444'); }
-    function advExchangeShards() {
+    async function advExchangeShards() {
         if (advData.shards < ADV_SHARDS_PER_SAUCE) return;        // 碎片不夠：格子已經是灰底，不另外跳訊息
-        if (!confirm(`要用 ${ADV_SHARDS_PER_SAUCE} 個冒險代幣兌換 1 個糖醋醬嗎？`)) return;
+        if (!await uiConfirm(`要用 ${ADV_SHARDS_PER_SAUCE} 個冒險代幣兌換 1 個糖醋醬嗎？`)) return;
         advData.shards -= ADV_SHARDS_PER_SAUCE;
         advData.sauce += 1;
         advSave();
         advRenderShopBox();
         advShardFloat(-ADV_SHARDS_PER_SAUCE);
     }
-    function advBuyPotion() {
+    async function advBuyPotion() {
         if (advData.shards < ADV_POTION_COST) return;
-        if (!confirm(`要用 ${ADV_POTION_COST} 個冒險代幣購買小型恢復藥水嗎？\n\nHP +${ADV_POTION_HEAL}`)) return;
+        if (!await uiConfirm(`要用 ${ADV_POTION_COST} 個冒險代幣購買小型恢復藥水嗎？\n\nHP +${ADV_POTION_HEAL}`)) return;
         advData.shards -= ADV_POTION_COST;
         advData.potions += 1;
         advSave();
         advRenderShopBox();
         advShardFloat(-ADV_POTION_COST);
     }
-    function advBuySoda() {
+    async function advBuySoda() {
+        if (!advTut().sodaBuy) { advTutSet('sodaBuy'); tutCoachClear(); }
         if (advData.items.soda) { alert('已經擁有彈珠汽水了。'); return; }
         if (advData.shards < ADV_SODA_PRICE) return;
-        if (!confirm(`要用 ${ADV_SODA_PRICE} 個冒險代幣購買彈珠汽水嗎？\n\n${ADV_ITEMS.soda.desc}`)) return;
+        if (!await uiConfirm(`要用 ${ADV_SODA_PRICE} 個冒險代幣購買彈珠汽水嗎？\n\n${ADV_ITEMS.soda.desc}`)) return;
         advData.shards -= ADV_SODA_PRICE;
         advData.items.soda = true;
         advSave();
@@ -8748,11 +8870,11 @@
         advUpdateGearAlerts();
         alert('🥤 買到彈珠汽水了！\n到「💪 能力值 → 裝備」把它裝備起來吧。');
     }
-    function advBuyBoba() {
+    async function advBuyBoba() {
         if (advData.items.boba) { alert('已經擁有快喝光的珍珠奶茶了。'); return; }
         if (!advGearOpen('boba')) return;                       // 還沒解鎖：格子上已經寫「第 5 關解鎖」
         if (advData.shards < ADV_BOBA_PRICE) return;
-        if (!confirm(`要用 ${ADV_BOBA_PRICE} 個冒險代幣購買快喝光的珍珠奶茶嗎？\n\n${ADV_ITEMS.boba.desc}`)) return;
+        if (!await uiConfirm(`要用 ${ADV_BOBA_PRICE} 個冒險代幣購買快喝光的珍珠奶茶嗎？\n\n${ADV_ITEMS.boba.desc}`)) return;
         advData.shards -= ADV_BOBA_PRICE;
         advData.items.boba = true;
         advSave();
@@ -8761,11 +8883,11 @@
         advUpdateGearAlerts();
         alert('🧋 買到快喝光的珍珠奶茶了！\n到「💪 能力值 → 裝備」把它裝備起來吧。');
     }
-    function advBuyCoaster() {
+    async function advBuyCoaster() {
         if (advData.items.coaster) { alert('已經擁有防燙杯套了。'); return; }
         if (!advGearOpen('coaster')) return;                    // 還沒解鎖：格子上已經寫「第 11 關解鎖」
         if (advData.shards < ADV_COASTER_PRICE) return;
-        if (!confirm(`要用 ${ADV_COASTER_PRICE} 個冒險代幣購買防燙杯套嗎？\n\n${ADV_ITEMS.coaster.desc}`)) return;
+        if (!await uiConfirm(`要用 ${ADV_COASTER_PRICE} 個冒險代幣購買防燙杯套嗎？\n\n${ADV_ITEMS.coaster.desc}`)) return;
         advData.shards -= ADV_COASTER_PRICE;
         advData.items.coaster = true;
         advSave();
@@ -8774,9 +8896,9 @@
         advUpdateGearAlerts();
         alert('☕ 買到防燙杯套了！\n到「💪 能力值 → 裝備」把它裝備起來吧。');
     }
-    function advBuyWipe() {
+    async function advBuyWipe() {
         if (advData.shards < ADV_WIPE_COST) return;
-        if (!confirm(`要用 ${ADV_WIPE_COST} 個冒險代幣購買濕紙巾嗎？\n\n可以把 1 點能力轉移到別的能力`)) return;
+        if (!await uiConfirm(`要用 ${ADV_WIPE_COST} 個冒險代幣購買濕紙巾嗎？\n\n可以把 1 點能力轉移到別的能力`)) return;
         advData.shards -= ADV_WIPE_COST;
         advData.wipes += 1;
         advSave();
@@ -8787,14 +8909,14 @@
     function advMoveIcon(m) { return m.icon; }
     function advMoveOpen(m) { return BattleCore.isUnlocked(BattleCore.moveUnlockAt(m.key), advData.cleared); }
     function advGearOpen(k) { return BattleCore.isUnlocked(BattleCore.gearUnlockAt(k), advData.cleared); }
-    function advBuyMove(key) {
+    async function advBuyMove(key) {
         let m = advMoveByKey(key);
         if (!m || m.buy.kind === 'free') return;
         if (advOwns(key)) { alert(`已經擁有「${m.name}」了。`); return; }
         if (!advMoveOpen(m)) return;                            // 還沒解鎖：格子上已經寫「第 21 關解鎖」
         if (m.buy.kind === 'chicken') { buyShopItem(m.buy.item); return; }
         if (advData.shards < m.buy.price) return;
-        if (!confirm(`要用 ${m.buy.price} 個冒險代幣學會「${m.name}」嗎？\n\n${ADV_TYPE_LABEL[m.type]}｜威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''}｜${m.q} 題｜${m.desc}`)) return;
+        if (!await uiConfirm(`要用 ${m.buy.price} 個冒險代幣學會「${m.name}」嗎？\n\n${ADV_TYPE_LABEL[m.type]}｜威力 ${m.power}${m.hits > 1 ? '×' + m.hits : ''}｜${m.q} 題｜${m.desc}`)) return;
         advData.shards -= m.buy.price;
         advData.own[key] = true;
         advAutoEquip(key);
@@ -8819,7 +8941,7 @@
         if (advData.shards < ADV_WEEKLY_SHARDS) return;
         if (walletBusy) return;
         if (!ensureLoginBeforeSpend()) return;
-        if (!confirm(`要用 ${ADV_WEEKLY_SHARDS} 個冒險代幣兌換 ${ADV_WEEKLY_CHICKENS} 個雞塊嗎？\n\n每週只能兌換 1 次。`)) return;
+        if (!await uiConfirm(`要用 ${ADV_WEEKLY_SHARDS} 個冒險代幣兌換 ${ADV_WEEKLY_CHICKENS} 個雞塊嗎？\n\n每週只能兌換 1 次。`)) return;
         walletBusy = true;
         try {
             let data = await walletRpc('weekly_exchange', {});
@@ -9092,6 +9214,14 @@
                 adv.btMenuH = Math.max(adv.btMenuH, pn.offsetHeight + 24);   // +24：中文比較長會換行
                 pn.innerHTML = keep;
             }
+            // 店員：中途會出現兩行的說明（崗位、加成）和「兌換集點卡」那一排 → 先預留，畫面才不會被切掉
+            if (adv.enemy && adv.enemy.special === 'clerk') {
+                let keep = pn.innerHTML, lg = pn.querySelector('#advLog');
+                if (lg) lg.innerHTML = '字<br>字';
+                if (!pn.querySelector('.adv-xrow')) { let mv = pn.querySelector('.adv-moves'); if (mv) mv.insertAdjacentHTML('afterend', '<div class="adv-xrow"><button type="button" class="adv-xbtn adv-xbtn--redeem"><b>字</b><span>字</span></button></div>'); }
+                adv.btMenuH = Math.max(adv.btMenuH, pn.offsetHeight + 4);
+                pn.innerHTML = keep;
+            }
             // 作答畫面（標題兩行＋單字＋四個選項）通常比只有 1～2 招的選單高 → 一起量，避免作答時選項被切掉要往下滑
             {
                 let keep = pn.innerHTML;
@@ -9214,6 +9344,8 @@
         advAbort();
         advSyncDaily();
         psCount('advPlay');
+        adv.tutStep = (lv.id === 1 && !advTut().b1) ? 1 : 0;      // r17：第一場戰鬥的新手導引（1 選衝撞 → 2 作答 → 3 選斬擊 → 4 作答 → 結束）
+        adv.tutPause = false; adv.tutLeft = null; adv.tutCombo = false;
         if (advData.hp <= 0) { advNoHpOpen(lv.id); return; }   // 沒有體力：跳出「體力不足」視窗（可以喝恢復藥水）
         advData.mapAt = lv.id;                               // 地圖上的雞塊：站在剛打的這關
         // 已通關的關卡可以一直重複挑戰：每天前 3 次打贏有通關獎勵，之後只累積招式熟練度（在 advWin 計算）
@@ -9398,7 +9530,7 @@
                 <div class="tg-st"><span class="k">${SHIELD}防禦</span><b>${d.def}</b></div>
                 <div class="tg-st"><span class="k">${full ? CROWN : ''}最佳</span>${has ? `<b class="best">${best}</b>` : '<b class="none">—</b>'}</div>
             </div><div class="tg-ab"><span>特殊能力</span><b>${tgAbility(d)}</b></div>
-            <div class="tg-ab tg-xp"><span>經驗值</span><b>${BattleCore.dummyXpTiers(d).map(t => `${t.pct === 100 ? '打倒' : t.pct + '%'} +${t.xp}`).join('・')}</b></div>`;
+            <div class="tg-ab tg-xp"><span>經驗值</span><b>會根據雞塊傷害量給予經驗</b></div>`;
         document.getElementById('tgDummy').innerHTML = advDummySVG(d.key, 0);
         document.getElementById('tgName').textContent = d.name;
         document.getElementById('tgPrev').disabled = tgIdx <= 0;
@@ -9415,6 +9547,8 @@
         let go = document.querySelector('#tgHome .tg-go'), bang = go && go.querySelector('.tg-bang');   // 新手導引：還沒按過「訓練」→ 驚嘆號
         if (go && !advTut().seen.tgGo && !bang) go.insertAdjacentHTML('beforeend', '<em class="tg-bang" aria-label="新的">!</em>');
         if (bang && advTut().seen.tgGo) bang.remove();
+        // r17 新手導引：訓練場 → 點「訓練」
+        if (!advTut().seen.tgGo) setTimeout(() => { let h = document.getElementById('tgHome'); if (h && !h.hidden && !advTut().seen.tgGo) tutCoach('#tgHome .tg-go', '點「訓練」開始練習'); }, 300);
     }
     // 左右切換木人：木人縮小變淡、狀態欄淡出再淡入
     function tgStep(dir) {
@@ -9469,7 +9603,10 @@
         ahDeckChosen(TG_PICK_KEY[s.mode], s.mode, tgNeed()).forEach(x => { if (x.l.content) text += x.l.content + '\n'; });
         return parseWordsRaw(text);
     }
-    function tgOpenPrep() { advTutSet('seen', 'tgGo'); let b = document.querySelector('#tgHome .tg-bang'); if (b) b.remove(); tgRenderPrep(); ahOpenSheet('Train'); }
+    function tgOpenPrep() {
+        advTutSet('seen', 'tgGo'); let b = document.querySelector('#tgHome .tg-bang'); if (b) b.remove(); tgRenderPrep(); ahOpenSheet('Train');
+        if (!advTut().tgStart) setTimeout(() => { let w = document.getElementById('ahTrain'); if (w && !w.hidden) tutCoach('#tgGoBar .ah-start', '按「開始訓練」\n打木人不會扣體力，可以放心練習'); }, 450);   // r17 新手導引
+    }
     function tgSetMode(m) {
         tgSaveSrc({ mode: m });
         tgRenderPrep();
@@ -9535,6 +9672,9 @@
         let words = tgWords();
         if (words.length < tgNeed(d) || (tgSrc().mode === 'auto' && !tgLvOk(tgSrc().lv, d))) { tgRenderPrep(); return; }
         psCount('train');
+        adv.tutStep = 0; adv.tutPause = false; adv.tutLeft = null;
+        adv.tutCombo = !advTut().combo;                              // r17：第一次訓練：介紹連對系統
+        advTutSet('tgStart');
         ahCloseSheet('Train');
         advAbort();
         advSyncDaily();
@@ -9608,9 +9748,13 @@
         }
         // 經驗值：打到 30%／60%／100% 各給一段（數字在 battle-core 的 DUMMIES.xp）；訓練不限次數
         let xp = BattleCore.dummyXp(d, dmg), lvB = advLevel();
+        // r17：第一次訓練打完（木人有受到傷害）→ 冒險代幣 +2、經驗 +2，只給一次
+        let gift = null;
+        if (dmg > 0 && !advTut().trainGift) { gift = BattleCore.TRAIN_FIRST_GIFT; advData.shards += gift.shards; xp += gift.xp; advTutSet('trainGift'); }
+        psLv('t:' + d.key, 'n', xp);
         if (xp) { advData.xp = (advData.xp || 0) + xp; if (advLevel() > lvB) advData.lvUpAt = Date.now(); }
         advSave();
-        tgShowResult({ d, dmg, rec: rec && dmg > 0, prev, reward, xp, lvUp: advLevel() > lvB, full: dmg >= d.hp, round: ev.round || 0 });
+        tgShowResult({ d, dmg, rec: rec && dmg > 0, prev, reward, xp, gift, lvUp: advLevel() > lvB, full: dmg >= d.hp, round: ev.round || 0 });
     }
     function tgShowResult(r) {
         crData = { train: true };
@@ -9622,8 +9766,9 @@
         let stats = `<div class="cr-stats">
             <div class="cr-stat cr-stat--score"><span class="cr-stat__label">總傷害</span><span class="cr-num tg-dmg">${r.dmg} <small>/ ${r.d.hp}</small></span></div>
             <div class="cr-stat cr-stat--score"><span class="cr-stat__label">答對・最多連對</span><span class="cr-num">${ok} <small>/ ${all}</small>・${adv.comboMax || 0}</span></div></div>`;
-        let its = (r.xp ? `<span class="cr-item"><span class="xp-ico">XP</span><b>+${r.xp}</b></span>` : '') + (r.reward && r.reward.shards ? `<span class="cr-item">${advShardIcon(26)}<b>×${r.reward.shards}</b></span>` : '');
-        let mid = `<div class="cr-reward tg-reward"><div class="cr-reward__head"><span class="cr-reward__label">${r.reward && r.reward.shards ? `獲得獎勵（含第一次打到 ${r.d.hp}）` : '獲得獎勵'}</span>${r.lvUp ? '<span class="cr-tag cr-tag--today">升級了！</span>' : ''}</div>
+        let shardN = ((r.reward && r.reward.shards) || 0) + ((r.gift && r.gift.shards) || 0);
+        let its = (r.xp ? `<span class="cr-item"><span class="xp-ico">XP</span><b>+${r.xp}</b></span>` : '') + (shardN ? `<span class="cr-item">${advShardIcon(26)}<b>×${shardN}</b></span>` : '');
+        let mid = `<div class="cr-reward tg-reward"><div class="cr-reward__head"><span class="cr-reward__label">${r.gift ? '獲得獎勵（含第一次訓練獎勵）' : r.reward && r.reward.shards ? `獲得獎勵（含第一次打到 ${r.d.hp}）` : '獲得獎勵'}</span>${r.lvUp ? '<span class="cr-tag cr-tag--today">升級了！</span>' : ''}</div>
             <div class="cr-reward__items">${its || '<span class="cr-none">沒有經驗值</span>'}</div></div>`;   // r16：字太多 → 拿掉經驗值門檻和最佳紀錄（新紀錄有緞帶）
         let btns = `<button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["tgBack",[]]]'>回訓練場</button>
             <button type="button" class="cr-btn cr-btn--primary" data-on-click='[["tgAgain",[]]]'>再練一次</button>`;
@@ -9705,9 +9850,23 @@
         el.hidden = false;
         dexRender();
         el.scrollTop = 0;
+        if (!advTut().dexIntro) dexTutStart();
+    }
+    // r17 新手導引：圖鑑 → 用貢丸當例子說明情蒐 → 提醒打不贏可以來看圖鑑
+    function dexTutStart() {
+        if (dexCh !== 1) { try { dexTab(1); } catch (e) {} }
+        setTimeout(() => {
+            let card = document.querySelector('#dexHome .dex-card[data-dex="meatball"]');
+            if (!card) { advTutSet('dexIntro'); return; }
+            try { card.scrollIntoView({ block: 'center' }); } catch (e) {}
+            tutCoach('#dexHome .dex-card[data-dex="meatball"]', '以「貢丸」為例：\n第 1 次打 → 知道牠的能力值\n第 2 次打 → 解鎖特殊能力\n第 3 次打 → 解鎖攻略', {
+                btn: '下一步', onBtn: () => tutCoach(null, '打不贏的敵人，可以多看圖鑑，\n找出牠的弱點再挑戰！', { btn: '知道了', onBtn: () => { advTutSet('dexIntro'); tutCoachClear(); } })
+            });
+        }, 400);
     }
     function dexClose() {
         let el = document.getElementById('dexHome'); if (el) el.hidden = true;
+        try { tutCoachClear(); } catch (e) {}
         if (dexObs) { dexObs.disconnect(); dexObs = null; }
         ahUpdateBadges();
     }
@@ -9777,6 +9936,7 @@
         d.got[lvId] = Date.now();
         advData.shards += r.shards;
         let lvB = advLevel();
+        psLv('dex', 'n', r.xp);
         if (r.xp) { advData.xp = (advData.xp || 0) + r.xp; if (advLevel() > lvB) advData.lvUpAt = Date.now(); }
         advSave();
         dexToast(`情蒐獎勵：冒險代幣 +${r.shards}${r.xp ? `、經驗值 +${r.xp}` : r.swapped ? `（等級已滿，經驗值換成代幣）` : ''}`);
@@ -9886,15 +10046,17 @@
             return `<button type="button" class="adv-move mv2 rar-${advRarityKey(m.key)}${sealed ? ' sealed' : ''}" ${off ? 'disabled' : ''} data-on-click='[["advChooseMove",["${m.key}"]]]'>
                 ${stamp ? '<span class="adv-stamp">已集點</span>' : ''}<span class="mv-main"><b class="nm">${m.name}${lvl ? ` <span class="adv-lv-chip">Lv.${lvl}</span>` : ''}</b><span class="dmg">傷害 ${m.hits > 1 ? per + '×' + m.hits : per}</span>${why ? `<small>${why}</small>` : ''}</span>${advMoveTypeTag(m.type)}</button>`;
         }).join('');
+        // r17：集點卡和珍珠奶茶放同一排（一左一右），文字精簡
+        let xs = [];
         if (adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.size >= ADV_STAMP_NEED && !adv.redeemed) {
-            moves += `<button type="button" class="adv-move adv-redeem rar-legend" data-on-click='[["advRedeemStamps",[]]]'><b class="nm">🎫 兌換集點卡！</b><span class="dmg">攻擊 +${ADV_STAMP_ATK}・HP +${ADV_STAMP_HEAL}</span><small>不用作答・不消耗行動・一場一次</small></button>`;
+            xs.push(`<button type="button" class="adv-xbtn adv-xbtn--redeem" data-on-click='[["advRedeemStamps",[]]]'><b>🎫 兌換集點卡</b><span>攻擊 +${ADV_STAMP_ATK}・HP 恢復 ${ADV_STAMP_HEAL}</span></button>`);
         }
-        let itemBtn = '';
         if (advHasGear('boba')) {
             let early = (adv.round || 1) < 2;                                       // 第 1 回合（敵人還沒攻擊過）不能喝
             let can = BattleCore.canBoba(adv);
-            itemBtn += `<button type="button" class="adv-item-btn" ${can ? '' : 'disabled'} data-on-click='[["advUseBoba",[]]]'>🧋 喝快喝光的珍珠奶茶　HP +1 <small>${!adv.itemUsed && early ? '（第 2 回合起才能喝）' : adv.itemUsed ? '（這場已經喝過了）' : '（HP 3 以下可用，一場 1 次）'}</small></button>`;
+            xs.push(`<button type="button" class="adv-xbtn adv-xbtn--boba" ${can ? '' : 'disabled'} data-on-click='[["advUseBoba",[]]]'><b>🧋 珍珠奶茶</b><span>HP +1${!adv.itemUsed && early ? '・第 2 回合起' : adv.itemUsed ? '・已喝過' : ''}</span></button>`);
         }
+        let itemBtn = xs.length ? `<div class="adv-xrow">${xs.join('')}</div>` : '';
         ['nectar', 'crown'].forEach(k => {
             let n = (typeof farm !== 'undefined' && farm.items) ? (farm.items[k] || 0) : 0;
             if (!n || !FARM_ITEMS[k]) return;     // 下架的道具：戰鬥中先不顯示
@@ -9908,8 +10070,44 @@
         if (adv.nextAtk) itemBtn = `<div class="adv-item-tip">⚡ 蓄力中：下一招攻擊 +${adv.nextAtk}</div>` + itemBtn;
         document.getElementById('advPanel').innerHTML = `<div class="adv-log" id="advLog">選擇招式！（本回合還可行動 ${adv.actionsLeft} 次）</div><div class="adv-moves">${moves}</div>${itemBtn}`;
         if (advBtOn() && !adv.btLocked) { adv.btLocked = true; requestAnimationFrame(() => advBtLock(true)); }
+        advBattleTutMenu();
     }
-    // 招式卡右邊的直條：聽力／字卡／速答（底色跟著稀有度：普通灰、稀有黃、傳說紫）
+    // ═════ r17 新手導引：戰鬥中 ═════
+    //   第一場（第 1 關）：只能按指定的招式、只能按正確答案；導引時倒數暫停（秒數還是顯示）
+    const ADV_TUT_MOVE = { 1: ['tackle', '先用「衝撞」攻擊！\n衝撞是字卡招式：看英文，選出正確的中文意思'], 3: ['slash', '換成「斬擊」！\n招式類型不一樣（聽力：聽發音選中文），傷害也不一樣'] };
+    function advBattleTutMenu() {
+        if (!adv.active) return;
+        if (adv.training && adv.tutCombo) {
+            setTimeout(() => {
+                if (!adv.active || !adv.tutCombo || adv.q) return;
+                tutCoach('#btCombo', `連對系統\n連續答對越多題，攻擊力倍數越高（${BattleCore.COMBO_STEPS.slice().reverse().map(x => `${x.at} 題 ×${x.mul}`).join('、')}）\n答錯會從 0 重新算！`, { btn: '知道了', onBtn: () => { adv.tutCombo = false; advTutSet('combo'); tutCoachClear(); } });
+            }, 350);
+            return;
+        }
+        let step = ADV_TUT_MOVE[adv.tutStep];
+        if (!step) return;
+        let key = step[0];
+        if (!adv.moves.some(m => m.key === key)) { adv.tutStep = 0; advTutSet('b1'); return; }   // 沒帶這招（不太可能）：導引直接結束
+        document.querySelectorAll('#advPanel .adv-move, #advPanel .adv-xbtn').forEach(b => { if (!(b.getAttribute('data-on-click') || '').includes(`"${key}"`)) b.classList.add('tut-off'); });
+        setTimeout(() => { if (adv.active && ADV_TUT_MOVE[adv.tutStep] === step && !adv.q) tutCoach(`#advPanel .adv-move[data-on-click*='"${key}"']`, step[1]); }, 250);
+    }
+    // 作答導引：只有正確答案能按，倒數暫停
+    function advBattleTutQ() {
+        if (!(adv.tutStep === 2 || adv.tutStep === 4) || !adv.q) return;
+        let q = adv.q;
+        adv.tutPause = true; adv.tutLeft = null;
+        let opts = document.querySelectorAll('#advPanel .adv-opt');
+        opts.forEach((b, i) => { if (i !== q.correct) b.classList.add('tut-off'); });
+        let txt = adv.tutStep === 2 ? '正確答案在這裡，點它！\n（導引的時候倒數會暫停）' : '聽發音，點正確的中文意思！\n（倒數一樣暫停）';
+        setTimeout(() => { if (adv.q === q && !q.done) tutCoach(`#advPanel .adv-opt:nth-child(${q.correct + 1})`, txt); }, 200);
+    }
+    function advBattleTutAnswered() {
+        if (!(adv.tutStep === 2 || adv.tutStep === 4)) return;
+        adv.tutPause = false; adv.tutLeft = null;
+        tutCoachClear();
+        adv.tutStep++;
+        if (adv.tutStep > 4) { adv.tutStep = 0; advTutSet('b1'); }
+    }
     function advMoveTypeTag(type) {
         let t = String(ADV_TYPE_LABEL[type] || (type === 'speed' ? '速答' : '')).split('').map(c => `<i>${c}</i>`).join('');
         return `<span class="mv-type" aria-hidden="true">${t}</span>`;
@@ -9941,6 +10139,9 @@
 
     async function advChooseMove(key) {
         if (!adv.active || adv.busy || adv.q) return;
+        if (ADV_TUT_MOVE[adv.tutStep] && ADV_TUT_MOVE[adv.tutStep][0] !== key) return;     // 新手導引：只能按指定的招式
+        if (ADV_TUT_MOVE[adv.tutStep]) { adv.tutStep++; tutCoachClear(); }
+        if (adv.training && adv.tutCombo) { adv.tutCombo = false; advTutSet('combo'); tutCoachClear(); }
         let m = adv.moves.find(x => x.key === key);
         if (!m || (adv.sealed || []).includes(key)) return;
         const id = adv.runId;
@@ -10009,6 +10210,7 @@
         const tick = () => {
             let q2 = adv.q;
             if (!adv.active || !q2 || q2.done || q2 !== q) { advStopTimer(); return; }
+            if (adv.tutPause) { if (adv.tutLeft == null) adv.tutLeft = Math.max(0, adv.timerEnd - Date.now()); adv.timerEnd = Date.now() + adv.tutLeft; }   // 新手導引：倒數暫停（秒數照樣顯示）
             let left = Math.max(0, adv.timerEnd - Date.now());
             let arc = document.getElementById('advTimerArc'), num = document.getElementById('advTimerNum');
             if (arc) { arc.style.strokeDashoffset = String(94.25 * (1 - left / (adv.timerTotal * 1000))); arc.style.stroke = left <= 5000 ? '#EF4444' : '#10B981'; }
@@ -10173,7 +10375,7 @@
         adv.busy = true;
         adv.q = null;
         adv.resolvedSeq = adv.moveSeq;
-        let masteryUp = adv.training ? 0 : advAddMasteryUse(m.key);
+        let masteryUp = (!adv.training || sp.pairs > 0) ? advAddMasteryUse(m.key) : 0;   // r17：訓練場也加熟練度（有配對成功才算）
         adv.mastery[m.key] = advMastery(m.key);
         advSave();
         // 加成怎麼算、敵人怎麼防禦：battle-core.js 的 speedEnd
@@ -10272,12 +10474,15 @@
             <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}<br><span class="adv-log-sub">選出正確的意思</span></div>
             <div class="adv-qword">${escapeHTML(w.english)}</div>
             <div class="adv-opts">${opts.map((o, i) => `<button type="button" class="adv-opt" data-on-click='[["advAnswerCard",[${i}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
+        advBattleTutQ();
     }
     async function advAnswerCard(i) {
         let q = adv.q;
         if (!adv.active || adv.busy || !q || q.type !== 'card' || q.done) return;
+        if (adv.tutPause && i !== q.correct) return;             // 新手導引：只能按正確答案
         const id = adv.runId;
         q.done = true;
+        advBattleTutAnswered();
         let btns = document.querySelectorAll('#advPanel .adv-opt');
         btns.forEach((b, idx) => { if (idx === q.correct) b.classList.add('ok'); else if (idx === i) b.classList.add('bad'); });
         let ok = i === q.correct;
@@ -10397,8 +10602,9 @@
             <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}<br><span class="adv-log-sub" id="advListenSub"></span></div>
             <div class="adv-opts">${opts.map((o, i) => `<button type="button" class="adv-opt" data-on-click='[["advAnswerListen",[${i}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
         advListenPlay(w.english);
+        advBattleTutQ();
     }
-    // 聽力選擇題（斬擊、連續斬擊）：播放時顯示「語音播放中」，唸完改成「選擇聽到的單字中文」
+    // 聽力選擇題（斬擊、二連斬）：播放時顯示「語音播放中」，唸完改成「選擇聽到的單字中文」
     const ADV_SPK_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>';
     function advListenPlay(text) {
         let q = adv.q, cn = adv.move && adv.move.mode === 'listenCn';
@@ -10414,8 +10620,10 @@
     async function advAnswerListen(i) {
         let q = adv.q;
         if (!adv.active || adv.busy || !q || q.type !== 'listenChoice' || q.done) return;
+        if (adv.tutPause && i !== q.correct) return;             // 新手導引：只能按正確答案
         const id = adv.runId;
         q.done = true;
+        advBattleTutAnswered();
         let btns = document.querySelectorAll('#advPanel .adv-opt');
         btns.forEach((b, idx) => { if (idx === q.correct) b.classList.add('ok'); else if (idx === i) b.classList.add('bad'); });
         let ok = i === q.correct;
@@ -11057,7 +11265,7 @@
         if (adv.resolvedSeq === adv.moveSeq) { console.warn('同一招重複結算，已忽略'); return; }
         adv.resolvedSeq = adv.moveSeq;
         // 熟練度：不論成功或失敗，用一次就 +1（先算好，打倒敵人直接勝利時也會算到）
-        let masteryUp = adv.move && !adv.training ? advAddMasteryUse(adv.move.key) : 0;   // 訓練：沒有任何獎勵（熟練度也不加）
+        let masteryUp = adv.move && (!adv.training || ok) ? advAddMasteryUse(adv.move.key) : 0;   // r17：訓練場攻擊成功也加熟練度（大冒險不論成敗都加）
         if (adv.move) adv.mastery[adv.move.key] = advMastery(adv.move.key);
         if (!ok && adv.q && adv.q.word) advNoteWrong(adv.q.word);
         advSave();
@@ -11128,6 +11336,7 @@
         let gainXp = advWinXp(lv, xpOld, xpDouble);
         if (xpDouble) advData.xpDay = getLocalDateStr();
         let lvBefore = advLevel();
+        psLv('s' + lv.id, 'w', gainXp);
         advData.xp = (advData.xp || 0) + gainXp;
         let lvAfter = advLevel();
         if (lvAfter > lvBefore) advData.lvUpAt = Date.now();       // 能力值頁的紅點跳兩下
@@ -11265,6 +11474,8 @@
         el.hidden = false;
         el.scrollTop = 0;
         document.body.classList.add('cr-open');
+        // r17 新手導引：第一次打贏第 1 關 → 指「下一關」
+        if (st === 'first' && lv && lv.id === 1 && !advTut().next) setTimeout(() => { if (!el.hidden) tutCoach('.cr-actions .cr-btn--primary', '打贏了！點「下一關」繼續冒險'); }, 700);
     }
     function advHideResult() {
         let el = document.getElementById('advResultView');
@@ -11285,6 +11496,7 @@
     function crReview(kind) { advHideResult(); advWrongPractice(kind); }
     // 首勝 →「繼續」：回地圖播插旗動畫
     function crContinue() {
+        advTutSet('next'); tutCoachClear();
         let d = crData || {}, lv = d.lv || adv.level;
         advHideResult();
         if (!lv) { goToAdventurePage(); return; }
@@ -11438,6 +11650,7 @@
         // 戰敗：拿勝利經驗值的 20%（至少 1）
         let loseXp = BattleCore.titleXp(BattleCore.loseXp(adv.level, !!advData.cleared[adv.level.id]), advData.title);   // 算法在 battle-core.js（含稱號加成）
         let lvB = advLevel();
+        psLv('s' + adv.level.id, 'l', loseXp);
         advData.xp = (advData.xp || 0) + loseXp;
         if (advLevel() > lvB) advData.lvUpAt = Date.now();
         advSave();
@@ -11575,6 +11788,8 @@
         farm = farmParse(res.state);
         if (Number.isFinite(Number(res.now))) farmOffset = Number(res.now) - Date.now();
         farmSave();
+        // r17：後台的農場資料到了（今天的登入花可能已經在別的時候領過）→ 今日任務的紅點重新判斷
+        try { updateChickenBadgeUI(); } catch (e) {}
     }
     function farmSync() {
         if (farmSyncing) return farmSyncing;
@@ -12091,12 +12306,12 @@
                 return `<button type="button" class="fm-opt${on ? ' on' : ''}" data-on-click='[["farmChooseDecor",["${it.id}"]]]'><span class="fm-opt-art">${farmDecorThumb(it)}</span><b>${it.name}</b>${on ? '<small>使用中</small>' : own ? '' : `<small>${farmLockIcon(12, '#8A8378')} ${it.price} 朵花</small>`}</button>`;
             }).join('')}</div></div>`;
     }
-    function farmChooseDecor(id) {
+    async function farmChooseDecor(id) {
         let it = FARM_DECOR.find(x => x.id === id);
         if (!it) return;
         if (!farm.ownedDecor.includes(id)) {
             if (farm.flowers < it.price) { alert(`花不夠！「${it.name}」要 ${it.price} 朵花，目前有 ${farm.flowers} 朵。\n\n收成作物就能得到花。`); return; }
-            if (!confirm(`要用 ${it.price} 朵花買「${it.name}」嗎？`)) return;
+            if (!await uiConfirm(`要用 ${it.price} 朵花買「${it.name}」嗎？`)) return;
             if (farmSrv === true) { farmCall('buy', { id }).then(r => { if (r) { farmEditSlot = ''; farmRender(); } }); return; }
             farm.flowers -= it.price;
             farm.ownedDecor.push(id);
