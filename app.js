@@ -1862,7 +1862,7 @@
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261118a';
+    const PS_APP_VER = '20261118b';
     // 新的一天：把之前累積的送出去（一天最多一次；沒有新資料就不送）
     async function psMaybeSend(force) {
         if (psSending || !supabaseClient) return;
@@ -7641,6 +7641,7 @@
             c = document.createElement('div');
             c.id = 'tutCoach'; c.dataset.key = key; c.dataset.sel = sel || ''; c.setAttribute('role', 'status');
             if (!sel) c.classList.add('is-center');
+            if (opt.btn) c.classList.add('is-modal');        // 有按鈕的說明：整個畫面擋住，只能按泡泡裡的按鈕（不會點到後面的招式）
             c.innerHTML = `<div class="tut-ring"${sel ? '' : ' hidden'}></div><div class="tut-bubble${opt.btn ? ' has-btn' : ''}">${escapeHTML(text)}${opt.btn ? `<button type="button" class="tut-btn">${escapeHTML(opt.btn)}</button>` : ''}</div>`;
             document.body.appendChild(c);
             let b = c.querySelector('.tut-btn');
@@ -7657,7 +7658,7 @@
             Object.assign(ring.style, { left: (r.left - pad) + 'px', top: (r.top - pad) + 'px', width: (r.width + pad * 2) + 'px', height: (r.height + pad * 2) + 'px' });
             let bw = bub.offsetWidth, bh = bub.offsetHeight, up = r.top - bh - 18 > 8;
             let left = Math.max(12, Math.min(vw - bw - 12, r.left + r.width / 2 - bw / 2));
-            bub.className = 'tut-bubble ' + (up ? 'up' : 'down');
+            bub.className = 'tut-bubble' + (opt.btn ? ' has-btn' : '') + ' ' + (up ? 'up' : 'down');   // 保留 has-btn，按鈕才按得到
             bub.style.left = left + 'px';
             bub.style.top = (up ? r.top - bh - 16 : Math.min(vh - bh - 8, r.bottom + 16)) + 'px';
             bub.style.setProperty('--ax', Math.max(14, Math.min(bw - 14, r.left + r.width / 2 - left)) + 'px');
@@ -9859,9 +9860,21 @@
             let card = document.querySelector('#dexHome .dex-card[data-dex="meatball"]');
             if (!card) { advTutSet('dexIntro'); return; }
             try { card.scrollIntoView({ block: 'center' }); } catch (e) {}
-            tutCoach('#dexHome .dex-card[data-dex="meatball"]', '以「貢丸」為例：\n第 1 次打 → 知道牠的能力值\n第 2 次打 → 解鎖特殊能力\n第 3 次打 → 解鎖攻略', {
-                btn: '下一步', onBtn: () => tutCoach(null, '打不贏的敵人，可以多看圖鑑，\n找出牠的弱點再挑戰！', { btn: '知道了', onBtn: () => { advTutSet('dexIntro'); tutCoachClear(); } })
-            });
+            // 分三步：能力值 → 特殊能力 → 攻略，一次只框一塊
+            const C = '#dexHome .dex-card[data-dex="meatball"] ';
+            const steps = [
+                [C + '.dex-stats', '以「貢丸」為例：\n第 1 次打 → 知道牠的能力值'],
+                [C + '.dex-sec:nth-of-type(2)', '第 2 次打 → 解鎖特殊能力'],
+                [C + '.dex-sec:nth-of-type(3)', '第 3 次打 → 解鎖攻略'],
+            ];
+            const go = (i) => {
+                if (i >= steps.length) { tutCoach(null, '打不贏的敵人，可以多看圖鑑，\n找出牠的弱點再挑戰！', { btn: '知道了', onBtn: () => { advTutSet('dexIntro'); tutCoachClear(); } }); return; }
+                let el = document.querySelector(steps[i][0]);
+                if (!el) { go(i + 1); return; }
+                try { el.scrollIntoView({ block: 'center' }); } catch (e) {}
+                tutCoach(steps[i][0], steps[i][1], { btn: '下一步', onBtn: () => go(i + 1) });
+            };
+            go(0);
         }, 400);
     }
     function dexClose() {
