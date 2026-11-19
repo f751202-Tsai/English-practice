@@ -18,7 +18,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="icon" href="data:,">
     <!-- 引入 Google Identity Services SDK -->
-    <script src="boot.js?v=20261119c"></script>
+    <script src="boot.js?v=20261119e"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -4365,6 +4365,8 @@ body.power-saving-mode.we-on .we input, body.power-saving-mode.we-on .we textare
 body.power-saving-mode.we-on .we-title { color: #FFFFFF !important; }
 body.power-saving-mode.we-on .we-track { background: #2d3140 !important; }
 body.power-saving-mode.we-on .we-pos-btn:not(.has-value) { background: #1b1e27 !important; }
+/* r19：省電模式：新增一列、批次貼上、A-Z 排序的文字改白色 */
+body.power-saving-mode.we-on .we-tools .we-pill:not([aria-pressed="true"]) { color: #FFFFFF !important; }
 
 /* 套圈圈丟出的小套圈圈 */
 .adv-mini-ring { position: absolute; z-index: 7; pointer-events: none; border-radius: 50%; border: 5px solid #F97316; box-shadow: 0 0 0 2px #231F20, inset 0 0 0 2px #231F20; background: transparent; }
@@ -4495,7 +4497,19 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .ah button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
 .ah-map { position: absolute; left: 0; right: 0; top: 0; bottom: calc(68px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: none; }
 .ah-map::-webkit-scrollbar { display: none; }
-.ah-world { position: relative; width: 100%; }
+.ah-world { position: relative; width: 100%; overflow: hidden; }
+/* r19：迷霧：還沒到的關卡（路、攤位、敵人）都蓋住；過關時往上退 */
+.ah-fog { position: absolute; left: 0; right: 0; top: 0; z-index: 4; pointer-events: none; transition: height 1.6s cubic-bezier(.4,0,.2,1), opacity .8s;
+  background: linear-gradient(to bottom, #3B2F66 0, #3B2F66 calc(100% - 110px), rgba(59,47,102,.85) calc(100% - 60px), rgba(59,47,102,0) 100%); }
+.ah-fog.is-store { background: linear-gradient(to bottom, #DCE3EC 0, #DCE3EC calc(100% - 110px), rgba(220,227,236,.85) calc(100% - 60px), rgba(220,227,236,0) 100%); }
+.ah-fog.is-gone { opacity: 0; }
+.ah-fog i { position: absolute; left: -30%; right: -30%; height: 150px; bottom: 10px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(196,181,253,.55), rgba(196,181,253,0)); animation: ah-mist 9s ease-in-out infinite alternate; }
+.ah-fog i:nth-child(2) { bottom: 120px; left: -10%; right: -50%; animation-duration: 12s; animation-delay: -4s; opacity: .8; }
+.ah-fog i:nth-child(3) { bottom: 260px; left: -50%; right: -10%; animation-duration: 15s; animation-delay: -7s; opacity: .6; }
+.ah-fog.is-store i { background: radial-gradient(closest-side, rgba(255,255,255,.9), rgba(255,255,255,0)); }
+@keyframes ah-mist { from { transform: translateX(-8%); } to { transform: translateX(8%); } }
+@media (prefers-reduced-motion: reduce) { .ah-fog i { animation: none; } .ah-fog { transition: none; } }
 .ah-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .ah-stage { position: absolute; z-index: 2; width: 24.6%; padding: 0; border: none; background: none; cursor: pointer; transform: translate(-50%, -42%); }
 .ah-stage svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -4508,7 +4522,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 @keyframes ah-jump { 0%,100% { transform: translate(-50%, -93%); } 40% { transform: translate(-50%, -125%) scale(1.04); } }
 .ah-pop { animation: ah-pop .42s cubic-bezier(.2,1.6,.4,1); }
 @keyframes ah-pop { from { transform: translate(-50%, -42%) scale(.7); } to { transform: translate(-50%, -42%) scale(1); } }
-.ah-lockfly { position: absolute; z-index: 4; width: 7%; transform: translate(-50%, -60%); animation: ah-lockfly .85s ease-out forwards; pointer-events: none; }
+.ah-lockfly { position: absolute; z-index: 5; width: 7%; transform: translate(-50%, -60%); animation: ah-lockfly .85s ease-out forwards; pointer-events: none; }
 .ah-lockfly svg { width: 100%; height: auto; display: block; }
 @keyframes ah-lockfly { 0% { transform: translate(-50%, -60%) scale(1); opacity: 1; } 30% { transform: translate(-50%, -150%) scale(1.25) rotate(-12deg); opacity: 1; } 100% { transform: translate(40%, -420%) scale(.7) rotate(40deg); opacity: 0; } }
 /* 上方一列 */
@@ -4522,6 +4536,55 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .ah-arrow.is-lock { background: #E5E7EB; box-shadow: none; }
 .ah-arrow.is-lock svg { width: 16px; height: 18px; }
 .ah-arrow.is-lock svg path, .ah-arrow.is-lock svg rect { stroke: #64748B; } .ah-arrow.is-lock svg rect { fill: #94A3B8; }
+/* r19：下一章的鎖頭爆開 */
+.ah-arrow.is-lock.is-burst { animation: ah-lockshake .5s ease-in-out; }
+@keyframes ah-lockshake { 0%,100% { transform: none; } 20% { transform: rotate(-14deg) scale(1.1); } 40% { transform: rotate(12deg) scale(1.15); } 60% { transform: rotate(-10deg) scale(1.2); } 80% { transform: rotate(8deg) scale(1.25); opacity: 1; } }
+.ah-lockboom { position: fixed; z-index: 10050; width: 0; height: 0; pointer-events: none; }
+.ah-lockboom b { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; background: #FCD34D; box-shadow: 0 0 6px #F59E0B; animation: ah-boom .8s ease-out forwards; }
+.ah-lockboom b:nth-child(odd) { background: #F472B6; box-shadow: 0 0 6px #EC4899; }
+@keyframes ah-boom { from { transform: translate(0,0) scale(1.2); opacity: 1; } to { transform: translate(var(--x), var(--y)) scale(.2); opacity: 0; } }
+.ah-lockboom span { position: absolute; width: 22px; top: -12px; }
+.ah-lockboom span svg { width: 100%; height: auto; display: block; }
+.ah-lockboom__l { left: -16px; clip-path: inset(0 50% 0 0); animation: ah-halfl .8s ease-in forwards; }
+.ah-lockboom__r { left: -6px; clip-path: inset(0 0 0 50%); animation: ah-halfr .8s ease-in forwards; }
+@keyframes ah-halfl { to { transform: translate(-34px, 50px) rotate(-70deg); opacity: 0; } }
+@keyframes ah-halfr { to { transform: translate(34px, 50px) rotate(70deg); opacity: 0; } }
+.ah-arrow.ah-arrow--new { animation: ah-arrownew 1.1s ease-in-out infinite; box-shadow: 0 2px 0 #B45309, 0 0 0 0 rgba(252,211,77,.7); }
+@keyframes ah-arrownew { 0%,100% { transform: scale(1); box-shadow: 0 2px 0 #B45309, 0 0 0 0 rgba(252,211,77,.7); } 50% { transform: scale(1.12); box-shadow: 0 2px 0 #B45309, 0 0 0 10px rgba(252,211,77,0); } }
+.ah-chick.ah-drop { animation: ah-drop .7s cubic-bezier(.3,1.5,.5,1); }
+@keyframes ah-drop { from { transform: translate(-50%, -260%); opacity: 0; } 60% { opacity: 1; } to { transform: translate(-50%, -93%); } }
+
+/* r19：整張地圖全破的慶祝畫面（比打贏頭目更盛大） */
+.chc { position: fixed; inset: 0; z-index: 10040; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, #6D28D9 0%, #3B0764 55%, #1E1036 100%); opacity: 0; transition: opacity .35s; }
+.chc.chc--alt { background: radial-gradient(ellipse at 50% 40%, #0EA5E9 0%, #1E3A8A 60%, #0F172A 100%); }
+.chc.is-in { opacity: 1; } .chc.is-out { opacity: 0; }
+.chc-rays { position: absolute; left: 50%; top: 42%; width: 170vmax; height: 170vmax; margin: -85vmax 0 0 -85vmax; pointer-events: none;
+  background: repeating-conic-gradient(rgba(253,224,71,.16) 0 8deg, rgba(253,224,71,0) 8deg 20deg); animation: chc-spin 16s linear infinite; }
+@keyframes chc-spin { to { transform: rotate(360deg); } }
+.chc-confetti i { position: absolute; top: -20px; border-radius: 2px; animation: chc-fall linear infinite; opacity: .95; }
+@keyframes chc-fall { from { transform: translateY(-20px) rotate(0); } to { transform: translateY(110vh) rotate(var(--r)); } }
+.chc-fw { position: absolute; width: 0; height: 0; animation: chc-fwt 3.2s ease-out infinite; }
+.chc-fw b { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; opacity: 0; animation: chc-fwb 3.2s ease-out infinite; animation-delay: inherit; box-shadow: 0 0 8px currentColor; }
+@keyframes chc-fwb { 0%,4% { transform: translate(0,0) scale(.4); opacity: 0; } 8% { opacity: 1; } 40% { transform: translate(var(--x), var(--y)) scale(1); opacity: 1; } 60%,100% { transform: translate(calc(var(--x) * 1.15), calc(var(--y) * 1.15 + 30px)) scale(.3); opacity: 0; } }
+.chc-card { position: relative; width: min(340px, 100%); padding: 74px 22px 22px; border-radius: 28px; text-align: center; color: #fff;
+  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.06)); border: 2px solid rgba(253,224,71,.6); box-shadow: 0 20px 60px rgba(0,0,0,.45), inset 0 0 40px rgba(253,224,71,.15);
+  transform: scale(.6); animation: chc-pop .7s .15s cubic-bezier(.3,1.6,.5,1) forwards; opacity: 0; }
+@keyframes chc-pop { to { transform: scale(1); opacity: 1; } }
+.chc-crown { position: absolute; left: 50%; top: -58px; width: 132px; margin-left: -66px; filter: drop-shadow(0 6px 14px rgba(253,224,71,.65)); animation: chc-bob 2.2s ease-in-out infinite; }
+.chc-crown svg { display: block; width: 100%; height: auto; }
+@keyframes chc-bob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-8px) rotate(3deg); } }
+.chc-chick { width: 92px; margin: 0 auto 4px; animation: chc-jump 1s ease-in-out infinite; }
+.chc-chick svg { display: block; width: 100%; height: auto; }
+@keyframes chc-jump { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-16px) scale(1.04,.96); } }
+.chc-kicker { font: 900 13px/1 Inter, 'Noto Sans TC', sans-serif; letter-spacing: 4px; color: #FDE68A; }
+.chc-title { margin: 8px 0 6px; font-size: 34px; font-weight: 900; line-height: 1.15; letter-spacing: 1px;
+  background: linear-gradient(180deg, #FFF7CC, #FCD34D 55%, #F59E0B); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 3px 0 rgba(120,53,15,.55)); }
+.chc-sub { margin: 0 0 18px; font-size: 15px; line-height: 1.6; color: #EDE9FE; font-weight: 700; }
+.chc-btn { width: 100%; height: 54px; border: none; border-radius: 16px; font-size: 19px; font-weight: 900; color: #78350F; cursor: pointer;
+  background: linear-gradient(180deg, #FDE047, #F59E0B); box-shadow: 0 4px 0 #B45309, 0 10px 24px rgba(245,158,11,.4); }
+.chc-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #B45309; }
+@media (prefers-reduced-motion: reduce) { .chc-rays, .chc-crown, .chc-chick { animation: none; } .chc-card { animation: none; opacity: 1; transform: none; } }
 .ah-ch-name { min-width: 0; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
 .ah-ch-name b { font-size: 17px; font-weight: 900; color: #4F46E5; white-space: nowrap; }
 .ah-ch-name small { font-size: 11.5px; font-weight: 800; color: #64748B; }
@@ -4917,6 +4980,12 @@ body.power-saving-mode .ui-cf__in { background: #12141b; border-color: #363a4a; 
 @keyframes ahHealHop { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-10px); } }
 @keyframes ahHealPop { from { opacity: 0; transform: translate(-50%, 10px); } 20% { opacity: 1; } to { opacity: 0; transform: translate(-50%, -26px); } }
 @media (prefers-reduced-motion: reduce) { .ah-dlg-art.ah-heal, .ah-heal-pop { animation: none; } }
+
+/* r19：每日首勝經驗值 ×2（藍色） */
+.xp-x2 { color: #2563EB; font-weight: 900; margin-left: 1px; white-space: nowrap; }
+.xp-x2-note { margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: #DBEAFE; color: #1D4ED8; font-size: 11px; font-weight: 800; vertical-align: 2px; white-space: nowrap; }
+/* r19：戰鬥中這回合還沒打完：左上角離開先不能按 */
+.adv-topbar .back-home-btn.is-locked { opacity: .35; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -6302,7 +6371,7 @@ body.power-saving-mode .ui-cf__in { background: #12141b; border-color: #363a4a; 
 </div>
 
 <!-- 戰鬥規則（app.js 和大冒險敵人模擬器共用同一份），一定要在 app.js 前面載入 -->
-<script src="battle-core.js?v=20261119c"></script>
-<script src="app.js?v=20261119c"></script>
+<script src="battle-core.js?v=20261119e"></script>
+<script src="app.js?v=20261119e"></script>
 </body>
 </html>
