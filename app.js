@@ -432,7 +432,8 @@
             setWalletOwner(key, email);
             if (await refreshWallet()) { prunePaidPacks(); try { ensureWordPacks(); } catch (e) {} }
             refreshAllListViews();
-            try { farmSync(); } catch (e) {}
+            try { Promise.resolve(farmSync()).finally(() => chickenBadgeHold(false)); } catch (e) { chickenBadgeHold(false); }   // r19：雲端都讀完了：今日任務紅點照實際狀況顯示
+            try { psShowId(); } catch (e) {}                 // r19：錢包可能換了：設定頁的玩家 ID 馬上更新（不用關掉設定再打開）
             return key;
         } catch (e) {
             console.warn('錢包綁定失敗（下次登入會再試）:', e && e.message || e);
@@ -513,6 +514,15 @@
         setTimeout(() => { floatSpan.remove(); }, 1050);
     }
 
+    // r19：有登入 Google 的玩家：打開 App／登入時，先不顯示今日任務的紅點，
+    //   等雲端（大冒險進度、錢包領取紀錄、農場）都讀完、確定有沒有獎勵可以領，再決定要不要顯示（最多等 20 秒）
+    let chickenBadgeHoldUntil = (() => { try { return localStorage.getItem('chicky_google_linked') === '1' ? Date.now() + 20000 : 0; } catch (e) { return 0; } })();
+    function chickenBadgeHold(on) {
+        chickenBadgeHoldUntil = on ? Date.now() + 20000 : 0;
+        try { updateChickenBadgeUI(); } catch (e) {}
+        if (on) setTimeout(() => { try { updateChickenBadgeUI(); } catch (e) {} }, 20100);   // 等太久（例如 iPhone 還沒重新連線）：照手機上的資料顯示
+    }
+    if (chickenBadgeHoldUntil) setTimeout(() => { try { updateChickenBadgeUI(); } catch (e) {} }, 20100);
     function updateChickenBadgeUI() {
         checkDailyReset();
         let rewardModal = document.getElementById('chickenRewardModal');
@@ -523,6 +533,7 @@
 
         // 檢查是否有「已達成但未領取」的任務
         let hasUnclaimed = CHICKEN_TASK_KEYS.some(k => chickenData.tasks[k].done && !isTaskClaimed(k));
+        if (Date.now() < chickenBadgeHoldUntil) hasUnclaimed = false;      // 雲端還沒讀完：先不顯示
         badge.style.display = hasUnclaimed ? 'flex' : 'none';
     }
 
@@ -697,6 +708,8 @@
 
     function closeChickenShopModal() {
         document.getElementById('chickenShopModal').style.display = 'none';
+        // r19：導引指著彈珠汽水時按返回 → 這次導引就算略過，不強迫買（之後不會再提醒）
+        try { if (typeof advData !== 'undefined' && advData && !advData.items.soda && !advTut().sodaBuy && BattleCore.tabOpen('shop', advData.cleared)) advTutSet('sodaBuy'); } catch (e) {}
         try { tutCoachClear(); } catch (e) {}
         try { advShopNew = new Set(); } catch (e) {}
         setTimeout(() => { try { ahTutCheck(); } catch (e) {} }, 300);
@@ -964,7 +977,7 @@
                     localStorage.setItem(GOOGLE_LINKED_FLAG, '1');
                     scheduleTokenRefresh(resp.expires_in);
                     let renewing = wasAuto && accessToken;           // 只是換新權杖：不必重新同步與綁定
-                    if (!renewing) { try { psSwitchSnap = psSnapSafe(); psHoldAt = Date.now(); } catch (e) {} cloudWalletKey = null; walletBoundThisLogin = false; advSwitchStore(); }   // 換成 Google 進度（r18：先拍下原本帳號的大冒險狀態，換錢包時統計要用）
+                    if (!renewing) { try { psSwitchSnap = psSnapSafe(); psHoldAt = Date.now(); } catch (e) {} try { chickenBadgeHold(true); } catch (e) {} cloudWalletKey = null; walletBoundThisLogin = false; advSwitchStore(); }   // 換成 Google 進度（r18：先拍下原本帳號的大冒險狀態，換錢包時統計要用）
                     accessToken = resp.access_token;
                     isCloudSyncActive = true;
                     updateCloudStatusText(`✅ 已連結 Google 雲端`);
@@ -1732,6 +1745,7 @@
             }
             if (advNeedUpload) await triggerAutoSaveToCloud();
             updateCloudStatusText(`✅ 已連結 Google 雲端`);
+            setTimeout(() => { try { psSnapRefresh(); } catch (e) {} }, 2000);     // r19：雲端進度好了：需要的話補送大冒險現況
         } catch (err) { 
             console.error("雲端載入失敗", err); 
             updateCloudStatusText(`⚠️ 雲端同步失敗`);
@@ -1798,9 +1812,9 @@
         }
     }
 
-    // ═════════ 玩家使用統計（後台 player_stats；12 小時回傳一次）═════════
+    // ═════════ 玩家使用統計（後台 player_stats；距離上次回傳滿 4 小時才送）═════════
     //   這台裝置先累加：c 計數器、win 每關打贏次數、days 每天遊玩分鐘；
-    //   每過 00:00 或 12:00 後第一次打開 App（或從背景回來、或 App 一直開著）時，把之前累積的一次送到後台（report_stats 會加總、順便帶回補發），送成功才清掉
+    //   距離上次成功回傳滿 4 小時後：打開 App、從背景回來、或 App 一直開著（每分鐘檢查）時，把之前累積的一次送到後台（report_stats 會加總、順便帶回補發），送成功才清掉
     //   snap：送出當下的大冒險狀態（等級、打到哪、熟練度、冒險代幣…），後台整份換掉
     //   計數器名稱（解碼 App 用同一份對照表）：
     //     listNew 新增題庫　listSave 編輯題庫按儲存　wordAdd 新增單字　wordEdit 修改單字
@@ -1808,13 +1822,21 @@
     //     advPlay 大冒險開打　advWin 打贏　advLose 打輸　train 訓練場
     const PS_KEY = 'chicky_pstats_v1', PS_ID_KEY = 'chicky_player_id';
     let ps = psLoad(), psSending = false;
-    // r18：改成 12 小時回傳一次：每天 00:00 和 12:00 各是一個新的「時段」（例如 2026-11-19a＝上午、2026-11-19b＝下午）
-    function psPeriod() { return getLocalDateStr() + (new Date().getHours() < 12 ? 'a' : 'b'); }
-    function psBlank() { return { c: {}, win: {}, days: {}, t: {}, lvx: {}, since: psPeriod() }; }
+    // r19：改成「距離上次成功回傳滿 4 小時」才送（不是固定時段，所以 03:59、04:01 不會連送兩次）
+    //   since＝上次成功回傳的時間（毫秒）；新玩家＝第一次開始記錄的時間
+    const PS_EVERY = 4 * 3600 * 1000;
+    function psSinceMs(v) {
+        if (typeof v === 'number' && isFinite(v)) return v;
+        // 舊版存的是時段字串（2026-11-19、2026-11-19a、2026-11-19b）：換成那個時段開始的時間
+        let m = /^(\d{4})-(\d{2})-(\d{2})([ab]?)$/.exec(String(v || ''));
+        if (m) return new Date(+m[1], +m[2] - 1, +m[3], m[4] === 'b' ? 12 : 0).getTime();
+        return Date.now();
+    }
+    function psBlank() { return { c: {}, win: {}, days: {}, t: {}, lvx: {}, since: Date.now() }; }
     function psLoad() {
         try {
             let o = JSON.parse(localStorage.getItem(PS_KEY) || 'null');
-            if (o && typeof o === 'object') return { c: o.c || {}, win: o.win || {}, days: o.days || {}, t: o.t || {}, lvx: o.lvx || {}, dsec: o.dsec || 0, since: o.since || psPeriod() };
+            if (o && typeof o === 'object') return { c: o.c || {}, win: o.win || {}, days: o.days || {}, t: o.t || {}, lvx: o.lvx || {}, dsec: o.dsec || 0, since: psSinceMs(o.since) };
         } catch (e) {}
         return psBlank();
     }
@@ -1868,7 +1890,27 @@
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261119c';
+    const PS_APP_VER = '20261119e';
+    // r19：大冒險現況多久補送一次（雲端進度載入好之後，如果超過這個時間沒送過現況，就單獨補送一份，不算回傳次數）
+    const PS_SNAP_AT = 'chicky_pstats_snapat', PS_SNAP_EVERY = 4 * 3600 * 1000;
+    // r19：診斷資訊（每次回傳一起送，後台只留最新一份）：哪種裝置、登入狀態、最近有沒有送失敗、為什麼沒附現況
+    const PS_DIAG = 'chicky_pstats_diag';
+    function psDiagGet() { try { return JSON.parse(localStorage.getItem(PS_DIAG)) || {}; } catch (e) { return {}; } }
+    function psDiagSet(o) { try { localStorage.setItem(PS_DIAG, JSON.stringify(Object.assign(psDiagGet(), o))); } catch (e) {} }
+    function psDiag(snap) {
+        let env = {}; try { env = getBrowserEnv(); } catch (e) {}
+        let ua = navigator.userAgent || '';
+        let d = psDiagGet();
+        return {
+            app: PS_APP_VER, at: new Date().toISOString(),
+            dev: env.isIOS ? 'iOS' : /Android/i.test(ua) ? 'Android' : 'PC',
+            br: env.isInApp ? 'inapp' : /CriOS|Chrome/i.test(ua) && !/Edg/i.test(ua) ? 'Chrome' : /Safari/i.test(ua) ? 'Safari' : /Edg/i.test(ua) ? 'Edge' : /Firefox|FxiOS/i.test(ua) ? 'Firefox' : 'other',
+            home: env.standalone ? 1 : 0,
+            g: accessToken ? 'in' : (localStorage.getItem(GOOGLE_LINKED_FLAG) === '1' ? 'wait' : (isValidWalletKey(localStorage.getItem(WALLET_KEY_STORAGE)) ? 'out' : 'never')),
+            snap: snap ? 1 : (advLoadedG && !advCloudReady ? 'cloud-not-ready' : 'logged-out'),
+            fails: d.fails || 0, err: d.err || ''
+        };
+    }
     // r18：要附上的大冒險現況。錢包已經綁過 Google、但現在顯示的是「離線進度」（登出中）→ 不附（null）
     //   不然登出時（或登出後換帳號時）送出的會是空白的離線進度，把後台這個玩家真正的等級、關卡蓋成 0
     function psSnapSafe() {
@@ -1877,12 +1919,11 @@
         if (advLoadedG && !advCloudReady) return null;
         return psSnap();
     }
-    // 新的時段（00:00、12:00 之後）：把之前累積的送出去（一個時段最多一次；沒有新資料就不送）
-    //   舊版存的 since 是「2026-11-19」（沒有 a／b），比任何時段都早，更新後會直接送一次，沒關係
+    // 距離上次成功回傳滿 4 小時：把之前累積的送出去（沒有新資料就不送）；換帳號前的 force 不受 4 小時限制
     let psFailAt = 0;
     async function psMaybeSend(force, snap) {      // snap：不給＝現在的大冒險現況；null＝不附（後台保留上一次的）
         if (psSending || !supabaseClient) return false;
-        if (!force && (ps.since >= psPeriod() || !psHasData())) return false;
+        if (!force && (Date.now() - psSinceMs(ps.since) < PS_EVERY || !psHasData())) return false;
         if (!force && Date.now() - psFailAt < 10 * 60 * 1000) return false;      // 剛失敗過：10 分鐘後再試
         if (!force && Date.now() - psHoldAt < 60000) return false;                // 正在登入／換帳號：等錢包換好再送（不然會送給錯的人）
         if (!force && advLoadedG && !advCloudReady && Date.now() - PS_T0 < 60000) return false;   // 剛打開：先等雲端進度載入，大冒險現況才會正確
@@ -1891,7 +1932,9 @@
         let sent = { c: ps.c, win: ps.win, days: ps.days, t: ps.t || {}, lvx: ps.lvx || {} };
         try {
             if (snap === undefined) snap = psSnapSafe();
-            let res = await walletRpc('report_stats', { p_delta: Object.assign({ v: 1 }, sent, snap ? { snap } : {}) });
+            let res = await walletRpc('report_stats', { p_delta: Object.assign({ v: 1 }, sent, snap ? { snap } : {}, { diag: psDiag(snap) }) });
+            try { if (snap) localStorage.setItem(PS_SNAP_AT, String(Date.now())); else localStorage.removeItem(PS_SNAP_AT); } catch (e) {}   // 這次沒附現況：雲端進度好了就補送
+            psDiagSet({ fails: 0, err: '' });
             // 送出期間又多的次數留著（下次再送）
             let left = psBlank();
             ['c', 'win', 'days', 't', 'lvx'].forEach(sec => Object.keys(ps[sec] || {}).forEach(k => { let r = (ps[sec][k] || 0) - ((sent[sec] && sent[sec][k]) || 0); if (r > 0) left[sec][k] = r; }));
@@ -1900,9 +1943,27 @@
             if (res && res.id) { try { localStorage.setItem(PS_ID_KEY, String(res.id)); } catch (e) {} }
             if (res && Array.isArray(res.gifts) && res.gifts.length) psApplyGifts(res.gifts);
             ok = true;
-        } catch (e) { psFailAt = Date.now(); console.warn('使用統計回傳失敗（下次再送）', e); }
+        } catch (e) {
+            psFailAt = Date.now(); console.warn('使用統計回傳失敗（下次再送）', e);
+            let d = psDiagGet(); psDiagSet({ fails: (d.fails || 0) + 1, err: String((e && (e.message || e.code)) || e).slice(0, 80) });
+        }
         psSending = false;
         return ok;
+    }
+    // r19：補送大冒險現況。回傳的時候雲端進度常常還沒載入好（iPhone 要點一下畫面才會重新連線），那次就沒附現況；
+    //   等雲端進度載入好，如果這台裝置超過 6 小時沒送過現況，就單獨補送一份（snapOnly：後台只換現況，不算回傳次數）
+    async function psSnapRefresh() {
+        if (psSending || !supabaseClient) return;
+        if (Date.now() - psHoldAt < 60000) return;
+        let last = 0; try { last = parseInt(localStorage.getItem(PS_SNAP_AT)) || 0; } catch (e) {}
+        if (Date.now() - last < PS_SNAP_EVERY) return;
+        let snap = psSnapSafe(); if (!snap) return;
+        psSending = true;
+        try {
+            await walletRpc('report_stats', { p_delta: { v: 1, snap, snapOnly: 1, diag: psDiag(snap) } });
+            try { localStorage.setItem(PS_SNAP_AT, String(Date.now())); } catch (e) {}
+        } catch (e) { console.warn('大冒險現況補送失敗（下次再送）', e); }
+        psSending = false;
     }
     // r18：同一台裝置換帳號（換成另一個雞塊錢包）之前：先把累積的送給「原本的帳號」，再清空，新帳號從零開始記
     //   送不出去（沒網路等）就丟掉，不算給新帳號（寧可少記，不要算錯人）
@@ -1920,7 +1981,7 @@
         } catch (e) {}
         ps = psBlank(); psSave();
         psSwitchSnap = null;
-        try { localStorage.removeItem(PS_ID_KEY); } catch (e) {}
+        try { localStorage.removeItem(PS_ID_KEY); localStorage.removeItem(PS_SNAP_AT); localStorage.removeItem(PS_DIAG); } catch (e) {}   // 新帳號：現況要重新送
     }
     // 補發：冒險代幣／恢復藥水／濕紙巾加進大冒險；雞塊後台已經加好了，這裡只更新畫面
     function psApplyGifts(list) {
@@ -2181,14 +2242,15 @@
             let n0 = CHICKEN_TASK_KEYS.length, d0 = CHICKEN_TASK_KEYS.filter(k => taskDoneOrClaimed(k)).length;
             let ring = document.getElementById('acTaskRing'), dot = document.getElementById('acTaskDot');
             if (ring) ring.setAttribute('stroke-dasharray', `${(d0 / n0 * 106.8).toFixed(1)} 106.8`);
-            if (dot) dot.style.display = CHICKEN_TASK_KEYS.some(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)) ? '' : 'none';
+            let hold = Date.now() < chickenBadgeHoldUntil;      // r19：有登入的玩家：雲端還沒讀完前先不亮紅點
+            if (dot) dot.style.display = !hold && CHICKEN_TASK_KEYS.some(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)) ? '' : 'none';
             let ok = document.getElementById('acTaskOk'); if (ok) ok.style.display = d0 >= n0 ? '' : 'none';     // 今日任務 100%：雞塊上打綠勾
         } catch (e) {}
         let box = document.getElementById('homeToday');
         if (!box) return;
         let keys = CHICKEN_TASK_KEYS, n = keys.length;
         let done = keys.filter(k => taskDoneOrClaimed(k)).length;
-        let unclaimed = keys.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)).length;
+        let unclaimed = Date.now() < chickenBadgeHoldUntil ? 0 : keys.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)).length;
         let sub = unclaimed ? `有 ${unclaimed} 項可以領雞塊！` : done >= n ? '今天的任務全部完成了！' : `再完成 ${n - done} 項，就能多領雞塊`;
         box.innerHTML = `<div class="tx"><b>今日任務 ${done} / ${n}</b><small>${sub}</small><div class="bar"><i style="width:${(done / n * 100).toFixed(0)}%"></i></div></div>
             <button type="button" class="go${unclaimed ? ' hot' : ''}" data-on-click='[["openChickenRewardModal",[]]]'>${unclaimed ? '領取' : '查看'}</button>`;
@@ -6137,7 +6199,9 @@
             return {
                 b1: has('b1') ? o.b1 : !!c['1'], next: has('next') ? o.next : !!c['1'], alloc: has('alloc') ? o.alloc : !!(o.bag),
                 sodaBuy: has('sodaBuy') ? o.sodaBuy : !!(items.soda || c['3']), tgStart: has('tgStart') ? o.tgStart : !!sn.tgGo,
-                combo: has('combo') ? o.combo : !!sn.tgGo, trainGift: has('trainGift') ? o.trainGift : !!sn.tgGo, dexIntro: has('dexIntro') ? o.dexIntro : !!sn.dex
+                combo: has('combo') ? o.combo : !!sn.tgGo, trainGift: has('trainGift') ? o.trainGift : !!sn.tgGo, dexIntro: has('dexIntro') ? o.dexIntro : !!sn.dex,
+                // r19：新地圖解鎖導引：chNew＝正在導引的章節 id（0＝沒有）；chDone＝已經導引過的章節
+                chNew: Number.isInteger(o.chNew) ? o.chNew : 0, chDone: Array.isArray(o.chDone) ? o.chDone.filter(Number.isInteger) : []
             };
         };
         if (t) { let sn = (t.seen && typeof t.seen === 'object') ? t.seen : {}; let seen = { shop: !!sn.shop, train: !!sn.train, dex: !!sn.dex, soda: !!sn.soda, tgGo: !!sn.tgGo }; return Object.assign({ intro: !!t.intro, bag: !!t.bag, seen, shopSeen: ss }, more(t, seen)); }
@@ -7526,7 +7590,7 @@
         let store = ch.id === 2, cur = ahHold ? ahHold.id : ahChickAt();
         // 上方：章節切換
         let prevCh = ADV_CHAPTERS.find(c => c.id === ch.id - 1), nextCh = ADV_CHAPTERS.find(c => c.id === ch.id + 1);
-        let nextOpen = ahChapterUnlocked(nextCh);
+        let nextOpen = ahChapterUnlocked(nextCh) && !(nextCh && ahChLockHold === nextCh.id);
         let chBox = document.getElementById('ahChapter');
         if (chBox) chBox.innerHTML = `<button type="button" class="ah-arrow" ${prevCh ? '' : 'disabled'} aria-label="上一章" data-on-click='[["advMapStep",[-1]]]'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             <span class="ah-ch-name"><b>${escapeHTML(ch.name)}</b></span>
@@ -7546,8 +7610,19 @@
         }).join('');
         let chick = '';
         if (cur >= ch.from && cur <= ch.to) chick = `<div class="ah-chick" id="ahChick" style="${pos(pts[cur - ch.from])}">${advChickenSVG()}</div>`;
-        box.innerHTML = `<div class="ah-world" id="ahWorld" style="aspect-ratio:${AH_W} / ${H}">${ahMapSVG(ch)}${stages}${chick}</div>`;
+        // r19：迷霧：目前要打的那關「之後」的路、關卡、敵人都被迷霧蓋住（不會先看到下一關是誰）
+        let fogAt = ahHold ? ahHold.id : ahCurrentId();
+        let fog = (fogAt >= ch.from && fogAt < ch.to && (ahHold || !advData.cleared[fogAt])) ? `<div class="ah-fog${store ? ' is-store' : ''}" id="ahFog" style="height:${ahFogPct(fogAt - ch.from)}%" aria-hidden="true"><i></i><i></i><i></i></div>` : '';
+        box.innerHTML = `<div class="ah-world" id="ahWorld" style="aspect-ratio:${AH_W} / ${H}">${ahMapSVG(ch)}${stages}${chick}${fog}</div>`;
         ahUpdateBadges();
+    }
+    // 迷霧蓋到哪裡（佔地圖高度的 %）：目前這關的攤位（敵人）還看得到，再往上就看不到
+    function ahFogPct(idx) { let p = ahPts()[idx]; return Math.max(0, (p.y - AH_S * 0.62) / ahMapH() * 100); }
+    // 過關走到下一關時：迷霧往上退，露出下一關
+    function ahFogLift(idx) {
+        let f = document.getElementById('ahFog'); if (!f) return;
+        if (idx >= AH_XS.length - 1) { f.style.height = '0%'; f.classList.add('is-gone'); return; }
+        f.style.height = ahFogPct(idx) + '%';
     }
     // 鏡頭：把某一關放在畫面中間偏下
     function ahScrollTo(id, smooth) {
@@ -7560,6 +7635,14 @@
         let nc = ADV_CHAPTERS.find(c => c.id === advMapChapter + (parseInt(d) || 0));
         if (!nc || (d > 0 && !ahChapterUnlocked(nc))) return;
         advMapChapter = nc.id;
+        let t = advTut();
+        if (t.chNew === nc.id && d > 0) {            // r19：新地圖第一次過來：雞塊跳到新地圖第一關，指示按「挑戰」
+            ahSetChickAt(nc.from);
+            advRenderMap(); ahScrollTo(nc.from);
+            let c = document.getElementById('ahChick'); if (c) { c.classList.remove('ah-drop'); void c.offsetWidth; c.classList.add('ah-drop'); }
+            setTimeout(ahTutCheck, 700);
+            return;
+        }
         advRenderMap();
         let cur = ahChickAt();
         ahScrollTo(cur >= nc.from && cur <= nc.to ? cur : (d > 0 ? nc.from : nc.to));
@@ -7646,6 +7729,13 @@
             if (!onMap) return;
             // 不在地圖上（開著訓練場、圖鑑、卡片…）：只收掉「地圖上的」導引，別的畫面自己的導引不要動
             if (!ahTutIdle()) { let c = document.getElementById('tutCoach'), sel = c ? c.dataset.sel : ''; if (sel && (sel.indexOf('#ahTab') === 0 || sel.indexOf('#adventureView .ah-go') === 0)) tutCoachClear(); return; }
+            // r19：新地圖解鎖：先指上方的箭頭，到新地圖後指「挑戰」（打過新地圖第一關就結束）
+            if (t.chNew) {
+                let nc = ADV_CHAPTERS.find(c => c.id === t.chNew);
+                if (!nc || advData.cleared[nc.from]) { let dn = (t.chDone || []).concat(t.chNew); t.chDone = dn; t.chNew = 0; advSave(true); }
+                else if (advMapChapter !== nc.id) { tutCoach('#ahChapter .ah-arrow[aria-label="下一章"]', `新地圖「${nc.name}」開放了！\n點這裡過去看看`); return; }
+                else { tutCoach('#adventureView .ah-go', `點「挑戰」開始${nc.name}的第一關！`); return; }
+            }
             // ① 第一次進大冒險：按「挑戰」
             if (!t.intro && !advData.cleared[1]) { tutCoach('#adventureView .ah-go', '點「挑戰」開始第一場戰鬥！'); return; }
             // ② 打完第 1 關拿到塑膠袋：按「狀態」去裝備
@@ -8003,7 +8093,8 @@
         let H = ahMapH(), pts = ahPts(), i = id - ch.from;
         // 0.6 秒：剛打贏的關卡變成「已過」
         ahWalkT.push(setTimeout(() => { let a = document.getElementById('ahStage' + id); if (a) { a.className = 'ah-stage is-cleared ah-pop'; a.innerHTML = ahStageSVG(id, 'cleared', ch.id === 2); } }, 600));
-        // 0.6～2.0 秒：沿著路一跳一跳走過去，鏡頭跟著
+        // 0.6～2.0 秒：沿著路一跳一跳走過去，鏡頭跟著（迷霧同時往上退）
+        ahWalkT.push(setTimeout(() => ahFogLift(nextLv.id - ch.from), 500));
         ahWalkT.push(setTimeout(() => {
             let svg = document.querySelector('#ahWorld .ah-svg'), chick = document.getElementById('ahChick'), map = document.getElementById('advMap'), world = document.getElementById('ahWorld');
             if (!svg || !chick || !map || !world) return;
@@ -8033,6 +8124,7 @@
                 b.parentNode.appendChild(fly);
                 setTimeout(() => fly.remove(), 900);
                 b.className = 'ah-stage is-current ah-pop'; b.disabled = false; b.innerHTML = ahStageSVG(nextLv.id, 'current', ch.id === 2);
+                ahFogLift(nextLv.id - ch.from);
                 b.setAttribute('aria-label', `第 ${nextLv.id} 關`);
             }
         }, 2050));
@@ -9444,7 +9536,17 @@
         advFloat(document.getElementById('advPlayer'), `攻擊 +${r.atk}`, '#7C3AED');
     }
     function advMakeEnemy(d) { return BattleCore.makeEnemy(d); }
+    // r19：出招後到這回合結束（我方攻擊／Miss 的動畫、接著敵人的攻擊）都不能按左上角離開；作答中、等我方出招時可以
+    function advQuitLocked() { return !!(adv.active && adv.busy && !adv.q && !(advSp && advSp.waiting)); }
+    setInterval(() => {
+        let v = document.getElementById('adventureBattleView');
+        if (!v || !v.classList.contains('active')) return;
+        let b = v.querySelector('.adv-topbar .back-home-btn'); if (!b) return;
+        let lk = advQuitLocked();
+        if (b.classList.contains('is-locked') !== lk) { b.classList.toggle('is-locked', lk); b.setAttribute('aria-disabled', lk ? 'true' : 'false'); }
+    }, 150);
     async function advQuit() {
+        if (advQuitLocked()) return;                 // 這回合還沒打完
         if (adv.active) {
             let run = adv.runId;
             let ok = await uiConfirm(adv.training ? '要離開訓練嗎？\n這次的傷害不會記錄。' : '要離開戰鬥嗎？\n這場戰鬥不會有任何獎勵。', '離開', '繼續戰鬥');
@@ -9956,7 +10058,9 @@
             let ab = !n ? unknown : n < 2 ? need(2) : escapeHTML(f.ability || '無');
             let tip = !n ? unknown : n < 3 ? need(3) : escapeHTML(f.tip || '—');
             let claim = '';
-            if (f.idx === 0 && dexCanClaim(f.lv)) {
+            // r19：有兩個型態以上的敵人：領取按鈕放在「最後一個型態」的卡片下面（全部型態都看完才領）
+            let lastIdx = Math.max(...forms.filter(x => x.lv === f.lv).map(x => x.idx));
+            if (f.idx === lastIdx && dexCanClaim(f.lv)) {
                 let r = BattleCore.dexReward(lv, advData.xp || 0);
                 claim = `<button type="button" class="dex-claim dex-claim--card" data-on-click='[["dexClaim",[${f.lv}]]]'>領取 ${advShardIcon(18)}+${r.shards}${r.xp ? `　<span class="xp-ico">XP</span>+${r.xp}` : ''}</button>`;
             }
@@ -11412,7 +11516,8 @@
         await advAnimate(P, [{ transform: 'translateY(0)' }, { transform: 'translateY(-16px)', offset: 0.3 }, { transform: 'translateY(0)', offset: 0.6 }, { transform: 'translateY(-10px)', offset: 0.8 }, { transform: 'translateY(0)' }], { duration: 800 });
         if (id !== adv.runId && adv.runId !== id) return;
         let lines = [], pop = [];
-        lines.push(`<div class="line" style="color:#7C3AED;font-weight:800;"><span class="xp-ico">XP</span> 經驗值 +${gainXp}${xpDouble ? '（今日首勝 ×2）' : ''}</div>`);
+        let xpT = xpDouble ? advXpX2(gainXp, advWinXp(lv, xpOld, false)) : null;
+        lines.push(`<div class="line" style="color:#7C3AED;font-weight:800;"><span class="xp-ico">XP</span> 經驗值 ${xpT ? xpT.html + '<span class="xp-x2-note">每日首勝</span>' : '+' + gainXp}</div>`);
         if (lvAfter > lvBefore) lines.push(`<div class="line" style="color:#7C3AED;font-weight:900;">🎉 升到 Lv.${lvAfter}！到「能力值」加點</div>`);
         if (gainShards > 0) { lines.push(`<div class="line">${advShardIcon(16)} 冒險代幣 +${gainShards}</div>`); pop.push(`${advShardIcon(22)} 冒險代幣 ×${gainShards}`); }
         if (loot.flips.length) {
@@ -11445,7 +11550,7 @@
         // 結算畫面的獎勵：只放 icon＋數量
         let items = [];
         if (gainSauce > 0) items.push({ icon: advSauceIcon(26), n: gainSauce, label: '糖醋醬' });
-        items.unshift({ icon: '<span class="xp-ico big">XP</span>', n: gainXp, xp: true, label: xpDouble ? '經驗值（今日首勝 ×2）' : '經驗值' });
+        items.unshift({ icon: '<span class="xp-ico big">XP</span>', n: gainXp, xp: true, x2: xpT, label: xpDouble ? '經驗值（每日首勝 ×2）' : '經驗值' });
         if (gainShards > 0) items.push({ icon: advShardIcon(26), n: gainShards, label: '冒險代幣' });
         if (gotWipes) items.push({ icon: advWipeIcon(26), n: gotWipes, label: '濕紙巾' });
         if (gotPotions + dropPotion > 0) items.push({ icon: advPotionIcon(26), n: gotPotions + dropPotion, label: '小型恢復藥水' });
@@ -11509,7 +11614,7 @@
             mid = `<div class="cr-miss"><span class="cr-miss__label">${ws.length ? `答錯 ${ws.length} 個字` : '這場沒有答錯的字'}</span>${ws.length ? `<div class="cr-miss__words">${ws.map(w => `<span class="cr-word"><b>${escapeHTML(w.english)}</b> ${escapeHTML(w.chinese || '')}</span>`).join('')}</div>` : ''}</div>`;
         } else {
             let tag = st === 'first' ? '' : `<span class="cr-tag cr-tag--today">今日 ${Math.min(used, ADV_REPLAY_PER_DAY)} / ${ADV_REPLAY_PER_DAY}</span>`;   // 首勝：上面已經有「首次通關」
-            let its = (d.items || []).map(it => `<span class="cr-item" role="img" aria-label="${escapeHTML(it.label)} ${it.xp ? '+' : '×'}${it.n}">${it.icon}<b>${it.xp ? '+' : '×'}${it.n}</b></span>`).join('');
+            let its = (d.items || []).map(it => `<span class="cr-item" role="img" aria-label="${escapeHTML(it.label)} ${it.x2 ? it.x2.plain : (it.xp ? '+' : '×') + it.n}">${it.icon}<b>${it.x2 ? it.x2.html : (it.xp ? '+' : '×') + it.n}</b></span>`).join('');
             if (!its) its = `<span class="cr-none">${d.rewardOK === false ? '今日獎勵已領完' : '這次沒有獎勵'}</span>`;
             mid = `<div class="cr-reward"><div class="cr-reward__head"><span class="cr-reward__label">獲得獎勵</span>${tag}</div><div class="cr-reward__items">${its}</div></div>`;
         }
@@ -11558,8 +11663,62 @@
         advHideResult();
         if (!lv) { goToAdventurePage(); return; }
         adv.pickLevel = lv.id;
+        // r19：打完一張地圖的最後一關（第一次）：先把下一張地圖的箭頭「鎖著」，播完慶祝動畫再爆開
+        let ch = ADV_CHAPTERS.find(c => c.to === lv.id), nextCh = ch && ADV_CHAPTERS.find(c => c.id === ch.id + 1);
+        let bigClear = !!(nextCh && d.state === 'first' && !advTut().chNew && !(advTut().chDone || []).includes(nextCh.id));
+        if (bigClear) ahChLockHold = nextCh.id;
         goToAdventurePage(true);
         advFlagAnim(lv.id, d.nextLv || null);
+        if (bigClear) setTimeout(() => advChapterClear(ch, nextCh), 350);
+    }
+
+    // ═════════ r19：整張地圖全破的慶祝（比打贏頭目更盛大）→ 下一章的鎖頭爆開 → 指示點過去 → 指示挑戰新地圖第一關 ═════════
+    var ahChLockHold = 0;          // 這一章的「下一章箭頭」先維持鎖著（等慶祝動畫播完才爆開）
+    function advChapterClear(ch, nextCh) {
+        let old = document.getElementById('chClear'); if (old) old.remove();
+        let reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const COLORS = ['#FDE047', '#F472B6', '#60A5FA', '#34D399', '#FB923C', '#C084FC', '#F87171'];
+        let confetti = '', fw = '';
+        for (let i = 0; i < 56; i++) confetti += `<i style="left:${(i * 37) % 100}%;background:${COLORS[i % COLORS.length]};animation-delay:${((i * 13) % 30) / 10}s;animation-duration:${2.6 + (i % 5) * 0.45}s;--r:${(i % 2 ? 1 : -1) * (300 + (i % 4) * 160)}deg;width:${6 + (i % 3) * 3}px;height:${10 + (i % 4) * 3}px"></i>`;
+        [[18, 22, 0], [80, 18, .5], [50, 10, 1.0], [26, 48, 1.5], [74, 44, 2.0], [50, 30, 2.6]].forEach(([x, y, dl], k) => {
+            let dots = '';
+            for (let j = 0; j < 14; j++) { let a = j / 14 * Math.PI * 2; dots += `<b style="--x:${(Math.cos(a) * 90).toFixed(0)}px;--y:${(Math.sin(a) * 90).toFixed(0)}px;background:${COLORS[(j + k) % COLORS.length]}"></b>`; }
+            fw += `<span class="chc-fw" style="left:${x}%;top:${y}%;animation-delay:${dl}s">${dots}</span>`;
+        });
+        let el = document.createElement('div');
+        el.id = 'chClear'; el.className = 'chc' + (nextCh.id === 2 ? '' : ' chc--alt');
+        el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', `${ch.name}全破`);
+        el.innerHTML = `<div class="chc-rays" aria-hidden="true"></div><div class="chc-confetti" aria-hidden="true">${reduce ? '' : confetti}</div><div class="chc-fws" aria-hidden="true">${reduce ? '' : fw}</div>
+            <div class="chc-card">
+                <div class="chc-crown" aria-hidden="true"><svg viewBox="0 0 120 96"><path d="M10 78 L18 26 L42 50 L60 14 L78 50 L102 26 L110 78 Z" fill="#FCD34D" stroke="#92400E" stroke-width="4" stroke-linejoin="round"/><rect x="10" y="74" width="100" height="14" rx="4" fill="#F59E0B" stroke="#92400E" stroke-width="4"/><circle cx="60" cy="58" r="8" fill="#F43F5E" stroke="#92400E" stroke-width="3"/><circle cx="34" cy="64" r="5" fill="#60A5FA" stroke="#92400E" stroke-width="2.5"/><circle cx="86" cy="64" r="5" fill="#34D399" stroke="#92400E" stroke-width="2.5"/><circle cx="18" cy="24" r="6" fill="#FDE68A" stroke="#92400E" stroke-width="3"/><circle cx="60" cy="12" r="6" fill="#FDE68A" stroke="#92400E" stroke-width="3"/><circle cx="102" cy="24" r="6" fill="#FDE68A" stroke="#92400E" stroke-width="3"/></svg></div>
+                <div class="chc-chick" aria-hidden="true">${advChickenSVG()}</div>
+                <div class="chc-kicker">STAGE CLEAR</div>
+                <h2 class="chc-title">${escapeHTML(ch.name)}全破！</h2>
+                <p class="chc-sub">${escapeHTML(ch.name)}的敵人全部打倒了！<br>新地圖「${escapeHTML(nextCh.name)}」解鎖</p>
+                <button type="button" class="chc-btn">太棒了！</button>
+            </div>`;
+        document.body.appendChild(el);
+        requestAnimationFrame(() => el.classList.add('is-in'));
+        el.querySelector('.chc-btn').addEventListener('click', () => {
+            el.classList.add('is-out');
+            setTimeout(() => el.remove(), 350);
+            let t = advTut(); t.chNew = nextCh.id; advSave(true);
+            ahChapterUnlockFx(nextCh);
+        });
+        try { el.querySelector('.chc-btn').focus({ preventScroll: true }); } catch (e) {}
+    }
+    // 上方「下一章」的鎖頭爆開 → 變成可以按的箭頭 → 指示點它
+    function ahChapterUnlockFx(nextCh) {
+        let lock = document.querySelector('#ahChapter .ah-arrow.is-lock');
+        const done = () => { ahChLockHold = 0; advRenderMap(); let a = document.querySelector('#ahChapter .ah-arrow[aria-label="下一章"]'); if (a) { a.classList.add('ah-arrow--new'); } ahTutCheck(); };
+        if (!lock || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) { done(); return; }
+        lock.classList.add('is-burst');
+        let r = lock.getBoundingClientRect(), fx = document.createElement('div');
+        fx.className = 'ah-lockboom'; fx.style.left = (r.left + r.width / 2) + 'px'; fx.style.top = (r.top + r.height / 2) + 'px';
+        fx.innerHTML = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => { let a = i / 10 * Math.PI * 2; return `<b style="--x:${(Math.cos(a) * 46).toFixed(0)}px;--y:${(Math.sin(a) * 46).toFixed(0)}px"></b>`; }).join('') + `<span class="ah-lockboom__l">${AH_LOCK}</span><span class="ah-lockboom__r">${AH_LOCK}</span>`;
+        document.body.appendChild(fx);
+        setTimeout(done, 650);
+        setTimeout(() => fx.remove(), 1300);
     }
 
     // ── 首勝插旗動畫（沿用原本的夜市地圖，在地圖上疊動畫）──
@@ -11661,12 +11820,18 @@
     // 首勝獎勵的 icon＋數量（卡片用）
     // 這關打贏「現在」真的拿得到的獎勵（關卡頁、地圖的小視窗共用）
     //   新關卡：經驗值＋首勝獎勵；舊關卡：經驗值 70%＋（今天還有次數才有）代幣、掉落；拿不到的不顯示
+    // r19：每日首勝 ×2 的經驗值顯示成「+22×2」（×2 藍色）；加了稱號 +5% 之後剛好不是兩倍時，顯示總數＋藍色「×2」
+    function advXpX2(total, base) {
+        return total === base * 2 ? { html: `+${base}<span class="xp-x2">×2</span>`, plain: `+${base}×2` } : { html: `+${total}<span class="xp-x2">（×2）</span>`, plain: `+${total}（×2）` };
+    }
     function advRewardList(lv) {
         let out = [], first = !advData.cleared[lv.id];
         let add = (icon, n, label, text) => out.push({ icon, n, label, text: text || '×' + n });
         if (lv.xp) {
             let xd = advData.xpDay !== getLocalDateStr(), x = advWinXp(lv, !first, xd);
-            add('<span class="xp-ico">XP</span>', x, `經驗值${first ? '' : '（舊關卡 70%）'}${xd ? '（今日首勝 ×2）' : ''}`, '+' + x);
+            let t2 = xd ? advXpX2(x, advWinXp(lv, !first, false)) : null;
+            add('<span class="xp-ico">XP</span>', x, `經驗值${first ? '' : '（舊關卡 70%）'}${xd ? '（每日首勝 ×2）' : ''}`, t2 ? t2.html : '+' + x);
+            if (t2) out[out.length - 1].plain = t2.plain;
         }
         let claw = lv.special === 'claw' ? BattleCore.CLAW_BONUS : 0;   // 娃娃機：多掉冒險代幣（數字在 battle-core.js）
         if (first) {
@@ -11682,7 +11847,7 @@
         return out;
     }
     function advRewardItemsOf(lv) {
-        return advRewardList(lv).map(r => `<span class="cr-item" role="img" aria-label="${escapeHTML(r.label)} ${r.text}"><span class="cr-ic">${r.icon}</span><b>${r.text}</b></span>`).join('');
+        return advRewardList(lv).map(r => `<span class="cr-item" role="img" aria-label="${escapeHTML(r.label)} ${r.plain || r.text}"><span class="cr-ic">${r.icon}</span><b>${r.text}</b></span>`).join('');
     }
     async function advLose(id, why) {
         const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
