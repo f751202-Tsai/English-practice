@@ -277,7 +277,8 @@
     // 任務算完成：這台裝置做過，或後台記錄今天已經領過（換裝置時本機沒有完成紀錄，但後台有領取紀錄）
     function taskDoneOrClaimed(key) { return !!((chickenData.tasks[key] && chickenData.tasks[key].done) || isTaskClaimed(key)); }
     function isTaskClaimed(key) {
-        if (key === 'dailyLogin' && (!isLoginShardClaimed() || !isLoginFlowerClaimed())) return false;   // 每日登入：雞塊、碎片、花都領了才算領完
+        // 每日登入：雞塊、碎片、花都領了才算領完（r20 修正：農場關閉時不送花，所以不用等花）
+        if (key === 'dailyLogin' && (!isLoginShardClaimed() || (FARM_OPEN && !isLoginFlowerClaimed()))) return false;
         return wallet.day === chickenData.lastDate && (wallet.claimedToday || []).indexOf(key) !== -1;
     }
 
@@ -1915,7 +1916,7 @@
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261121a';
+    const PS_APP_VER = '20261122a';
     // r19：大冒險現況多久補送一次（雲端進度載入好之後，如果超過這個時間沒送過現況，就單獨補送一份，不算回傳次數）
     const PS_SNAP_AT = 'chicky_pstats_snapat', PS_SNAP_EVERY = 4 * 3600 * 1000;
     // r19：診斷資訊（每次回傳一起送，後台只留最新一份）：哪種裝置、登入狀態、最近有沒有送失敗、為什麼沒附現況
