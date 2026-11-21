@@ -91,6 +91,23 @@
     // 每日任務（2026/11 改版）：每日登入／任一練習 10 題／任一測驗 10 題／大冒險打敗敵人／農場澆水或收成
     const CHICKEN_TASK_KEYS = ['dailyLogin', 'practice10', 'exam10', 'advWin', 'farmCare'];
 
+    // ═════════ r20：暫時關閉的功能（之後要開放時，把開關改成 true 就好，程式都還在）═════════
+    // FARM_OPEN：雞塊農場
+    //   false 時：首頁「雞塊農場」入口隱藏（index.html 的 data-farm-entry）、每日登入不送花、
+    //            今日任務不顯示「在雞塊農場澆花或收成」（做不到的任務不列出來，進度用剩下的任務算）
+    //   農場本身（farm 資料、花、後台 farm_act）都保留，花還是可以從其他地方拿到、也還是會存檔
+    const FARM_OPEN = false;
+    // LANG_SWITCH_OPEN：系統設定的「學習語言」下拉選單（英文／韓文）
+    //   false 時只是把選單藏起來（index.html 的 data-lang-switch），切換語言的功能 onLearningLanguageChange 都保留
+    const LANG_SWITCH_OPEN = false;
+    // 今日任務「現在有開放」的那幾個（FARM_OPEN 關閉時不含 farmCare）；畫面顯示、進度、紅點都用這個
+    function activeTaskKeys() { return CHICKEN_TASK_KEYS.filter(k => FARM_OPEN || k !== 'farmCare'); }
+    function applyFeatureSwitches() {
+        document.querySelectorAll('[data-farm-entry]').forEach(el => { el.hidden = !FARM_OPEN; el.style.display = FARM_OPEN ? '' : 'none'; });
+        document.querySelectorAll('[data-lang-switch]').forEach(el => { el.hidden = !LANG_SWITCH_OPEN; el.style.display = LANG_SWITCH_OPEN ? '' : 'none'; });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyFeatureSwitches); else setTimeout(applyFeatureSwitches, 0);
+
     function loadLocalChickenProgress() {
         let raw = {};
         try { raw = JSON.parse(localStorage.getItem('chicky_chicken_data')) || {}; } catch (e) { raw = {}; }
@@ -532,7 +549,7 @@
         if (!badge) return;
 
         // 檢查是否有「已達成但未領取」的任務
-        let hasUnclaimed = CHICKEN_TASK_KEYS.some(k => chickenData.tasks[k].done && !isTaskClaimed(k));
+        let hasUnclaimed = activeTaskKeys().some(k => chickenData.tasks[k].done && !isTaskClaimed(k));
         if (Date.now() < chickenBadgeHoldUntil) hasUnclaimed = false;      // 雲端還沒讀完：先不顯示
         badge.style.display = hasUnclaimed ? 'flex' : 'none';
     }
@@ -566,7 +583,7 @@
     ];
     function dtRewards(key) {
         let r = [{ icon: TK_NUGGET_IMG, n: 1, label: '雞塊' }];
-        if (key === 'dailyLogin') { r.push({ icon: advShardIcon(18), n: LOGIN_SHARDS, label: '冒險代幣' }); r.push({ icon: farmFlowerIcon(18), n: 1, label: '花' }); }
+        if (key === 'dailyLogin') { r.push({ icon: advShardIcon(18), n: LOGIN_SHARDS, label: '冒險代幣' }); if (FARM_OPEN) r.push({ icon: farmFlowerIcon(18), n: 1, label: '花' }); }   // r20：農場關閉時每日登入不送花
         return r;
     }
     function dtResetText() {
@@ -580,7 +597,8 @@
         let container = document.getElementById('rewardTasksContainer');
         if (!container) return;
         let claimed = 0, ready = 0;
-        container.innerHTML = DT_TASKS.map(def => {
+        let tasks = DT_TASKS.filter(d => activeTaskKeys().includes(d.key));     // r20：農場關閉時不列「農場」任務
+        container.innerHTML = tasks.map(def => {
             let st = dtState(def.key);
             if (st === 'claimed') claimed++;
             if (st === 'ready') ready++;
@@ -595,7 +613,8 @@
         }).join('');
         let el;
         if ((el = document.getElementById('dtDone'))) el.textContent = claimed;
-        if ((el = document.getElementById('dtFill'))) el.style.width = (claimed / DT_TASKS.length * 100) + '%';
+        if ((el = document.getElementById('dtTotal'))) el.textContent = tasks.length;
+        if ((el = document.getElementById('dtFill'))) el.style.width = (claimed / tasks.length * 100) + '%';
         if ((el = document.getElementById('dtReset'))) el.textContent = dtResetText();
         if ((el = document.getElementById('dtClaimAll'))) el.hidden = ready < 2;      // 可領取 2 個以上才顯示「全部領取」
         try { renderHomeToday(); } catch (e) {}
@@ -603,7 +622,7 @@
     function dtBackdrop(e) { if (e && e.target && e.target.id === 'chickenRewardModal') closeChickenRewardModal(); }
     // 全部領取：每個可領取的任務都按一次領取（依序向後端登記，動畫一起播）
     async function claimAllChickenRewards() {
-        let keys = DT_TASKS.map(d => d.key).filter(k => dtState(k) === 'ready');
+        let keys = DT_TASKS.map(d => d.key).filter(k => activeTaskKeys().includes(k) && dtState(k) === 'ready');
         let rects = {};
         keys.forEach(k => { let b = document.querySelector(`#rewardTasksContainer [data-key="${k}"] .dt-btn--claim`); if (b) rects[k] = b.getBoundingClientRect(); });
         for (let k of keys) { await claimChickenReward(k, null, rects[k]); }
@@ -651,7 +670,7 @@
         for (let i = 0; walletBusy && i < 40; i++) await new Promise(r => setTimeout(r, 100));    // 全部領取：等上一個領完
         if (walletBusy) return;
         let fxRect = rectIn || (btnEl && btnEl.getBoundingClientRect ? btnEl.getBoundingClientRect() : null), fx = [];
-        if (taskKey === 'dailyLogin' && !isLoginFlowerClaimed()) { claimLoginFlower(); fx.push({ icon: farmFlowerIcon(22), n: 1, k: 'flower' }); }     // 花 +1（存在農場；後台 farm_act login_flower 把關）
+        if (FARM_OPEN && taskKey === 'dailyLogin' && !isLoginFlowerClaimed()) { claimLoginFlower(); fx.push({ icon: farmFlowerIcon(22), n: 1, k: 'flower' }); }     // 花 +1（存在農場；後台 farm_act login_flower 把關）
         if (taskKey === 'dailyLogin' && !isLoginShardClaimed()) {
             // 碎片先發（存在本機進度）；雞塊下面照原本的方式向後端領
             advData.shards += LOGIN_SHARDS;
@@ -1667,7 +1686,13 @@
         //   不然新帳號（或刪除後雲端已經沒有存檔的帳號）會把別人的進度當成自己的上傳
         try {
             let prevOwner = localStorage.getItem(LOCAL_OWNER_KEY) || '';
-            if (email && prevOwner && prevOwner !== email) advDropGoogleCache();
+            if (email && prevOwner && prevOwner !== email) {
+                advDropGoogleCache();
+                // r20：今日任務的完成進度也是「這台裝置」記的：換成另一個 Google 帳號時，前一個帳號今天做的（例如打贏敵人）不能算給新帳號
+                //   新帳號今天在別台裝置做過的，下面讀雲端時會再合併回來
+                CHICKEN_TASK_KEYS.forEach(k => { if (k !== 'dailyLogin') chickenData.tasks[k] = { done: false }; });
+                saveChickenData();
+            }
         } catch (e) {}
         try {
             let query = encodeURIComponent(`name='${FILENAME}' and 'appDataFolder' in parents and trashed=false`);
@@ -1890,7 +1915,7 @@
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261119e';
+    const PS_APP_VER = '20261121a';
     // r19：大冒險現況多久補送一次（雲端進度載入好之後，如果超過這個時間沒送過現況，就單獨補送一份，不算回傳次數）
     const PS_SNAP_AT = 'chicky_pstats_snapat', PS_SNAP_EVERY = 4 * 3600 * 1000;
     // r19：診斷資訊（每次回傳一起送，後台只留最新一份）：哪種裝置、登入狀態、最近有沒有送失敗、為什麼沒附現況
@@ -1908,7 +1933,68 @@
             home: env.standalone ? 1 : 0,
             g: accessToken ? 'in' : (localStorage.getItem(GOOGLE_LINKED_FLAG) === '1' ? 'wait' : (isValidWalletKey(localStorage.getItem(WALLET_KEY_STORAGE)) ? 'out' : 'never')),
             snap: snap ? 1 : (advLoadedG && !advCloudReady ? 'cloud-not-ready' : 'logged-out'),
-            fails: d.fails || 0, err: d.err || ''
+            fails: d.fails || 0, err: d.err || '',
+            scr: scrInfo()                                   // r20：螢幕資訊（解析度、縮放、有沒有畫面被切到）
+        };
+    }
+    // ═════════ r20：螢幕偵測（記到玩家統計的 diag.scr）＋畫面太窄時自動縮小 ═════════
+    //   很多手機開了「顯示大小／網頁縮放」之後，網頁可用的寬度（CSS 像素）會變得很窄（例如 412 → 300），
+    //   版面是照 360 以上設計的，就會出現文字換行、被切掉。
+    //   做法：可用寬度小於 SCR_FIT_W 時，把整個畫面等比例縮小（html 的 zoom），讓版面維持 SCR_FIT_W 寬，全部塞得進去。
+    //   偵測：進到大冒險、能力值這些版面固定的畫面時，檢查有沒有文字被切掉（內容比框還寬），記下是哪一種元素。
+    const SCR_FIT_W = 360, SCR_KEY = 'chicky_scr_clip';
+    let scrFit = 1;
+    function scrApplyFit() {
+        // 用 viewport 的 width=360：瀏覽器會把 360 寬的版面整個等比例縮小塞進螢幕（vh、捲動、點擊位置都正常）
+        try {
+            let m = document.querySelector('meta[name="viewport"]'); if (!m) return;
+            if (!scrApplyFit.orig) scrApplyFit.orig = m.getAttribute('content');
+            let w = window.innerWidth || document.documentElement.clientWidth || SCR_FIT_W;
+            if (scrFit === 1 && w < SCR_FIT_W - 2) {
+                scrFit = Math.round(w / SCR_FIT_W * 100) / 100;
+                m.setAttribute('content', `width=${SCR_FIT_W}, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content`);
+                document.documentElement.classList.add('scr-fit');
+            }
+        } catch (e) {}
+    }
+    scrApplyFit();
+    function scrClipGet() { try { return JSON.parse(localStorage.getItem(SCR_KEY)) || {}; } catch (e) { return {}; } }
+    // 檢查目前畫面有沒有被切到的文字：按鈕、分頁、標題…內容比框還寬（橫向超出）或整頁可以左右滑
+    function scrCheckClip(scope) {
+        try {
+            let root = scope || document.querySelector('.app-view.active'); if (!root) return;
+            let found = {};
+            if (document.documentElement.scrollWidth > document.documentElement.clientWidth + 2) found['page-hscroll'] = 1;
+            const keyOf = el => ((el.id ? '#' + el.id : '') || '.' + String(el.className || el.tagName).trim().split(/\s+/)[0]).slice(0, 32);
+            root.querySelectorAll('button, [role="tab"], .adv-move, .adv-opt, h1, h2, h3, .cr-btn, .tg-ab b, .picker-title').forEach(el => {
+                if (!el.offsetParent || el.clientWidth < 8) return;
+                if (el.closest('.ah-world, .adv-car-side, .adv-stage, [data-clip-ok]')) return;     // 地圖關卡、卡片輪播兩側、戰鬥場景：本來就會超出框（設計如此）
+                if (el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 4) found[keyOf(el)] = 1;   // 內容比框還寬／還高：被切掉
+            });
+            // 分頁標籤應該只有一行：變成兩行（例如「基本素質」被擠成兩行）也算
+            root.querySelectorAll('[role="tab"]').forEach(el => {
+                if (!el.offsetParent) return;
+                let cs = getComputedStyle(el), fs = parseFloat(cs.fontSize) || 14, lh = parseFloat(cs.lineHeight) || fs * 1.3;
+                let r = document.createRange(); r.selectNodeContents(el);
+                let tops = [...r.getClientRects()].filter(x => x.width > 0).map(x => x.top).sort((a, b) => a - b), lines = tops.length ? 1 : 0;
+                for (let i = 1; i < tops.length; i++) if (tops[i] - tops[i - 1] > lh * 0.5) lines++;
+                if (lines > 1 && el.textContent.trim().length > 1) found[keyOf(el) + '(2行)'] = 1;
+            });
+            let keys = Object.keys(found); if (!keys.length) return;
+            let c = scrClipGet();
+            keys.forEach(k => { c[k] = Math.min(999, (c[k] || 0) + 1); });
+            let ks = Object.keys(c); if (ks.length > 12) ks.sort((a, b) => c[a] - c[b]).slice(0, ks.length - 12).forEach(k => delete c[k]);
+            localStorage.setItem(SCR_KEY, JSON.stringify(c));
+        } catch (e) {}
+    }
+    function scrInfo() {
+        let w = window.innerWidth || 0, sw = (screen && screen.width) || 0;
+        return {
+            vw: w, vh: window.innerHeight || 0, sw, sh: (screen && screen.height) || 0,
+            dpr: Math.round((window.devicePixelRatio || 1) * 100) / 100,
+            zm: sw && w ? Math.round(sw / w * 100) / 100 : 1,       // 約略的網頁縮放（螢幕寬 ÷ 可用寬）；1.3 左右代表手機開了放大
+            fit: scrFit === 1 ? 0 : Math.round(scrFit * 100) / 100,  // 有自動縮小的話是縮小的比例
+            clip: scrClipGet()                                       // 偵測到被切到的元素：{ 元素: 次數 }
         };
     }
     // r18：要附上的大冒險現況。錢包已經綁過 Google、但現在顯示的是「離線進度」（登出中）→ 不附（null）
@@ -2080,6 +2166,7 @@
         try { if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = (viewId === 'adventureBattleView'); } catch (e) {}
         document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
+        setTimeout(() => scrCheckClip(), 1500);              // r20：版面排好後檢查有沒有文字被切到（記到統計）
         document.body.classList.toggle('farm-on', viewId.indexOf('farm') === 0);     // 雞塊農場：整頁暖色背景
         // 雞塊農場有自己的配色：在農場裡不套用省電模式（深色），離開農場再照設定恢復
         try { let ps = document.getElementById('powerSavingToggle'); document.body.classList.toggle('power-saving-mode', !/^(farm|adv)/.test(viewId) && !!(ps && ps.checked)); } catch (e) {}   // 遊戲（大冒險、農場）畫面不受省電模式影響
@@ -2239,16 +2326,16 @@
     function renderHomeToday() {
         if (typeof chickenData === 'undefined') return;
         try {   // 右上角的雞塊：外圈是今日任務進度，有可以領的就亮紅點
-            let n0 = CHICKEN_TASK_KEYS.length, d0 = CHICKEN_TASK_KEYS.filter(k => taskDoneOrClaimed(k)).length;
+            let n0 = activeTaskKeys().length, d0 = activeTaskKeys().filter(k => taskDoneOrClaimed(k)).length;
             let ring = document.getElementById('acTaskRing'), dot = document.getElementById('acTaskDot');
             if (ring) ring.setAttribute('stroke-dasharray', `${(d0 / n0 * 106.8).toFixed(1)} 106.8`);
             let hold = Date.now() < chickenBadgeHoldUntil;      // r19：有登入的玩家：雲端還沒讀完前先不亮紅點
-            if (dot) dot.style.display = !hold && CHICKEN_TASK_KEYS.some(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)) ? '' : 'none';
+            if (dot) dot.style.display = !hold && activeTaskKeys().some(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)) ? '' : 'none';
             let ok = document.getElementById('acTaskOk'); if (ok) ok.style.display = d0 >= n0 ? '' : 'none';     // 今日任務 100%：雞塊上打綠勾
         } catch (e) {}
         let box = document.getElementById('homeToday');
         if (!box) return;
-        let keys = CHICKEN_TASK_KEYS, n = keys.length;
+        let keys = activeTaskKeys(), n = keys.length;
         let done = keys.filter(k => taskDoneOrClaimed(k)).length;
         let unclaimed = Date.now() < chickenBadgeHoldUntil ? 0 : keys.filter(k => chickenData.tasks[k] && chickenData.tasks[k].done && !isTaskClaimed(k)).length;
         let sub = unclaimed ? `有 ${unclaimed} 項可以領雞塊！` : done >= n ? '今天的任務全部完成了！' : `再完成 ${n - done} 項，就能多領雞塊`;
@@ -7613,22 +7700,36 @@
         // r19：迷霧：目前要打的那關「之後」的路、關卡、敵人都被迷霧蓋住（不會先看到下一關是誰）
         let fogAt = ahHold ? ahHold.id : ahCurrentId();
         let fog = (fogAt >= ch.from && fogAt < ch.to && (ahHold || !advData.cleared[fogAt])) ? `<div class="ah-fog${store ? ' is-store' : ''}" id="ahFog" style="height:${ahFogPct(fogAt - ch.from)}%" aria-hidden="true"><i></i><i></i><i></i></div>` : '';
-        box.innerHTML = `<div class="ah-world" id="ahWorld" style="aspect-ratio:${AH_W} / ${H}">${ahMapSVG(ch)}${stages}${chick}${fog}</div>`;
+        box.innerHTML = `<div class="ah-clip" id="ahClip"><div class="ah-world" id="ahWorld" style="aspect-ratio:${AH_W} / ${H}">${ahMapSVG(ch)}${stages}${chick}${fog}</div></div>`;
+        ahClipU = 0;
+        if (fog) ahApplyClip(fogAt - ch.from);
         ahUpdateBadges();
+    }
+    // r20：迷霧上面的地圖直接切掉，只能往上滑到「下一關」（還在迷霧裡）為止，不會滑很久都是迷霧
+    //   ahClipU：上面切掉多少（地圖座標）；地圖整個往上移（負的 margin，% 是以寬度計算）
+    var ahClipU = 0;
+    function ahClipPx() { let w = document.getElementById('ahWorld'); return w ? ahClipU / ahMapH() * w.offsetHeight : 0; }
+    function ahApplyClip(idx) {
+        let w = document.getElementById('ahWorld'), map = document.getElementById('advMap'); if (!w) return;
+        let pts = ahPts(), before = ahClipPx();
+        ahClipU = (idx >= 0 && idx < pts.length - 1) ? Math.max(0, pts[idx + 1].y - 190) : 0;
+        w.style.marginTop = ahClipU ? `-${(ahClipU / AH_W * 100).toFixed(3)}%` : '';
+        if (map && before) map.scrollTop += before - ahClipPx();          // 切掉的變少 → 內容往下移，畫面跟著補回來（不會跳）
     }
     // 迷霧蓋到哪裡（佔地圖高度的 %）：目前這關的攤位（敵人）還看得到，再往上就看不到
     function ahFogPct(idx) { let p = ahPts()[idx]; return Math.max(0, (p.y - AH_S * 0.62) / ahMapH() * 100); }
     // 過關走到下一關時：迷霧往上退，露出下一關
     function ahFogLift(idx) {
         let f = document.getElementById('ahFog'); if (!f) return;
-        if (idx >= AH_XS.length - 1) { f.style.height = '0%'; f.classList.add('is-gone'); return; }
+        if (idx >= AH_XS.length - 1) { f.style.height = '0%'; f.classList.add('is-gone'); ahApplyClip(-1); return; }
         f.style.height = ahFogPct(idx) + '%';
+        ahApplyClip(idx);
     }
     // 鏡頭：把某一關放在畫面中間偏下
     function ahScrollTo(id, smooth) {
         let box = document.getElementById('advMap'), el = document.getElementById('ahStage' + id);
         if (!box || !el) return;
-        let top = el.offsetTop - box.clientHeight * 0.58;
+        let top = el.offsetTop - ahClipPx() - box.clientHeight * 0.58;
         box.scrollTo({ top: Math.max(0, top), behavior: smooth ? 'smooth' : 'auto' });
     }
     function advMapStep(d) {
@@ -7946,7 +8047,7 @@
                 let sg = segs[k], q = sg.rev ? 1 - lt : lt, pt = sg.p.getPointAtLength(q * sg.len), hop = Math.sin(lt * Math.PI) * 14;
                 chick.style.left = (pt.x / AH_W * 100) + '%';
                 chick.style.top = ((pt.y - hop) / H * 100) + '%';
-                if (map && world) map.scrollTop = Math.max(0, (pt.y / H) * world.offsetHeight - map.clientHeight * 0.58);
+                if (map && world) map.scrollTop = Math.max(0, (pt.y / H) * world.offsetHeight - ahClipPx() - map.clientHeight * 0.58);
                 if (t < 1) requestAnimationFrame(step);
                 else { done = true; segs.forEach(x => x.p.remove()); advRenderMap(); resolve(); }
             };
@@ -8107,7 +8208,7 @@
                 let p = seg.getPointAtLength(e * len), hop = Math.abs(Math.sin(t * Math.PI * 5)) * 16;
                 chick.style.left = (p.x / AH_W * 100) + '%';
                 chick.style.top = ((p.y - hop) / H * 100) + '%';
-                let py = (p.y / H) * world.offsetHeight;
+                let py = (p.y / H) * world.offsetHeight - ahClipPx();
                 map.scrollTop = Math.max(0, py - map.clientHeight * 0.58);
                 if (t < 1) ahWalkRaf = requestAnimationFrame(step);
             };
@@ -8182,7 +8283,7 @@
 
     let advStatsTab = 'stats';      // 能力值頁目前的分頁：stats 基本素質 / moves 招式
     let advMoveFocus = '';          // 招式分頁：正在看哪一招的詳細資料
-    function advSetStatsTab(t) { advStatsTab = ['moves', 'gear', 'bag'].indexOf(t) !== -1 ? t : 'stats'; if (t === 'bag') { advBagGearOnly = false; advBagSlot = null; advBagFilter = 'all'; advBagSel = ''; } advRenderStatsPage(); }
+    function advSetStatsTab(t) { advStatsTab = ['moves', 'gear', 'bag'].indexOf(t) !== -1 ? t : 'stats'; if (t === 'bag') { advBagGearOnly = false; advBagSlot = null; advBagFilter = 'all'; advBagSel = ''; } advRenderStatsPage(); setTimeout(() => scrCheckClip(), 600); }
     // ═════════ 雞塊能力值頁（chicky-stats：樣式 .st-*）═════════
     const ST_COIN = '<svg class="st-coin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fbbf24" stroke="#b45309" stroke-width="1.6"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f59e0b" stroke-width="1.4"/><path d="M12 8.5v7" stroke="#b45309" stroke-width="1.8" stroke-linecap="round"/></svg>';
     const ST_INFO = '<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 11v6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.3" fill="currentColor"/></svg>';
@@ -9154,16 +9255,26 @@
         return w;
     }
     // 選項（干擾答案）：先從這場還沒出現過的單字挑，不夠才用出現過的；值不能重複、不能等於正確答案
+    // r20：中文意思拆成「意思清單」（「會議、開會」→ 會議／開會；括號裡的補充說明不算），用來判斷兩個選項是不是同一個意思
+    function advCnSenses(v) {
+        return String(v || '').replace(/[（(][^）)]*[）)]/g, ' ').split(/[、，,;；\/／|｜\s]+/).map(t => t.replace(/[的地得了。.!！?？~～]+$/, '').trim()).filter(Boolean);
+    }
     function advPickDistractors(answer, n, filt, valueOf) {
         let ans = valueOf(answer), vals = new Set([ans]), out = [];
+        // r20：中文選項：跟正確答案（或已經選出的選項）有任何一個意思相同的字，不能當錯誤選項
+        //   例如題庫同時有 meeting「會議」和 conference「會議、研討會」→ 不會同時出現兩個「會議」
+        let cnMode = valueOf === undefined ? false : (answer && valueOf(answer) === answer.chinese && !!answer.chinese);
+        let senses = new Set(cnMode ? advCnSenses(ans) : []);
+        const overlap = (v) => cnMode && advCnSenses(v).some(t => senses.has(t));
         let pool = adv.words.filter(x => x !== answer && filt(x));
         let fresh = advShuffle(pool.filter(x => !adv.seen.has(advWordKey(x))));
         let used = advShuffle(pool.filter(x => adv.seen.has(advWordKey(x))));
         for (let x of fresh.concat(used)) {
             if (out.length >= n) break;
             let v = valueOf(x);
-            if (!v || vals.has(v)) continue;
+            if (!v || vals.has(v) || overlap(v)) continue;
             vals.add(v); out.push(x);
+            if (cnMode) advCnSenses(v).forEach(t => senses.add(t));
         }
         out.forEach(x => adv.seen.add(advWordKey(x)));
         return out;
@@ -9241,7 +9352,11 @@
         if (btOn) {
             let sh = Math.max(0, p.shield || 0), badge = document.getElementById('btShieldBadge'), bar = document.getElementById('btShieldBar');
             if (badge) { badge.hidden = sh <= 0; let n = document.getElementById('btShieldNum'); if (n) n.textContent = sh; }
-            if (bar) { bar.hidden = sh <= 0; let f = document.getElementById('btShieldFill'); if (f) f.style.width = Math.min(100, sh / Math.max(1, p.max) * 100) + '%'; }
+            // r20：護盾條：只要有護盾就跟血條一樣長（滿格＝這場戰鬥護盾最多的時候），被扣就照比例縮短
+            //   例：護盾最多 2，被扣 1 → 剩一半；中途補到比原本多 → 以新的最大值當滿格
+            if (!adv.shPk || adv.shPk.run !== adv.runId) adv.shPk = { run: adv.runId, v: 0 };
+            adv.shPk.v = Math.max(adv.shPk.v, sh, p.shieldMax || 0);
+            if (bar) { bar.hidden = sh <= 0; let f = document.getElementById('btShieldFill'); if (f) f.style.width = Math.min(100, sh / Math.max(1, adv.shPk.v) * 100) + '%'; }
         }
         if (et) et.textContent = `${Math.max(0, e.hp)}/${e.max}` + (e.shield ? ` 🛡️${e.shield}` : '');
         if (adv.training) {                                      // 木人：依剩下的 HP 換受損的圖
@@ -9647,6 +9762,9 @@
     function tgAnyUnseen() { try { return tgList().some(d => !(advData.tgSeen || {})[d.key]); } catch (e) { return false; } }
     function tgCur() { let l = tgList(); tgIdx = Math.max(0, Math.min(tgIdx, l.length - 1)); return l[tgIdx]; }
     function tgData() { if (!advData.train || typeof advData.train !== 'object') advData.train = { best: {}, first: {} }; return advData.train; }
+    // r20：訓練場今天已經拿過幾次經驗（每天最多 BattleCore.TRAIN_XP_PER_DAY 次）
+    function tgXpUsed() { let T = tgData(); return T.xpDay === getLocalDateStr() ? (T.xpN || 0) : 0; }
+    function tgXpLeft() { return Math.max(0, BattleCore.TRAIN_XP_PER_DAY - tgXpUsed()); }
     // 開訓練場（大冒險首頁底部「訓練場」）
     function goToTraining() {
         if (!document.getElementById('adventureView').classList.contains('active')) goToAdventurePage(true);
@@ -9677,7 +9795,7 @@
                 <div class="tg-st"><span class="k">${SHIELD}防禦</span><b>${d.def}</b></div>
                 <div class="tg-st"><span class="k">${full ? CROWN : ''}最佳</span>${has ? `<b class="best">${best}</b>` : '<b class="none">—</b>'}</div>
             </div><div class="tg-ab"><span>特殊能力</span><b>${tgAbility(d)}</b></div>
-            <div class="tg-ab tg-xp"><span>經驗值</span><b>會根據雞塊傷害量給予經驗</b></div>`;
+            <div class="tg-ab tg-xp"><span>經驗值</span><b${tgXpLeft() ? '' : ' class="is-off"'}>${tgXpLeft() ? `會根據雞塊傷害量給予經驗（今天還有 ${tgXpLeft()} 次）` : '今日無法再獲得經驗'}</b></div>`;
         document.getElementById('tgDummy').innerHTML = advDummySVG(d.key, 0);
         document.getElementById('tgName').textContent = d.name;
         document.getElementById('tgPrev').disabled = tgIdx <= 0;
@@ -9893,15 +10011,21 @@
             reward = d.firstReward || {};
             if (reward.shards) advData.shards += reward.shards;
         }
-        // 經驗值：打到 30%／60%／100% 各給一段（數字在 battle-core 的 DUMMIES.xp）；訓練不限次數
-        let xp = BattleCore.dummyXp(d, dmg), lvB = advLevel();
+        // 經驗值：打到 30%／60%／100% 各給一段（數字在 battle-core 的 DUMMIES.xp）
+        // r20：每天最多拿 3 次經驗（有拿到經驗才算一次）；超過就不給，結算畫面寫「今日無法再獲得經驗」
+        let xp = BattleCore.dummyXp(d, dmg), lvB = advLevel(), xpCapped = false;
+        let tutFirst = dmg > 0 && !advTut().trainGift;            // 導引的第一次訓練：不算在每天 3 次裡
+        if (xp > 0 && !tutFirst) {
+            if (tgXpLeft() <= 0) { xp = 0; xpCapped = true; }
+            else { T.xpN = tgXpUsed() + 1; T.xpDay = getLocalDateStr(); }
+        }
         // r17：第一次訓練打完（木人有受到傷害）→ 冒險代幣 +2、經驗 +2，只給一次
         let gift = null;
         if (dmg > 0 && !advTut().trainGift) { gift = BattleCore.TRAIN_FIRST_GIFT; advData.shards += gift.shards; xp += gift.xp; advTutSet('trainGift'); }
         psLv('t:' + d.key, 'n', xp);
         if (xp) { advData.xp = (advData.xp || 0) + xp; if (advLevel() > lvB) advData.lvUpAt = Date.now(); }
         advSave();
-        tgShowResult({ d, dmg, rec: rec && dmg > 0, prev, reward, xp, gift, lvUp: advLevel() > lvB, full: dmg >= d.hp, round: ev.round || 0 });
+        tgShowResult({ d, dmg, rec: rec && dmg > 0, prev, reward, xp, gift, xpCapped, lvUp: advLevel() > lvB, full: dmg >= d.hp, round: ev.round || 0 });
     }
     function tgShowResult(r) {
         crData = { train: true };
@@ -9916,7 +10040,7 @@
         let shardN = ((r.reward && r.reward.shards) || 0) + ((r.gift && r.gift.shards) || 0);
         let its = (r.xp ? `<span class="cr-item"><span class="xp-ico">XP</span><b>+${r.xp}</b></span>` : '') + (shardN ? `<span class="cr-item">${advShardIcon(26)}<b>×${shardN}</b></span>` : '');
         let mid = `<div class="cr-reward tg-reward"><div class="cr-reward__head"><span class="cr-reward__label">${r.gift ? '獲得獎勵（含第一次訓練獎勵）' : r.reward && r.reward.shards ? `獲得獎勵（含第一次打到 ${r.d.hp}）` : '獲得獎勵'}</span>${r.lvUp ? '<span class="cr-tag cr-tag--today">升級了！</span>' : ''}</div>
-            <div class="cr-reward__items">${its || '<span class="cr-none">沒有經驗值</span>'}</div></div>`;   // r16：字太多 → 拿掉經驗值門檻和最佳紀錄（新紀錄有緞帶）
+            <div class="cr-reward__items">${its || `<span class="cr-none">${r.xpCapped ? '今日無法再獲得經驗（每天 3 次）' : '沒有經驗值'}</span>`}</div>${r.xpCapped && its ? '<p class="tg-xpcap">今日無法再獲得經驗（每天 3 次）</p>' : (r.xp && !r.xpCapped ? `<p class="tg-xpcap is-info">今天還能拿 ${tgXpLeft()} 次訓練經驗</p>` : '')}</div>`;   // r16：字太多 → 拿掉經驗值門檻和最佳紀錄（新紀錄有緞帶）
         let btns = `<button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["tgBack",[]]]'>回訓練場</button>
             <button type="button" class="cr-btn cr-btn--primary" data-on-click='[["tgAgain",[]]]'>再練一次</button>`;
         el.innerHTML = `<section class="cr-screen" data-state="${r.full ? 'first' : 'replay'}" aria-label="訓練結算"><div class="cr-card">
@@ -10184,6 +10308,8 @@
         return '';
     }
     function advShowMenu() {
+        // r20：珍珠奶茶改成自動使用：輪到我方、條件達成（第 2 回合起、HP 剩 2 以下、還沒用過）就自動喝，播完動畫再顯示招式
+        if (adv.active && !adv.busy && !adv.training && BattleCore.canBoba(adv)) { advAutoBoba(); return; }
         adv.q = null;
         advUpdateHud();
         let speakOk = !!getSpeechRecognitionCtor();
@@ -10212,11 +10338,7 @@
         if (adv.enemy.special === 'clerk' && adv.stamps && adv.stamps.size >= ADV_STAMP_NEED && !adv.redeemed) {
             xs.push(`<button type="button" class="adv-xbtn adv-xbtn--redeem" data-on-click='[["advRedeemStamps",[]]]'><b>🎫 兌換集點卡</b><span>攻擊 +${ADV_STAMP_ATK}・HP 恢復 ${ADV_STAMP_HEAL}</span></button>`);
         }
-        if (advHasGear('boba')) {
-            let early = (adv.round || 1) < 2;                                       // 第 1 回合（敵人還沒攻擊過）不能喝
-            let can = BattleCore.canBoba(adv);
-            xs.push(`<button type="button" class="adv-xbtn adv-xbtn--boba" ${can ? '' : 'disabled'} data-on-click='[["advUseBoba",[]]]'><b>🧋 珍珠奶茶</b><span>HP +1${!adv.itemUsed && early ? '・第 2 回合起' : adv.itemUsed ? '・已喝過' : ''}</span></button>`);
-        }
+        // r20：珍珠奶茶不再是按鈕（條件達成會自動使用，見 advAutoBoba）
         let itemBtn = xs.length ? `<div class="adv-xrow">${xs.join('')}</div>` : '';
         ['nectar', 'crown'].forEach(k => {
             let n = (typeof farm !== 'undefined' && farm.items) ? (farm.items[k] || 0) : 0;
@@ -10288,6 +10410,41 @@
     }
     function advHasGear(k) { return BattleCore.hasGear(adv, k); }
     // 快喝光的珍珠奶茶：一場戰鬥限用 1 次，HP 3 以下才能喝，不消耗行動次數
+    // r20：自動喝珍珠奶茶的動畫：雞塊頭上冒出一杯珍奶，往上飄、發光、慢慢變大 → 飲料被喝光 → 淡出 → 頭上「HP +1」
+    const ADV_BOBA_CUP = `<svg viewBox="0 0 64 88" aria-hidden="true"><defs><clipPath id="bobaClip"><path d="M14 22 L50 22 L46 80 Q32 86 18 80 Z"/></clipPath></defs>
+        <rect x="35" y="2" width="5" height="26" rx="2" fill="#F472B6" stroke="#9D174D" stroke-width="1.5" transform="rotate(12 37 15)"/>
+        <g clip-path="url(#bobaClip)"><rect class="boba-tea" x="10" y="26" width="44" height="62" fill="#D6A36B"/>
+        <g class="boba-pearls" fill="#3F2A1D"><circle cx="22" cy="76" r="4"/><circle cx="31" cy="78" r="4"/><circle cx="40" cy="76" r="4"/><circle cx="26" cy="70" r="4"/><circle cx="36" cy="70" r="4"/></g></g>
+        <path d="M14 22 L50 22 L46 80 Q32 86 18 80 Z" fill="rgba(255,255,255,.18)" stroke="#5B3A1E" stroke-width="3" stroke-linejoin="round"/>
+        <rect x="10" y="17" width="44" height="7" rx="3" fill="#FDE68A" stroke="#5B3A1E" stroke-width="3"/></svg>`;
+    async function advAutoBoba() {
+        const id = adv.runId;
+        adv.busy = true;
+        advPanelLog('🧋 HP 好低！自動喝了快喝光的珍珠奶茶…');
+        let P = document.getElementById('advPlayer'), stage = document.getElementById('advStage');
+        let reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (P && stage && !reduce) {
+            let c = advActorCenter(P), box = (P.offsetParent && stage.contains(P.offsetParent)) ? P.offsetParent : stage;
+            let cup = document.createElement('div');
+            cup.className = 'adv-boba-fx';
+            cup.innerHTML = `<i class="adv-boba-glow"></i>${ADV_BOBA_CUP}`;
+            cup.style.left = c.x + 'px'; cup.style.top = (P.offsetTop - 8) + 'px';
+            box.appendChild(cup);
+            await advWait(1900);                      // 往上飄＋發光＋變大（0.8 秒）→ 喝光（0.7 秒）→ 淡出（0.4 秒）
+            cup.remove();
+        } else await advWait(500);
+        if (id !== adv.runId || !adv.active) return;
+        if (BattleCore.useBoba(adv)) {
+            advData.hp = adv.player.hp; advSave();
+            advFloat(P, 'HP +1', '#10B981', -6);
+            advUpdateHud();
+        }
+        await advWait(700);
+        if (id !== adv.runId || !adv.active) return;
+        adv.busy = false;
+        advShowMenu();
+        advSetLog('🧋 喝光珍珠奶茶，HP 恢復一點！');
+    }
     function advUseBoba() {
         if (!adv.active || adv.busy || adv.q) return;
         if (!BattleCore.useBoba(adv)) return;
@@ -10760,13 +10917,15 @@
         let opts = advShuffle([ans, ...wrong]);
         adv.q = { type: 'listenChoice', word: w, opts, correct: opts.indexOf(ans), done: false };
         document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}<br><span class="adv-log-sub" id="advListenSub"></span></div>
+            <div class="adv-log" id="advLog">${ADV_REPLAY_BTN}${m.icon} ${m.name}${advProgText()}<br><span class="adv-log-sub" id="advListenSub"></span></div>
             <div class="adv-opts">${opts.map((o, i) => `<button type="button" class="adv-opt" data-on-click='[["advAnswerListen",[${i}]]]'>${escapeHTML(o)}</button>`).join('')}</div>`;
         advListenPlay(w.english);
         advBattleTutQ();
     }
     // 聽力選擇題（斬擊、二連斬）：播放時顯示「語音播放中」，唸完改成「選擇聽到的單字中文」
     const ADV_SPK_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>';
+    // r20：聽力招式（斬擊、二連斬、突刺）：題目框左邊的空位放「再聽一次」按鈕（跟右邊的倒數計時對稱，不會改變題目框大小）
+    const ADV_REPLAY_BTN = `<button type="button" class="adv-log-replay" aria-label="再聽一次" title="再聽一次" data-on-click='[["advReplayListen",[]]]'><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></button>`;
     function advListenPlay(text) {
         let q = adv.q, cn = adv.move && adv.move.mode === 'listenCn';
         let set = (playing) => {
@@ -10798,7 +10957,7 @@
         adv.q = { type: 'listen', word: w, done: false };
         let m = adv.move;
         document.getElementById('advPanel').innerHTML = `
-            <div class="adv-log" id="advLog">${m.icon} ${m.name}${advProgText()}<br><span class="adv-log-sub">聽發音，拼出單字</span></div>
+            <div class="adv-log" id="advLog">${ADV_REPLAY_BTN}${m.icon} ${m.name}${advProgText()}<br><span class="adv-log-sub">聽發音，拼出單字</span></div>
             <div class="adv-spell-hint"><button type="button" class="adv-replay" aria-label="再聽一次" data-on-click='[["advReplayListen",[]]]'>🔊</button><span>提示：${advSpellHint(w.english)}</span></div>
             <div class="adv-input-row">
                 <input type="text" id="advListenInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入聽到的單字">
