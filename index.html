@@ -18,7 +18,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="icon" href="data:,">
     <!-- 引入 Google Identity Services SDK -->
-    <script src="boot.js?v=20261119e"></script>
+    <script src="boot.js?v=20261121a"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1750,6 +1750,11 @@
         .adv-panel { flex: 1 0 auto; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; padding-bottom: 4px; }
         .adv-log.has-timer { position: relative; padding-right: 46px; }
         .adv-log:has(.adv-timer) { padding-right: 46px; }
+        .adv-log:has(.adv-log-replay) { position: relative; padding-left: 46px; padding-right: 46px; }
+        .adv-log-replay { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; padding: 0; border: none; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center; background: #fff; color: #4F46E5; box-shadow: 0 1px 0 rgba(79,70,229,.25), 0 0 0 1.5px rgba(79,70,229,.25); cursor: pointer; }
+        .adv-log-replay:active { transform: translateY(-50%) scale(.92); }
+        body.power-saving-mode .adv-log-replay { background: #2a2d4a; color: #C7D2FE; }
         .adv-timer { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; }
         .adv-timer svg { display: block; }
         .adv-timer b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #475569; }
@@ -4497,6 +4502,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .ah button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
 .ah-map { position: absolute; left: 0; right: 0; top: 0; bottom: calc(68px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: none; }
 .ah-map::-webkit-scrollbar { display: none; }
+.ah-clip { width: 100%; overflow: hidden; }
 .ah-world { position: relative; width: 100%; overflow: hidden; }
 /* r19：迷霧：還沒到的關卡（路、攤位、敵人）都蓋住；過關時往上退 */
 .ah-fog { position: absolute; left: 0; right: 0; top: 0; z-index: 4; pointer-events: none; transition: height 1.6s cubic-bezier(.4,0,.2,1), opacity .8s;
@@ -4981,6 +4987,20 @@ body.power-saving-mode .ui-cf__in { background: #12141b; border-color: #363a4a; 
 @keyframes ahHealPop { from { opacity: 0; transform: translate(-50%, 10px); } 20% { opacity: 1; } to { opacity: 0; transform: translate(-50%, -26px); } }
 @media (prefers-reduced-motion: reduce) { .ah-dlg-art.ah-heal, .ah-heal-pop { animation: none; } }
 
+/* r20：訓練場每天 3 次經驗 */
+.tg-ab.tg-xp b.is-off { color: #DC2626; }
+.tg-xpcap { margin: 6px 0 0; font-size: 12px; font-weight: 800; color: #DC2626; text-align: center; }
+.tg-xpcap.is-info { color: #64748B; }
+/* r20：自動喝珍珠奶茶的動畫 */
+.adv-boba-fx { position: absolute; z-index: 6; width: 44px; height: 60px; margin-left: -22px; pointer-events: none; transform-origin: 50% 100%;
+  animation: adv-boba-up 1.9s ease-out forwards; }
+.adv-boba-fx svg { position: relative; display: block; width: 100%; height: 100%; overflow: visible; }
+.adv-boba-glow { position: absolute; left: 50%; top: 50%; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(253,230,138,.95), rgba(253,230,138,.35) 55%, rgba(253,230,138,0)); animation: adv-boba-glow 1.9s ease-out forwards; }
+.adv-boba-fx .boba-tea, .adv-boba-fx .boba-pearls { transform-box: view-box; animation: adv-boba-drain 1.9s ease-in forwards; }
+@keyframes adv-boba-up { 0% { transform: translateY(10px) scale(.4); opacity: 0; } 15% { opacity: 1; } 42% { transform: translateY(-70px) scale(1.35); } 79% { transform: translateY(-74px) scale(1.45); opacity: 1; } 100% { transform: translateY(-86px) scale(1.5); opacity: 0; } }
+@keyframes adv-boba-glow { 0% { transform: scale(.3); opacity: 0; } 30% { opacity: 1; } 42% { transform: scale(1.1); } 60% { transform: scale(.9); } 79% { transform: scale(1.15); opacity: .9; } 100% { transform: scale(1.3); opacity: 0; } }
+@keyframes adv-boba-drain { 0%, 42% { transform: translateY(0); } 79%, 100% { transform: translateY(64px); } }
 /* r19：每日首勝經驗值 ×2（藍色） */
 .xp-x2 { color: #2563EB; font-weight: 900; margin-left: 1px; white-space: nowrap; }
 .xp-x2-note { margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: #DBEAFE; color: #1D4ED8; font-size: 11px; font-weight: 800; vertical-align: 2px; white-space: nowrap; }
@@ -5176,7 +5196,8 @@ body.power-saving-mode .ui-cf__in { background: #12141b; border-color: #363a4a; 
                             <div class="item-arrow">›</div>
                         </div>
 
-                        <div class="list-item" data-on-click='[["goToFarmPage",[]]]'>
+                        <!-- r20：雞塊農場入口暫時隱藏（app.js 的 FARM_OPEN 改成 true 就會出現） -->
+                        <div class="list-item" data-farm-entry data-on-click='[["goToFarmPage",[]]]'>
                             <div class="item-icon-box">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V11"></path><path d="M12 13c0-4 3-6 7-6 0 4-3 6-7 6z"></path><path d="M12 11C12 7.5 9.5 5 5 5c0 4 2.5 6 7 6z"></path><path d="M6 21h12"></path></svg>
                             </div>
@@ -5952,7 +5973,7 @@ body.power-saving-mode .ui-cf__in { background: #12141b; border-color: #363a4a; 
         <div class="dt-progress">
             <div class="dt-progress__meta">
                 <span class="dt-reset"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="dtReset"></span></span>
-                <span class="dt-count"><span id="dtDone">0</span> <small>/ 5 完成</small></span>
+                <span class="dt-count"><span id="dtDone">0</span> <small>/ <span id="dtTotal">4</span> 完成</small></span>
             </div>
             <div class="dt-track"><div class="dt-fill" id="dtFill" style="width: 0%"></div></div>
         </div>
@@ -6114,7 +6135,8 @@ body.power-saving-mode .ui-cf__in { background: #12141b; border-color: #363a4a; 
         <h3 style="margin-top:0; color:var(--primary); font-size:18px; font-weight:700;">⚙️ 系統設定</h3>
         <div class="gsec" id="cloudSettingsBox"><button id="cloudAuthBtn" class="gbtn" data-on-click='[["handleAuthClick",[]]]'>登入 Google 雲端</button></div>
         
-        <div class="config-group" style="margin-top: 12px;">
+        <!-- r20：學習語言選單暫時隱藏（app.js 的 LANG_SWITCH_OPEN 改成 true 就會出現） -->
+        <div class="config-group" data-lang-switch style="margin-top: 12px;">
             <label for="learningLanguage" style="margin-top:0;">🌐 學習語言：</label>
             <select id="learningLanguage" data-on-change='[["onLearningLanguageChange",[]]]' style="margin-top: 4px;">
                 <option value="en" selected>英文 (English)</option>
@@ -6371,7 +6393,7 @@ body.power-saving-mode .ui-cf__in { background: #12141b; border-color: #363a4a; 
 </div>
 
 <!-- 戰鬥規則（app.js 和大冒險敵人模擬器共用同一份），一定要在 app.js 前面載入 -->
-<script src="battle-core.js?v=20261119e"></script>
-<script src="app.js?v=20261119e"></script>
+<script src="battle-core.js?v=20261121a"></script>
+<script src="app.js?v=20261121a"></script>
 </body>
 </html>
