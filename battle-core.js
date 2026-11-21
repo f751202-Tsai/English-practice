@@ -76,7 +76,7 @@
               { name: '大亨堡', sprite: 'bun',    hp: 8, atk: 3, agi: 2, def: 3, int: 9, luck: 2, moveName: '麵包夾擊', special: 'bun' },
               { name: '熱狗',   sprite: 'hotdog', hp: 7, atk: 5, agi: 4, def: 2, int: 3, luck: 4, moveName: '熱油噴射', special: 'hotdog' }
           ] },
-        { id: 13, name: '御飯糰',   sprite: 'onigiri', minWords: 70, hp: 15, atk: 5, agi: 3, def: 3, int: 9, luck: 3, shield: 12, moveName: '海苔捲擊', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, xp: 19, special: 'wrap' },
+        { id: 13, name: '御飯糰',   sprite: 'onigiri', minWords: 70, hp: 15, atk: 5, agi: 3, def: 3, int: 9, luck: 3, shield: 15, moveName: '海苔捲擊', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, xp: 19, special: 'wrap' },
         { id: 14, name: '瓶裝無糖茶', sprite: 'tea',   minWords: 70, hp: 18, atk: 5, agi: 3, def: 4, int: 5, luck: 0, moveName: '冰鎮茶柱', movePower: 0, firstShards: 5, firstSauce: 0, repeatShards: 3, xp: 21, special: 'tea' },
         { id: 15, name: 'ibon',   sprite: 'ibon',    minWords: 70, hp: 25, atk: 6, agi: 2, def: 7, int: 5, luck: -2, moveName: '列印繳費單', movePower: 0, firstShards: 0, firstSauce: 0, repeatShards: 4, xp: 23, firstPotions: 1, firstTickets: 3, firstItem: 'bill', potionChance: 0.2, special: 'seal' },
         { id: 16, name: '盒裝沙拉', sprite: 'salad',  minWords: 80, hp: 22, atk: 5, agi: 5, def: 3, int: 5, luck: 3, moveName: '生菜甩擊', movePower: 0, firstShards: 6, firstSauce: 0, repeatShards: 4, xp: 23, firstTickets: 1, special: 'salad' },
@@ -130,7 +130,7 @@
 
     // ── 裝備（只寫名稱與效果說明；圖示在 app.js）──
     const ITEMS = {
-        boba: { name: '快喝光的珍珠奶茶', desc: '一場戰鬥限用 1 次：第 2 回合起、HP 剩 3 以下可以喝，HP +1' },
+        boba: { name: '快喝光的珍珠奶茶', desc: '一場戰鬥限用 1 次：第 2 回合起、HP 剩 2 以下，HP 恢復一點' },
         tofu: { name: '烤焦臭豆腐', desc: '自己的招式失敗時，雙方各扣 1 點體力（無視防禦）' },
         skewer: { name: '竹籤', desc: '攻擊無視對方的護盾，直接扣體力' },
         bill: { name: '繁瑣的繳費單', desc: '？？？' },
@@ -150,7 +150,7 @@
     const ITEM_RARITY = { boba: 'common', tofu: 'common', skewer: 'rare', bill: 'common', bag: 'common', soda: 'common', coaster: 'common', helmet: 'rare', net: 'rare' };
     const COASTER_INT = 3;
     const BAG_SHIELD = 1;
-    const BOBA_HP_AT = 3;                   // 珍珠奶茶：HP 剩 3 以下才能喝
+    const BOBA_HP_AT = 2;                   // 珍珠奶茶：HP 剩 2 以下才會喝（r20：3 → 2；條件達成時 App 會自動使用）
     const NECTAR_SHIELD = 2;                // 農場花蜜：護盾 +2
     const CROWN_ATK = 1;                    // 農場花環：攻擊 +1
 
@@ -168,6 +168,7 @@
         { key: 'iron',  name: '鐵木人',   sprite: 'dummy_iron',  hp: 999, def: 30, agi: 0, traits: [],                                       unlock: 15, firstReward: { shards: 30 }, xp: [[0.3, 2], [0.6, 3], [1, 4]], src: { from: 11, to: 20, minWords: 50 } }
     ];
     const TRAIN_ROUNDS = 10;                // 訓練：10 回合結束
+    const TRAIN_XP_PER_DAY = 3;                     // r20：訓練場每天最多拿 3 次經驗（打完 10 回合、有拿到經驗就算一次；第一次訓練的導引獎勵不算）
     const TRAIN_FIRST_GIFT = { shards: 2, xp: 2 };   // r17：第一次訓練打完、木人有受到傷害 → 冒險代幣 +2、經驗 +2（只給一次）
     // 大冒險首頁底部按鈕：打完第幾關才能按（新手導引；狀態一開始就能按）
     const TAB_OPEN = { shop: 2, train: 3, dex: 4 };
@@ -784,7 +785,7 @@
         RESIST_CAP, STINK_DMG, BOBA_HEAL, CLAW_BONUS, PINBALL_HEAL, PINBALL_HIT, SEAL_COUNT,
         COFFEE_BURN, CLERK_POSTS, CLERK_SHIFT_HP, CLERK_CD, STAMP_NEED, STAMP_ATK, STAMP_HEAL, RESIST, IMMUNE, WEAK_BONUS,
         SPEED_GUARD, CLERK_SPEED_GUARD, TEA_SPEED_HEAL, EXPIRE_SPEED_DMG, EXPIRE_SPEED_EVERY, MICRO_ATK_UP, EXPIRE_SELF, EGG_CARD_BONUS, IGNORE_SHIELD,
-        DUMMIES, TRAIN_ROUNDS, TRAIN_FIRST_GIFT, TRAIN_MIN_WORDS, TAB_OPEN, dummyXpTiers, dummyXp, dummySrc, tabOpen, COMBO_STEPS, CLERK_SHIFT_BUFF, DEX_NEED, DEX_REWARD, DEX_CHAPTER_REWARD, TITLES, DEX_TEXT, ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
+        DUMMIES, TRAIN_ROUNDS, TRAIN_FIRST_GIFT, TRAIN_XP_PER_DAY, TRAIN_MIN_WORDS, TAB_OPEN, dummyXpTiers, dummyXp, dummySrc, tabOpen, COMBO_STEPS, CLERK_SHIFT_BUFF, DEX_NEED, DEX_REWARD, DEX_CHAPTER_REWARD, TITLES, DEX_TEXT, ITEMS, ITEM_RARITY, SHOP_OPEN, CRIT_AT, COASTER_INT, BAG_SHIELD, BOBA_HP_AT, NECTAR_SHIELD, CROWN_ATK, TRAIT_TYPES,
         // 公式
         levelOf, upMax, moveByKey, rarityKey, rarity, masteryLevel, masteryPerLv, masteryAtk, luckDice, rollLuck, shieldMax, answerSecs,
         dexForms, dexReward, titleXp, comboMul, dummyLevel, dummyUnlocked, dummyStage, comboAnswer, critOn, moveUnlockAt, gearUnlockAt, isUnlocked, unlocks, takeDamage, actionCount, damage, speedCfg, speedBonus, expireSpeedDmg, playerStats, winXp, loseXp, makeEnemy, hasGear, gearStatBonus, gearTimeMinus, netActive, HELMET, NET_ATK, NET_MAX_INT, winHeal, shuffle,
