@@ -2145,7 +2145,7 @@
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261122e';
+    const PS_APP_VER = '20261122f';
     // r19：大冒險現況多久補送一次（雲端進度載入好之後，如果超過這個時間沒送過現況，就單獨補送一份，不算回傳次數）
     const PS_SNAP_AT = 'chicky_pstats_snapat', PS_SNAP_EVERY = 4 * 3600 * 1000;
     // r19：診斷資訊（每次回傳一起送，後台只留最新一份）：哪種裝置、登入狀態、最近有沒有送失敗、為什麼沒附現況
