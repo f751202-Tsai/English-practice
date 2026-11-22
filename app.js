@@ -1519,6 +1519,188 @@
         return list.find(v => v.default) || list.find(v => v.localService) || list[0];
     }
 
+    // ═════════ r21：聲音診斷（找出某些 iPhone 完全沒聲音的原因）═════════
+    //   ① 平常：默默記錄每一次發音（不改變發音方式，只是在旁邊聽事件）：有沒有開始（start）、有沒有唸完（end）、
+    //      錯誤代碼（error）、從叫它唸到真的開始花幾毫秒、當時的語言、聲音、音量、語速、是不是在點擊當下呼叫…
+    //      最近 40 筆存在 localStorage（chicky_tts_log），統計回傳時附上摘要（diag.tts）。
+    //   ② 系統設定 →「聲音檢測」（或網址加 ?voicecheck=1 直接打開）：一步一步播放不同方式的聲音，
+    //      讓玩家按「有聽到／沒聽到」，最後產生一份報告可以複製傳給開發者。
+    const TTS_LOG_KEY = 'chicky_tts_log';
+    let ttsLog = [];
+    try { ttsLog = JSON.parse(localStorage.getItem(TTS_LOG_KEY)) || []; } catch (e) { ttsLog = []; }
+    let ttsSeq = 0, ttsLastCancel = 0, ttsVoicesAt = 0, ttsSaveT = null;
+    const ttsT0 = Date.now();
+    function ttsSave() { clearTimeout(ttsSaveT); ttsSaveT = setTimeout(() => { try { localStorage.setItem(TTS_LOG_KEY, JSON.stringify(ttsLog.slice(-40))); } catch (e) {} }, 300); }
+    function ttsVoiceTag(v) { return v ? `${v.name}|${v.lang}|${v.localService ? 'local' : 'net'}${v.default ? '|default' : ''}` : '(未指定)'; }
+    (function ttsInstrument() {
+        const ss = window.speechSynthesis;
+        if (!ss) { ttsLog.push({ t: new Date().toISOString(), note: 'no-speechSynthesis' }); ttsSave(); return; }
+        try {
+            const oSpeak = ss.speak.bind(ss), oCancel = ss.cancel.bind(ss);
+            ss.cancel = function () { ttsLastCancel = performance.now(); return oCancel(); };
+            ss.speak = function (u) {
+                try { ttsTrack(u); } catch (e) {}
+                return oSpeak(u);
+            };
+            ss.addEventListener && ss.addEventListener('voiceschanged', () => { if (!ttsVoicesAt) ttsVoicesAt = Date.now() - ttsT0; });
+        } catch (e) { ttsLog.push({ t: new Date().toISOString(), note: 'wrap-failed ' + e.message }); ttsSave(); }
+    })();
+    function ttsTrack(u) {
+        const ss = window.speechSynthesis, now = performance.now();
+        let txt = String(u.text || '');
+        let e = {
+            i: ++ttsSeq, t: new Date().toISOString().slice(11, 23), view: (document.querySelector('.app-view.active') || {}).id || '',
+            txt: txt.trim() ? txt.slice(0, 24) : '(空白，解鎖用)', len: txt.length, lang: u.lang || '', voice: ttsVoiceTag(u.voice),
+            rate: Math.round(u.rate * 100) / 100, vol: u.volume, pitch: u.pitch,
+            pre: (ss.speaking ? 'speaking ' : '') + (ss.pending ? 'pending ' : '') + (ss.paused ? 'paused' : '') || 'idle',
+            cancelGap: ttsLastCancel ? Math.round(now - ttsLastCancel) : null,
+            gesture: navigator.userActivation ? (navigator.userActivation.isActive ? 1 : 0) : '?',
+            vis: document.visibilityState, ev: []
+        };
+        const mark = (k) => e.ev.push(k + '+' + Math.round(performance.now() - now));
+        u.addEventListener('start', () => { mark('start'); ttsSave(); });
+        u.addEventListener('end', () => { mark('end'); ttsSave(); });
+        u.addEventListener('error', (ev) => { mark('error:' + (ev && ev.error || '?')); ttsSave(); });
+        u.addEventListener('pause', () => mark('pause'));
+        u.addEventListener('resume', () => mark('resume'));
+        e._u = u;                                                   // 留住參考（iOS 有時會把還沒唸完的句子回收掉）
+        setTimeout(() => {
+            if (!e.ev.some(x => /^(start|error)/.test(x))) e.ev.push('NO-START-3s(' + (ss.speaking ? 'speaking' : 'idle') + (ss.pending ? ',pending' : '') + (ss.paused ? ',paused' : '') + ')');
+            delete e._u; ttsSave();
+        }, 3000);
+        ttsLog.push(e); if (ttsLog.length > 60) ttsLog = ttsLog.slice(-40);
+        ttsSave();
+    }
+    // 統計回傳用的摘要（不含單字內容）
+    function ttsSummary() {
+        let real = ttsLog.filter(x => x.len > 1 && x.ev);
+        let err = {};
+        real.forEach(x => x.ev.forEach(k => { let m = /^error:(.*?)\+/.exec(k); if (m) err[m[1]] = (err[m[1]] || 0) + 1; }));
+        let vs = []; try { vs = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; } catch (e) {}
+        return {
+            n: real.length, start: real.filter(x => x.ev.some(k => /^start/.test(k))).length,
+            nostart: real.filter(x => x.ev.some(k => /^NO-START/.test(k))).length, err,
+            vc: vs.length, en: vs.filter(v => /^en/i.test(v.lang)).length, ios: IS_IOS ? 1 : 0
+        };
+    }
+    // 產生 WAV 嗶聲（用 <audio> 播放，檢查「一般媒體聲音」有沒有被擋）
+    function ttsBeepWavUrl() {
+        const sr = 22050, n = Math.floor(sr * 0.5), buf = new ArrayBuffer(44 + n * 2), dv = new DataView(buf);
+        const w = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+        w(0, 'RIFF'); dv.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+        dv.setUint32(24, sr, true); dv.setUint32(28, sr * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true); w(36, 'data'); dv.setUint32(40, n * 2, true);
+        for (let i = 0; i < n; i++) dv.setInt16(44 + i * 2, Math.sin(2 * Math.PI * 660 * i / sr) * 12000 * Math.min(1, (n - i) / 2000), true);
+        return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+    }
+    // 檢測的每一個步驟：run() 在玩家按「播放」的當下執行，回傳說明文字
+    const TTS_CHECKS = [
+        { k: 'appEn', name: '英文單字（跟 App 平常一樣的方式）', run: () => ttsSpeakLikeApp('apple', true) },
+        { k: 'plainEn', name: '英文單字（不指定聲音、音量 100%、語速 1）', run: () => { let u = new SpeechSynthesisUtterance('Hello, this is a test.'); u.lang = 'en-US'; u.rate = 1; u.volume = 1; window.speechSynthesis.speak(u); return ttsDesc(u); } },
+        { k: 'cancelEn', name: '英文（先停掉再馬上唸，跟測驗一樣）', run: () => { window.speechSynthesis.cancel(); return ttsSpeakLikeApp('banana', false); } },
+        { k: 'zh', name: '中文', run: () => { let u = new SpeechSynthesisUtterance('你好，這是測試'); u.lang = 'zh-TW'; u.volume = 1; window.speechSynthesis.speak(u); return ttsDesc(u); } },
+        { k: 'audio', name: '嗶聲（一般音效，用 audio 播放）', run: () => { let a = new Audio(ttsBeepWavUrl()); let r = a.play(); if (r && r.catch) r.catch(err => ttsCheckNote('audio', 'play() 失敗：' + err.name + ' ' + err.message)); return 'audio.play()'; } },
+        { k: 'webaudio', name: '嗶聲（Web Audio）', run: () => { let C = window.AudioContext || window.webkitAudioContext; if (!C) return '不支援 Web Audio'; let c = new C(); let s0 = c.state; c.resume && c.resume(); let o = c.createOscillator(), g = c.createGain(); o.frequency.value = 520; g.gain.value = 0.25; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.5); return 'AudioContext ' + s0 + ' → ' + c.state; } },
+    ];
+    function ttsDesc(u) { return `lang=${u.lang} voice=${ttsVoiceTag(u.voice)} rate=${Math.round(u.rate * 100) / 100} vol=${u.volume}`; }
+    function ttsSpeakLikeApp(word, cancelFirst) {
+        let u = new SpeechSynthesisUtterance(word);
+        let lang = getLearningLanguage();
+        let chosen = getSelectedVoiceForLearning();
+        if (chosen) u.voice = chosen;
+        u.lang = lang === 'ko' ? 'ko-KR' : 'en-US';
+        let r = parseFloat((document.getElementById('fcSpeakRate') || {}).value); u.rate = isFinite(r) && r > 0 ? r : 0.8;
+        let sysVol = document.getElementById('systemVolume') ? document.getElementById('systemVolume').value : 100;
+        u.volume = Math.max(0, Math.min(1.0, (parseInt(sysVol) || 100) / 100));
+        if (cancelFirst) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+        window.speechSynthesis.speak(u);
+        return ttsDesc(u);
+    }
+    let ttsCheck = null;
+    function ttsCheckNote(k, s) { if (ttsCheck && ttsCheck.res[k]) ttsCheck.res[k].note = (ttsCheck.res[k].note ? ttsCheck.res[k].note + '；' : '') + s; }
+    function ttsOpenCheck() {
+        let old = document.getElementById('ttsCheckModal'); if (old) old.remove();
+        ttsCheck = { step: -1, res: {}, q: {} };
+        let m = document.createElement('div');
+        m.id = 'ttsCheckModal'; m.className = 'tts-ck'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true');
+        m.innerHTML = `<div class="tts-ck__box"><h3>🔊 聲音檢測</h3><div id="ttsCkBody"></div></div>`;
+        document.body.appendChild(m);
+        ttsCkRender();
+    }
+    function ttsCkRender() {
+        let b = document.getElementById('ttsCkBody'); if (!b) return;
+        let c = ttsCheck;
+        if (c.step === -1) {
+            const q = (k, label, opts) => `<div class="tts-ck__q"><b>${label}</b><div>${opts.map(o => `<button type="button" class="tts-ck__opt${c.q[k] === o ? ' is-on' : ''}" data-q="${k}" data-v="${o}">${o}</button>`).join('')}</div></div>`;
+            b.innerHTML = `<p class="tts-ck__p">先回答 3 個問題，接著會播 ${TTS_CHECKS.length} 段聲音，每段聽完按「有聽到」或「沒聽到」。</p>
+                ${q('silent', '手機側邊的「靜音」有打開嗎？（螢幕上方會出現鈴鐺劃一條線）', ['有', '沒有', '不知道'])}
+                ${q('bt', '現在有接藍牙耳機或藍牙喇叭嗎？', ['有', '沒有'])}
+                ${q('vol', '手機的音量有開大嗎？（按側邊音量鍵確認）', ['有', '沒有', '不知道'])}
+                <button type="button" class="tts-ck__go" id="ttsCkStart">開始檢測</button>`;
+            b.querySelectorAll('.tts-ck__opt').forEach(x => x.addEventListener('click', () => { c.q[x.dataset.q] = x.dataset.v; ttsCkRender(); }));
+            b.querySelector('#ttsCkStart').addEventListener('click', () => { c.step = 0; ttsCkRender(); });
+            return;
+        }
+        if (c.step < TTS_CHECKS.length) {
+            let t = TTS_CHECKS[c.step], r = c.res[t.k];
+            b.innerHTML = `<p class="tts-ck__p">第 ${c.step + 1} / ${TTS_CHECKS.length} 項：<b>${t.name}</b></p>
+                <button type="button" class="tts-ck__go" id="ttsCkPlay">▶ 播放${r ? '（再播一次）' : ''}</button>
+                <div class="tts-ck__ans"${r ? '' : ' hidden'}><button type="button" class="tts-ck__yes" data-a="有聽到">有聽到</button><button type="button" class="tts-ck__no" data-a="沒聽到">沒聽到</button></div>
+                <button type="button" class="tts-ck__close" id="ttsCkQuit">結束檢測</button>`;
+            b.querySelector('#ttsCkPlay').addEventListener('click', () => {
+                let before = ttsLog.length, res = c.res[t.k] = { tries: ((c.res[t.k] || {}).tries || 0) + 1, at: performance.now() };
+                try { res.how = t.run(); } catch (e) { res.how = '錯誤：' + e.message; }
+                res.logIdx = before;                              // 這次播放之後的發音紀錄（看 start/end/error）
+                b.querySelector('.tts-ck__ans').hidden = false;
+            });
+            b.querySelectorAll('.tts-ck__ans button').forEach(x => x.addEventListener('click', () => { c.res[t.k].heard = x.dataset.a; c.res[t.k].logEnd = ttsLog.length; c.step++; ttsCkRender(); }));
+            b.querySelector('#ttsCkQuit').addEventListener('click', () => { c.step = TTS_CHECKS.length; ttsCkRender(); });
+            return;
+        }
+        b.innerHTML = `<p class="tts-ck__p">檢測完成！請按「複製報告」，把內容貼給開發者（LINE 官方帳號）。</p>
+            <textarea class="tts-ck__report" id="ttsCkReport" readonly>產生報告中…</textarea>
+            <button type="button" class="tts-ck__go" id="ttsCkCopy">複製報告</button>
+            <button type="button" class="tts-ck__close" id="ttsCkClose">關閉</button>`;
+        b.querySelector('#ttsCkClose').addEventListener('click', () => { let m = document.getElementById('ttsCheckModal'); if (m) m.remove(); });
+        b.querySelector('#ttsCkCopy').addEventListener('click', async () => {
+            let ta = document.getElementById('ttsCkReport'), ok = false;
+            try { await navigator.clipboard.writeText(ta.value); ok = true; } catch (e) { try { ta.select(); ok = document.execCommand('copy'); } catch (e2) {} }
+            b.querySelector('#ttsCkCopy').textContent = ok ? '已複製 ✓' : '請長按文字框全選複製';
+        });
+        setTimeout(() => { let ta = document.getElementById('ttsCkReport'); if (ta) ta.value = ttsReport(); }, 1200);   // 等最後一段的事件記錄完
+    }
+    function ttsReport() {
+        let L = [], ss = window.speechSynthesis, vs = [];
+        try { vs = ss ? ss.getVoices() : []; } catch (e) {}
+        let env = {}; try { env = getBrowserEnv(); } catch (e) {}
+        L.push('=== 雞塊 App 聲音檢測報告 ===');
+        L.push('時間：' + new Date().toLocaleString() + '　App：' + (typeof PS_APP_VER !== 'undefined' ? PS_APP_VER : '?'));
+        L.push('玩家 ID：' + (localStorage.getItem('chicky_player_id') || '—'));
+        L.push('裝置：' + navigator.userAgent);
+        L.push(`環境：iOS=${IS_IOS ? 1 : 0} 主畫面=${env.standalone ? 1 : 0} App內瀏覽器=${env.isInApp ? 1 : 0} 螢幕=${screen.width}x${screen.height} dpr=${window.devicePixelRatio}`);
+        L.push(`語音功能：speechSynthesis=${ss ? 1 : 0} speaking=${ss && ss.speaking ? 1 : 0} pending=${ss && ss.pending ? 1 : 0} paused=${ss && ss.paused ? 1 : 0}　voiceschanged 在 ${ttsVoicesAt || '沒觸發'} ms`);
+        try { L.push('audioSession：' + (navigator.audioSession ? navigator.audioSession.type + '/' + navigator.audioSession.state : '不支援')); } catch (e) {}
+        L.push('問卷：靜音=' + (ttsCheck.q.silent || '未答') + '　藍牙=' + (ttsCheck.q.bt || '未答') + '　音量開大=' + (ttsCheck.q.vol || '未答'));
+        L.push(`App 設定：學習語言=${getLearningLanguage()} 選擇的聲音=${ttsVoiceTag(getSelectedVoiceForLearning())} 字卡語速=${(document.getElementById('fcSpeakRate') || {}).value || '?'}`);
+        let en = vs.filter(v => /^(en|zh)/i.test(v.lang));
+        L.push(`系統聲音：共 ${vs.length} 個，英文/中文 ${en.length} 個：`);
+        en.slice(0, 25).forEach(v => L.push('  ' + ttsVoiceTag(v)));
+        L.push('--- 檢測結果 ---');
+        TTS_CHECKS.forEach(t => {
+            let r = ttsCheck.res[t.k];
+            if (!r) { L.push(`・${t.name}：沒有測`); return; }
+            let evs = ttsLog.slice(r.logIdx, r.logEnd).filter(x => x.i).map(x => `#${x.i}[${x.ev.join(',') || '無事件'}]`).join(' ');
+            L.push(`・${t.name}：${r.heard || '沒回答'}（播 ${r.tries} 次）${r.how ? '　' + r.how : ''}${evs ? '　事件 ' + evs : ''}${r.note ? '　備註 ' + r.note : ''}`);
+        });
+        L.push('--- 最近的發音紀錄（平常使用時） ---');
+        ttsLog.slice(-30).forEach(x => {
+            if (x.note) { L.push('  ' + x.note); return; }
+            L.push(`  #${x.i} ${x.t} ${x.view} 「${x.txt}」 lang=${x.lang} voice=${x.voice} rate=${x.rate} vol=${x.vol} 之前=${x.pre} 停掉後=${x.cancelGap == null ? '-' : x.cancelGap + 'ms'} 點擊當下=${x.gesture} ${x.vis} → ${x.ev.join(',') || '無事件'}`);
+        });
+        return L.join('\n');
+    }
+    // 網址加 ?voicecheck=1：打開 App 後直接進入聲音檢測（方便請測試者幫忙）
+    try { if (/[?&]voicecheck=1/.test(location.search)) setTimeout(ttsOpenCheck, 1500); } catch (e) {}
+
     // iOS 第一次發音必須在使用者點擊當下發生；之後在計時器裡唸才會有聲音。
     // 所以第一次碰觸畫面時，先唸一個聽不到的空句子把語音「解鎖」。
     (function unlockSpeechOnFirstTouch() {
@@ -1916,7 +2098,7 @@
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261122a';
+    const PS_APP_VER = '20261122c';
     // r19：大冒險現況多久補送一次（雲端進度載入好之後，如果超過這個時間沒送過現況，就單獨補送一份，不算回傳次數）
     const PS_SNAP_AT = 'chicky_pstats_snapat', PS_SNAP_EVERY = 4 * 3600 * 1000;
     // r19：診斷資訊（每次回傳一起送，後台只留最新一份）：哪種裝置、登入狀態、最近有沒有送失敗、為什麼沒附現況
@@ -1935,7 +2117,8 @@
             g: accessToken ? 'in' : (localStorage.getItem(GOOGLE_LINKED_FLAG) === '1' ? 'wait' : (isValidWalletKey(localStorage.getItem(WALLET_KEY_STORAGE)) ? 'out' : 'never')),
             snap: snap ? 1 : (advLoadedG && !advCloudReady ? 'cloud-not-ready' : 'logged-out'),
             fails: d.fails || 0, err: d.err || '',
-            scr: scrInfo()                                   // r20：螢幕資訊（解析度、縮放、有沒有畫面被切到）
+            scr: scrInfo(),                                  // r20：螢幕資訊（解析度、縮放、有沒有畫面被切到）
+            tts: ttsSummary()                                // r21：發音摘要（唸了幾次、幾次有開始、沒開始、錯誤代碼、系統聲音數）
         };
     }
     // ═════════ r20：螢幕偵測（記到玩家統計的 diag.scr）＋畫面太窄時自動縮小 ═════════
@@ -11862,23 +12045,28 @@
         el.querySelector('.chc-btn').addEventListener('click', () => {
             el.classList.add('is-out');
             setTimeout(() => el.remove(), 350);
-            let t = advTut(); t.chNew = nextCh.id; advSave(true);
-            ahChapterUnlockFx(nextCh);
+            setTimeout(() => ahChapterUnlockFx(nextCh), 400);          // 等慶祝畫面淡出再開始鎖頭動畫（不然會被蓋住）
         });
         try { el.querySelector('.chc-btn').focus({ preventScroll: true }); } catch (e) {}
     }
     // 上方「下一章」的鎖頭爆開 → 變成可以按的箭頭 → 指示點它
+    // r20b：鎖頭動畫放慢，讓玩家看清楚：搖晃 0.9 秒 → 爆開（兩半掉下去＋碎片＋閃光）→ 變成箭頭跳出來 → 停約 1.5 秒 → 才出現「點這裡」的提示
     function ahChapterUnlockFx(nextCh) {
+        const coach = () => { let t = advTut(); t.chNew = nextCh.id; advSave(true); ahTutCheck(); };
+        const openArrow = () => { ahChLockHold = 0; advRenderMap(); let a = document.querySelector('#ahChapter .ah-arrow[aria-label="下一章"]'); if (a) a.classList.add('ah-arrow--pop', 'ah-arrow--new'); };
         let lock = document.querySelector('#ahChapter .ah-arrow.is-lock');
-        const done = () => { ahChLockHold = 0; advRenderMap(); let a = document.querySelector('#ahChapter .ah-arrow[aria-label="下一章"]'); if (a) { a.classList.add('ah-arrow--new'); } ahTutCheck(); };
-        if (!lock || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) { done(); return; }
-        lock.classList.add('is-burst');
-        let r = lock.getBoundingClientRect(), fx = document.createElement('div');
-        fx.className = 'ah-lockboom'; fx.style.left = (r.left + r.width / 2) + 'px'; fx.style.top = (r.top + r.height / 2) + 'px';
-        fx.innerHTML = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => { let a = i / 10 * Math.PI * 2; return `<b style="--x:${(Math.cos(a) * 46).toFixed(0)}px;--y:${(Math.sin(a) * 46).toFixed(0)}px"></b>`; }).join('') + `<span class="ah-lockboom__l">${AH_LOCK}</span><span class="ah-lockboom__r">${AH_LOCK}</span>`;
-        document.body.appendChild(fx);
-        setTimeout(done, 650);
-        setTimeout(() => fx.remove(), 1300);
+        if (!lock || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) { openArrow(); setTimeout(coach, 600); return; }
+        lock.classList.add('is-burst');                                   // 0～0.9 秒：越晃越大
+        setTimeout(() => {
+            let r = lock.getBoundingClientRect(), fx = document.createElement('div');
+            fx.className = 'ah-lockboom'; fx.style.left = (r.left + r.width / 2) + 'px'; fx.style.top = (r.top + r.height / 2) + 'px';
+            fx.innerHTML = '<i class="ah-lockboom__flash"></i>' + Array.from({ length: 16 }, (_, i) => { let a = i / 16 * Math.PI * 2, d = 46 + (i % 3) * 14; return `<b style="--x:${(Math.cos(a) * d).toFixed(0)}px;--y:${(Math.sin(a) * d).toFixed(0)}px"></b>`; }).join('') + `<span class="ah-lockboom__l">${AH_LOCK}</span><span class="ah-lockboom__r">${AH_LOCK}</span>`;
+            document.body.appendChild(fx);
+            lock.style.visibility = 'hidden';                             // 原本的鎖頭換成裂開的兩半
+            setTimeout(openArrow, 450);                                   // 碎片還在飛時，箭頭跳出來
+            setTimeout(() => fx.remove(), 1700);
+            setTimeout(coach, 2300);                                      // 箭頭出現後停約 1.8 秒，再出現提示
+        }, 900);
     }
 
     // ── 首勝插旗動畫（沿用原本的夜市地圖，在地圖上疊動畫）──
@@ -13574,7 +13762,7 @@
         startCardExamSession,
         startExamMode,
         startFlashcardSession,
-        submitCardExamAnswer, chiSuggPick, accountDelete, psCopyId, psCheckGifts,
+        submitCardExamAnswer, chiSuggPick, accountDelete, psCopyId, psCheckGifts, ttsOpenCheck,
         submitExamAnswer,
         switchHistoryTab,
         syncEditorScroll,
