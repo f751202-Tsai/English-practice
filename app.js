@@ -1565,11 +1565,25 @@
         u.addEventListener('resume', () => mark('resume'));
         e._u = u;                                                   // 留住參考（iOS 有時會把還沒唸完的句子回收掉）
         setTimeout(() => {
-            if (!e.ev.some(x => /^(start|error)/.test(x))) e.ev.push('NO-START-3s(' + (ss.speaking ? 'speaking' : 'idle') + (ss.pending ? ',pending' : '') + (ss.paused ? ',paused' : '') + ')');
-            delete e._u; ttsSave();
+            if (!e.ev.some(x => /^(start|error)/.test(x))) { e.ev.push('NO-START-3s(' + (ss.speaking ? 'speaking' : 'idle') + (ss.pending ? ',pending' : '') + (ss.paused ? ',paused' : '') + ')'); if (txt.trim()) ttsBad(); }
+            ttsSave();
         }, 3000);
+        // r21c：有開始、但過了正常該唸完的時間還沒結束（也沒被取消）→ 語音卡住
+        setTimeout(() => {
+            if (e.ev.some(x => /^start/.test(x)) && !e.ev.some(x => /^(end|error)/.test(x))) { e.ev.push('STUCK'); if (txt.trim()) ttsBad(); }
+            delete e._u; ttsSave();
+        }, 5000 + Math.min(20000, txt.length * 180));
         ttsLog.push(e); if (ttsLog.length > 60) ttsLog = ttsLog.slice(-40);
         ttsSave();
+    }
+    // r21c：iPhone 平常使用時，語音「沒開始」或「卡住」累積 2 次 → 跳出一次提示（每次打開 App 最多一次），教玩家怎麼修
+    let ttsBadN = 0, ttsTipShown = false;
+    function ttsBad() {
+        ttsBadN++;
+        if (!IS_IOS || ttsTipShown || ttsBadN < 2 || document.getElementById('ttsCheckModal')) return;
+        ttsTipShown = true;
+        uiConfirm('聽不到發音嗎？\n這支 iPhone 的「語音朗讀」好像卡住了，可以試試：\n1. 設定 → 輔助使用 → 朗讀內容 → 打開「朗讀所選範圍」\n2. 回到 App 再聽一次\n3. 還是沒聲音的話，重新開機', '開始聲音檢測', '知道了')
+            .then(ok => { if (ok) ttsOpenCheck(); }).catch(() => {});
     }
     // 統計回傳用的摘要（不含單字內容）
     function ttsSummary() {
@@ -1579,7 +1593,7 @@
         let vs = []; try { vs = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; } catch (e) {}
         return {
             n: real.length, start: real.filter(x => x.ev.some(k => /^start/.test(k))).length,
-            nostart: real.filter(x => x.ev.some(k => /^NO-START/.test(k))).length, err,
+            nostart: real.filter(x => x.ev.some(k => /^NO-START/.test(k))).length, stuck: real.filter(x => x.ev.some(k => k === 'STUCK')).length, err,
             vc: vs.length, en: vs.filter(v => /^en/i.test(v.lang)).length, ios: IS_IOS ? 1 : 0
         };
     }
@@ -1590,7 +1604,9 @@
         w(0, 'RIFF'); dv.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
         dv.setUint32(24, sr, true); dv.setUint32(28, sr * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true); w(36, 'data'); dv.setUint32(40, n * 2, true);
         for (let i = 0; i < n; i++) dv.setInt16(44 + i * 2, Math.sin(2 * Math.PI * 660 * i / sr) * 12000 * Math.min(1, (n - i) / 2000), true);
-        return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+        let bin = '', u8 = new Uint8Array(buf);
+        for (let i = 0; i < u8.length; i += 8192) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 8192));
+        return 'data:audio/wav;base64,' + btoa(bin);                       // 用 data URI（iPhone 對 blob 網址的 wav 會回 NotSupportedError）
     }
     // 檢測的每一個步驟：run() 在玩家按「播放」的當下執行，回傳說明文字
     const TTS_CHECKS = [
@@ -1599,6 +1615,13 @@
         { k: 'cancelEn', name: '英文（先停掉再馬上唸，跟測驗一樣）', run: () => { window.speechSynthesis.cancel(); return ttsSpeakLikeApp('banana', false); } },
         { k: 'zh', name: '中文', run: () => { let u = new SpeechSynthesisUtterance('你好，這是測試'); u.lang = 'zh-TW'; u.volume = 1; window.speechSynthesis.speak(u); return ttsDesc(u); } },
         { k: 'audio', name: '嗶聲（一般音效，用 audio 播放）', run: () => { let a = new Audio(ttsBeepWavUrl()); let r = a.play(); if (r && r.catch) r.catch(err => ttsCheckNote('audio', 'play() 失敗：' + err.name + ' ' + err.message)); return 'audio.play()'; } },
+        // r21b：iPhone「語音有開始但沒聲音／卡住」時，試試看把網頁的聲音改成「媒體播放」（跟 IG、YouTube 一樣）再唸
+        { k: 'sessPlay', name: '英文（改成媒體播放模式再唸）', run: () => {
+            let a = navigator.audioSession, before = a ? a.type : '不支援';
+            try { if (a) a.type = 'playback'; } catch (e) {}
+            try { window.speechSynthesis.cancel(); } catch (e) {}
+            let u = new SpeechSynthesisUtterance('Hello, can you hear me now?'); u.lang = 'en-US'; u.volume = 1; window.speechSynthesis.speak(u);
+            return `audioSession ${before} → ${a ? a.type : '不支援'}　` + ttsDesc(u); } },
         { k: 'webaudio', name: '嗶聲（Web Audio）', run: () => { let C = window.AudioContext || window.webkitAudioContext; if (!C) return '不支援 Web Audio'; let c = new C(); let s0 = c.state; c.resume && c.resume(); let o = c.createOscillator(), g = c.createGain(); o.frequency.value = 520; g.gain.value = 0.25; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.5); return 'AudioContext ' + s0 + ' → ' + c.state; } },
     ];
     function ttsDesc(u) { return `lang=${u.lang} voice=${ttsVoiceTag(u.voice)} rate=${Math.round(u.rate * 100) / 100} vol=${u.volume}`; }
@@ -1637,7 +1660,11 @@
                 ${q('vol', '手機的音量有開大嗎？（按側邊音量鍵確認）', ['有', '沒有', '不知道'])}
                 <button type="button" class="tts-ck__go" id="ttsCkStart">開始檢測</button>`;
             b.querySelectorAll('.tts-ck__opt').forEach(x => x.addEventListener('click', () => { c.q[x.dataset.q] = x.dataset.v; ttsCkRender(); }));
-            b.querySelector('#ttsCkStart').addEventListener('click', () => { c.step = 0; ttsCkRender(); });
+            b.querySelector('#ttsCkStart').addEventListener('click', () => {
+                let ss = window.speechSynthesis; c.engineBefore = ss ? `speaking=${ss.speaking ? 1 : 0} pending=${ss.pending ? 1 : 0} paused=${ss.paused ? 1 : 0}` : '-';
+                try { ss.cancel(); ss.resume(); } catch (e) {}          // 先把卡住的語音清掉，再開始檢測
+                c.step = 0; ttsCkRender();
+            });
             return;
         }
         if (c.step < TTS_CHECKS.length) {
@@ -1656,7 +1683,7 @@
             b.querySelector('#ttsCkQuit').addEventListener('click', () => { c.step = TTS_CHECKS.length; ttsCkRender(); });
             return;
         }
-        b.innerHTML = `<p class="tts-ck__p">檢測完成！請按「複製報告」，把內容貼給開發者（LINE 官方帳號）。</p>
+        b.innerHTML = `${ttsAdvice()}<p class="tts-ck__p">如果照上面的方法還是沒有聲音，請按「複製報告」，把內容貼給開發者（LINE 官方帳號）。</p>
             <textarea class="tts-ck__report" id="ttsCkReport" readonly>產生報告中…</textarea>
             <button type="button" class="tts-ck__go" id="ttsCkCopy">複製報告</button>
             <button type="button" class="tts-ck__close" id="ttsCkClose">關閉</button>`;
@@ -1667,6 +1694,24 @@
             b.querySelector('#ttsCkCopy').textContent = ok ? '已複製 ✓' : '請長按文字框全選複製';
         });
         setTimeout(() => { let ta = document.getElementById('ttsCkReport'); if (ta) ta.value = ttsReport(); }, 1200);   // 等最後一段的事件記錄完
+    }
+    // r21c：依檢測結果直接告訴玩家可能的原因和怎麼修（2026/11 iPhone 16 Pro：語音有開始、沒聲音或卡住 → 打開「朗讀所選範圍」就好了）
+    function ttsAdvice() {
+        let c = ttsCheck, R = c.res, heard = k => R[k] && R[k].heard === '有聽到', no = k => R[k] && R[k].heard === '沒聽到';
+        const SPEECH = ['appEn', 'plainEn', 'cancelEn', 'zh', 'sessPlay'];
+        let anySpeech = SPEECH.some(heard), noSpeech = SPEECH.some(no) && !anySpeech;
+        let beep = heard('audio') || heard('webaudio'), noBeep = (no('audio') || !R.audio) && (no('webaudio') || !R.webaudio) && (R.audio || R.webaudio);
+        let vs = []; try { vs = window.speechSynthesis.getVoices(); } catch (e) {}
+        const card = (title, steps, tone) => `<div class="tts-ck__adv${tone ? ' is-' + tone : ''}"><b>${title}</b>${steps.length ? '<ol>' + steps.map(x => '<li>' + x + '</li>').join('') + '</ol>' : ''}</div>`;
+        if (!noSpeech && anySpeech) return card('✅ 聲音正常', [], 'ok');
+        if (!noSpeech) return '';
+        let out = '';
+        if (c.q.silent === '有') out += card('先把靜音關掉再試一次', ['從右上角往下滑打開控制中心，按鈴鐺圖示關閉靜音（或用側邊的按鍵）', '回到 App 再聽一次'], '');
+        if (noBeep) out += card('手機好像整個沒有聲音', ['按側邊音量鍵把音量調大', '如果有連藍牙耳機／喇叭，先關掉藍牙', '確認沒有開靜音'], '');
+        if (IS_IOS) out += card(`很可能是 iPhone 的「語音朗讀」沒有啟動${beep ? '（嗶聲聽得到、只有唸單字沒聲音）' : ''}`, ['打開 iPhone 的「設定」→「輔助使用」→「朗讀內容」', '打開「朗讀所選範圍」', '回到 App 再聽一次（通常這樣就好了）', '還是沒聲音：重新開機後再試'], 'main');
+        else if (!vs.length) out += card('這個瀏覽器找不到可以唸英文的聲音', ['換用 Chrome 或 Safari 開啟', '在手機的「文字轉語音」設定下載英文語音'], 'main');
+        else out += card('語音沒有發出聲音', ['重新整理頁面再試', '換用其他瀏覽器（Chrome／Safari）', '重新開機後再試'], 'main');
+        return out;
     }
     function ttsReport() {
         let L = [], ss = window.speechSynthesis, vs = [];
@@ -1679,11 +1724,13 @@
         L.push(`環境：iOS=${IS_IOS ? 1 : 0} 主畫面=${env.standalone ? 1 : 0} App內瀏覽器=${env.isInApp ? 1 : 0} 螢幕=${screen.width}x${screen.height} dpr=${window.devicePixelRatio}`);
         L.push(`語音功能：speechSynthesis=${ss ? 1 : 0} speaking=${ss && ss.speaking ? 1 : 0} pending=${ss && ss.pending ? 1 : 0} paused=${ss && ss.paused ? 1 : 0}　voiceschanged 在 ${ttsVoicesAt || '沒觸發'} ms`);
         try { L.push('audioSession：' + (navigator.audioSession ? navigator.audioSession.type + '/' + navigator.audioSession.state : '不支援')); } catch (e) {}
+        L.push('開始檢測前的語音狀態：' + (ttsCheck.engineBefore || '-') + '（如果 speaking=1，代表語音卡住了）');
         L.push('問卷：靜音=' + (ttsCheck.q.silent || '未答') + '　藍牙=' + (ttsCheck.q.bt || '未答') + '　音量開大=' + (ttsCheck.q.vol || '未答'));
         L.push(`App 設定：學習語言=${getLearningLanguage()} 選擇的聲音=${ttsVoiceTag(getSelectedVoiceForLearning())} 字卡語速=${(document.getElementById('fcSpeakRate') || {}).value || '?'}`);
         let en = vs.filter(v => /^(en|zh)/i.test(v.lang));
         L.push(`系統聲音：共 ${vs.length} 個，英文/中文 ${en.length} 個：`);
         en.slice(0, 25).forEach(v => L.push('  ' + ttsVoiceTag(v)));
+        try { let adv = ttsAdvice().replace(/<li>/g, '\n  ・').replace(/<b>/g, '\n【').replace(/<\/b>/g, '】').replace(/<[^>]+>/g, '').trim(); if (adv) L.push('App 給的建議：' + adv); } catch (e) {}
         L.push('--- 檢測結果 ---');
         TTS_CHECKS.forEach(t => {
             let r = ttsCheck.res[t.k];
@@ -2098,7 +2145,7 @@
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261122c';
+    const PS_APP_VER = '20261122e';
     // r19：大冒險現況多久補送一次（雲端進度載入好之後，如果超過這個時間沒送過現況，就單獨補送一份，不算回傳次數）
     const PS_SNAP_AT = 'chicky_pstats_snapat', PS_SNAP_EVERY = 4 * 3600 * 1000;
     // r19：診斷資訊（每次回傳一起送，後台只留最新一份）：哪種裝置、登入狀態、最近有沒有送失敗、為什麼沒附現況
