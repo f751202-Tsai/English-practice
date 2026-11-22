@@ -18,7 +18,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="icon" href="data:,">
     <!-- 引入 Google Identity Services SDK -->
-    <script src="boot.js?v=20261122c"></script>
+    <script src="boot.js?v=20261122e"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -5005,6 +5005,10 @@ body.power-saving-mode .ui-cf__in { background: #12141b; border-color: #363a4a; 
 .tts-ck__ans button { flex: 1; height: 46px; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; color: #fff; }
 .tts-ck__yes { background: #10B981; } .tts-ck__no { background: #EF4444; }
 .tts-ck__close { width: 100%; height: 40px; margin-top: 10px; border: none; border-radius: 12px; background: #EEF2FF; color: #4338CA; font-weight: 700; }
+.tts-ck__adv { margin: 0 0 10px; padding: 12px 14px; border-radius: 14px; background: #FEF3C7; color: #78350F; font-size: 14px; line-height: 1.6; }
+.tts-ck__adv.is-main { background: #FEE2E2; color: #7F1D1D; border: 2px solid #FCA5A5; }
+.tts-ck__adv.is-ok { background: #D1FAE5; color: #065F46; }
+.tts-ck__adv b { display: block; font-size: 15px; } .tts-ck__adv ol { margin: 6px 0 0; padding-left: 20px; }
 .tts-ck__report { width: 100%; height: 220px; box-sizing: border-box; font: 11px/1.5 ui-monospace, Menlo, monospace; border: 1px solid #C7D2FE; border-radius: 10px; padding: 8px; color: #111; background: #F8FAFC; }
 /* r20：訓練場每天 3 次經驗 */
 .tg-ab.tg-xp b.is-off { color: #DC2626; }
@@ -6421,7 +6425,7 @@ body.power-saving-mode .ui-cf__in { background: #12141b; border-color: #363a4a; 
 </div>
 
 <!-- 戰鬥規則（app.js 和大冒險敵人模擬器共用同一份），一定要在 app.js 前面載入 -->
-<script src="battle-core.js?v=20261122c"></script>
-<script src="app.js?v=20261122c"></script>
+<script src="battle-core.js?v=20261122e"></script>
+<script src="app.js?v=20261122e"></script>
 </body>
 </html>
