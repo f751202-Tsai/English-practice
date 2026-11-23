@@ -19,7 +19,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="icon" href="data:,">
     <!-- 引入 Google Identity Services SDK -->
-    <script src="boot.js?v=20261122f"></script>
+    <script src="boot.js?v=20261123b"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1767,6 +1767,8 @@
         body.power-saving-mode .adv-opt.bad { background: #7F1D1D !important; border-color: #EF4444 !important; color: #FEE2E2 !important; }
         .adv-opt.ok { box-shadow: 0 0 0 2px #22C55E; }
         .adv-log { font-size: 13.5px; font-weight: 700; text-align: center; background: #EEF2FF; color: var(--primary); border-radius: 10px; padding: 5px 8px; flex: 0 0 auto; line-height: 1.4; }
+        .adv-mine-tag { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 999px; background: #FEF3C7; color: #B45309; font-size: 11.5px; font-weight: 800; line-height: 18px; vertical-align: 1px; }   /* r22：自訂題庫的字 */
+        body.power-saving-mode .adv-mine-tag { background: #3A2E12; color: #FCD34D; }
         body.power-saving-mode .adv-log { background: #232842 !important; color: #C7D2FE !important; }
         .adv-moves { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
         .adv-move { border: 1.5px solid var(--border-color); background: #FFFFFF; border-radius: 12px; padding: 7px 8px; text-align: left; cursor: pointer; font-family: inherit; color: var(--text-main); width: 100%; }
@@ -3145,7 +3147,25 @@
 }
 .we-input:focus { box-shadow: inset 0 0 0 2px var(--we-primary-2); }
 .we-input--en { font-family: var(--we-font-en); font-size: 15px; font-weight: 800; }
-.we-edit__en { margin: 0 3px; }
+.we-edit__en { margin: 0 3px; position: relative; }
+/* r22：單字自動完成 */
+.we-suggest { position: absolute; left: 0; top: calc(100% + 4px); z-index: 30; width: max(100%, 230px); max-width: calc(100vw - 40px); padding: 4px; border-radius: 12px; background: #fff; box-shadow: 0 8px 24px rgba(30, 27, 75, .16), 0 0 0 1px var(--we-primary-border); }
+.we-suggest__row { display: flex; align-items: center; gap: 6px; border-radius: 8px; }
+.we-suggest__row.is-active, .we-suggest__row:hover { background: #EEF2FF; }
+.we-suggest__w { flex: 1; min-width: 0; text-align: left; padding: 8px 8px; border: none; background: none; font-family: var(--we-font-en); font-size: 15px; font-weight: 600; color: #1e1b4b; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.we-suggest__w b { color: var(--we-primary-2, #4F46E5); font-weight: 900; }
+.we-suggest__dict { flex: none; padding: 6px 8px; font-size: 12px; font-weight: 700; color: #64748B; text-decoration: none; white-space: nowrap; }
+.we-suggest__dict:hover { color: #4F46E5; text-decoration: underline; }
+.about-lic { text-align: left; margin: 12px 0; font-size: 12.5px; color: var(--text-muted); }
+.about-lic summary { cursor: pointer; font-weight: 700; color: var(--text-main); font-size: 14px; padding: 4px 0; }
+.about-lic p { margin: 8px 0; line-height: 1.6; }
+.about-lic pre { white-space: pre-wrap; word-break: break-word; font-family: inherit; font-size: 11.5px; margin: 8px 0; padding: 10px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 8px; max-height: 220px; overflow: auto; }
+body.power-saving-mode .about-lic pre { background: #1B1E27; }
+.we-suggest__more { padding: 6px 8px 4px; font-size: 12px; color: #94A3B8; }
+body.power-saving-mode .we-suggest { background: #1B1E27; box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 0 1px #2B303C; }
+body.power-saving-mode .we-suggest__row.is-active, body.power-saving-mode .we-suggest__row:hover { background: #262A36; }
+body.power-saving-mode .we-suggest__w { color: #fff; }
+body.power-saving-mode .we-suggest__w b { color: #A5B4FC; }
 .we-edit__means { display: flex; flex-direction: column; gap: 6px; }
 .we-edit__mean { display: grid; grid-template-columns: minmax(0, 1fr) 58px; gap: 6px; padding: 0 3px; }
 .we-pos-btn {
@@ -4281,6 +4301,24 @@ body.power-saving-mode .adv-move.mv2.rar-legend .mv-type { background: #701A75 !
 .spd-go { width: 100%; margin-top: 4px; min-height: 48px; border: none; border-radius: 14px; background: #6366F1; color: #fff; font-family: inherit; font-size: 16px; font-weight: 900; cursor: pointer; }
 .spd-go:disabled { opacity: .5; cursor: default; }
 body.power-saving-mode .spd-cell:not(.gone) { background: #1B1E27; border-color: #2B303C; color: #fff; }
+/* r22：速答配對改成「英文左、中文右」；點了的配成同一個顏色（藍／紫／青／橘，紅色只用在配錯），全部配好才對答案 */
+.spd-pairs { grid-template-columns: 1fr 1fr; column-gap: 14px; }
+.spd-hint { margin-top: 4px; font-size: 11.5px; font-weight: 700; color: #6b7090; text-align: center; }
+.spd-cell.p0 { border-color: #3B82F6; background: #DBEAFE; color: #1E3A8A; box-shadow: 0 0 0 2px #BFDBFE; }
+.spd-cell.p1 { border-color: #8B5CF6; background: #EDE9FE; color: #4C1D95; box-shadow: 0 0 0 2px #DDD6FE; }
+.spd-cell.p2 { border-color: #0891B2; background: #CFFAFE; color: #164E63; box-shadow: 0 0 0 2px #A5F3FC; }
+.spd-cell.p3 { border-color: #F59E0B; background: #FEF3C7; color: #78350F; box-shadow: 0 0 0 2px #FDE68A; }
+.spd-cell.pend { background: #FFFFFF; border-style: dashed; border-width: 2px; box-shadow: none; animation: spd-pend 1s ease-in-out infinite; }
+.spd-cell.ok { border-color: #10B981; background: #ECFDF5; color: #065F46; }
+@keyframes spd-pend { 50% { transform: scale(.97); } }
+body.power-saving-mode .spd-cell.p0 { background: #172554; border-color: #60A5FA; color: #DBEAFE; box-shadow: none; }
+body.power-saving-mode .spd-cell.p1 { background: #2E1065; border-color: #A78BFA; color: #EDE9FE; box-shadow: none; }
+body.power-saving-mode .spd-cell.p2 { background: #083344; border-color: #22D3EE; color: #CFFAFE; box-shadow: none; }
+body.power-saving-mode .spd-cell.p3 { background: #451A03; border-color: #FBBF24; color: #FEF3C7; box-shadow: none; }
+body.power-saving-mode .spd-cell.pend { background: #1B1E27; }
+body.power-saving-mode .spd-cell.ok { background: #052E16; border-color: #34D399; color: #D1FAE5; }
+body.power-saving-mode .spd-cell.bad { background: #450A0A; border-color: #F87171; color: #FECACA; }
+body.power-saving-mode .spd-hint { color: #94A3B8; }
 
 /* ── 冥想動畫：頭上的雲朵／燈泡、雞塊慢慢呼吸 ── */
 .adv-overhead { position: absolute; z-index: 6; pointer-events: none; transform: translate(-50%, -100%); }
@@ -4711,7 +4749,7 @@ body.ah-on .scale-wrapper, body.ah-on .scale-wrapper-practice, body.ah-on .scale
 .tg-rule { display: block; font-size: 12.5px; font-weight: 700; color: #6B7280; }
 .cr-reward.tg-reward { flex-direction: column; align-items: stretch; gap: 8px; }
 .cr-reward.tg-reward .cr-reward__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.cr-reward.tg-reward .cr-reward__items { justify-content: flex-start; }
+.cr-reward.tg-reward .cr-reward__items { justify-content: center; }   /* r22：獎勵置中 */
 .tg-tiers { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .tg-tier { padding: 3px 9px; border-radius: 999px; background: #F1F5F9; color: #94A3B8; font-size: 12.5px; font-weight: 800; }
 .tg-tier.on { background: #EDE9FE; color: #6D28D9; }
@@ -6245,6 +6283,46 @@ body.power-saving-mode .ui-cf__in { background: #12141b; border-color: #363a4a; 
         <div class="author-box" style="margin: 15px 0; padding: 14px; background: #F8FAFC; border-radius: 12px; border: 1px solid var(--border-color); font-size: 15px; font-weight: 600; color: var(--primary);">
             作者: Fried Chicken Tsai
         </div>
+        <details class="about-lic">
+            <summary>授權聲明</summary>
+            <p>新增單字時的「單字自動完成」詞庫，一部分來自 English Speller Database（ESDB，舊稱 SCOWL），詞表產生資訊與授權聲明原文如下。</p>
+            <pre>Custom wordlist generated from https://app.aspell.net/create using
+the English Speller Database (ESDB) with parameters:
+  Size: 35 (small)
+  Spelling: US
+  Variant Level: 0 (none)
+  Special: &lt;none&gt;
+  Diacritics: strip
+
+https://wordlist.aspell.net
+
+ESDB Git Revision: Wed Jun 24 14:30:42 2026 -0400 [1e5b7d3]
+App Git Revision: Thu Jun 25 15:43:51 2026 -0400 [156fb4e]</pre>
+            <pre>Copyright 2000-2026 by Kevin Atkinson
+
+Permission to use, copy, modify, distribute, and sell any part of the English
+Speller Database (ESDB, previously known as SCOWLv2), or word lists
+created from it, is hereby granted without fee, provided that the above
+copyright notice appears in all copies and that both the above copyright
+notice and this notice appear in supporting documentation.  Kevin Atkinson
+makes no representations about the suitability of this database for any
+purpose.  It is provided “as is” without express or implied warranty.
+
+ESDB is derived from many sources, most of which are in the Public Domain.
+Data from the Corpus of Contemporary American English (COCA) was also used.
+
+All data from COCA comes from 3-gram data that is not freely available;
+however, the usage is within the rights given by the NDA that was signed when
+purchasing the data.  More information on COCA is available at
+https://www.english-corpora.org/coca/.
+
+The primary source of words for ESDB comes from 12dicts and ENABLE2K.  Both
+are in the Public Domain, but Alan Beale &lt;biljir@pobox.com&gt; deserves special
+credit as he is the author of 12dicts and a major contributor to ENABLE2K.  In
+addition, he gave me an incredible amount of feedback and created a number of
+special lists in order to help improve the overall quality of ESDB.</pre>
+            <p>「查字典」連結會開啟劍橋字典（Cambridge Dictionary）的網頁。本 App 僅提供連結，與劍橋大學出版社與評估中心沒有合作或關聯。</p>
+        </details>
         <div class="config-group" style="text-align: left; margin: 12px 0;">
             <label style="margin-top:0;">🛠️ 開發者介面</label>
             <div id="devLoginPanel" style="display: flex; gap: 8px; margin-top: 8px;">
@@ -6426,7 +6504,7 @@ body.power-saving-mode .ui-cf__in { background: #12141b; border-color: #363a4a; 
 </div>
 
 <!-- 戰鬥規則（app.js 和大冒險敵人模擬器共用同一份），一定要在 app.js 前面載入 -->
-<script src="battle-core.js?v=20261122f"></script>
-<script src="app.js?v=20261122f"></script>
+<script src="battle-core.js?v=20261123b"></script>
+<script src="app.js?v=20261123b"></script>
 </body>
 </html>
