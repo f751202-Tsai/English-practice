@@ -1992,7 +1992,7 @@
                 if (usedKey) {
                     let needUpload = usedKey !== cloudWalletKey;
                     cloudWalletKey = usedKey;
-                    if (!advData.owner) { advData.owner = usedKey; advSave(true); }
+                    if (!advData.owner || needUpload) { advData.owner = usedKey; advSave(true); }   // r22：換成新錢包（例如拆開共用的錢包）時，大冒險進度的標記也要跟著換，不然之後每次登入都會被當成別人的進度
                     if (needUpload) { advNeedUpload = false; await triggerAutoSaveToCloud(); }
                 } else {
                     walletBoundThisLogin = false;   // 連線失敗：下次同步時再試
@@ -2075,7 +2075,9 @@
     //     listNew 新增題庫　listSave 編輯題庫按儲存　wordAdd 新增單字　wordEdit 修改單字
     //     pracListen 聽力練習　pracCard 字卡練習　pracSpeak 朗讀練習　exListen 聽力測驗　exCard 字卡測驗
     //     advPlay 大冒險開打　advWin 打贏　advLose 打輸　train 訓練場
-    const PS_KEY = 'chicky_pstats_v1', PS_ID_KEY = 'chicky_player_id';
+    //     r22：advSrcAuto 用冒險題庫開打　advSrcPick 自選題庫開打　advSrcMine 自選裡有自訂題庫　advSrcPack 自選裡有精選單字庫　advMineQ 冒險題庫中出了幾題自己的單字
+    //   r22：ses 每次上線 { "開始時間": 秒數 }（後台要先更新 player_stats.sql 才會收）
+    const PS_KEY = 'chicky_pstats_v1', PS_ID_KEY = 'chicky_player_id', PS_SES_GAP = 30 * 60 * 1000;
     let ps = psLoad(), psSending = false;
     // r19：改成「距離上次成功回傳滿 4 小時」才送（不是固定時段，所以 03:59、04:01 不會連送兩次）
     //   since＝上次成功回傳的時間（毫秒）；新玩家＝第一次開始記錄的時間
@@ -2087,11 +2089,11 @@
         if (m) return new Date(+m[1], +m[2] - 1, +m[3], m[4] === 'b' ? 12 : 0).getTime();
         return Date.now();
     }
-    function psBlank() { return { c: {}, win: {}, days: {}, t: {}, lvx: {}, since: Date.now() }; }
+    function psBlank() { return { c: {}, win: {}, days: {}, t: {}, lvx: {}, ses: {}, since: Date.now() }; }
     function psLoad() {
         try {
             let o = JSON.parse(localStorage.getItem(PS_KEY) || 'null');
-            if (o && typeof o === 'object') return { c: o.c || {}, win: o.win || {}, days: o.days || {}, t: o.t || {}, lvx: o.lvx || {}, dsec: o.dsec || 0, since: psSinceMs(o.since) };
+            if (o && typeof o === 'object') return { c: o.c || {}, win: o.win || {}, days: o.days || {}, t: o.t || {}, lvx: o.lvx || {}, ses: o.ses || {}, sk: o.sk || '', sl: o.sl || 0, dsec: o.dsec || 0, since: psSinceMs(o.since) };
         } catch (e) {}
         return psBlank();
     }
@@ -2114,6 +2116,11 @@
             let k = psCat(); ps.t[k] = (ps.t[k] || 0) + 15;
             ps.dsec = (ps.dsec || 0) + 15;
             if (ps.dsec >= 60) { ps.dsec -= 60; let d = getLocalDateStr(); ps.days[d] = (ps.days[d] || 0) + 1; }
+            // r22：每次上線（session）：離開超過 30 分鐘再回來算新的一次；key＝開始時間「YYYY-MM-DD HH:MM」，值＝在前景的秒數
+            let now = Date.now();
+            if (!ps.sk || now - (ps.sl || 0) > PS_SES_GAP) { let t = new Date(now); ps.sk = getLocalDateStr() + ' ' + String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0'); }
+            if (!ps.ses) ps.ses = {};
+            ps.ses[ps.sk] = (ps.ses[ps.sk] || 0) + 15; ps.sl = now;
             psSave();
         } catch (e) {}
     }, 15000);
@@ -2127,7 +2134,7 @@
             psSave();
         } catch (e) {}
     }
-    function psHasData() { return Object.keys(ps.c).length || Object.keys(ps.win).length || Object.keys(ps.days).length || Object.keys(ps.t || {}).length || Object.keys(ps.lvx || {}).length; }
+    function psHasData() { return Object.keys(ps.c).length || Object.keys(ps.win).length || Object.keys(ps.days).length || Object.keys(ps.t || {}).length || Object.keys(ps.lvx || {}).length || Object.keys(ps.ses || {}).length; }
     // 大冒險目前的狀態
     function psSnap() {
         let d = advData || {}, cl = Object.keys(d.cleared || {}).filter(k => d.cleared[k]).map(Number);
@@ -2142,10 +2149,11 @@
             dexN: (() => { try { let o = {}; BattleCore.dexForms().forEach(f => { let n = dexFormN(f); if (n) o[f.key] = Math.min(3, n); }); return o; } catch (e) { return {}; } })(),
             titles: (() => { try { return advTitlesOwned(); } catch (e) { return []; } })(),
             lists: (() => { try { return wordLists.filter(l => !isPackList(l)).length; } catch (e) { return 0; } })(), words,
+            mode: (() => { try { return advMode(); } catch (e) { return ''; } })(),      // r22：大冒險題目 auto 跟著關卡／custom 自己勾題庫
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261122f';
+    const PS_APP_VER = '20261123b';
     // r19：大冒險現況多久補送一次（雲端進度載入好之後，如果超過這個時間沒送過現況，就單獨補送一份，不算回傳次數）
     const PS_SNAP_AT = 'chicky_pstats_snapat', PS_SNAP_EVERY = 4 * 3600 * 1000;
     // r19：診斷資訊（每次回傳一起送，後台只留最新一份）：哪種裝置、登入狀態、最近有沒有送失敗、為什麼沒附現況
@@ -2173,7 +2181,8 @@
     //   版面是照 360 以上設計的，就會出現文字換行、被切掉。
     //   做法：可用寬度小於 SCR_FIT_W 時，把整個畫面等比例縮小（html 的 zoom），讓版面維持 SCR_FIT_W 寬，全部塞得進去。
     //   偵測：進到大冒險、能力值這些版面固定的畫面時，檢查有沒有文字被切掉（內容比框還寬），記下是哪一種元素。
-    const SCR_FIT_W = 360, SCR_KEY = 'chicky_scr_clip';
+    const SCR_FIT_W = 360, SCR_KEY = 'chicky_scr_clip2';   // r22：改成只看文字之後從頭重算（舊的 chicky_scr_clip 有誤判，丟掉）
+    try { localStorage.removeItem('chicky_scr_clip'); } catch (e) {}
     let scrFit = 1;
     function scrApplyFit() {
         // 用 viewport 的 width=360：瀏覽器會把 360 寬的版面整個等比例縮小塞進螢幕（vh、捲動、點擊位置都正常）
@@ -2191,6 +2200,24 @@
     scrApplyFit();
     function scrClipGet() { try { return JSON.parse(localStorage.getItem(SCR_KEY)) || {}; } catch (e) { return {}; } }
     // 檢查目前畫面有沒有被切到的文字：按鈕、分頁、標題…內容比框還寬（橫向超出）或整頁可以左右滑
+    // r22：只看文字有沒有超出框（故意凸出去的底線、紅點驚嘆號、NEW 角標這些絕對定位的裝飾不算）
+    function scrTextOut(el) {
+        try {
+            let r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+            let L = r.left + (parseFloat(cs.borderLeftWidth) || 0) - 2, Rr = r.right - (parseFloat(cs.borderRightWidth) || 0) + 2;
+            let T = r.top + (parseFloat(cs.borderTopWidth) || 0) - 3, B = r.bottom - (parseFloat(cs.borderBottomWidth) || 0) + 3;
+            let tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), n, rg = document.createRange();
+            while ((n = tw.nextNode())) {
+                if (!n.nodeValue.trim()) continue;
+                let a = n.parentElement, deco = false;
+                while (a && a !== el) { let p = getComputedStyle(a).position; if (p === 'absolute' || p === 'fixed') { deco = true; break; } a = a.parentElement; }
+                if (deco) continue;
+                rg.selectNodeContents(n);
+                for (let q of rg.getClientRects()) if (q.width > 0 && (q.right > Rr || q.left < L || q.bottom > B || q.top < T)) return true;
+            }
+        } catch (e) {}
+        return false;
+    }
     function scrCheckClip(scope) {
         try {
             let root = scope || document.querySelector('.app-view.active'); if (!root) return;
@@ -2200,7 +2227,7 @@
             root.querySelectorAll('button, [role="tab"], .adv-move, .adv-opt, h1, h2, h3, .cr-btn, .tg-ab b, .picker-title').forEach(el => {
                 if (!el.offsetParent || el.clientWidth < 8) return;
                 if (el.closest('.ah-world, .adv-car-side, .adv-stage, [data-clip-ok]')) return;     // 地圖關卡、卡片輪播兩側、戰鬥場景：本來就會超出框（設計如此）
-                if (el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 4) found[keyOf(el)] = 1;   // 內容比框還寬／還高：被切掉
+                if ((el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 4) && scrTextOut(el)) found[keyOf(el)] = 1;   // 內容比框還寬／還高，而且是「文字」超出框：被切掉
             });
             // 分頁標籤應該只有一行：變成兩行（例如「基本素質」被擠成兩行）也算
             root.querySelectorAll('[role="tab"]').forEach(el => {
@@ -2246,7 +2273,7 @@
         if (!force && advLoadedG && !advCloudReady && Date.now() - PS_T0 < 60000) return false;   // 剛打開：先等雲端進度載入，大冒險現況才會正確
         psSending = true;
         let ok = false;
-        let sent = { c: ps.c, win: ps.win, days: ps.days, t: ps.t || {}, lvx: ps.lvx || {} };
+        let sent = { c: ps.c, win: ps.win, days: ps.days, t: ps.t || {}, lvx: ps.lvx || {}, ses: ps.ses || {} };
         try {
             if (snap === undefined) snap = psSnapSafe();
             let res = await walletRpc('report_stats', { p_delta: Object.assign({ v: 1 }, sent, snap ? { snap } : {}, { diag: psDiag(snap) }) });
@@ -2254,8 +2281,8 @@
             psDiagSet({ fails: 0, err: '' });
             // 送出期間又多的次數留著（下次再送）
             let left = psBlank();
-            ['c', 'win', 'days', 't', 'lvx'].forEach(sec => Object.keys(ps[sec] || {}).forEach(k => { let r = (ps[sec][k] || 0) - ((sent[sec] && sent[sec][k]) || 0); if (r > 0) left[sec][k] = r; }));
-            left.dsec = ps.dsec || 0;
+            ['c', 'win', 'days', 't', 'lvx', 'ses'].forEach(sec => Object.keys(ps[sec] || {}).forEach(k => { let r = (ps[sec][k] || 0) - ((sent[sec] && sent[sec][k]) || 0); if (r > 0) left[sec][k] = r; }));
+            left.dsec = ps.dsec || 0; left.sk = ps.sk || ''; left.sl = ps.sl || 0;      // 正在進行的這次上線：送出後繼續算在同一次
             ps = left; psSave();
             if (res && res.id) { try { localStorage.setItem(PS_ID_KEY, String(res.id)); } catch (e) {} }
             if (res && Array.isArray(res.gifts) && res.gifts.length) psApplyGifts(res.gifts);
@@ -2737,6 +2764,7 @@
         root.querySelectorAll('[data-view]').forEach(v => { v.hidden = v.dataset.view !== m; });
         document.body.classList.toggle('we-sub', m !== 'list');
         weClosePos();
+        try { wsClose(); } catch (e) {}
         weCount();
     }
     function openEditorDetail(idx) {
@@ -2958,6 +2986,84 @@
         let n = weParsed.length; weSetMode('list'); weRenderRows(); weToast('已加入 ' + n + ' 個單字');
         try { let c = document.getElementById('obCoach'); if (c) c.remove(); } catch (e) {}
     }
+    // ---- r22：單字自動完成（新增一列的英文欄）：打 app → 下面列出 apple、apply…，右邊有「查字典」連到劍橋字典 ----
+    //   詞庫在 wordsuggest.js（約 3 萬 8 千字，第一次點英文欄才載入）；常用字排前面，同一層再依長度、字母排
+    let wsEntries = null, wsLoading = false, wsActive = -1, wsItems = [];
+    function wsLoad() {
+        if (wsEntries || wsLoading || getListLang(wordLists[lastSelectedList]) === 'ko') return;
+        wsLoading = true;
+        let sc = document.createElement('script');
+        sc.src = 'wordsuggest.js?v=' + PS_APP_VER;
+        sc.onload = () => {
+            try {
+                let best = new Map();
+                (window.CHICKY_WORDS || []).forEach((txt, lvl) => String(txt).split(/\s+/).forEach(w => { if (/^[a-z]+$/.test(w) && (!best.has(w) || best.get(w) > lvl)) best.set(w, lvl); }));
+                wsEntries = [...best.entries()].map(([w, lvl]) => ({ w, lvl })).sort((a, b) => a.w < b.w ? -1 : a.w > b.w ? 1 : 0);
+                window.CHICKY_WORDS = null;
+            } catch (e) { wsEntries = []; }
+            wsLoading = false;
+            if (document.activeElement === we$('#weDraftEn')) wsRender();
+        };
+        sc.onerror = () => { wsLoading = false; };
+        document.head.appendChild(sc);
+    }
+    function wsSearch(prefix, limit) {
+        let lo = 0, hi = wsEntries.length;
+        while (lo < hi) { let mid = (lo + hi) >> 1; if (wsEntries[mid].w < prefix) lo = mid + 1; else hi = mid; }
+        let res = [];
+        for (let i = lo; i < wsEntries.length && wsEntries[i].w.startsWith(prefix); i++) res.push(wsEntries[i]);
+        res.sort((a, b) => a.lvl - b.lvl || a.w.length - b.w.length || (a.w < b.w ? -1 : 1));
+        return { items: res.slice(0, limit), total: res.length };
+    }
+    function wsBox() {
+        let b = we$('#weSuggest');
+        if (!b) { let host = we$('.we-edit__en'); if (!host) return null; b = weEl('div', 'we-suggest'); b.id = 'weSuggest'; b.setAttribute('role', 'listbox'); b.hidden = true; host.appendChild(b); }
+        return b;
+    }
+    function wsClose() { let b = we$('#weSuggest'); if (b) { b.hidden = true; b.textContent = ''; } wsItems = []; wsActive = -1; }
+    function wsRender() {
+        let input = we$('#weDraftEn'), box = wsBox();
+        if (!input || !box) return;
+        let p = input.value.trim().toLowerCase();
+        if (!wsEntries || !/^[a-z]{2,}$/.test(p) || getListLang(wordLists[lastSelectedList]) === 'ko') { wsClose(); return; }   // 打 2 個字母以上才列（片語、有空格就不列）
+        let r = wsSearch(p, 6);
+        wsItems = r.items.filter(it => it.w !== p || r.items.length > 1); wsActive = -1;
+        box.textContent = '';
+        if (!wsItems.length) { wsClose(); return; }
+        wsItems.forEach((it, i) => {
+            let row = weEl('div', 'we-suggest__row'); row.setAttribute('role', 'option');
+            let w = weEl('button', 'we-suggest__w'); w.type = 'button';
+            w.append(weEl('b', '', it.w.slice(0, p.length)), document.createTextNode(it.w.slice(p.length)));
+            w.addEventListener('mousedown', (e) => e.preventDefault());           // 不讓輸入框失去焦點（點了才不會先關掉）
+            w.addEventListener('click', () => wsPick(i));
+            let a = weEl('a', 'we-suggest__dict', '查字典 ↗');
+            a.href = 'https://dictionary.cambridge.org/dictionary/english/' + encodeURIComponent(it.w);
+            a.target = '_blank'; a.rel = 'noopener';
+            a.setAttribute('aria-label', '在劍橋字典查 ' + it.w);
+            a.addEventListener('mousedown', (e) => e.preventDefault());
+            row.append(w, a); box.appendChild(row);
+        });
+        if (r.total > wsItems.length) box.appendChild(weEl('div', 'we-suggest__more', '還有 ' + (r.total - wsItems.length) + ' 個符合的單字'));
+        box.hidden = false;
+    }
+    function wsPick(i) {
+        let it = wsItems[i], input = we$('#weDraftEn'); if (!it || !input) return;
+        input.value = it.w; weDraft.en = it.w; weCheckDraft(); wsClose();
+        let z = document.querySelector('#weDraftMeans .we-input'); if (z) z.focus();
+    }
+    function wsKey(e) {
+        let box = we$('#weSuggest');
+        if (!box || box.hidden || !wsItems.length) return false;
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            wsActive = e.key === 'ArrowDown' ? (wsActive + 1) % wsItems.length : (wsActive - 1 + wsItems.length) % wsItems.length;
+            box.querySelectorAll('.we-suggest__row').forEach((r, i) => r.classList.toggle('is-active', i === wsActive));
+            return true;
+        }
+        if (e.key === 'Enter' && wsActive >= 0 && !e.isComposing) { e.preventDefault(); wsPick(wsActive); return true; }
+        if (e.key === 'Escape') { wsClose(); return true; }
+        return false;
+    }
     // ---- 綁定事件（畫面元素是固定的，綁一次就好）----
     (function weBind() {
         let on = (sel, ev, fn) => { let n = we$(sel); if (n) n.addEventListener(ev, fn); };
@@ -2967,8 +3073,13 @@
         on('#weSaveBtn', 'click', () => weSave(false));
         on('#weToAdd', 'click', weOpenAdd);
         on('#weToPaste', 'click', weOpenPaste);
-        on('#weDraftEn', 'input', (e) => { weDraft.en = e.target.value; weCheckDraft(); });
-        on('#weDraftEn', 'keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); let z = document.querySelector('#weDraftMeans .we-input'); if (z) z.focus(); } });
+        on('#weDraftEn', 'input', (e) => { weDraft.en = e.target.value; weCheckDraft(); wsRender(); });
+        on('#weDraftEn', 'keydown', (e) => {
+            if (wsKey(e)) return;                                  // r22：自動完成的上下鍵／Enter／Esc
+            if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); let z = document.querySelector('#weDraftMeans .we-input'); if (z) z.focus(); }
+        });
+        on('#weDraftEn', 'focus', () => { wsLoad(); wsRender(); });
+        on('#weDraftEn', 'blur', () => setTimeout(() => { if (document.activeElement !== we$('#weDraftEn')) wsClose(); }, 200));
         on('#weDraftStar', 'click', () => { weDraft.star = !weDraft.star; weRenderDraft(); });
         on('#weAddMean', 'click', () => { weDraft.means.push({ zh: '', pos: [] }); weRenderDraft(); let ins = document.querySelectorAll('#weDraftMeans .we-input'); ins[ins.length - 1].focus(); });
         on('#weAddConfirm', 'click', weConfirmDraft);
@@ -3809,7 +3920,7 @@
         let ans = `${currentItem.senseText || currentItem.chinese || ''}${correctPosArr.length ? `（${correctPosArr.join('、')}）` : ''}`;
         qzStatus('cardExamStatus', isCorrect ? '✓ 答對了' : `✗ ${escapeHTML(ans)}`, isCorrect ? 'is-ok' : 'is-bad');
         currentCardExamIndex++;
-        setTimeout(() => { if (document.getElementById('cardExamPlayView').classList.contains('active')) playCurrentCardExamQuestion(); }, 1000);
+        setTimeout(() => { if (document.getElementById('cardExamPlayView').classList.contains('active')) playCurrentCardExamQuestion(); }, 1000 + (isCorrect ? 0 : EXAM_WRONG_EXTRA));   // r22：答錯多停 3 秒看答案
     }
 
     function handleCardExamKeyDown(e) {
@@ -3836,6 +3947,7 @@
         // 觸發字卡測驗雞塊任務檢查
         triggerTaskCheck('card_exam_done', { total, score });
 
+        histTutQueue('card');
         let newRecord = { date: new Date().toLocaleString(), range: currentCardExamRanges || '預設範圍', total, score, results: cardExamResults, lang: getLearningLanguage() };
         cardExamHistory.unshift(newRecord);
         cardExamHistory = trimHistoryPerLang(cardExamHistory);
@@ -5461,6 +5573,25 @@
         setTimeout(startAnswerTimer, 6000 * repeatCount);
     }
 
+    const EXAM_WRONG_EXTRA = 3000;     // r22：聽力／字卡測驗答錯時，多停幾毫秒讓玩家看正確答案
+    // r22：第一次做完聽力或字卡測驗 → 關掉成績視窗後，帶去「測驗紀錄」看錯的單字、把錯的字存到同一本題庫
+    const HIST_TUT_KEY = 'chicky_hist_tut';
+    let histTutPending = '';
+    function histTutQueue(type) { try { if (!localStorage.getItem(HIST_TUT_KEY)) histTutPending = type; } catch (e) {} }
+    function histTutOffer() {
+        let type = histTutPending; histTutPending = '';
+        if (!type) return;
+        try { localStorage.setItem(HIST_TUT_KEY, '1'); } catch (e) {}
+        setTimeout(() => tutCoach(null, '考錯的單字不用自己記！\n「測驗紀錄」可以看每一次考錯了哪些字，\n還能把常錯的單字一起存到同一本題庫，之後專心複習。', { btn: '帶我去看', onBtn: () => {
+            tutCoachClear();
+            hist.type = type === 'card' ? 'card' : 'listening';
+            openHistoryModal();
+            setTimeout(() => {
+                let sel = document.querySelector('#histBody .hs-link') ? '#histBody .hs-link' : '#histBody .hs-sec';
+                tutCoach(sel, document.querySelector('#histBody .hs-link') ? '這裡是「常錯單字」\n按「存到題庫」，把錯的字歸類到同一本題庫' : '考錯的單字會整理在「常錯單字」\n之後可以一起存到題庫複習', { btn: '知道了' });
+            }, 400);
+        } }), 250);
+    }
     function submitExamAnswer() {
         if (!isExamRunning || examLocked) return;
         examLocked = true;
@@ -5497,7 +5628,7 @@
         currentWordIndex++;
         let pauseSec = parseInt(document.getElementById('examPauseTime').value);
         if (isNaN(pauseSec)) pauseSec = 1;
-        setTimeout(() => { if (isExamRunning) playExamQuestion(); }, Math.max(1000, pauseSec * 1000));
+        setTimeout(() => { if (isExamRunning) playExamQuestion(); }, Math.max(1000, pauseSec * 1000) + (isCorrect ? 0 : EXAM_WRONG_EXTRA));   // r22：答錯多停 3 秒看答案
     }
 
     // 清掉上一次（或中途離開時）留在輸入框的字
@@ -5609,6 +5740,7 @@
         // 觸發聽力測驗雞塊任務檢查
         triggerTaskCheck('listening_exam_done', { total, score });
 
+        histTutQueue('listening');
         let newRecord = { date: new Date().toLocaleString(), range: currentExamRanges, total, score, results: examResults, lang: getLearningLanguage() };
         examHistory.unshift(newRecord);
         examHistory = trimHistoryPerLang(examHistory);
@@ -5819,7 +5951,7 @@
     function closeAdvancedModal() { document.getElementById('advancedModal').style.display = 'none'; }
     function openExamAdvancedModal() { document.getElementById('examAdvancedModal').style.display = 'block'; }
     function closeExamAdvancedModal() { document.getElementById('examAdvancedModal').style.display = 'none'; }
-    function closeExamResultModal() { document.getElementById('examResultModal').style.display = 'none'; }
+    function closeExamResultModal() { document.getElementById('examResultModal').style.display = 'none'; histTutOffer(); }
 
     function switchHistoryTab(tabName) {
         const tabs = {
@@ -6518,6 +6650,7 @@
                 b1: has('b1') ? o.b1 : !!c['1'], next: has('next') ? o.next : !!c['1'], alloc: has('alloc') ? o.alloc : !!(o.bag),
                 sodaBuy: has('sodaBuy') ? o.sodaBuy : !!(items.soda || c['3']), tgStart: has('tgStart') ? o.tgStart : !!sn.tgGo,
                 combo: has('combo') ? o.combo : !!sn.tgGo, trainGift: has('trainGift') ? o.trainGift : !!sn.tgGo, dexIntro: has('dexIntro') ? o.dexIntro : !!sn.dex,
+                potion: has('potion') ? o.potion : false,      // r22：第一次體力歸 0 → 帶去背包喝藥水（舊玩家也會在下次體力歸 0 時看到一次）
                 // r19：新地圖解鎖導引：chNew＝正在導引的章節 id（0＝沒有）；chDone＝已經導引過的章節
                 chNew: Number.isInteger(o.chNew) ? o.chNew : 0, chDone: Array.isArray(o.chDone) ? o.chDone.filter(Number.isInteger) : []
             };
@@ -9079,6 +9212,26 @@
             <div class="adv-bag-grid${inl ? ' adv-bag-grid--6' : ''}">${cells.join('')}</div>
             <div class="adv-bag-info">${advBagInfoHTML(defs, inl)}</div>`;
         advBagTut();
+        advPotTutStep();
+    }
+    // r22 新手導引：第一次體力歸 0（戰敗）→ 帶玩家到背包喝小型恢復藥水（點藥水 → 按「使用」）
+    let advPotTut = false;
+    function advPotTutOffer() {
+        if (adv.training || advTut().potion || advData.hp > 0 || (advData.potions || 0) < 1) return;
+        advTutSet('potion');                      // 只主動帶一次（中途離開就算了，背包分頁一直都在）
+        setTimeout(() => {
+            tutCoach(null, '雞塊沒有體力了！\n背包裡有「小型恢復藥水」，喝了馬上恢復體力，就能繼續挑戰。', { btn: '帶我去喝', onBtn: () => { tutCoachClear(); advPotTut = true; goToAdvStats('bag', ''); } });
+        }, 900);
+    }
+    function advPotTutStep() {
+        if (!advPotTut) return;
+        setTimeout(() => {
+            if (!advPotTut) return;
+            let sv = document.getElementById('advStatsView');
+            if (!sv || !sv.classList.contains('active') || advStatsTab !== 'bag' || (advData.potions || 0) < 1) { advPotTut = false; tutCoachClear(); return; }
+            if (advBagSel !== 'potion') tutCoach(`#advBagInline .adv-bag-cell[data-on-click*='"potion"']`, '點「小型恢復藥水」');
+            else tutCoach('#advBagInline .adv-bag-info .adv-plain-btn.main', '按「使用」喝下去！');
+        }, 250);
     }
     // r17 新手導引：裝備欄的視窗裡 → 先點塑膠袋 → 再按「裝備」
     function advBagTut() {
@@ -9202,8 +9355,10 @@
         advData.potions -= 1;
         advData.hp = Math.min(max, advData.hp + ADV_POTION_HEAL);
         advSave();
+        let wasTut = advPotTut; advPotTut = false;
         advCloseBag();
         advRenderStatsPage();
+        if (wasTut) setTimeout(() => tutCoach(null, `體力恢復到 ${advData.hp} 了！\n回到關卡就能繼續挑戰。\n之後體力不夠時，也可以來背包喝藥水。`, { btn: '知道了' }), 350);   // r22
     }
     function advMoreLabel(owned, eqKeys) {
         let rest = owned.slice(ADV_MOVES_SHOWN), eqIn = rest.filter(m => eqKeys.includes(m.key)).length;
@@ -9451,11 +9606,30 @@
     // 冒險題庫的出題順序
     //   一般關卡：這關的新字考一輪 → 2 題舊字（有答錯過的先考，沒有就考答對過的）→ 再一輪新字…
     //   複習關：前 2 題先考答錯過的字，之後隨機
+    //   r22：玩家有自己的自訂題庫（有字）→ 每一輪最後再加 1 題「自己的單字」（這場不重複，全部出過才重來）
+    //     一般關卡：新字一輪 → 2 題舊字 → 1 題自己的單字 → 再一輪…
+    //     複習關：2 題答錯過的字 → 1 題自己的單字 → 之後隨機
+    function advMinePool() {                  // 自訂題庫（不含精選單字庫）裡、目前學習語言的字，同一個英文只留一個
+        let seen = new Set(), out = [];
+        try {
+            wordLists.forEach(l => {
+                if (!l || isPackList(l) || !isListInCurrentLang(l) || !l.content) return;
+                parseWordsRaw(l.content).forEach(w => { let k = advWordKey(w); if (k && !seen.has(k)) { seen.add(k); out.push(Object.assign({}, w, { _mine: true })); } });
+            });
+        } catch (e) {}
+        return out;
+    }
+    function advPlanMine(P) {
+        if (!P.mine || !P.mine.length) return [];
+        if (!P.mineLeft || !P.mineLeft.length) P.mineLeft = advShuffle(P.mine.slice());
+        let k = P.mineLeft.findIndex(w => !!w.chinese);           // 有中文的優先（字卡題也能用）
+        return P.mineLeft.splice(k === -1 ? 0 : k, 1);
+    }
     function advPlanRefill() {
         let P = adv.plan;
         let wrongFirst = list => advShuffle(list.slice()).sort((x, y) => advWrongOf(y.english) - advWrongOf(x.english));
         if (P.review) {
-            if (!P.started) { P.started = true; P.queue = wrongFirst(P.fresh.filter(w => advWrongOf(w.english) > 0)).slice(0, 2); }
+            if (!P.started) { P.started = true; P.queue = wrongFirst(P.fresh.filter(w => advWrongOf(w.english) > 0)).slice(0, 2).concat(advPlanMine(P)); }
             return;              // 之後交給一般的隨機出題
         }
         P.queue = advShuffle(P.fresh.slice());
@@ -9465,15 +9639,17 @@
             if (pick.length < 2) pick = pick.concat(advShuffle(P.old.filter(w => !pick.includes(w))).slice(0, 2 - pick.length));   // 答錯過的不夠 2 個：用答對過的補
             P.queue = P.queue.concat(pick);
         }
+        P.queue = P.queue.concat(advPlanMine(P));
     }
     function advNextWord(kind) {
         let filt = kind === 'cn' ? (w => !!w.chinese) : (() => true);
         if (adv.plan) {
             if (!adv.plan.queue.length) advPlanRefill();
             let k = adv.plan.queue.findIndex(filt);
-            if (k !== -1) { let w = adv.plan.queue.splice(k, 1)[0]; if (!adv.seen) adv.seen = new Set(); adv.seen.add(advWordKey(w)); return w; }
-            if (!adv.plan.review) { adv.plan.queue = []; advPlanRefill(); k = adv.plan.queue.findIndex(filt); if (k !== -1) return adv.plan.queue.splice(k, 1)[0]; }
+            if (k !== -1) { let w = adv.plan.queue.splice(k, 1)[0]; if (!adv.seen) adv.seen = new Set(); adv.seen.add(advWordKey(w)); adv.curMine = !!w._mine; if (w._mine) psCount('advMineQ'); return w; }
+            if (!adv.plan.review) { adv.plan.queue = []; advPlanRefill(); k = adv.plan.queue.findIndex(filt); if (k !== -1) { let w = adv.plan.queue.splice(k, 1)[0]; adv.curMine = !!w._mine; return w; } }
         }
+        adv.curMine = false;
         let pool = adv.words.filter(filt);
         if (!adv.seen) adv.seen = new Set();
         let fresh = pool.filter(w => !adv.seen.has(advWordKey(w)));
@@ -9693,7 +9869,7 @@
             if ((adv.moves || []).some(m => m.mode === 'speed') || ringOpen) {
                 let keep = pn.innerHTML, cell = '<button type="button" class="spd-cell">word</button>';
                 let title = ringOpen ? `<b>🎯 天女散花！快配對躲開</b><small>已配對 0 / ${ADV_RING_NEED} 組・沒配完每少 1 組扣 1 點 HP</small>` : '<b>⚡ 速答配對</b><small>已配對 0 組</small>';
-                pn.innerHTML = `<div class="spd-head"><div class="spd-title">${title}</div><div class="spd-timer"></div></div><div class="spd-grid">${cell.repeat(4)}</div><div class="spd-sep"></div><div class="spd-grid">${cell.repeat(4)}</div>`;
+                pn.innerHTML = `<div class="spd-head"><div class="spd-title">${title}</div><div class="spd-timer"></div></div><div class="spd-hint">配好全部才會對答案・點一下可以取消</div><div class="spd-grid spd-pairs">${cell.repeat(8)}</div>`;   // r22：英文左、中文右
                 adv.btMenuH = Math.max(adv.btMenuH, pn.offsetHeight + 24);   // +24：中文比較長會換行
                 pn.innerHTML = keep;
             }
@@ -9827,6 +10003,16 @@
         advAbort();
         advSyncDaily();
         psCount('advPlay');
+        // r22：玩家用什麼題目打（advSrcAuto 跟著關卡的冒險題庫／advSrcPick 自己勾題庫；勾的裡面有自訂題庫 advSrcMine、有精選單字庫 advSrcPack）
+        try {
+            if (autoMode) psCount('advSrcAuto');
+            else {
+                psCount('advSrcPick');
+                let sel = advSelected.map(i => wordLists[i]).filter(l => l && isListInCurrentLang(l));
+                if (sel.some(l => !isPackList(l))) psCount('advSrcMine');
+                if (sel.some(l => isPackList(l))) psCount('advSrcPack');
+            }
+        } catch (e) {}
         adv.tutStep = (lv.id === 1 && !advTut().b1) ? 1 : 0;      // r17：第一場戰鬥的新手導引（1 選衝撞 → 2 作答 → 3 選斬擊 → 4 作答 → 結束）
         adv.tutPause = false; adv.tutLeft = null; adv.tutCombo = false;
         if (advData.hp <= 0) { advNoHpOpen(lv.id); return; }   // 沒有體力：跳出「體力不足」視窗（可以喝恢復藥水）
@@ -9838,7 +10024,8 @@
         adv.seen = new Set();          // 這場戰鬥已經出現過的單字
         adv.wrongThis = [];            // 這場戰鬥答錯的字
         adv.stOk = 0; adv.stAll = 0;   // 這場戰鬥答對的題數／作答題數
-        adv.plan = autoMode ? { review: advIsReview(lv.id), fresh: advAutoWords(lv), old: advIsReview(lv.id) ? [] : advOldWords(lv), queue: [], started: false } : null;
+        adv.plan = autoMode ? { review: advIsReview(lv.id), fresh: advAutoWords(lv), old: advIsReview(lv.id) ? [] : advOldWords(lv), queue: [], started: false, mine: advMinePool() } : null;
+        adv.curMine = false;
         // 戰鬥狀態由 battle-core.js 建立（雞塊能力、裝備效果、敵人資料都在那裡）
         let eqMoves = advEquipped(), mast = {};
         eqMoves.forEach(m => { mast[m.key] = advMastery(m.key); });
@@ -10266,12 +10453,12 @@
             <div class="cr-enemy"><span class="cr-enemy__art">${advDummySVG(r.d.key, BattleCore.dummyStage(r.d.hp - r.dmg, r.d.hp))}</span></div>
             <p class="cr-hero__sub">${escapeHTML(r.d.name)}・${r.full ? `第 ${r.round} 回合打完` : `${BattleCore.TRAIN_ROUNDS} 回合`}</p></div>`;
         let stats = `<div class="cr-stats">
-            <div class="cr-stat cr-stat--score"><span class="cr-stat__label">總傷害</span><span class="cr-num tg-dmg">${r.dmg} <small>/ ${r.d.hp}</small></span></div>
-            <div class="cr-stat cr-stat--score"><span class="cr-stat__label">答對・最多連對</span><span class="cr-num">${ok} <small>/ ${all}</small>・${adv.comboMax || 0}</span></div></div>`;
+            <div class="cr-stat cr-stat--score"><span class="cr-stat__label">總傷害</span><span class="cr-num tg-dmg">${r.dmg}</span></div>
+            <div class="cr-stat cr-stat--score"><span class="cr-stat__label">連對</span><span class="cr-num">${adv.comboMax || 0} <small>次</small></span></div></div>`;   // r22：只留重點（不顯示滿分、答對幾題）
         let shardN = ((r.reward && r.reward.shards) || 0) + ((r.gift && r.gift.shards) || 0);
         let its = (r.xp ? `<span class="cr-item"><span class="xp-ico">XP</span><b>+${r.xp}</b></span>` : '') + (shardN ? `<span class="cr-item">${advShardIcon(26)}<b>×${shardN}</b></span>` : '');
         let mid = `<div class="cr-reward tg-reward"><div class="cr-reward__head"><span class="cr-reward__label">${r.gift ? '獲得獎勵（含第一次訓練獎勵）' : r.reward && r.reward.shards ? `獲得獎勵（含第一次打到 ${r.d.hp}）` : '獲得獎勵'}</span>${r.lvUp ? '<span class="cr-tag cr-tag--today">升級了！</span>' : ''}</div>
-            <div class="cr-reward__items">${its || `<span class="cr-none">${r.xpCapped ? '今日無法再獲得經驗（每天 3 次）' : '沒有經驗值'}</span>`}</div>${r.xpCapped && its ? '<p class="tg-xpcap">今日無法再獲得經驗（每天 3 次）</p>' : (r.xp && !r.xpCapped ? `<p class="tg-xpcap is-info">今天還能拿 ${tgXpLeft()} 次訓練經驗</p>` : '')}</div>`;   // r16：字太多 → 拿掉經驗值門檻和最佳紀錄（新紀錄有緞帶）
+            <div class="cr-reward__items">${its || `<span class="cr-none">${r.xpCapped ? '今日無法再獲得經驗（每天 3 次）' : '沒有經驗值'}</span>`}</div>${r.xpCapped && its ? '<p class="tg-xpcap">今日無法再獲得經驗（每天 3 次）</p>' : ''}</div>`;   // r22：拿掉「今天還能拿 N 次」   // r16：字太多 → 拿掉經驗值門檻和最佳紀錄（新紀錄有緞帶）
         let btns = `<button type="button" class="cr-btn cr-btn--secondary" data-on-click='[["tgBack",[]]]'>回訓練場</button>
             <button type="button" class="cr-btn cr-btn--primary" data-on-click='[["tgAgain",[]]]'>再練一次</button>`;
         el.innerHTML = `<section class="cr-screen" data-state="${r.full ? 'first' : 'replay'}" aria-label="訓練結算"><div class="cr-card">
@@ -10720,7 +10907,7 @@
         else advAskSpeak();
         advMountTimer();
     }
-    function advProgText() { let m = adv.move; return m.q > 1 ? `（第 ${adv.progress + 1}/${m.q} 題）` : ''; }
+    function advProgText() { let m = adv.move; return (m.q > 1 ? `（第 ${adv.progress + 1}/${m.q} 題）` : '') + (adv.curMine ? '<span class="adv-mine-tag">你的單字</span>' : ''); }   // r22：自訂題庫的字加個小標籤
     // 這一題答對了：還有下一題就繼續，題目答完就發動招式
     // 命中：每一題記一次（答對 1／答錯或時間到 0），各類與全部都只留最近 20 題
     function advRecordHit(ok) {
@@ -10813,6 +11000,14 @@
         sp.en = advShuffle(pick.map((w, i) => i));
         sp.cn = advShuffle(pick.map((w, i) => i));
         sp.done = new Set(); sp.selEn = null; sp.selCn = null; sp.bad = null;
+        sp.link = {}; sp.pend = null; sp.checking = false; sp.badPairs = null;     // r22：link＝{ 英文 i: { cn, color } }；pend＝點了一邊、還沒配另一邊
+    }
+    const SPD_COLORS = 4;                      // 配對的顏色（藍／紫／青／橘，不用紅色：紅色留給「配錯」）
+    function advSpdFreeColor(sp) { let used = new Set(Object.values(sp.link).map(x => x.color)); for (let c = 0; c < SPD_COLORS; c++) if (!used.has(c)) return c; return 0; }
+    function advSpdLinkOf(sp, side, i) {       // 這一格在哪一組配對裡：回傳英文那一格的 i（沒有就 null）
+        if (side === 'en') return sp.link[i] ? i : null;
+        for (let k in sp.link) if (sp.link[k].cn === i) return +k;
+        return null;
     }
     // 冥想動畫：答題時雞塊頭上冒出白白的雲朵，答完出現燈泡
     const ADV_CLOUD_SVG = '<svg viewBox="0 0 64 44" aria-hidden="true"><path d="M14 36 Q4 36 4 27.5 Q4 19 13 19.5 Q14 8 26 9 Q32 1 42 6 Q52 4 54 15 Q62 17 61 26 Q61 36 50 36 Z" fill="#fff" stroke="#CBD5E1" stroke-width="2.2" stroke-linejoin="round"/><circle cx="24" cy="24" r="2.4" fill="#A78BFA"/><circle cx="33" cy="24" r="2.4" fill="#A78BFA"/><circle cx="42" cy="24" r="2.4" fill="#A78BFA"/></svg>';
@@ -10863,15 +11058,20 @@
     }
     function advSpeedRender() {
         let sp = advSp, m = sp.m;
+        // r22：英文在左、中文在右；點一下選取（同色），再點一下取消；全部配好才對答案（配錯的才變紅色）
         let cell = (side, slot) => {
             let i = (side === 'en' ? sp.en : sp.cn)[slot], w = sp.round[i];
             if (!w) return '<div class="spd-cell gone"></div>';
             if (sp.done.has(i)) return '<div class="spd-cell gone"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>';
-            let sel = side === 'en' ? sp.selEn === i : sp.selCn === i;
-            let bad = sp.bad && sp.bad[side] === i;
+            let k = advSpdLinkOf(sp, side, i), color = k !== null ? sp.link[k].color : null;
+            let pend = sp.pend && sp.pend.side === side && sp.pend.i === i;
+            let bad = sp.badPairs && sp.badPairs.some(b => (side === 'en' ? b.en : b.cn) === i);
+            let ok = sp.okPairs && sp.okPairs.some(b => (side === 'en' ? b.en : b.cn) === i);
+            let cls = bad ? ' bad' : ok ? ' ok' : color !== null ? ' p' + color : pend ? ' pend p' + advSpdFreeColor(sp) : '';
             let txt = side === 'en' ? w.english : advSpeedShort(w);
-            return `<button type="button" class="spd-cell${side === 'en' ? ' en' : ' cn'}${sel ? ' sel' : ''}${bad ? ' bad' : ''}" data-on-click='[["advSpeedTap",["${side}",${i}]]]'>${escapeHTML(txt)}${bad && side === 'cn' ? `<span class="spd-pen">配錯 −${sp.c.pen} 秒</span>` : ''}</button>`;
+            return `<button type="button" class="spd-cell${side === 'en' ? ' en' : ' cn'}${cls}" aria-pressed="${color !== null || pend ? 'true' : 'false'}" data-on-click='[["advSpeedTap",["${side}",${i}]]]'>${escapeHTML(txt)}${bad && side === 'cn' ? `<span class="spd-pen">配錯 −${sp.c.pen} 秒</span>` : ''}</button>`;
         };
+        let showHint = !sp.pairs && !sp.wrong;
         let left = Math.max(0, sp.endAt - Date.now());
         document.getElementById('advPanel').innerHTML = `
             <div class="spd-head">
@@ -10880,33 +11080,47 @@
                     : `<b>${m.icon} ${m.name}・速答配對</b><small>已配對 <b id="spdPairs">${sp.pairs}</b> 組・${sp.c.label} <b class="hot">+${advSpeedBonus(sp)}</b></small>`}</div>
                 <div class="spd-timer"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" fill="none" stroke="#E0E7FF" stroke-width="4"/><circle id="spdRing" cx="22" cy="22" r="20" fill="none" stroke="#4F46E5" stroke-width="4" stroke-linecap="round" stroke-dasharray="125.66" style="stroke-dashoffset:${(125.66 * (1 - left / (sp.total * 1000))).toFixed(2)}" transform="rotate(-90 22 22)"/></svg><b id="spdTime">${Math.ceil(left / 1000)}</b></div>
             </div>
-            <div class="spd-grid">${[0, 1, 2, 3].map(k => cell('en', k)).join('')}</div>
-            <div class="spd-sep"></div>
-            <div class="spd-grid">${[0, 1, 2, 3].map(k => cell('cn', k)).join('')}</div>`;
+            <div class="spd-hint"${showHint ? '' : ' style="visibility:hidden"'}>配好全部才會對答案・點一下可以取消</div>
+            <div class="spd-grid spd-pairs">${[0, 1, 2, 3].map(k => cell('en', k) + cell('cn', k)).join('')}</div>`;
     }
     function advSpeedTap(side, i) {
         let sp = advSp;
-        if (!sp || sp.over || !adv.active || sp.id !== adv.runId || sp.done.has(i)) return;
-        sp.bad = null;
-        if (side === 'en') sp.selEn = sp.selEn === i ? null : i; else sp.selCn = sp.selCn === i ? null : i;
-        if (sp.selEn !== null && sp.selCn !== null) {
-            let a = sp.selEn, b = sp.selCn;
-            if (a === b) {
-                sp.done.add(a); sp.pairs++;
-                advRecordHit(true);
-            } else {
-                sp.wrong++;
-                sp.endAt -= sp.c.pen * 1000;
-                sp.bad = { en: a, cn: b };
-                advRecordHit(false);
-                advNoteWrong(sp.round[a]);
-            }
-            sp.selEn = null; sp.selCn = null;
-            if (sp.ring && sp.pairs >= ADV_RING_NEED) { advSpeedRender(); advSpeedEnd(); return; }
-            if (sp.done.size >= sp.round.length) { advSpeedRound(); }
+        if (!sp || sp.over || sp.checking || !adv.active || sp.id !== adv.runId || sp.done.has(i)) return;
+        let k = advSpdLinkOf(sp, side, i);
+        if (k !== null) { delete sp.link[k]; advSpeedRender(); return; }          // 已經配好的：再點一下取消這一組
+        if (!sp.pend) sp.pend = { side, i };
+        else if (sp.pend.side === side) sp.pend = sp.pend.i === i ? null : { side, i };   // 同一邊：換選另一格（點同一格＝取消）
+        else {
+            let en = side === 'en' ? i : sp.pend.i, cn = side === 'cn' ? i : sp.pend.i;
+            sp.link[en] = { cn, color: advSpdFreeColor(sp) };
+            sp.pend = null;
+            let left = sp.round.map((w, x) => x).filter(x => !sp.done.has(x));
+            if (left.every(x => sp.link[x])) { advSpeedCheck(); return; }        // 全部配好了：對答案
         }
         advSpeedRender();
+    }
+    // r22：對答案：配對的那幾組一起看；對的打勾消失，錯的變紅色、每組扣秒數，之後解開讓玩家重配
+    function advSpeedCheck() {
+        let sp = advSp;
+        sp.checking = true;
+        sp.okPairs = []; sp.badPairs = [];
+        Object.keys(sp.link).forEach(k => {
+            let en = +k, cn = sp.link[k].cn;
+            if (en === cn) { sp.okPairs.push({ en, cn }); sp.pairs++; advRecordHit(true); }
+            else { sp.badPairs.push({ en, cn }); sp.wrong++; sp.endAt -= sp.c.pen * 1000; advRecordHit(false); advNoteWrong(sp.round[en]); }
+        });
+        advSpeedRender();
         advSpeedTick();
+        const id = sp.id;
+        setTimeout(() => {
+            if (advSp !== sp || sp.over || id !== adv.runId) return;
+            sp.okPairs.forEach(b => sp.done.add(b.en));
+            sp.okPairs = null; sp.badPairs = null; sp.link = {}; sp.pend = null; sp.checking = false;
+            if (sp.ring && sp.pairs >= ADV_RING_NEED) { advSpeedRender(); advSpeedEnd(); return; }
+            if (sp.done.size >= sp.round.length) advSpeedRound();
+            advSpeedRender();
+            advSpeedTick();
+        }, sp.badPairs.length ? 900 : 450);
     }
     async function advSpeedEnd() {
         let sp = advSp;
@@ -10985,7 +11199,8 @@
         advBeginRound();
     }
     // 4 個小套圈圈從套圈圈飛到雞塊身上
-    async function advRingThrow(n) {
+    //   dodge＝true（r22：全部配對成功）：雞塊往後跳開，小套圈圈落空、掉在雞塊原本站的地方後淡出
+    async function advRingThrow(n, dodge) {
         const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
         if (!P || !E || !P.offsetParent) return;
         let host = P.offsetParent;
@@ -11001,13 +11216,25 @@
             r.style.top = (ey - size / 2) + 'px';
             host.appendChild(r);
             let tx = px - ex + (k - (n - 1) / 2) * size * 0.35, ty = py - ey - k * size * 0.18;
-            let a = r.animate([
+            let kf = [
                 { transform: 'translate(0,0) rotate(0deg) scale(.6)', opacity: 0 },
                 { transform: `translate(${tx * 0.5}px, ${ty * 0.5 - size * 1.6}px) rotate(200deg) scale(1)`, opacity: 1, offset: 0.5 },
                 { transform: `translate(${tx}px, ${ty}px) rotate(400deg) scale(.9)`, opacity: 1 }
-            ], { duration: 650, delay: k * 140, easing: 'ease-in', fill: 'forwards' });
+            ];
+            if (dodge) kf = kf.concat([{ transform: `translate(${tx}px, ${ty + P.offsetHeight * 0.32}px) rotate(430deg) scale(.85)`, opacity: 0 }]).map((f, i, all) => Object.assign({}, f, i === 1 ? { offset: 0.35 } : i === 2 ? { offset: 0.7 } : {}));   // 落空：掉到地上後淡出
+            let a = r.animate(kf, { duration: dodge ? 900 : 650, delay: k * 140, easing: 'ease-in', fill: 'forwards' });
             anims.push(a.finished.catch(() => {}));
-            setTimeout(() => r.remove(), 650 + k * 140 + 700);
+            setTimeout(() => r.remove(), (dodge ? 900 : 650) + k * 140 + 700);
+        }
+        if (dodge) {                               // 圈圈快到的時候往後跳開，全部落空後再跳回原位
+            let away = -Math.max(26, P.offsetWidth * 0.4);
+            anims.push(P.animate([
+                { transform: 'translate(0,0)' },
+                { transform: `translate(${away * 0.5}px,-${P.offsetHeight * 0.35}px)`, offset: 0.12 },
+                { transform: `translate(${away}px,0)`, offset: 0.24 },
+                { transform: `translate(${away}px,0)`, offset: 0.82 },
+                { transform: 'translate(0,0)' }
+            ], { duration: 900 + (n - 1) * 140 + 400, delay: 200, easing: 'ease-out' }).finished.catch(() => {}));
         }
         await Promise.all(anims);
     }
@@ -11595,9 +11822,11 @@
                 await advWait(500);
                 return false;
             case 'ringDodge':
+                advPanelLog(`✨ 配對了 ${ev.pairs} 組！套圈圈丟出 4 個小套圈圈…`);
+                await advRingThrow(4, true);              // r22：全部配對也照樣丟出來，雞塊閃開
                 advPanelLog(`✨ 配對了 ${ev.pairs} 組，全部躲開了！`);
                 advFloat(P, '躲開了！', '#10B981');
-                await advWait(1100);
+                await advWait(900);
                 return false;
             case 'ringThrow':
                 advPanelLog(`🎯 只配對了 ${ev.pairs} 組…套圈圈丟出 4 個小套圈圈！`);
@@ -12281,6 +12510,7 @@
         // 第 19、20 關的戰敗提示拿掉了：改看敵人圖鑑的攻略
         if (tip) loseNotes.push('背包裡的小型恢復藥水可以恢復體力喔！');
         advShowResult({ state: 'lose', lv: adv.level, notes: loseNotes });
+        advPotTutOffer();                         // r22：第一次體力歸 0 → 帶去背包喝藥水
     }
 
     // ═════════════════════════════════════════════════════════════
