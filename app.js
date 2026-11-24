@@ -71,6 +71,17 @@
     const MAX_LISTS_DEFAULT = 10;
     
     const OB_FIRST_RUN = localStorage.getItem('dictation_word_lists') === null;   // 第一次打開 App（新手教學用）
+    // r24：玩家第一次是從哪個連結進來的（網址加 ?src=threads 這種）。只記第一次；記完把 src 從網址拿掉
+    //   沒有 src：新玩家記 direct（直接進入），更新前就在用的玩家記 old
+    const SRC_KEY = 'chicky_src';
+    (function srcCapture() {
+        try {
+            let u = new URL(location.href), raw = u.searchParams.get('src');
+            let v = raw ? raw.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 30) : '';
+            if (!localStorage.getItem(SRC_KEY)) localStorage.setItem(SRC_KEY, v || (OB_FIRST_RUN ? 'direct' : 'old'));
+            if (raw !== null) { u.searchParams.delete('src'); history.replaceState(history.state, '', u.pathname + (u.searchParams.toString() ? '?' + u.searchParams.toString() : '') + u.hash); }
+        } catch (e) {}
+    })();
     let wordLists = JSON.parse(localStorage.getItem('dictation_word_lists')) || [];
 
     if (wordLists.length === 0) {
@@ -988,6 +999,7 @@
                 callback: async (resp) => {
                     authBusyUntil = 0;
                     let wasAuto = autoReconnecting; autoReconnecting = false;
+                    if (gTryAt) { psCount(resp.error !== undefined || !resp.access_token ? 'g|fail|' + String(resp.error || 'no-token').slice(0, 24) : 'g|ok'); gTryAt = 0; }   // r24：玩家自己按登入的結果
                     if (resp.error !== undefined || !resp.access_token) {
                         if (wasAuto && accessToken) return;          // 換新失敗但舊權杖還能用：先不動
                         accessToken = null; isCloudSyncActive = false;
@@ -1008,6 +1020,7 @@
                     authBusyUntil = 0;
                     console.warn('Google 登入視窗錯誤:', err);
                     let t = err && err.type;
+                    if (gTryAt && !autoReconnecting) { psCount('g|fail|' + String(t || 'unknown').slice(0, 24)); gTryAt = 0; }   // r24：關掉登入視窗、彈出視窗被擋…
                     if (autoReconnecting) {                         // 自動重連被瀏覽器擋下：等使用者點一下畫面
                         autoReconnecting = false;
                         if (!accessToken) armReconnectOnNextClick();
@@ -1586,6 +1599,7 @@
             .then(ok => { if (ok) ttsOpenCheck(); }).catch(() => {});
     }
     // 統計回傳用的摘要（不含單字內容）
+    function ttsTop(arr) { let c = {}; arr.forEach(k => { k = String(k).slice(0, 60); if (k) c[k] = (c[k] || 0) + 1; }); let o = {}; Object.keys(c).sort((a, b) => c[b] - c[a]).slice(0, 3).forEach(k => o[k] = c[k]); return o; }
     function ttsSummary() {
         let real = ttsLog.filter(x => x.len > 1 && x.ev);
         let err = {};
@@ -1594,7 +1608,11 @@
         return {
             n: real.length, start: real.filter(x => x.ev.some(k => /^start/.test(k))).length,
             nostart: real.filter(x => x.ev.some(k => /^NO-START/.test(k))).length, stuck: real.filter(x => x.ev.some(k => k === 'STUCK')).length, err,
-            vc: vs.length, en: vs.filter(v => /^en/i.test(v.lang)).length, ios: IS_IOS ? 1 : 0
+            vc: vs.length, en: vs.filter(v => /^en/i.test(v.lang)).length, ios: IS_IOS ? 1 : 0,
+            // r24：用了哪個聲音（最多 3 個，各幾次）、手機預設的英文聲音（沒指定聲音時通常就是它）、App 會挑的聲音、語速
+            v: ttsTop(real.map(x => x.voice || '')), rate: ttsTop(real.map(x => String(x.rate))),
+            dv: (() => { let en = vs.filter(v => /^en/i.test(v.lang)); let d = en.find(v => v.default) || en.find(v => /^en[-_]us$/i.test(v.lang) && v.localService) || en[0]; return d ? ttsVoiceTag(d).slice(0, 60) : ''; })(),
+            pick: (() => { try { return ttsVoiceTag(getSelectedVoice('en-US')).slice(0, 60); } catch (e) { return ''; } })()
         };
     }
     // 產生 WAV 嗶聲（用 <audio> 播放，檢查「一般媒體聲音」有沒有被擋）
@@ -1828,8 +1846,10 @@
         if (Date.now() < authBusyUntil) return;
         authBusyUntil = Date.now() + 3000;
         if (env.isIOS && env.standalone) updateCloudStatusText('⚠️ 主畫面模式的 Google 登入可能失敗，建議改用 Safari 開啟');
+        psCount('g|try'); gTryAt = Date.now();          // r24：玩家自己按了登入
         tokenClient.requestAccessToken({ prompt: 'consent' });
     }
+    let gTryAt = 0;                                     // r24：玩家按了登入、還在等結果
     async function handleLogout() {
         // 登出前先把還沒上傳的大冒險進度送上雲端
         if (accessToken && advCloudReady && advDirty) { clearTimeout(advCloudTimer); try { await triggerAutoSaveToCloud(); } catch (e) {} }
@@ -2136,6 +2156,24 @@
     }
     function psHasData() { return Object.keys(ps.c).length || Object.keys(ps.win).length || Object.keys(ps.days).length || Object.keys(ps.t || {}).length || Object.keys(ps.lvx || {}).length || Object.keys(ps.ses || {}).length; }
     // 大冒險目前的狀態
+    // r24：題庫組成：英文／韓文幾本、空的、內容格式不對、認不得的精選單字庫代碼、最近每天建立幾本（找出「自訂題庫 27 本、0 字」的原因）
+    function psListMix() {
+        let o = { en: 0, ko: 0, empty: 0, bad: 0, pack: 0, unk: {}, made: {}, max: 0 };
+        try {
+            o.max = getMaxLists();
+            wordLists.forEach(l => {
+                if (!l) { o.bad++; return; }
+                if (l.pack && !WORD_PACKS[l.pack]) o.unk[String(l.pack).slice(0, 20)] = (o.unk[String(l.pack).slice(0, 20)] || 0) + 1;
+                if (isPackList(l)) { o.pack++; return; }
+                if (getListLang(l) === 'ko') o.ko++; else o.en++;
+                if (typeof l.content !== 'string') o.bad++;
+                else if (!getListWordCount(l.content)) o.empty++;
+                if (l.createdAt) { let d = new Date(l.createdAt); if (!isNaN(d)) { let k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); o.made[k] = (o.made[k] || 0) + 1; } }
+            });
+            let ks = Object.keys(o.made).sort().slice(-10), m = {}; ks.forEach(k => m[k] = o.made[k]); o.made = m;   // 最近 10 個有建立題庫的日子
+        } catch (e) {}
+        return o;
+    }
     function psSnap() {
         let d = advData || {}, cl = Object.keys(d.cleared || {}).filter(k => d.cleared[k]).map(Number);
         let words = 0; try { words = wordLists.filter(l => !isPackList(l)).reduce((t, l) => t + getListWordCount(l.content), 0); } catch (e) {}
@@ -2149,11 +2187,12 @@
             dexN: (() => { try { let o = {}; BattleCore.dexForms().forEach(f => { let n = dexFormN(f); if (n) o[f.key] = Math.min(3, n); }); return o; } catch (e) { return {}; } })(),
             titles: (() => { try { return advTitlesOwned(); } catch (e) { return []; } })(),
             lists: (() => { try { return wordLists.filter(l => !isPackList(l)).length; } catch (e) { return 0; } })(), words,
+            lx: psListMix(),                                                       // r24：題庫組成（只有數字，不記標題）
             mode: (() => { try { return advMode(); } catch (e) { return ''; } })(),      // r22：大冒險題目 auto 跟著關卡／custom 自己勾題庫
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261123b';
+    const PS_APP_VER = '20261124b';
     // r19：大冒險現況多久補送一次（雲端進度載入好之後，如果超過這個時間沒送過現況，就單獨補送一份，不算回傳次數）
     const PS_SNAP_AT = 'chicky_pstats_snapat', PS_SNAP_EVERY = 4 * 3600 * 1000;
     // r19：診斷資訊（每次回傳一起送，後台只留最新一份）：哪種裝置、登入狀態、最近有沒有送失敗、為什麼沒附現況
@@ -2173,6 +2212,7 @@
             snap: snap ? 1 : (advLoadedG && !advCloudReady ? 'cloud-not-ready' : 'logged-out'),
             fails: d.fails || 0, err: d.err || '',
             scr: scrInfo(),                                  // r20：螢幕資訊（解析度、縮放、有沒有畫面被切到）
+            src: (() => { try { return localStorage.getItem(SRC_KEY) || ''; } catch (e) { return ''; } })(),   // r24：第一次從哪個連結進來
             tts: ttsSummary()                                // r21：發音摘要（唸了幾次、幾次有開始、沒開始、錯誤代碼、系統聲音數）
         };
     }
@@ -3037,7 +3077,7 @@
             w.addEventListener('mousedown', (e) => e.preventDefault());           // 不讓輸入框失去焦點（點了才不會先關掉）
             w.addEventListener('click', () => wsPick(i));
             let a = weEl('a', 'we-suggest__dict', '查字典 ↗');
-            a.href = 'https://dictionary.cambridge.org/dictionary/english/' + encodeURIComponent(it.w);
+            a.href = 'https://dictionary.cambridge.org/dictionary/english-chinese-traditional/' + encodeURIComponent(it.w);   // r23b：英漢（繁體）
             a.target = '_blank'; a.rel = 'noopener';
             a.setAttribute('aria-label', '在劍橋字典查 ' + it.w);
             a.addEventListener('mousedown', (e) => e.preventDefault());
@@ -3920,7 +3960,7 @@
         let ans = `${currentItem.senseText || currentItem.chinese || ''}${correctPosArr.length ? `（${correctPosArr.join('、')}）` : ''}`;
         qzStatus('cardExamStatus', isCorrect ? '✓ 答對了' : `✗ ${escapeHTML(ans)}`, isCorrect ? 'is-ok' : 'is-bad');
         currentCardExamIndex++;
-        setTimeout(() => { if (document.getElementById('cardExamPlayView').classList.contains('active')) playCurrentCardExamQuestion(); }, 1000 + (isCorrect ? 0 : EXAM_WRONG_EXTRA));   // r22：答錯多停 3 秒看答案
+        setTimeout(() => { if (document.getElementById('cardExamPlayView').classList.contains('active')) playCurrentCardExamQuestion(); }, isCorrect ? 1000 : EXAM_WRONG_MS);   // r23c：答錯固定停 1.5 秒看答案
     }
 
     function handleCardExamKeyDown(e) {
@@ -5573,7 +5613,7 @@
         setTimeout(startAnswerTimer, 6000 * repeatCount);
     }
 
-    const EXAM_WRONG_EXTRA = 3000;     // r22：聽力／字卡測驗答錯時，多停幾毫秒讓玩家看正確答案
+    const EXAM_WRONG_MS = 1500;        // r23c：聽力／字卡測驗答錯時，固定停 1.5 秒讓玩家看正確答案
     // r22：第一次做完聽力或字卡測驗 → 關掉成績視窗後，帶去「測驗紀錄」看錯的單字、把錯的字存到同一本題庫
     const HIST_TUT_KEY = 'chicky_hist_tut';
     let histTutPending = '';
@@ -5582,14 +5622,21 @@
         let type = histTutPending; histTutPending = '';
         if (!type) return;
         try { localStorage.setItem(HIST_TUT_KEY, '1'); } catch (e) {}
-        setTimeout(() => tutCoach(null, '考錯的單字不用自己記！\n「測驗紀錄」可以看每一次考錯了哪些字，\n還能把常錯的單字一起存到同一本題庫，之後專心複習。', { btn: '帶我去看', onBtn: () => {
+        // r22b：三步：① 帶去「測驗紀錄」 → ② 「歷史紀錄」：點進去看每次考錯的字 → ③ 「常錯單字」：存到題庫，把錯的字歸類在一起
+        const step = (sel, text, btn, next) => {
+            let el = sel && document.querySelector(sel);
+            if (sel && !el) { if (next) next(); else tutCoachClear(); return; }
+            if (el) el.scrollIntoView({ block: 'center' });
+            setTimeout(() => tutCoach(sel, text, { btn, onBtn: () => { tutCoachClear(); if (next) setTimeout(next, 250); } }), el ? 350 : 0);
+        };
+        setTimeout(() => tutCoach(null, '考錯的單字不用自己記！\n「測驗紀錄」會幫你記下每一次考錯的字。', { btn: '帶我去看', onBtn: () => {
             tutCoachClear();
             hist.type = type === 'card' ? 'card' : 'listening';
             openHistoryModal();
-            setTimeout(() => {
-                let sel = document.querySelector('#histBody .hs-link') ? '#histBody .hs-link' : '#histBody .hs-sec';
-                tutCoach(sel, document.querySelector('#histBody .hs-link') ? '這裡是「常錯單字」\n按「存到題庫」，把錯的字歸類到同一本題庫' : '考錯的單字會整理在「常錯單字」\n之後可以一起存到題庫複習', { btn: '知道了' });
-            }, 400);
+            setTimeout(() => step('#histBody .hs-row.link', '這是「歷史紀錄」\n點進去，就能看到這次考錯了哪些字', '下一步', () => {
+                let hasWrong = !!document.querySelector('#histBody .hs-link');
+                step(hasWrong ? '#histBody .hs-link' : '#histBody .hs-sec', hasWrong ? '考錯的字會整理在「常錯單字」\n按「存到題庫」，把錯的字歸類到同一本題庫，之後專心複習' : '考錯的字會整理在「常錯單字」\n之後可以按「存到題庫」，把錯的字歸類到同一本題庫', '知道了', () => window.scrollTo(0, 0));
+            }), 450);
         } }), 250);
     }
     function submitExamAnswer() {
@@ -5628,7 +5675,7 @@
         currentWordIndex++;
         let pauseSec = parseInt(document.getElementById('examPauseTime').value);
         if (isNaN(pauseSec)) pauseSec = 1;
-        setTimeout(() => { if (isExamRunning) playExamQuestion(); }, Math.max(1000, pauseSec * 1000) + (isCorrect ? 0 : EXAM_WRONG_EXTRA));   // r22：答錯多停 3 秒看答案
+        setTimeout(() => { if (isExamRunning) playExamQuestion(); }, isCorrect ? Math.max(1000, pauseSec * 1000) : EXAM_WRONG_MS);   // r23c：答錯固定停 1.5 秒看答案（不管停頓設定）
     }
 
     // 清掉上一次（或中途離開時）留在輸入框的字
@@ -9219,8 +9266,9 @@
     function advPotTutOffer() {
         if (adv.training || advTut().potion || advData.hp > 0 || (advData.potions || 0) < 1) return;
         advTutSet('potion');                      // 只主動帶一次（中途離開就算了，背包分頁一直都在）
+        psCount('pt|offer');                      // r24：藥水導引有沒有用：出現 → 按「帶我去喝」→ 真的喝了
         setTimeout(() => {
-            tutCoach(null, '雞塊沒有體力了！\n背包裡有「小型恢復藥水」，喝了馬上恢復體力，就能繼續挑戰。', { btn: '帶我去喝', onBtn: () => { tutCoachClear(); advPotTut = true; goToAdvStats('bag', ''); } });
+            tutCoach(null, '雞塊沒有體力了！\n背包裡有「小型恢復藥水」，喝了馬上恢復體力，就能繼續挑戰。', { btn: '帶我去喝', onBtn: () => { tutCoachClear(); psCount('pt|go'); advPotTut = true; goToAdvStats('bag', ''); } });
         }, 900);
     }
     function advPotTutStep() {
@@ -9356,6 +9404,7 @@
         advData.hp = Math.min(max, advData.hp + ADV_POTION_HEAL);
         advSave();
         let wasTut = advPotTut; advPotTut = false;
+        if (wasTut) psCount('pt|use');
         advCloseBag();
         advRenderStatsPage();
         if (wasTut) setTimeout(() => tutCoach(null, `體力恢復到 ${advData.hp} 了！\n回到關卡就能繼續挑戰。\n之後體力不夠時，也可以來背包喝藥水。`, { btn: '知道了' }), 350);   // r22
@@ -9969,7 +10018,19 @@
     }
 
     // ── 開始 / 結束 ──
+    // r24：戰鬥中直接關掉 App：開打時記下「正在打第幾關第幾回合」，正常結束就清掉；下次打開還在＝上次是直接關掉的
+    const ADV_LIVE_KEY = 'chicky_adv_live';
+    function advLiveSet() { try { if (adv.active && !adv.training && adv.level) localStorage.setItem(ADV_LIVE_KEY, JSON.stringify({ s: adv.level.id, r: adv.round || 0, t: Date.now() })); } catch (e) {} }
+    function advLiveClear() { try { localStorage.removeItem(ADV_LIVE_KEY); } catch (e) {} }
+    setTimeout(() => {
+        try {
+            let o = JSON.parse(localStorage.getItem(ADV_LIVE_KEY) || 'null');
+            if (o && o.s && Date.now() - (o.t || 0) < 24 * 3600 * 1000) psCount(`aq|s${o.s}|r${o.r || 0}|close`);
+            advLiveClear();
+        } catch (e) {}
+    }, 0);
     function advAbort() {
+        advLiveClear();
         advStopTimer();
         try { advCloseReward(); } catch (e) {}
         adv.runId++;
@@ -10035,6 +10096,7 @@
         adv.micOk = false;
         adv.active = true;
         adv.busy = false;
+        advLiveSet();
         requestWakeLock();
         if (!document.getElementById('adventureBattleView').classList.contains('active')) advLockBattleHeight();
         switchView('adventureBattleView');
@@ -10084,6 +10146,7 @@
             let run = adv.runId;
             let ok = await uiConfirm(adv.training ? '要離開訓練嗎？\n這次的傷害不會記錄。' : '要離開戰鬥嗎？\n這場戰鬥不會有任何獎勵。', '離開', '繼續戰鬥');
             if (!ok || run !== adv.runId || !adv.active) return;   // 按取消，或視窗開著時戰鬥已經結束：不動
+            if (!adv.training && adv.level) psCount(`aq|s${adv.level.id}|r${adv.round || 0}|back`);   // r24：在第幾關、第幾回合按返回離開
         }
         advAbort();
         advBackToLevel();
@@ -10376,6 +10439,7 @@
         adv.micOk = false;
         adv.active = true;
         adv.busy = false;
+        advLiveSet();
         requestWakeLock();
         if (!document.getElementById('adventureBattleView').classList.contains('active')) advLockBattleHeight();
         switchView('adventureBattleView');
@@ -10712,6 +10776,7 @@
     function advBeginRound() {
         adv.ringOpening = false;
         adv.busy = true;
+        advLiveSet();
         advPlay(BattleCore.beginRound(adv, Math.random, advMoveBlock), adv.runId);
     }
     // 這招每一下的傷害（算法在 battle-core.js）
@@ -12080,7 +12145,7 @@
 
     async function advWin(id) {
         const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
-        adv.active = false;
+        adv.active = false; advLiveClear();
         releaseWakeLock();
         let lv = adv.level;
         advDexRecord();                           // 圖鑑：打完一場情蒐 +1（輸贏都算）
@@ -12476,7 +12541,7 @@
     async function advLose(id, why) {
         const P = document.getElementById('advPlayer'), E = document.getElementById('advEnemy');
         if (adv.active && !adv.training) psCount('advLose');
-        adv.active = false;
+        adv.active = false; advLiveClear();
         releaseWakeLock();
         advDexRecord();                           // 圖鑑：輸了也算情蒐 +1
         advSaveLastWrong(); advSave();
@@ -13812,6 +13877,7 @@
     function obStart() {
         obClear();
         obStepNow = 0;
+        psCount('ob|s0');                         // r24：新手教學每一步有沒有走到（s0 歡迎頁、s1～s4 四個分頁、done 看完、skip 略過）
         if (document.getElementById('homeDashboardView') && !document.getElementById('homeDashboardView').classList.contains('active')) setHomeTab('practice');
         let star = (x, y, s, c, o) => `<svg aria-hidden="true" style="position:absolute;${x};${y}" width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2z" fill="${c}"${o ? ` opacity="${o}"` : ''}/></svg>`;
         document.body.insertAdjacentHTML('beforeend', `<div id="obWelcome" role="dialog" aria-modal="true" aria-label="歡迎來到 Chicky Vocab"><div class="ob-w">
@@ -13851,6 +13917,7 @@
     function obGo(k) {
         obClear();
         obStepNow = k + 1;
+        psCount('ob|s' + (k + 1));
         let st = OB_STEPS[k];
         setHomeTab(st.tab);
         window.scrollTo(0, 0);
@@ -13897,6 +13964,7 @@
     // ⑥ 看完（或略過）：記下來，下次不再出現；按「開始使用」會直接打開題庫放第一個字
     function obFinish(openEditor) {
         obClear();
+        psCount(openEditor ? 'ob|done' : 'ob|skip');
         obStepNow = -1;
         try { localStorage.setItem(OB_DONE_KEY, '1'); localStorage.removeItem(OB_FORCE_KEY); } catch (e) {}
         if (!openEditor) { setHomeTab('practice'); return; }
