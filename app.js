@@ -1541,7 +1541,8 @@
     const TTS_LOG_KEY = 'chicky_tts_log';
     let ttsLog = [];
     try { ttsLog = JSON.parse(localStorage.getItem(TTS_LOG_KEY)) || []; } catch (e) { ttsLog = []; }
-    let ttsSeq = 0, ttsLastCancel = 0, ttsVoicesAt = 0, ttsSaveT = null;
+    let ttsSeq = 0, ttsLastCancel = 0, ttsVoicesAt = 0, ttsSaveT = null, ttsLastHidden = 0;
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') ttsLastHidden = performance.now(); });
     const ttsT0 = Date.now();
     function ttsSave() { clearTimeout(ttsSaveT); ttsSaveT = setTimeout(() => { try { localStorage.setItem(TTS_LOG_KEY, JSON.stringify(ttsLog.slice(-40))); } catch (e) {} }, 300); }
     function ttsVoiceTag(v) { return v ? `${v.name}|${v.lang}|${v.localService ? 'local' : 'net'}${v.default ? '|default' : ''}` : '(未指定)'; }
@@ -1573,17 +1574,23 @@
         const mark = (k) => e.ev.push(k + '+' + Math.round(performance.now() - now));
         u.addEventListener('start', () => { mark('start'); ttsSave(); });
         u.addEventListener('end', () => { mark('end'); ttsSave(); });
-        u.addEventListener('error', (ev) => { mark('error:' + (ev && ev.error || '?')); ttsSave(); });
+        // r25：App 自己取消（換下一題、暫停、跳出頁面）或畫面切到背景造成的錯誤，記成 cancel，不算發音錯誤
+        //   有些 Android 的語音引擎被取消時會回報 synthesis-failed，而不是 interrupted／canceled
+        const byUs = () => ttsLastCancel > now || ttsLastHidden > now || document.visibilityState === 'hidden';
+        u.addEventListener('error', (ev) => { let er = (ev && ev.error) || '?'; mark((byUs() || er === 'interrupted' || er === 'canceled' ? 'cancel:' : 'error:') + er); ttsSave(); });
         u.addEventListener('pause', () => mark('pause'));
         u.addEventListener('resume', () => mark('resume'));
         e._u = u;                                                   // 留住參考（iOS 有時會把還沒唸完的句子回收掉）
         setTimeout(() => {
-            if (!e.ev.some(x => /^(start|error)/.test(x))) { e.ev.push('NO-START-3s(' + (ss.speaking ? 'speaking' : 'idle') + (ss.pending ? ',pending' : '') + (ss.paused ? ',paused' : '') + ')'); if (txt.trim()) ttsBad(); }
+            if (!e.ev.some(x => /^(start|error|cancel)/.test(x))) {
+                if (ttsLastCancel > now || ttsLastHidden > now) e.ev.push('cancel:before-start');      // r25：還沒開始就被取消，不算「沒開始」
+                else { e.ev.push('NO-START-3s(' + (ss.speaking ? 'speaking' : 'idle') + (ss.pending ? ',pending' : '') + (ss.paused ? ',paused' : '') + ')'); if (txt.trim()) ttsBad(); }
+            }
             ttsSave();
         }, 3000);
         // r21c：有開始、但過了正常該唸完的時間還沒結束（也沒被取消）→ 語音卡住
         setTimeout(() => {
-            if (e.ev.some(x => /^start/.test(x)) && !e.ev.some(x => /^(end|error)/.test(x))) { e.ev.push('STUCK'); if (txt.trim()) ttsBad(); }
+            if (e.ev.some(x => /^start/.test(x)) && !e.ev.some(x => /^(end|error|cancel)/.test(x)) && !(ttsLastCancel > now || ttsLastHidden > now)) { e.ev.push('STUCK'); if (txt.trim()) ttsBad(); }
             delete e._u; ttsSave();
         }, 5000 + Math.min(20000, txt.length * 180));
         ttsLog.push(e); if (ttsLog.length > 60) ttsLog = ttsLog.slice(-40);
@@ -1602,11 +1609,12 @@
     function ttsTop(arr) { let c = {}; arr.forEach(k => { k = String(k).slice(0, 60); if (k) c[k] = (c[k] || 0) + 1; }); let o = {}; Object.keys(c).sort((a, b) => c[b] - c[a]).slice(0, 3).forEach(k => o[k] = c[k]); return o; }
     function ttsSummary() {
         let real = ttsLog.filter(x => x.len > 1 && x.ev);
-        let err = {};
-        real.forEach(x => x.ev.forEach(k => { let m = /^error:(.*?)\+/.exec(k); if (m) err[m[1]] = (err[m[1]] || 0) + 1; }));
+        let err = {}, errv = {};
+        real.forEach(x => x.ev.forEach(k => { let m = /^error:(.*?)\+/.exec(k); if (m) { err[m[1]] = (err[m[1]] || 0) + 1; let v = String(x.voice || '').slice(0, 60); errv[v] = (errv[v] || 0) + 1; } }));
+        let cx = real.filter(x => x.ev.some(k => /^cancel/.test(k))).length;          // r25：被 App 取消的（不算錯誤）
         let vs = []; try { vs = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; } catch (e) {}
         return {
-            n: real.length, start: real.filter(x => x.ev.some(k => /^start/.test(k))).length,
+            n: real.length, start: real.filter(x => x.ev.some(k => /^start/.test(k))).length, cx, errv,
             nostart: real.filter(x => x.ev.some(k => /^NO-START/.test(k))).length, stuck: real.filter(x => x.ev.some(k => k === 'STUCK')).length, err,
             vc: vs.length, en: vs.filter(v => /^en/i.test(v.lang)).length, ios: IS_IOS ? 1 : 0,
             // r24：用了哪個聲音（最多 3 個，各幾次）、手機預設的英文聲音（沒指定聲音時通常就是它）、App 會挑的聲音、語速
@@ -2192,7 +2200,7 @@
             google: advIsGoogleMode() ? 1 : 0, lang: (() => { try { return getLearningLanguage(); } catch (e) { return ''; } })(), app: PS_APP_VER
         };
     }
-    const PS_APP_VER = '20261124b';
+    const PS_APP_VER = '20261125a';
     // r19：大冒險現況多久補送一次（雲端進度載入好之後，如果超過這個時間沒送過現況，就單獨補送一份，不算回傳次數）
     const PS_SNAP_AT = 'chicky_pstats_snapat', PS_SNAP_EVERY = 4 * 3600 * 1000;
     // r19：診斷資訊（每次回傳一起送，後台只留最新一份）：哪種裝置、登入狀態、最近有沒有送失敗、為什麼沒附現況
